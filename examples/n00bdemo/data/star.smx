@@ -1,0 +1,26 @@
+<!-- Created using Project Scarlet SMX Export Plug-in for Blender -->
+<!-- NOTE: If you plan to use this model as a static mesh, it is recommended that you run this file through smxopt -->
+<!-- or smxtool to clean up duplicate/unused normals which are kept for animation purposes. -->
+<model version="1">
+<vertices count="10">
+<v x="1.533171" y="2.100845" z="-0.000000"/>
+<v x="-0.586904" y="-0.806044" z="0.000000"/>
+<v x="0.000881" y="-2.608315" z="0.000000"/>
+<v x="-1.526110" y="2.104695" z="-0.000000"/>
+<v x="-2.481925" y="-0.806045" z="0.000000"/>
+<v x="2.469579" y="-0.806044" z="0.000000"/>
+<v x="0.951937" y="0.311990" z="-0.000000"/>
+<v x="-0.950176" y="0.311990" z="-0.000000"/>
+<v x="0.000881" y="1.002973" z="-0.000000"/>
+<v x="0.588666" y="-0.806044" z="0.000000"/>
+</vertices>
+<primitives count="7">
+<poly v0="4" v1="7" v2="1" r0="255" g0="255" b0="64" type="F3" />
+<poly v0="2" v1="1" v2="9" r0="255" g0="255" b0="64" type="F3" />
+<poly v0="6" v1="5" v2="9" r0="255" g0="255" b0="64" type="F3" />
+<poly v0="8" v1="0" v2="6" r0="255" g0="255" b0="64" type="F3" />
+<poly v0="8" v1="7" v2="3" r0="255" g0="255" b0="64" type="F3" />
+<poly v0="1" v1="7" v2="9" v3="6" r0="255" g0="255" b0="64" type="F4" />
+<poly v0="7" v1="8" v2="6" r0="255" g0="255" b0="64" type="F3" />
+</primitives>
+</model>

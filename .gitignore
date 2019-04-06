@@ -1,0 +1,10 @@
+.svn
+build
+bin
+*.a
+*.o
+*.elf
+*.exe
+*.lzp
+*.qlp
+*.iso

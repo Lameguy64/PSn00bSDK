@@ -1,0 +1,44 @@
+If you wish to build the toolchain yourself, beware that this process can get pretty tedious. A system with at least 4 physical cores or 8 total threads is recommended. You may have better success building the toolchain in ArchLinux especially if you want to build the most recent version of GCC.
+
+These instructions may work for Windows using MSys2 or Cygwin64.
+
+
+Building binutils:
+
+* Download binutils source files at ftp://ftp.gnu.org and choose a version you prefer to use.
+* Extract the contents of the archive. Preferably to a directory called gcc for example.
+* Create a directory named binutils-build inside the gcc directory.
+* Configure binutils from the binutils-build directory with the following parameters:
+
+../binutils-<version>/configure --prefix=/usr/local/mipsel-unknown-elf --target=mipsel-unknown-elf --with-float=soft
+
+Replace <version> with the version of binutils you downloaded. You may also want to change the prefix to a path you wish to install the toolchain to.
+* Run 'make -j 4' to compile binutils (-j specifies how many jobs to execute at once).
+* Run make install-strip to install binutils to the path specified by --prefix (may require root priviledges). Binutils needs to be installed in order for GCC to compile.
+
+
+Building gcc:
+
+* Download gcc source files at ftp://ftp.gnu.org and choose a version you prefer to use.
+* Extract it to the same directory you extracted binutils in.
+* Create a directory named gcc-build inside the gcc directory.
+* Configure gcc from the gcc-build directory with the following parameters:
+
+../gcc-<version>/configure --disable-nls --disable-libada --disable-libssp --disable-libquadmath --disable-libstdc++-v3 --disable-libgomp --disable-libatomic --disable-libcilkrts --disable-libitm --disable-libsanitizer --disable-liblibvtv --disable-libmpx --disable-libhsail-rt --disable-libgfortran --disable-libbacktrace --disable-libgo --disable-libffi --disable-libobjc --disable-liboffloadmic --enable-libgcc --target=mipsel-unknown-elf --prefix=/usr/local/mipsel-unknown-elf --with-float=soft --enable-languages=c,c++ --with-gnu-as --with-gnu-ld
+
+Replace <version> with the version of gcc you downloaded. The prefix must be the same as the prefix you specified for binutils.
+* Run make in the same manner as you built binutils to build gcc.
+* Run make install-strip to install gcc (may require root priviledges).
+* Include the path to the bin directory of the toolchain you just built into your PATH environment variable. The compiler and binutils programs are prefixed with mipsel-unknown-elf (ie. mipsel-unknown-elf-gcc).
+
+
+Note regarding C++ support:
+
+By default C++ support such as classes are unavailable due to the lack of a C++ support library as GCC's stdc++-v3 never seems to compile for mipsel-unknown-elf which explains why the suggested config disables it. Newlib may work instead but it might be too bloated to be practical to use on the PS1 considering the system only has 2MB of DRAM so more than 200KB taken up by libraries to support C++ is considered unacceptable in the PSn00bSDK project.
+
+
+Note for Windows users:
+
+From my experience GCC won't build with libgcc even in Msys, Msys2 and Cygwin64. To get around this you'll have to steal a copy of the libgcc libraries from a Linux build. A complete binary download of PSn00bSDK for Windows should have this library included.
+
+If you don't compile with libgcc int64 and floating point emulation will be unavailable so the advice of getting GCC to compile by disabling libgcc is like repairing the flat tire of a car by taking out the tire entirely. Though use of in64 and floating point are not really optimal on the PS1 hardware to begin with.

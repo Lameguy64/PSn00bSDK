@@ -1,0 +1,30 @@
+To build the tools, simply run 'make all install' in this directory. The
+binaries of the tools should reside in a directory named bin for your
+convenience.
+
+
+Brief tools summary:
+
+lzpack	- File compression and packing utility for creating LZP, PCK and 
+		  QLP archive files. Depends on tinyxml2.
+		  
+smxlink - SMX to SMD linker tool (from Project Scarlet/Scarlet Engine).
+		  SMD drawing and parsing code can be found in the n00bdemo example.
+		  Depends on tinyxml2.
+
+plugins - Includes a plugin for exporting models into Project Scarlet/Scarlet
+		  Engine SMX model data format.
+
+util	- A collection of small single C or C++ file tools such as elf2x.
+
+
+Other tools you may want:
+
+img2tim  - Image to TIM texture file converter powered by FreeImage.
+	https://github.com/Lameguy64/img2tim
+
+smxtool	 - SMX model data tweaking tool.
+	https://github.com/Lameguy64/smxtool
+
+mkpsxiso - PlayStation ISO creation tool with CD-DA, CD-XA and STR file support.
+	https://github.com/Lameguy64/mkpsxiso
