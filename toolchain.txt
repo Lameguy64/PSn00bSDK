@@ -24,7 +24,7 @@ Building gcc:
 * Create a directory named gcc-build inside the gcc directory.
 * Configure gcc from the gcc-build directory with the following parameters:
 
-../gcc-<version>/configure --disable-nls --disable-libada --disable-libssp --disable-libquadmath --disable-libstdc++-v3 --disable-libgomp --disable-libatomic --disable-libcilkrts --disable-libitm --disable-libsanitizer --disable-liblibvtv --disable-libmpx --disable-libhsail-rt --disable-libgfortran --disable-libbacktrace --disable-libgo --disable-libffi --disable-libobjc --disable-liboffloadmic --enable-libgcc --target=mipsel-unknown-elf --prefix=/usr/local/mipsel-unknown-elf --with-float=soft --enable-languages=c,c++ --with-gnu-as --with-gnu-ld
+../gcc-<version>/configure --disable-nls --disable-libada --disable-libssp --disable-libquadmath --disable-libstdc++-v3 --disable-libgomp --disable-libatomic --disable-libcilkrts --disable-libitm --disable-libsanitizer --disable-liblibvtv --disable-libmpx --disable-libhsail-rt --disable-libgfortran --disable-libgo --disable-libffi --disable-libobjc --disable-liboffloadmic --enable-libgcc --target=mipsel-unknown-elf --prefix=/usr/local/mipsel-unknown-elf --with-float=soft --enable-languages=c,c++ --with-gnu-as --with-gnu-ld
 
 Replace <version> with the version of gcc you downloaded. The prefix must be the same as the prefix you specified for binutils.
 * Run make in the same manner as you built binutils to build gcc.
