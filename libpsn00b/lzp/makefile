@@ -7,7 +7,7 @@ OFILES	= $(addprefix build/,$(CFILES:.c=.o))
 
 INCLUDE = -I../include
 
-CFLAGS	= -O2 -msoft-float -fno-builtin -nostdlib -Wa,--strip-local-absolute
+CFLAGS	= -g -O2 -msoft-float -fno-builtin -nostdlib -Wa,--strip-local-absolute
 AFLAGS	= -msoft-float --strip-local-absolute
 
 CC		= $(PREFIX)gcc

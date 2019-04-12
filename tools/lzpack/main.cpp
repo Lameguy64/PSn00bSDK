@@ -10,21 +10,21 @@
 
 
 typedef struct {
-	char	id[3];
-	u_char	numFiles;
+	char			id[3];
+	unsigned char	numFiles;
 } QLP_HEAD;
 
 typedef struct {
-	char	fileName[16];
-	u_long	fileSize;
-	u_long	offset;
+	char			fileName[16];
+	unsigned int	fileSize;
+	unsigned int	offset;
 } QLP_FILE;
 
 
 typedef struct {
-	char	name[16];
-	int		size;
-	int		offset;			// In 2048 byte sector units
+	char			name[16];
+	unsigned int	size;
+	unsigned int	offset;			// In 2048 byte sector units
 } PCK_FILE;
 
 typedef struct {
@@ -51,7 +51,7 @@ const char* TrimPathName(const char* path);
 
 int main(int argc, const char* argv[]) {
 
-    printf("LZPack v0.60b - File Compression and Packing Utility\n");
+    printf("LZPack v0.61b - File Compression and Packing Utility\n");
     printf("2016-2019 Meido-Tek Productions (Lameguy64)\n\n");
 
 	if (argc <= 1) {
