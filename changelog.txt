@@ -1,0 +1,28 @@
+PSn00bSDK changelog
+
+05-23-2019 by Lameguy64:
+
+* Added dev notes.txt file in docs that includes notes about the many
+  quirks discovered about the system throughout the development of this SDK.
+
+* Updated libn00bref.odf a little.
+
+* Added rgb24 example.
+
+* Made stack usage in ResetGraph() less wasteful.
+
+* VSync IRQ handling now done using a custom exit handler. Actual VSync
+  handling is yet to be moved to the custom exit handler though.
+
+* Made stack usage in start.s of libc a lot less wasteful.
+
+* Implemented controller support via BIOS functions (use _InitPad(),
+  _StartPad() and _StopPad()). BIOS memory card functions may also
+  work as well but its not tested yet.
+
+* Removed duplicate initpad.s and initcard.s functions in psxapi.
+
+* Added _InitCd() function to psxapi which is a safer version of _96_init()
+  as it preserves other DMA channel settings. Use BIOS file functions such
+  as open(), read() and close() with path names starting with cdrom:/ to
+  access files from CD after calling _InitCd().

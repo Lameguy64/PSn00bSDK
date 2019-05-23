@@ -6,7 +6,7 @@ PREFIX	= mipsel-unknown-elf-
 
 TARGET	= ../libpsxapi.a
 
-SOURCES	= stdio fs sys
+SOURCES	= stdio fs sys pad
 
 AFILES	= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.s))
 OFILES	= $(addprefix build/,$(AFILES:.s=.o))

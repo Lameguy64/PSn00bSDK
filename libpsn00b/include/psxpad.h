@@ -104,5 +104,4 @@ typedef struct {
 	unsigned short	gun_y;		// Gun Y position in scanlines
 } GCONTYPE;
 
-
 #endif

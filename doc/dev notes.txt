@@ -1,0 +1,44 @@
+These are some development notes I've put together that would be of great
+aid to those willing to contribute to the PSn00bSDK project. Many of these
+came from my own experience dealing with the PS1 at low-level when I ran
+into some unexplained quirks while some are from disassembly observations
+and clarification of existing documents. More entries will be added when
+I run into more previously undocumented quirks in the future.
+	- Lameguy64
+	
+* When calling C functions (ie. BIOS functions) from assembly code you'll
+need to allocate N words on the stack first when calling a function that has
+N arguments (addiu $sp, -(4*N) where N = number of arguments of the function
+being called) even if the arguments are on registers a0 to a3 and the C
+functions don't always use the space allotted in stack.
+
+* A custom handler hooked using BIOS function B(19h)
+(SetCustomExitFromException) is only triggered when there's an interrupt
+that hasn't been acknowledged by previous IRQ handlers that have been
+executed prior. This is also the best point to acknowledge any interrupts
+without breaking compatibility with built-in BIOS features and is what the
+official SDK uses to handle interrupts.
+
+* It is not advisable to acknowledge interrupts in event handlers like in
+PSXSDK as it would break BIOS features that depend on interrupts. Clearing
+the VBlank IRQ in a event handler for example prevents the BIOS controller
+functions from working as it depends on the VBlank IRQ to determine when to
+query controllers. Acknowledge interrupts using a custom handler set by BIOS
+function B(19h) (SetCustomExitFromException).
+
+* When running in high resolution mode you must additionally wait for bit 31
+in GPUSTAT (1F801814h) to alternate on every frame (frame 0: wait until 0,
+frame 1: wait until 1, frame 2: wait until 0) before waiting for VSync
+otherwise the GPU will only draw the first field if you don't have drawing
+to displayed area enabled. Performing this check in a low resolution/non
+interlaced mode is harmless.
+
+* There's a hardware bug in the GPU FillVRAM command GP0(02h) where if you
+set the height to 512 pixels the primitive is executed with a height of 0 as
+the hardware does not appear to interpret the last bit of the height value.
+This is most apparent when putting a DRAWENV with the height of 512 pixels
+(for PAL for example) and background clearing is enabled.
+
+* In the official SDK, DMA IRQs appear to be enabled only when a callback
+function is set (ie. DrawSyncCallback() enables IRQ for DMA channel 2). DMA
+IRQs are only triggered on transfer completion.

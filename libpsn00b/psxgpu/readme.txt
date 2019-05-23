@@ -27,7 +27,7 @@ Todo list:
 	  getting number of vsyncs elapsed and waiting until a specified number of
 	  vsyncs have passed.
 
-	* VSync interrupt handler should be hooked using BIOS function
+	* (old) VSync interrupt handler should be hooked using BIOS function
 	  SetCustomExitFromException() like the official GPU library instead of
 	  hooking an event handler, but said hook never seems to work. Perhaps
 	  something in the kernel area needs to be patched/set or some event/IRQ
@@ -47,4 +47,15 @@ Todo list:
 
 Changelog:
 
-	None thus far...
+	05-23-2019 by Lameguy64:
+	
+	* Got custom exit handler set using SetCustomExitFromException() (BIOS
+	  function B(19h)) working. Currently used to acknowledge VSync IRQ but
+	  actual VSync handling is still done with events and needs to be
+	  transferred to the custom exit handler. At least it lets BIOS
+	  controller functions to work now. See doc/dev notes.txt for details
+	  on how this handler behaves.
+	
+	* Made stack usage a lot less wasteful in ResetGraph() (you only need
+	  to allocate N words on stack based on N arguments of the function
+	  being called.

@@ -1,5 +1,5 @@
 # Start function!
-# This is essentially the entrypoint of the PS-EXE
+# This is essentially the entry point of the PS-EXE
 
 .set noreorder
 
@@ -8,11 +8,10 @@
 .global _start
 .type _start, @function
 _start:
-
-	addiu	$sp, -32
-	sw		$ra, 28($sp)
+	addiu	$sp, -4
+	sw		$ra, 0($sp)
 	
-	la		$gp, _gp		# Very important to set!
+	la		$gp, _gp		# Very important!
 	
 	la		$a0, .bss		# What are the CORRECT symbols for BSS start and end?
 	la		$a1, _end
@@ -30,10 +29,11 @@ _start:
 	move	$a1, $0
 	
 	jal		main
-	nop
+	addiu	$sp, -8
+	addiu	$sp, 8
 	
-	lw		$ra, 28($sp)
-	addiu	$sp, 32
+	lw		$ra, 0($sp)		# Return
+	addiu	$sp, 4
 	jr		$ra
 	nop
 	

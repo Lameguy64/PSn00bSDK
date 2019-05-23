@@ -84,14 +84,20 @@ extern int chdir(const char *path);
 
 int AddDev(DCB *dcb);
 int DelDev(const char *name);
-extern void ListDev();
+extern void ListDev(void);
 
-extern void EnterCriticalSection();
-extern void ExitCriticalSection();
+extern void EnterCriticalSection(void);
+extern void ExitCriticalSection(void);
 
-extern void _96_init();
-extern void _96_remove();
+extern void _InitCd(void);
+extern void _96_init(void);
+extern void _96_remove(void);
 
 extern void ChangeClearPAD(int mode);
+
+// BIOS pad functions
+void _InitPad(char *buff1, int len1, char *buff2, int len2);
+void _StartPad(void);
+void _StopPad(void);
 
 #endif

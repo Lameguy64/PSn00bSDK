@@ -45,4 +45,6 @@ Todo list:
 
 Changelog:
 
-	None thus far...
+	05-23-2019 by Lameguy64:
+
+	* Made stack usage a lot less wastefull in _start entrypoint.
