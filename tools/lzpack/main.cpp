@@ -229,7 +229,7 @@ int CreateLZPfile(const char* packFile, FileListClass* fileList) {
 
     LZP_HEAD head;
 
-    strncpy(head.id, "LZP", 4);
+    strncpy(head.id, "LZP", sizeof(head.id));
     head.numFiles = fileList->EntryCount();
 
 	fseek(packp, 0, SEEK_SET);
