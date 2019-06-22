@@ -30,13 +30,13 @@ SetVideoMode:
 	andi	$a1, 0xf7				# Mask off PAL bit
 
 	la		$v0, _gpu_standard
-	beqz	$a0, .set_done
+	beqz	$a0, .Lset_done
 	sw		$0 , 0($v0)
 	li		$v1, 1
 	sw		$v1, 0($v0)
-	b		.set_done
+	b		.Lset_done
 	or		$a1, 0x8
-.set_done:
+.Lset_done:
 
 	lui		$v0, 0x800				# Apply new mode
 	or		$a1, $v0

@@ -14,15 +14,15 @@
 .type memcpy, @function
 memcpy:
 	move	$v0, $a0
-.loop:
+.Lloop:
 	blez	$a2, .exit
 	addi	$a2, -1
 	lbu		$a3, 0($a1)
 	addiu	$a1, 1
 	sb		$a3, 0($a0)
-	b		.loop
+	b		.Lloop
 	addiu	$a0, 1
-.exit:
+.Lexit:
 	jr		$ra
 	nop
 	

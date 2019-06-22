@@ -68,7 +68,7 @@ typedef struct {
 	unsigned char	stat;
 	unsigned char	len:4;
 	unsigned char	type:4;		// Device type (0x1)
-	unsigned char	btn;
+	unsigned short	btn;
 	char			x_mov;		// X movement of mouse
 	char			y_mov;		// Y movement of mouse
 } MOUSETYPE;

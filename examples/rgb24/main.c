@@ -43,7 +43,7 @@ int main() {
 	// Upload image to VRAM
 	GetTimInfo(tim_image, &tim);
 	LoadImage(tim.prect, tim.paddr);
-	DrawSync();
+	DrawSync(0);
 	
 	while(1) {
 	}

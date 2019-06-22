@@ -36,8 +36,8 @@ char *FntSort(unsigned int *ot, char *pri, int x, int y, const char *text) {
 	pri = (char*)sprt;
 	
 	tpage = (DR_TPAGE*)pri;
-	setlen( tpage, 1 );
 	tpage->code[0] = _font_tpage;
+	setlen( tpage, 1 );
 	setcode( tpage, 0xe1 );
 	addPrim( ot, pri );
 	pri += sizeof(DR_TPAGE);

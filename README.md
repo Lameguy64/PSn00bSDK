@@ -1,78 +1,149 @@
 # PSn00bSDK
 
-PSn00bSDK is a 100% free and open source SDK for developing homebrew games
-and applications for the original Sony PlayStation. The SDK consists mainly
-of libraries and some tools for converting and building resources to be
-used on the console.
+PSn00bSDK is a 100% free and open source SDK project for the original Sony
+PlayStation for developing homebrew applications and games for the console
+whether it be an open source, freeware, or commercial project.
 
-While PSn00bSDK is currently a work in progress the project aims to develop
-an SDK that is as close to the official Sony SDK as possiblein in terms of
-supported hardware features which include GPU, GTE, SPU, CD, MDEC and
-controller/memory card peripherals and a library API written to follow the
-official SDK's API syntax. With extensive low-level technical documentation
-of the PSX readily available (such as nocash's PSX specs) there should be no
-excuse to not have full support of the aforementioned hardware features.
+The SDK is composed mainly of libraries (libpsn00b) and some utilities that
+provide a basic framework for developing software for the PlayStation
+hardware, the compiler is separate (GCC) and should be acquired from GNU.
+The library API is intentionally written to resemble the library API of the
+official libraries as closely as possible. This design decision is not only
+for familiarity reasons and so that existing sample code and tutorials would
+still apply, but to also make porting existing homebrew originally made with
+official SDKs to PSn00bSDK easier with few modifications.
 
-The PSn00bSDK libraries are written mostly in MIPS assembly language with
-compiler generated code limited to small and moderately sized support
-functions for best possible performance and to keep the runtime library
-footprint as small as possible. Many of the library functions avoid using
-BIOS calls such as C string and memory manipulation functions and use pure
-assembly equivalents for improved performance for memory and string
-manipulation operations.
+PSn00bSDK is currently a work in progress and cannot really be considered
+production ready, but what is currently implemented should be enough to
+produce some interesting homebrew with the SDK, especially with extensive
+support for the GPU and GTE hardware. There's no reason not to fully support
+the hardware features of the target platform when they have been fully
+documented for years (nocash's PSX specs document in this case).
+
+Most of libpsn00b is written mostly in MIPS assembly, more so functions that
+interface with hardware. Many of the standard C functions are implemented in
+custom MIPS assembly instead of equivalents found in the BIOS ROM for
+performance reasons.
+
+
+## Notable features
+
+* Extensive GPU support with polygon primitives, high-speed DMA VRAM
+  transfers and DMA ordering table processing. All video modes for both NTSC
+  and PAL standards also supported with fully adjustable display area and
+  automatic video standard detection based on last GPU mode, no BIOS ROM
+  string checks used.
+
+* Extensive GTE support with rotate, translate, perspective correction and
+  lighting through assembly macros (for both C and ASM) and high performance
+  matrix and vector functions, all calculations performed in fixed point
+  integer math.
+
+* Stable and easy to use interrupt service routine with callback system for
+  simplified handling of hardware and DMA interrupts, no crude event handlers
+  or kernel hacks used and should be compatible with HLE BIOS implementations
+  and homebrew loaders and menus.
+
+* Complete Serial I/O support with SIOCONS driver for tty console access
+  through serial interface.
+
+* BIOS controller functions for polling controller input function as
+  intended, no crude manual polling in main loop.
+
+* BIOS CD-ROM support with custom initialization function that does not
+  break other DMA channels (such as GPU and SPU DMA) for easier CD-ROM
+  initialization.
+
+* Uses Sony SDK library syntax for familiarity to experienced programmers
+  and to make porting existing homebrew to PSn00bSDK easier.
+
+* Works on real hardware and most popular emulators.
+
+
+## Obtaining PSn00bSDK
+
+Because PSn00bSDK is updated semi-regularly as this project is mostly a
+work-in-progress, it is better to obtain this SDK from source by building
+it yourself in the long run. Prepared packages containing precompiled
+libpsn00b libraries, the toolchain and additional utilities not included
+in this repository for Windows users are planned, but some arrangements
+need to be made. Perhaps when PSn00bSDK is halfway production ready.
+
+A precompiled copy of the GCC 7.2.0 toolchain for Windows is available
+in lameguy64's website in the PSn00bSDK page. This should make building
+PSn00bSDK under Windows a bit easier as building the toolchain is the
+hardest part of building PSn00bSDK and its more difficult to get it to
+compile correctly under Windows.
 
 
 ## Building the SDK
 
-For most users (particularly those who run Windows) it is recommended to
-just download a release package containing the GCC toolchain and libraries
-in binary form ready to be used.
+### Windows (needs work/testing):
+1. Download the following:
+  * MinGW GCC
+  * MSys2
+  * tinyxml2 (for lzpack and smxlink)
+  * GCC 7.2.0 for mipsel-unknown-elf (download from Lameguy64's website)
+2. Install MSys2 and MinGW GCC.
+3. Extract GCC 7.2.0 for mipsel-unknown-elf to the root of your C drive.
+4. Update your PATH environment variable to point to the bin directories of
+   GCC 7.2.0 for mipsel-unknown-elf, MSys2 and MinGW GCC. Make sure you can
+   access gcc, mipsel-unknown-elf-gcc and make from any directory in the
+   command prompt.
+5. Build tinyxml2 with MinGW GCC through MSys2's shell.
+6. Clone/download PSn00bSDK source files.
+7. Enter libpsn00b directory and run make (with optional -j parameter for
+   building across multiple cores/threads).
+8. Enter tools directory and run make, then make install to consolidate the
+   executables to a bin directory. Add this directory to your PATH
+   environment variable.
+9. Compile the example programs to test if the SDK is set up correctly.
+   Set correct paths in sdk-common.mk when necessary.
 
-If you wish to build the SDK yourself building PSn00bSDK requires a GNU
-GCC toolchain targeting mipsel-unknown-elf. For instructions on how to
-build the GCC toolchain please read toolchain.txt.
-
-To build the PSn00bSDK libraries simply enter the libpsn00b directory and
-run make. Make sure you have the path of the toolchain binaries in your PATH
-environment variable. If things go accordingly it should run through all
-library directories and produce library files.
-
-To build the PSn00bSDK tools simply enter the tools directory and run make.
-You'll need tinyxml2 to satisfy the lzpack and smxlink tools.
-
-To build the PSn00bSDK examples which also tests if your SDK setup works
-correctly simply enter the examples directory and run make. You may want
-to modify the sdk-common.mk file first and make sure the library paths are
-correct and that your PATH environment variable has the tools/bin directory
-in it as elf2x and lzpack are required for the examples to build correctly.
+### Linux and Unix-likes:
+1. Build and install the GNU GCC toolchain configured for mipsel-unknown-elf
+   (see toolchain.txt for details).
+2. Install the following (development) package:
+  * tinyxml2
+3. Clone/download PSn00bSDK source files.
+4. Enter the libpsn00b directory and run make. Make sure
+   mipsel-unknown-elf-gcc is accessible in the terminal from within any
+   directory beforehand.
+5. Enter the tools directory and run make, then make install to consolidate
+   the binaries to a bin directory. Add this directory to your PATH variable.
+6. Compile the example programs to test if the SDK is set up correctly.
+   Set correct paths in sdk-common.mk when necessary.
 
 
 ## Examples
 
-There are a few graphics examples and complete source code of n00bdemo
-included in the examples directory. More example programs may be added in
-future updates and contributions are welcome.
+There are a few examples and complete source code of n00bdemo included in
+the examples directory. More example programs may be added in the future
+and contributed example programs are welcome.
 
 
-## To-do
+## To-do List
 
-* Support functions to get C++ classes working are yet to be implemented.
-  glibc won't compile (or its not included with GCC sources) and likely
-  depends on a Linux kernel that does not exist on the PS1. Newlib might
-  be undesirable as it appears to be too bloated for PS1. Just getting
-  classes to work would be enough.
+* libc: C++ support (getting classes, new and delete working is enough)
+  and better sprintf() (one from PSXSDK is slow due to unnecessary usage
+  of int64 and somewhat a bit buggy) yet to be implemented. More standard
+  C library stuff also yet to be implemented.
 
-* psxspu needs to be expanded upon. Currently lacks support for reverb
-  and many voice controls.
+* psxgpu: VRAM download and VRAM move functions, some more primitives
+  and macros yet to be implemented.
 
-* An 'IRQ handler for all' implementation through BIOS function
-  SetCustomExitFromException() is yet to be implemented for better/more
-  reliable interrupt handling. UPDATE: SetCustomExitFromException() hook
-  is now working! See readme of psxgpu for details.
+* psxgte: Higher level GTE rotate translate and perspective functions
+  yet to be implemented.
 
-* CD-ROM library is yet to be made.
+* psxspu: Lots of work to do.
 
-* Better (and faster) sprintf() function.
+* psxapi: Plenty of BIOS function calls yet to be added.
+
+* psxetc: Text stream stuff (FntOpen(), FntPrint(), FndFlush()) for
+  debug purposes yet to be implemented.
+  
+* Libraries yet to be made: psxcd (for better CD-ROM support) and
+  psxmdec (MDEC support).
 
 
 ## Usage terms
@@ -80,9 +151,12 @@ future updates and contributions are welcome.
 PSn00bSDK falls under the terms and conditions of the Mozilla Public
 License. A quick summary of this license is that PSn00bSDK can be used
 freely in both free and open source projects and commercial closed source
-projects. But if modifications to the SDK were made as part of the
-development of such projects such changes must be contributed back in
-return.
+projects as projects using PSn00bSDK does not necessarily have to follow
+the MPL as well.
+
+If modifications to the SDK were made as part of the development of such
+projects that enhance its functionality, such changes must be contributed
+back in return.
 
 
 ## Credits
@@ -90,6 +164,6 @@ return.
 Main developer:
 * Lameguy64
 
-Important references used:
+References used:
 * nocash's PlayStation specs document (http://problemkaputt.de/psx-spx.htm)
-* Tails92's PSXSDK project (bits and pieces of it).
+* Tails92's PSXSDK project.

@@ -203,8 +203,8 @@ int main(int argc, const char* argv[]) {
 		nextpri += sizeof(DR_TPAGE);
 		
 		/* Wait for GPU and VSync */
-		DrawSync();
-		VSync();
+		DrawSync( 0 );
+		VSync( 0 );
 		
 		/* Since draw.isbg is non-zero this clears the screen */
 		PutDrawEnv( &draw );

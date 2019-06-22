@@ -57,8 +57,8 @@ void initDisplay() {
 
 void display() {
 
-	VSync();
-	DrawSync();
+	DrawSync(0);
+	VSync(0);
 	
 	PutDrawEnv( &draw );
 	DrawOTag( ot[db]+OT_LEN-1 );

@@ -38,8 +38,8 @@
 #define setDrawTPage( p, tp, abr, x, y ) \
 	( (p)->code[0] = getTPage( tp, abr, x, y ), \
 	setlen( p, 1 ), setcode( p, 0xe1 ) )
-	
-/** ORIGINAL FUNCTION **/
+
+/* ORIGINAL */	
 #define setDrawTPageVal( p, tp ) \
 	( (p)->code[0] = tp, \
 	setlen( p, 1 ), setcode( p, 0xe1 ) )
@@ -217,6 +217,15 @@ typedef struct {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
+	short			x1,y1;
+	short			x2,y2;
+	short			x3,y3;
+} POLY_F4;
+
+typedef struct {
+	unsigned int	tag;
+	unsigned char	r0,g0,b0,code;
+	short			x0,y0;
 	unsigned char	u0,v0;
 	unsigned short	clut;
 	short			x1,y1;
@@ -226,41 +235,6 @@ typedef struct {
 	unsigned char	u2,v2;
 	unsigned short	pad;
 } POLY_FT3;
-
-typedef struct {
-	unsigned int	tag;
-	unsigned char	r0,g0,b0,code;
-	short			x0,y0;
-	unsigned char	r1,g1,b1,pad0;
-	short			x1,y1;
-	unsigned char	r2,g2,b2,pad1;
-	short			x2,y2;
-} POLY_G3;
-
-typedef struct {
-	unsigned int	tag;
-	unsigned char	r0,g0,b0,code;
-	short			x0,y0;
-	unsigned char	u0,v0;
-	unsigned short	clut;
-	unsigned char	r1,g1,b1,pad0;
-	short			x1,y1;
-	unsigned char	u1,v1;
-	unsigned short	tpage;
-	unsigned char	r2,g2,b2,pad1;
-	short			x2,y2;
-	unsigned char	u2,v2;
-	unsigned short	pad2;
-} POLY_GT3;
-
-typedef struct {
-	unsigned int	tag;
-	unsigned char	r0,g0,b0,code;
-	short			x0,y0;
-	short			x1,y1;
-	short			x2,y2;
-	short			x3,y3;
-} POLY_F4;
 
 typedef struct {
 	unsigned int	tag;
@@ -287,9 +261,35 @@ typedef struct {
 	short			x1,y1;
 	unsigned char	r2,g2,b2,pad1;
 	short			x2,y2;
+} POLY_G3;
+
+typedef struct {
+	unsigned int	tag;
+	unsigned char	r0,g0,b0,code;
+	short			x0,y0;
+	unsigned char	r1,g1,b1,pad0;
+	short			x1,y1;
+	unsigned char	r2,g2,b2,pad1;
+	short			x2,y2;
 	unsigned char	r3,g3,b3,pad2;
 	short			x3,y3;
 } POLY_G4;
+
+typedef struct {
+	unsigned int	tag;
+	unsigned char	r0,g0,b0,code;
+	short			x0,y0;
+	unsigned char	u0,v0;
+	unsigned short	clut;
+	unsigned char	r1,g1,b1,pad0;
+	short			x1,y1;
+	unsigned char	u1,v1;
+	unsigned short	tpage;
+	unsigned char	r2,g2,b2,pad1;
+	short			x2,y2;
+	unsigned char	u2,v2;
+	unsigned short	pad2;
+} POLY_GT3;
 
 typedef struct {
 	unsigned int	tag;
@@ -431,21 +431,6 @@ typedef struct {
 /*
  *	VRAM fill and transfer primitive definitions
  */
-typedef struct {
-	unsigned int	tag;
-	unsigned char	r0,g0,b0,code;
-	unsigned short	x0,y0;		// Note: coordinates must be in 16 pixel steps
-	unsigned short	w,h;
-} FILL;
-
-typedef struct {
-	unsigned int	tag;
-	unsigned char	p0,p1,p2,code;
-	unsigned short	x0,y0;
-	unsigned short	x1,y1;
-	unsigned short	w,h;
-	unsigned int	nop[4];
-} VRAM2VRAM;
 
 typedef struct {
 	unsigned int	tag;
@@ -462,11 +447,26 @@ typedef struct {
 	unsigned int	code[1];
 } DR_TPAGE;
 
-typedef struct {	/* ORIGINAL CODE */
+typedef struct {	/* ORIGINAL */
 	unsigned int	tag;
 	unsigned int	code[1];
 } DR_MASK;
 
+typedef struct {	/* ORIGINAL */
+	unsigned int	tag;
+	unsigned char	r0,g0,b0,code;
+	unsigned short	x0,y0;		// Note: coordinates must be in 16 pixel steps
+	unsigned short	w,h;
+} FILL;
+
+typedef struct {	/* ORIGINAL */
+	unsigned int	tag;
+	unsigned char	p0,p1,p2,code;
+	unsigned short	x0,y0;
+	unsigned short	x1,y1;
+	unsigned short	w,h;
+	unsigned int	nop[4];
+} VRAM2VRAM;
 
 // General structs
 
@@ -528,17 +528,23 @@ void PutDrawEnv(DRAWENV *draw);
 
 void SetDispMask(int mask);
 
-void VSync();
-void DrawSync();
+int VSync(int m);
+int DrawSync(int m);
 void WaitGPUcmd();
 void WaitGPUdma();
 
-void VSyncCallback(void (*func)());
+void *VSyncCallback(void (*func)());
+void *DrawSyncCallback(void (*func)());
+
+void *DMACallback(int dma, void (*func)());
+void *InterruptCallback(int irq, void (*func)());
+void *GetInterruptCallback(int irq);				// Original
 
 void LoadImage(RECT *rect, unsigned int *data);
 
 void ClearOTagR(unsigned int* ot, int n);
 void DrawOTag(unsigned int* ot);
+void DrawPrim(void *pri);
 
 void AddPrim(unsigned int* ot, void* pri);
 

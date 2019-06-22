@@ -4,7 +4,7 @@
 #include <stdarg.h>
 
 #ifndef NULL
-#define NULL (void*)0
+#define NULL 0
 #endif
 
 // BIOS seek modes
@@ -32,6 +32,14 @@ extern void printf (const char *__format, ...);
 
 extern int getc(int __fd);
 extern int putc(int __char, int __fd);
+
+#define fputc(__char, __fd) 	putc(__char, __fd)
+#define fgetc(__char, __fd) 	getc(__char, __fd)
+
+// Console TTY
+extern void gets(char *__s);
+extern void puts(const char *__s);
+extern int getchar(void);
 extern void putchar(int __c);
 
 // The following functions do not use the BIOS

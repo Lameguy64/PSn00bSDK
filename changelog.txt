@@ -1,18 +1,103 @@
 PSn00bSDK changelog
 
+
+06-23-2019 by Lameguy64:
+
+* LibPSn00b Run-time Library is officially version 0.10b.
+
+* Reworked readme file with improved build instructions.
+
+* libpsn00b: Added missing C extern groups for C++ compatibility in
+  psxapi.h, stdlib.h and string.h.
+
+* libpsn00b: Removed changelogs in the readmes of each libpsn00b library
+  as its much easier to keep track of changes in a single changelog than
+  scattering them across multiple changelogs.
+
+* psxapi: Added Exec() function and EXEC struct.
+
+* psxgpu: Added DrawPrim() function (uses direct I/O).
+
+* psxgpu: VSync() function completely overhauled. Logic is now based on
+  Sony's code but more efficient and can return total number of vblanks
+  elapsed, number of hblanks since last call and wait up to n vblanks
+  specified by an appropriate argument value. It will also generate a
+  timeout when vblank interrupt stops working and would attempt to
+  restart it.
+
+* psxapi: Added gets() and getc() BIOS functions.
+
+* psxapi: Corrected a putc()/putchar() discrepancy. putc() puts a character
+  to a file stream, putchar() puts a character to stdout.
+
+* Completely revised library reference manual with better formatting and
+  more functions documented.
+
+* psxgpu: Added DrawSyncCallback().
+
+* psxgpu: Implemented DMA interrupt callback system with DMACallback()
+  allowing to handle DMA interrupts very easily.
+
+* libpsn00b: Implemented Serial I/O library (psxsio) with serial tty device
+  (installed using AddSIO) and serial callback support. Serial library
+  is also fully documented.
+
+* psxgpu: Implemented IRQ callback system with InterruptCallback() allowing
+  to set interrupt callbacks very easily.
+  
+* psxgpu: Implemented proper IRQ handler installed using HookEntryInt or
+  SetCustomExitFromException() for handling VSync and other interrupts.
+  ChangeClearPAD(0) must now be called after _InitPad() or vsync timeout
+  will occur.
+
+* libpsn00b: Started making local labels prefixed with .L instead of . making
+  them not appear in symbol lists resulting in a cleaner symbol dump. Still
+  not possible to do function-scope local labels like in ASMPSX because GAS
+  syntax is ASS (or ASS GAS which is farts, GAS is farts).
+  
+* psxgpu: DrawSync() function now waits for DMA completion and GPU transfer
+  ready instead of simply waiting for GPU transfer ready which is the likely
+  cause of subtle GPU related timing issues, it also sets GPU DMA transfer
+  mode to off afterwards. It can also read number of words remaining in DMA
+  transfer if a0 is non-zero but it likely only returns the correct value on
+  VRAM transfers. Exact way how DrawSync() returns the count in the official
+  SDK is currently unknown.
+
+
+
+06-07-2019 by qbradq:
+
+* lzpack: Swapped a buffer length litteral with sizeof operator, fixing a
+  stack overflow bug in some instances.
+
+
+
 05-23-2019 by Lameguy64:
 
 * Added dev notes.txt file in docs that includes notes about the many
-  quirks discovered about the system throughout the development of this SDK.
+  quirks about the console discovered during the development of this
+  SDK project.
 
 * Updated libn00bref.odf a little.
 
+* Added turboboot example.
+
 * Added rgb24 example.
 
-* Made stack usage in ResetGraph() less wasteful.
+* Got custom exit handler set using SetCustomExitFromException() (BIOS
+ function B(19h)) working. Currently used to acknowledge VSync IRQ but
+ actual VSync handling is still done with events and needs to be
+ transferred to the custom exit handler. At least it lets BIOS
+ controller functions to work now. See doc/dev notes.txt for details
+ on how this handler behaves.
 
-* VSync IRQ handling now done using a custom exit handler. Actual VSync
-  handling is yet to be moved to the custom exit handler though.
+* Made stack usage in ResetGraph() less wasteful. You only need to
+  allocate N words on stack based on N arguments of the function
+  being called.
+
+* VSync IRQ handling now done using a custom exit from exception handler.
+  Actual VSync handling is yet to be moved to the custom exit handler
+  though.
 
 * Made stack usage in start.s of libc a lot less wasteful.
 

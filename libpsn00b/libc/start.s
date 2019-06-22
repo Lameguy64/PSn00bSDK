@@ -15,9 +15,9 @@ _start:
 	
 	la		$a0, .bss		# What are the CORRECT symbols for BSS start and end?
 	la		$a1, _end
-.clear_bss:
+.Lclear_bss:
 	sb		$0 , 0($a0)
-	blt		$a0, $a1, .clear_bss
+	blt		$a0, $a1, .Lclear_bss
 	addiu	$a0, 1
 	
 	la		$a0, _end+4		# Initialize heap for malloc (does not use BIOS maalloc)

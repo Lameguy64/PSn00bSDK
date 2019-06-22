@@ -33,7 +33,3 @@ Todo list:
 	  be implemented.
 	* Various high level RotTransPersp style functions not yet implemented.
 	
-
-Changelog:
-
-	None thus far...

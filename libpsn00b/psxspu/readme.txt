@@ -29,8 +29,3 @@ Todo list:
 	* SpuKeyOn() is actually not part of the official library.
 
 	* SPU reverb configuration functions yet to be implemented.
-
-
-Changelog:
-
-	None so far...

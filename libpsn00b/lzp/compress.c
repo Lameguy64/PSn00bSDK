@@ -3,6 +3,7 @@
 #include <string.h>
 #if LZP_USE_MALLOC == TRUE
 #include <stdlib.h>
+#include <malloc.h>
 #endif
 
 #include "lzconfig.h"

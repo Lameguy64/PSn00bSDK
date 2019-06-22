@@ -4,7 +4,7 @@
 
 PREFIX	= mipsel-unknown-elf-
 
-TARGET	= ../libpsxetc.a
+TARGET	= ../libpsxsio.a
 
 CFILES	= $(notdir $(wildcard ./*.c))
 AFILES	= $(notdir $(wildcard ./*.s))
@@ -12,8 +12,8 @@ OFILES	= $(addprefix build/,$(CFILES:.c=.o) $(AFILES:.s=.o))
 
 INCLUDE = -I../include
 
-CFLAGS	= -g -O2 -msoft-float -fno-builtin -nostdlib -Wa,--strip-local-absolute
-AFLAGS	= -g -msoft-float --strip-local-absolute
+CFLAGS	= -O2 -msoft-float -fno-builtin -Wa,--strip-local-absolute
+AFLAGS	= -msoft-float -Wa,--strip-local-absolute
 
 CC		= $(PREFIX)gcc
 AS		= $(PREFIX)as
@@ -32,7 +32,7 @@ build/%.o: %.c
 	
 build/%.o: %.s
 	@mkdir -p $(dir $@)
-	$(AS) $(AFLAGS) $(INCLUDE) $< -o $@
+	$(CC) $(AFLAGS) $(INCLUDE) -c $< -o $@
 
 clean:
 	rm -Rf build $(TARGET)

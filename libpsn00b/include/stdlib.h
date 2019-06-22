@@ -41,6 +41,10 @@ void *calloc(int number, int size);
 void *realloc(void *buf , int n);
 */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int rand();
 void srand(unsigned long seed);
 
@@ -52,6 +56,10 @@ long double strtold(const char *nptr, char **endptr);
 // Note: these use floats internally!
 double strtod(const char *nptr, char **endptr);
 float strtof(const char *nptr, char **endptr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

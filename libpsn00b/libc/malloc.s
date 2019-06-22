@@ -52,7 +52,7 @@ malloc:
 	lw		$a2, 0($a2)
 	sll		$a0, 2
 	
-.find_next:
+.Lfind_next:
 	
 	move	$a1, $a2
 	
@@ -61,16 +61,16 @@ malloc:
 	
 	subu	$v0, $a2, $a1			# Compute space between current and next
 	
-	beqz	$v1, .empty_block		# Occupy empty block (if size = 0)
+	beqz	$v1, .Lempty_block		# Occupy empty block (if size = 0)
 	nop
 	
-	beqz	$a2, .new_block			# Allocate a new block (if no next)
+	beqz	$a2, .Lnew_block		# Allocate a new block (if no next)
 	nop
 	
 	addiu	$v0, -(ND_HSIZ*2)		# Compute remaining space of block
 	subu	$v0, $v1
 	
-	blt		$v0, $a0, .find_next	# Search for the next block if space is not big enough
+	blt		$v0, $a0, .Lfind_next	# Search for the next block if space is not big enough
 	nop
 	
 	# Perform a block split using remaining space of current block
@@ -88,19 +88,19 @@ malloc:
 	jr		$ra
 	addiu	$v0, ND_HSIZ
 	
-.empty_block:	# Occupy an empty block
+.Lempty_block:						# Occupy an empty block
 
-	beqz	$a2, .no_next			# Skip size calculation if there's no next
+	beqz	$a2, .Lno_next			# Skip size calculation if there's no next
 	nop
 	
 	addiu	$v0, -ND_HSIZ
-	blt		$v0, $a0, .find_next
+	blt		$v0, $a0, .Lfind_next
 	nop
 	
-	b		.skip_space_check
+	b		.Lskip_space_check
 	nop
 	
-.no_next:
+.Lno_next:
 
 	la		$v1, _malloc_addr		# Check if there's enough space for a block
 	lw		$v1, 0($v1)
@@ -111,16 +111,16 @@ malloc:
 	addu	$v1, $a0
 	addiu	$v1, ND_HSIZ
 	
-	bgt		$v1, $v0, .no_space
+	bgt		$v1, $v0, .Lno_space
 	nop
 	
-.skip_space_check:
+.Lskip_space_check:
 
 	sw		$a0, ND_SIZE($a1)
 	jr		$ra						# Return address
 	addiu	$v0, $a1, ND_HSIZ
 	
-.new_block:		# Create a new block
+.Lnew_block:						# Create a new block
 
 	addu	$a2, $a1, $v1			# Compute address for new block
 	addiu	$a2, ND_HSIZ
@@ -134,7 +134,7 @@ malloc:
 	addu	$v1, $a0
 	addiu	$v1, ND_HSIZ
 	
-	bgt		$v1, $v0, .no_space		# Reject if it exceeds specified size
+	bgt		$v1, $v0, .Lno_space	# Reject if it exceeds specified size
 	nop
 	
 	sw		$a1, ND_PREV($a2)
@@ -146,7 +146,8 @@ malloc:
 	jr		$ra						# Return address
 	addiu	$v0, $a2, ND_HSIZ
 	
-.no_space:		# Return a null if no space can be found
+.Lno_space:							# Return a null if no space can be found
+
 	jr		$ra
 	move	$v0, $0
 
@@ -168,10 +169,12 @@ calloc:
 	
 	move	$a0, $v0
 	mflo	$a1
-.clear_loop:
+
+.Lclear_loop:
+
 	sw		$0 , 0($a0)
 	addi	$a1, 4
-	bgtz	$a1, .clear_loop
+	bgtz	$a1, .Lclear_loop
 	addiu	$a0, 4
 	
 	lw		$ra, 0($sp)
@@ -191,10 +194,10 @@ free:
 	lw		$a1, ND_PREV($a0)
 	lw		$a2, ND_NEXT($a0)
 	
-	beqz	$a1, .is_start			# Check if block is a starting block
+	beqz	$a1, .Lis_start			# Check if block is a starting block
 	nop
 	
-	beqz	$a2, .is_end
+	beqz	$a2, .Lis_end
 	nop
 
 	# Unlink
@@ -203,10 +206,13 @@ free:
 	jr		$ra
 	sw		$a1, ND_PREV($a2)
 	
-.is_end:		# Unlinks the ending block
+.Lis_end:							# Unlinks the ending block
+
 	jr		$ra
 	sw		$0 , ND_NEXT($a1)
-.is_start:		# Simply set size to 0 if starting block
+	
+.Lis_start:							# Simply set size to 0 if starting block
+
 	jr		$ra
 	sw		$0 , ND_SIZE($a0)
 

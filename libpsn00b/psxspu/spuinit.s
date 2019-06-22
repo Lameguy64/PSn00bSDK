@@ -58,11 +58,11 @@ SpuInit:
 	
 	li		$a2, 23
 	
-.clear_voices:
+.Lclear_voices:
 	jal		SpuSetVoiceRaw
 	move	$a0, $a2
 	addiu	$a2, -1
-	bgez	$a2, .clear_voices
+	bgez	$a2, .Lclear_voices
 	nop
 	
 	li		$v0, 0xffff					# Set all keys to off
@@ -104,11 +104,11 @@ SpuInit:
 SpuCtrlSync:
 	lui		$v1, IOBASE
 	andi	$a0, 0x3f
-.ctrl_wait:
+.Lctrl_wait:
 	lhu		$v0, SPUSTAT($v1)		# Get SPUSTAT value
 	nop
 	andi	$v0, 0x3f
-	bne		$v0, $a0, .ctrl_wait	# Wait until SPUCNT and SPUSTAT are equal
+	bne		$v0, $a0, .Lctrl_wait	# Wait until SPUCNT and SPUSTAT are equal
 	nop
 	jr		$ra
 	nop

@@ -13,19 +13,19 @@
 .global memcmp
 .type memcmp, @function
 memcmp:
-	blez	$a2, .exit
+	blez	$a2, .Lexit
 	addi	$a2, -1
 	lbu		$v0, 0($a0)
 	lbu		$v1, 0($a1)
 	addiu	$a0, 1
-	bne		$v0, $v1, .mismatch
+	bne		$v0, $v1, .Lmismatch
 	addiu	$a1, 1
 	b		memcmp
 	nop
-.mismatch:
+.Lmismatch:
 	jr		$ra
 	sub		$v0, $v1
-.exit:
+.Lexit:
 	jr		$ra
 	move	$v0, $0
 	

@@ -615,7 +615,7 @@ void transition() {
 		
 	}
 	
-	DrawSync();
+	DrawSync(0);
 	
 	draw.isbg = 1;
 	

@@ -97,7 +97,7 @@ PutDrawEnv:
 
 	lbu		$v0, DRAW_isbg($a0)
 	nop
-	beqz	$v0, .no_fillVRAM
+	beqz	$v0, .Lno_fillVRAM
 	nop
 
 	lw		$v0, DRAW_isbg($a0)			# FillVRAM
@@ -110,7 +110,7 @@ PutDrawEnv:
 	sw		$v0, 24($a1)				# 6
 
 	srl		$v0, $v1, 16				# Workaround as rectangle primitives
-	blt		$v0, 511, .no_overflow		# don't accept a height of 512
+	blt		$v0, 511, .Lno_overflow		# don't accept a height of 512
 	nop
 
 	li		$v0, 511
@@ -118,19 +118,19 @@ PutDrawEnv:
 	andi	$v1, 0xffff
 	or		$v1, $v0
 
-.no_overflow:
+.Lno_overflow:
 	sw		$v1, 28($a1)				# 7
 	li		$v0, 0x07ffffff				# Packet header (length+terminator)
 	sw		$v0, 0($a1)
 
-.no_fillVRAM:
+.Lno_fillVRAM:
 
-.gpu_wait:								# Wait for GPU to become ready for commands and DMA
+.Lgpu_wait:								# Wait for GPU to become ready for commands and DMA
 	jal		ReadGPUstat
 	nop
 	srl		$v0, 26
 	andi	$v0, 1
-	beqz	$v0, .gpu_wait
+	beqz	$v0, .Lgpu_wait
 	nop
 
 	jal		DrawOTag

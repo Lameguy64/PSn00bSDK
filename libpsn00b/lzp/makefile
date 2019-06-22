@@ -1,6 +1,6 @@
 PREFIX	= mipsel-unknown-elf-
 
-TARGET	= liblzp.a
+TARGET	= ../liblzp.a
 
 CFILES	= $(notdir $(wildcard ./*.c))
 OFILES	= $(addprefix build/,$(CFILES:.c=.o))

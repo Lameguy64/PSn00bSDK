@@ -22,7 +22,7 @@ void FntLoad(int x, int y) {
 	_font_tpage = getTPage( 0, 0, pos.x, 0 ) | 0x200;
 	
 	LoadImage( &pos, tim.paddr );
-	DrawSync();
+	DrawSync(0);
 	
 	// Load font clut
 	pos = *tim.crect;
@@ -32,6 +32,6 @@ void FntLoad(int x, int y) {
 	_font_clut = getClut( pos.x, pos.y );
 	
 	LoadImage( &pos, tim.caddr );
-	DrawSync();
+	DrawSync(0);
 	
 }

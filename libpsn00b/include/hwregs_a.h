@@ -63,6 +63,13 @@
 .set JOY_CTRL,	0x104A
 .set JOY_BAUD,	0x104E
 
+# Serial
+.set SIO_TXRX,	0x1050
+.set SIO_STAT,	0x1054
+.set SIO_MODE,	0x1058
+.set SIO_CTRL,	0x105a
+.set SIO_BAUD,	0x105e
+
 # IRQ
 .set ISTAT,		0x1070
 .set IMASK,		0x1074

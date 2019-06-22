@@ -10,21 +10,28 @@ I run into more previously undocumented quirks in the future.
 need to allocate N words on the stack first when calling a function that has
 N arguments (addiu $sp, -(4*N) where N = number of arguments of the function
 being called) even if the arguments are on registers a0 to a3 and the C
-functions don't always use the space allotted in stack.
+functions don't always use the space allotted in stack. When calling a
+function with a variable number of arguments (printf) always allocate
+16 bytes of stack.
 
-* A custom handler hooked using BIOS function B(19h)
-(SetCustomExitFromException) is only triggered when there's an interrupt
-that hasn't been acknowledged by previous IRQ handlers that have been
-executed prior. This is also the best point to acknowledge any interrupts
-without breaking compatibility with built-in BIOS features and is what the
-official SDK uses to handle interrupts.
+* Hooking a custom handler using BIOS function HookEntryInt (B(19h), known
+as SetCustomExitFromException in nocash docs) is only triggered when there's
+an IRQ that is not yet acknowledged by previous IRQ handlers built into the
+kernel. This is also the best point to acknowledge any IRQs without breaking
+compatibility with built-in BIOS IRQ handlers and is what the official SDK
+uses to handle IRQs. To make sure this handler is triggered on every interrupt
+you must call ChangeClearPad(0) and ChangeClearRCnt(3, 0) (which are functions
+(B(5Bh)) and C(0Ah) respectively) otherwise the pad and root counter handlers
+in the kernel will acknowledge the interrupt before your handler, preventing
+you from handling them yourself.
 
-* It is not advisable to acknowledge interrupts in event handlers like in
-PSXSDK as it would break BIOS features that depend on interrupts. Clearing
-the VBlank IRQ in a event handler for example prevents the BIOS controller
+* It is not advisable to handle interrupts using event handlers like in
+PSXSDK as it breaks BIOS features that depend on interrupts. Clearing the
+VBlank IRQ in a event handler for example prevents the BIOS controller
 functions from working as it depends on the VBlank IRQ to determine when to
 query controllers. Acknowledge interrupts using a custom handler set by BIOS
-function B(19h) (SetCustomExitFromException).
+function HookEntryInt (B(19h), known as SetCustomExitFromException in nocash
+docs).
 
 * When running in high resolution mode you must additionally wait for bit 31
 in GPUSTAT (1F801814h) to alternate on every frame (frame 0: wait until 0,
@@ -34,10 +41,11 @@ to displayed area enabled. Performing this check in a low resolution/non
 interlaced mode is harmless.
 
 * There's a hardware bug in the GPU FillVRAM command GP0(02h) where if you
-set the height to 512 pixels the primitive is executed with a height of 0 as
-the hardware does not appear to interpret the last bit of the height value.
-This is most apparent when putting a DRAWENV with the height of 512 pixels
-(for PAL for example) and background clearing is enabled.
+set the height to 512 pixels the primitive is processed with a height of 0
+as the hardware does not appear to interpret the last bit of the height
+value. This is most apparent when putting a DRAWENV with the height of 512
+pixels (for PAL for example) and background clearing is enabled, hence why
+DRAWENV.isbg is not effective in the official SDK.
 
 * In the official SDK, DMA IRQs appear to be enabled only when a callback
 function is set (ie. DrawSyncCallback() enables IRQ for DMA channel 2). DMA

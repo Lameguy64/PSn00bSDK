@@ -9,6 +9,10 @@
 #ifndef _STRING_H
 #define _STRING_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int strcmp(const char *dst , const char *src);
 int strncmp(const char *dst , const char *src , int len);
 char *strpbrk(const char *dst , const char *src);
@@ -37,6 +41,9 @@ void *memcpy(void *dst , const void *src , int n);
 void *memset(void *dst , char c , int n);
 int memcmp(const void *b1 , const void *b2 , int n);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

@@ -47,6 +47,20 @@ struct DIRENTRY {			// Directory entry
 	char			system[4];
 };
 
+struct EXEC {
+	unsigned int pc0;
+	unsigned int gp0;
+	unsigned int t_addr;
+	unsigned int t_size;
+	unsigned int d_addr;
+	unsigned int d_size;
+	unsigned int b_addr;
+	unsigned int b_size;
+	unsigned int s_addr;
+	unsigned int s_size;
+	unsigned int sp,fp,rp,ret,base;
+};
+
 // Not recommended to use these functions to install IRQ handlers
 
 typedef struct {
@@ -56,48 +70,60 @@ typedef struct {
 	unsigned int pad;
 } INT_RP;
 
-extern void SysEnqIntRP(int pri, INT_RP *rp);
-extern void SysDeqIntRP(int pri, INT_RP *rp);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-// Use event handlers instead
+void SysEnqIntRP(int pri, INT_RP *rp);
+void SysDeqIntRP(int pri, INT_RP *rp);
 
-extern int OpenEvent(unsigned int class, int spec, int mode, void (*func)());
-extern int CloseEvent(int ev_desc);
-extern int EnableEvent(int ev_desc);
-extern int DisableEvent(int ev_desc);
+// Event handler stuff
+
+int OpenEvent(unsigned int class, int spec, int mode, void (*func)());
+int CloseEvent(int ev_desc);
+int EnableEvent(int ev_desc);
+int DisableEvent(int ev_desc);
 
 // BIOS file functions
 
-extern int open(const char *name, int mode);
-extern int close(int fd);
-extern int seek(int fd, unsigned int offset, int mode);
-extern int read(int fd, char *buff, unsigned int len);
-extern int write(int fd, const char *buff, unsigned int len);
-extern int ioctl(int fd, int cmd, int arg);
-extern struct DIRENTRY *firstfile(const char *wildcard, struct DIRENTRY *entry);
-extern struct DIRENTRY *nextfile(struct DIRENTRY *entry);
-extern int erase(const char *name);
-extern int chdir(const char *path);
+int open(const char *name, int mode);
+int close(int fd);
+int seek(int fd, unsigned int offset, int mode);
+int read(int fd, char *buff, unsigned int len);
+int write(int fd, const char *buff, unsigned int len);
+int ioctl(int fd, int cmd, int arg);
+struct DIRENTRY *firstfile(const char *wildcard, struct DIRENTRY *entry);
+struct DIRENTRY *nextfile(struct DIRENTRY *entry);
+int erase(const char *name);
+int chdir(const char *path);
 
 #define delete( p )	erase( p )
 #define cd( p )		chdir( p )			// For compatibility
 
 int AddDev(DCB *dcb);
 int DelDev(const char *name);
-extern void ListDev(void);
+void ListDev(void);
 
-extern void EnterCriticalSection(void);
-extern void ExitCriticalSection(void);
+void EnterCriticalSection(void);
+void ExitCriticalSection(void);
 
-extern void _InitCd(void);
-extern void _96_init(void);
-extern void _96_remove(void);
-
-extern void ChangeClearPAD(int mode);
+void _InitCd(void);
+void _96_init(void);
+void _96_remove(void);
 
 // BIOS pad functions
 void _InitPad(char *buff1, int len1, char *buff2, int len2);
 void _StartPad(void);
 void _StopPad(void);
+
+void ChangeClearPAD(int mode);
+void ChangeClearRCnt(int t, int m);
+
+// Executable functions
+int Exec(struct EXEC *exec, int argc, char *argv);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

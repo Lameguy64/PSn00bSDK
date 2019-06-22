@@ -12,7 +12,7 @@ VSyncCallback:
 	sw		$a0, 4($sp)
 
 	lw		$a0, 4($sp)
-	la		$v0, _vsync_callback_func
+	la		$v0, _vsync_cb_func
 	sw		$a0, 0($v0)
 
 	jal		ExitCriticalSection

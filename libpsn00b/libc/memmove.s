@@ -14,16 +14,16 @@ memmove:
 	addu	$a1, $a2
 	addiu	$a0, -1
 	addiu	$a1, -1
-.loop:
-	blez	$a2, .exit
+.Lloop:
+	blez	$a2, .Lexit
 	addi	$a2, -1
 	lbu		$v1, 0($a1)
 	addiu	$a1, -1
 	sb		$v1, 0($a0)
 	addiu	$a0, -1
-	b		.loop
+	b		.Lloop
 	nop
-.exit:
+.Lexit:
 	jr		$ra
 	nop
 	

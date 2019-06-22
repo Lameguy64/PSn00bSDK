@@ -14,12 +14,12 @@
 .type memset,@function
 memset:
 	move	$v0, $a0
-	blez	$a2, .exit
+	blez	$a2, .Lexit
 	addi	$a2, -1
 	sb		$a1, 0($a0)
 	b		memset
 	addiu	$a0, 1
-.exit:
+.Lexit:
 	jr		$ra
 	nop
 	

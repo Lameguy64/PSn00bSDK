@@ -13,13 +13,13 @@ SpuSetKey:
 	
 	lui		$a2, IOBASE
 	
-	beqz	$a0, .key_off
+	beqz	$a0, .Lkey_off
 	nop
 	
 	jr		$ra
 	sh		$a1, SPU_KEY_ON($v1)
 	
-.key_off:
+.Lkey_off:
 
 	jr		$ra
 	sh		$a1, SPU_KEY_OFF($v1)

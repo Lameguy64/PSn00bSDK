@@ -288,8 +288,8 @@ void init() {
 void display() {
 	
 	/* Wait for GPU to finish drawing and vertical retrace */
-	DrawSync();
-	VSync();
+	DrawSync( 0 );
+	VSync( 0 );
 	
 	/* Swap buffers */
 	db_active ^= 1;

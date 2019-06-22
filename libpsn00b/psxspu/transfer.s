@@ -18,10 +18,10 @@ SpuSetTransferMode:
 .type SpuSetTransferStartAddr, @function
 SpuSetTransferStartAddr:
 	li		$v0, 0x1000				# Check if value is valid
-	blt		$a0, $v0, .bad_value
+	blt		$a0, $v0, .Lbad_value
 	nop
 	li		$v0, 0xffff
-	bgt		$a0, $v0, .bad_value
+	bgt		$a0, $v0, .Lbad_value
 	nop
 	
 	la		$v1, _spu_transfer_addr
@@ -31,7 +31,7 @@ SpuSetTransferStartAddr:
 	jr		$ra
 	move	$v0, $a0
 	
-.bad_value:
+.Lbad_value:
 	jr		$ra
 	move	$v0, $0
 	
@@ -67,11 +67,11 @@ SpuWrite:
 	
 	lw		$a0, 4($sp)
 	
-.dma_wait:								# Wait for SPU to be ready for DMA
+.Ldma_wait:								# Wait for SPU to be ready for DMA
 	lhu		$v0, SPUSTAT($a3)
 	nop
 	andi	$v0, 0x400					# Bit 8 in SPUSTAT never changes to 1 on
-	bnez	$v0, .dma_wait				# emulators so use bit 10 instead
+	bnez	$v0, .Ldma_wait				# emulators so use bit 10 instead
 	nop
 	
 	sw		$a0, D4_MADR($a3)			# Set DMA source address

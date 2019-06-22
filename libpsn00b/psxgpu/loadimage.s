@@ -19,7 +19,7 @@ LoadImage:
 
 	lui		$s0, 0x1f80			# Set I/O segment base address
 
-.gpu_wait:						# Wait for GPU to be ready for commands and DMA
+.Lgpu_wait:						# Wait for GPU to be ready for commands and DMA
 	jal		ReadGPUstat
 	nop
 	srl		$v0, 0x1a
@@ -27,7 +27,7 @@ LoadImage:
 	li		$v1, 5
 	#srl		$v0, 28
 	#andi	$v0, 1
-	bne		$v0, $v1, .gpu_wait
+	bne		$v0, $v1, .Lgpu_wait
 	nop
 
 	lui		$v0, 0x400			# Set DMA direction to off

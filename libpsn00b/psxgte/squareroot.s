@@ -5,6 +5,8 @@
 
 .section .text
 
+# Implementation based from Sony libs
+
 .global SquareRoot12
 .type SquareRoot12, @function
 SquareRoot12:
@@ -12,7 +14,7 @@ SquareRoot12:
 	nop
 	nop
 	mfc2	$v0, C2_LZCR
-	beq		$v0, 32, $bad_sqr12
+	beq		$v0, 32, .Lbad_sqr12
 	nop
 	andi	$t0, $v0, 0x1
 	addiu	$v1, $0 , -2
@@ -21,15 +23,15 @@ SquareRoot12:
 	sub		$t1, $t2
 	sra		$t1, 1
 	addi	$t3, $t2, -24
-	bltz	$t3, $value_less12
+	bltz	$t3, .Lvalue_less12
 	nop
 	sllv	$t4, $a0, $t3
-	b		$value_greater12
-$value_less12:
+	b		.Lvalue_greater12
+.Lvalue_less12:
 	addiu	$t3, $0 , 24
 	sub		$t3, $t2
 	srav	$t4, $a0, $t3
-$value_greater12:
+.Lvalue_greater12:
 	addi	$t4, -64
 	sll		$t4, 1
 	la		$t5, sqrt_table
@@ -37,18 +39,18 @@ $value_greater12:
 	lh		$t5, 0($t5)
 	nop
 	
-	bltz	$t1, $1594c
+	bltz	$t1, .L1594c
 	nop
 	jr		$ra
 	sllv	$v0, $t5, $t1
 	
-$1594c:
+.L1594c:
 
 	sub		$t1, $0 , $t1
 	jr		$ra
 	srl		$v0, $t5, $t1
 	
-$bad_sqr12:
+.Lbad_sqr12:
 	jr		$ra
 	move	$v0, $0
 	
@@ -60,7 +62,7 @@ SquareRoot0:
 	nop
 	nop
 	mfc2	$v0, C2_LZCR
-	beq		$v0, 32, $bad_sqr
+	beq		$v0, 32, .Lbad_sqr
 	nop
 	andi	$t0, $v0, 0x1
 	addiu	$v1, $0 , -2
@@ -69,15 +71,15 @@ SquareRoot0:
 	sub		$t1, $t2
 	sra		$t1, 1
 	addi	$t3, $t2, -24
-	bltz	$t3, $value_less
+	bltz	$t3, .Lvalue_less
 	nop
 	sllv	$t4, $a0, $t3
-	b		$value_greater
-$value_less:
+	b		.Lvalue_greater
+.Lvalue_less:
 	addiu	$t3, $0 , 24
 	sub		$t3, $t2
 	srav	$t4, $a0, $t3
-$value_greater:
+.Lvalue_greater:
 	addi	$t4, -64
 	sll		$t4, 1
 	la		$t5, sqrt_table
@@ -87,7 +89,7 @@ $value_greater:
 	sllv	$t5, $t5, $t1
 	jr		$ra
 	srl		$v0, $t5, 12
-$bad_sqr:
+.Lbad_sqr:
 	jr		$ra
 	move	$v0, $0
 	

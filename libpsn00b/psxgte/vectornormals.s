@@ -6,12 +6,11 @@
 
 .section .text
 
+# Implementation based from Sony libs
 
 .global VectorNormalS
 .type VectorNormalS, @function
 VectorNormalS:
-	
-	# Implementation ripped from Sony libs
 	
 	lw		$t0, 0($a0)
 	lw		$t1, 4($a0)
@@ -42,15 +41,15 @@ VectorNormalS:
 	sra		$t6, 1
 	addiu	$t3, $v1, -24
 	
-	bltz	$t3, $value_neg
+	bltz	$t3, .Lvalue_neg
 	nop
-	b		$value_pos
+	b		.Lvalue_pos
 	sllv	$t4, $v0, $t3
-$value_neg:
+.Lvalue_neg:
 	addiu	$t3, $0 , 24
 	sub		$t3, $v1
 	srav	$t4, $v0, $t3
-$value_pos:
+.Lvalue_pos:
 	addi	$t4, -64
 	sll		$t4, 1
 	
