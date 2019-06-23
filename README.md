@@ -2,7 +2,8 @@
 
 PSn00bSDK is a 100% free and open source SDK project for the original Sony
 PlayStation for developing homebrew applications and games for the console
-whether it be an open source, freeware, or commercial project.
+100% freely. This SDK can be used for freeware, commercial, and open source
+homebrew projects.
 
 The SDK is composed mainly of libraries (libpsn00b) and some utilities that
 provide a basic framework for developing software for the PlayStation
@@ -27,6 +28,7 @@ performance reasons.
 
 
 ## Notable features
+As of libpsn00b run-time library v0.10
 
 * Extensive GPU support with polygon primitives, high-speed DMA VRAM
   transfers and DMA ordering table processing. All video modes for both NTSC
@@ -47,11 +49,12 @@ performance reasons.
 * Complete Serial I/O support with SIOCONS driver for tty console access
   through serial interface.
 
-* BIOS controller functions for polling controller input function as
-  intended, no crude manual polling in main loop.
+* BIOS controller functions for polling controller input work as intended
+  thanks to proper interrupt handling, no crude manual polling of controllers
+  in your main loop.
 
-* BIOS CD-ROM support with custom initialization function that does not
-  break other DMA channels (such as GPU and SPU DMA) for easier CD-ROM
+* BIOS CD-ROM support with a custom initialization function that doesn't
+  clear other DMA channel settings (such as GPU and SPU DMA) for easier
   initialization.
 
 * Uses Sony SDK library syntax for familiarity to experienced programmers
@@ -62,26 +65,27 @@ performance reasons.
 
 ## Obtaining PSn00bSDK
 
-Because PSn00bSDK is updated semi-regularly as this project is mostly a
-work-in-progress, it is better to obtain this SDK from source by building
-it yourself in the long run. Prepared packages containing precompiled
-libpsn00b libraries, the toolchain and additional utilities not included
-in this repository for Windows users are planned, but some arrangements
-need to be made. Perhaps when PSn00bSDK is halfway production ready.
+Because PSn00bSDK is updated semi-regularly due to this project being in
+a work-in-progress state, it is better to obtain this SDK from source by
+building it yourself in the long run. Prepared packages containing
+precompiled libpsn00b libraries, the toolchain and additional utilities
+not included in this repository for Windows users are planned, though some
+arrangements would need to be made first. Perhaps once PSn00bSDK is
+considered halfway production ready.
 
 A precompiled copy of the GCC 7.2.0 toolchain for Windows is available
-in lameguy64's website in the PSn00bSDK page. This should make building
-PSn00bSDK under Windows a bit easier as building the toolchain is the
-hardest part of building PSn00bSDK and its more difficult to get it to
-compile correctly under Windows.
+in lameguy64's website (http://lameguy64.tk) in the PSn00bSDK page. This
+should make building PSn00bSDK under Windows a bit easier as building the
+toolchain is the hardest part of building PSn00bSDK as its more difficult
+to get it to compile correctly under Windows than on Linux and BSDs.
 
 
 ## Building the SDK
 
 ### Windows (needs work/testing):
 1. Download the following:
-  * MinGW GCC
-  * MSys2
+  * MinGW GCC (32-bit or 64-bit whichever you prefer)
+  * MSys2 (32-bit or 64-bit whichever you prefer)
   * tinyxml2 (for lzpack and smxlink)
   * GCC 7.2.0 for mipsel-unknown-elf (download from Lameguy64's website)
 2. Install MSys2 and MinGW GCC.
@@ -90,29 +94,31 @@ compile correctly under Windows.
    GCC 7.2.0 for mipsel-unknown-elf, MSys2 and MinGW GCC. Make sure you can
    access gcc, mipsel-unknown-elf-gcc and make from any directory in the
    command prompt.
-5. Build tinyxml2 with MinGW GCC through MSys2's shell.
+5. Build tinyxml2 with MinGW GCC through MSys2's shell
+   (./configure then make).
 6. Clone/download PSn00bSDK source files.
-7. Enter libpsn00b directory and run make (with optional -j parameter for
-   building across multiple cores/threads).
-8. Enter tools directory and run make, then make install to consolidate the
+7. Enter libpsn00b directory and run make.
+8. Enter tools directory and run make, then 'make install' to consolidate the
    executables to a bin directory. Add this directory to your PATH
-   environment variable.
+   environment variable and make sure elf2x is accessible from any directory.
 9. Compile the example programs to test if the SDK is set up correctly.
-   Set correct paths in sdk-common.mk when necessary.
+   Update directory paths in sdk-common.mk when necessary.
 
 ### Linux and Unix-likes:
 1. Build and install the GNU GCC toolchain configured for mipsel-unknown-elf
    (see toolchain.txt for details).
+2. Update your PATH environment variable to point to the bin directory of the
+   toolchain. Make sure the toolchain executables are accessible from any
+   directory in the terminal.
 2. Install the following (development) package:
   * tinyxml2
 3. Clone/download PSn00bSDK source files.
-4. Enter the libpsn00b directory and run make. Make sure
-   mipsel-unknown-elf-gcc is accessible in the terminal from within any
-   directory beforehand.
-5. Enter the tools directory and run make, then make install to consolidate
-   the binaries to a bin directory. Add this directory to your PATH variable.
+4. Enter the libpsn00b directory and run make.
+5. Enter the tools directory and run make, then 'make install' to consolidate
+   the executables to a bin directory. Add this directory to your PATH
+   variable and make sure elf2x is accessible from any directory.
 6. Compile the example programs to test if the SDK is set up correctly.
-   Set correct paths in sdk-common.mk when necessary.
+   Update directory paths in sdk-common.mk when necessary.
 
 
 ## Examples
