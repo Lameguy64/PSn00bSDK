@@ -28,7 +28,7 @@ performance reasons.
 
 
 ## Notable features
-As of libpsn00b run-time library v0.10
+As of libpsn00b run-time library v0.10b
 
 * Extensive GPU support with polygon primitives, high-speed DMA VRAM
   transfers and DMA ordering table processing. All video modes for both NTSC

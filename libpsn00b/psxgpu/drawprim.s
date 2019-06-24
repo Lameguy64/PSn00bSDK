@@ -23,6 +23,7 @@ DrawPrim:
 	move	$a0, $s0
 	lbu		$a1, 3($a0)			# Get length of primitive packet
 	addiu	$a0, 4
+	addiu	$a1, -1
 	
 .Ltransfer_loop:
 	lw		$v0, 0($a0)
