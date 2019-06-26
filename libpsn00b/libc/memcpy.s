@@ -15,7 +15,7 @@
 memcpy:
 	move	$v0, $a0
 .Lloop:
-	blez	$a2, .exit
+	blez	$a2, .Lexit
 	addi	$a2, -1
 	lbu		$a3, 0($a1)
 	addiu	$a1, 1
