@@ -19,7 +19,7 @@ void FntLoad(int x, int y) {
 	pos.x = x;
 	pos.y = y;
 	
-	_font_tpage = getTPage( 0, 0, pos.x, 0 ) | 0x200;
+	_font_tpage = getTPage( 0, 0, pos.x, pos.y ) | 0x200;
 	
 	LoadImage( &pos, tim.paddr );
 	DrawSync(0);
