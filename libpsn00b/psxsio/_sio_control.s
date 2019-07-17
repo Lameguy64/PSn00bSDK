@@ -90,8 +90,9 @@ _sio_control:
 	div		$v1, $v0
 	nop
 	nop
-	jr		$ra
 	mflo	$v0
+	jr		$ra
+	nop
 	
 .Lcmd0arg4:		# Serial RX read
 
@@ -117,14 +118,15 @@ _sio_control:
 .Lcmd1arg1:
 
 	andi	$v0, $a2, 0x1CFF
-	
-	jr		$ra
 	sh		$a2, SIO_CTRL($a3)
+	jr		$ra
+	nop
 
 .Lcmd1arg2:
 	
-	jr		$ra
 	sh		$a2, SIO_MODE($a3)
+	jr		$ra
+	nop
 	
 .Lcmd1arg3:
 

@@ -16,7 +16,7 @@ LIBS		= -lc -lpsxetc -lpsxgpu -lpsxgte -lpsxspu -lpsxapi -lgcc
 CFLAGS		= -g -O2 -fno-builtin -fdata-sections -ffunction-sections
 CPPFLAGS	= $(CFLAGS) -fno-exceptions
 AFLAGS		= -g -msoft-float
-LDFLAGS		= -g -Ttext=0x80010000 -gc-sections
+LDFLAGS		= -g -Ttext=0x80010000 -gc-sections -T $(GCC_BASE)/mipsel-unknown-elf/lib/ldscripts/elf32elmip.x
 
 CC			= $(PREFIX)gcc
 CXX			= $(PREFIX)g++

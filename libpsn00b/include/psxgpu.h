@@ -25,15 +25,11 @@
 #define setVector( v, _x, _y, _z ) \
 	(v)->vx = _x, (v)->vy = _y, (v)->vz = _z
 
-#define setRECT( r, _x, _y, _w, _h ) \
+#define setRECT( v, _x, _y, _w, _h ) \
 	(v)->x = _x, (v)->y = _y, (v)->w = _w, (v)->h = _h
 
 
-
-
-
-// Primitive macros
-	
+// Primitive macros	
 
 #define setDrawTPage( p, tp, abr, x, y ) \
 	( (p)->code[0] = getTPage( tp, abr, x, y ), \
@@ -95,7 +91,6 @@
 
 #define setWH( p, _w, _h ) \
 	(p)->w = _w, (p)->h = _h
-
 
 /*
  *	Set texture coordinates
@@ -183,11 +178,16 @@
 #define setTile16( p )	setlen( p, 2 ), 	setcode( p, 0x78 )
 #define setTile( p )	setlen( p, 3 ), 	setcode( p, 0x60 )
 
+#define setLineF2( p )	setlen( p, 3 ),	setcode( p, 0x40 )
 #define setLineG2( p )	setlen( p, 4 ),	setcode( p, 0x50 )
+
+#define setLineF3( p )	setlen( p, 5 ), setcode( p, 0x48 ), (p)->pad = 0x55555555
+#define setLineG3( p )	setlen( p, 7 ), setcode( p, 0x58 ), (p)->pad = 0x55555555, \
+	(p)->p1 = 0, (p)->p2 = 0
 
 #define setLineF4( p )	setlen( p, 6 ), setcode( p, 0x4c ), (p)->pad = 0x55555555
 #define setLineG4( p )	setlen( p, 9 ), setcode( p, 0x5c ), (p)->pad = 0x55555555, \
-	(p)->p2 = 0, (p)->p3 = 0
+	(p)->p1 = 0, (p)->p2 = 0, (p)->p3 = 0
 			
 #define setFill( p ) 	setlen( p, 3 ), 	setcode( p, 0x02 )
 
@@ -533,14 +533,18 @@ int DrawSync(int m);
 void WaitGPUcmd();
 void WaitGPUdma();
 
+// Callback hook functions
 void *VSyncCallback(void (*func)());
 void *DrawSyncCallback(void (*func)());
 
+// Interrupt callback functions
 void *DMACallback(int dma, void (*func)());
 void *InterruptCallback(int irq, void (*func)());
 void *GetInterruptCallback(int irq);				// Original
+void RestartCallback();
 
 void LoadImage(RECT *rect, unsigned int *data);
+void StoreImage(RECT *rect, unsigned int *data);
 
 void ClearOTagR(unsigned int* ot, int n);
 void DrawOTag(unsigned int* ot);

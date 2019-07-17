@@ -17,9 +17,12 @@ DrawSyncCallback:
 	
 	beqz	$a0, .Luninstall
 	nop
+	
 	la		$a1, _drawsync_handler
+	lw		$a1, 4($sp)
 	jal		DMACallback
 	li		$a0, 2
+	
 	b		.Lcontinue
 	nop
 	
@@ -52,7 +55,6 @@ DrawSyncCallback:
 _drawsync_handler:
 
 .Ldma_wait:
-
 	la		$v0, _drawsync_func
 	lw		$v0, 0($v0)
 	nop

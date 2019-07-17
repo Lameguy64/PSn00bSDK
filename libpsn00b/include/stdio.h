@@ -43,10 +43,10 @@ extern int getchar(void);
 extern void putchar(int __c);
 
 // The following functions do not use the BIOS
-int vsnprintf(char *string, unsigned int size, char *fmt, va_list ap);
-int vsprintf(char *string, char *fmt, va_list ap);
-int sprintf(char *string, char *fmt, ...);
-int snprintf(char *string, unsigned int size, char *fmt, ...);
+int vsnprintf(char *string, unsigned int size, const char *fmt, va_list ap);
+int vsprintf(char *string, const char *fmt, va_list ap);
+int sprintf(char *string, const char *fmt, ...);
+int snprintf(char *string, unsigned int size, const char *fmt, ...);
 
 #ifdef __cplusplus
 }

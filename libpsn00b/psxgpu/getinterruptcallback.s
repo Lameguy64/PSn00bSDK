@@ -11,7 +11,9 @@ GetInterruptCallback:
 	la		$a1, _irq_func_table
 	sll		$a0, 2
 	addu	$a1, $a0
-	
-	jr		$ra
 	lw		$v0, 0($a1)
+	nop
+	jr		$ra
+	nop
+	
 	

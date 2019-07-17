@@ -4,6 +4,8 @@ CPPFILES	= main.cpp timreader.cpp
 CFLAGS		= -O2
 LDFLAGS		= -s
 
+INCLUDE		=
+LIBDIRS		=
 LIBS		= -ltinyxml2
 
 CC			= gcc
@@ -13,9 +15,10 @@ OFILES		= $(addprefix build/,$(CPPFILES:.cpp=.o))
 
 ifeq "$(OS)" "Windows_NT"
 
-# Config for Windows
+# Config for Windows (comment out if in msys2)
 INCLUDE		= -I/c/tinyxml2
 LIBDIRS		= -L/c/tinyxml2
+
 TARGET		:= $(TARGET).exe
 
 else

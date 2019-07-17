@@ -22,7 +22,7 @@
 #include "ball16c.h"
 
 
-#define MAX_BALLS 384
+#define MAX_BALLS 1024
 
 #define OT_LEN 		8
 

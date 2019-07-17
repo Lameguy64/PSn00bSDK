@@ -2,7 +2,7 @@
 # Part of the PSn00bSDK Project
 # 2019 Lameguy64 / Meido-Tek Productions
 
-PREFIX	= mipsel-unknown-elf-
+include ../common.mk
 
 TARGET	= ../libpsxapi.a
 
@@ -11,9 +11,7 @@ SOURCES	= stdio fs sys pad
 AFILES	= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.s))
 OFILES	= $(addprefix build/,$(AFILES:.s=.o))
 
-INCLUDE = -I../include
-
-AFLAGS	= -msoft-float -Wa,--strip-local-absolute
+AFLAGS	= -g -msoft-float -Wa,--strip-local-absolute
 
 CC		= $(PREFIX)gcc
 AS		= $(PREFIX)as

@@ -1,6 +1,8 @@
 .svn
 build
 bin
+old
+scrap
 *.a
 *.o
 *.elf
@@ -8,3 +10,4 @@ bin
 *.lzp
 *.qlp
 *.iso
+*.rom

@@ -29,6 +29,10 @@ typedef struct {
 	unsigned char r, g, b, cd;
 } CVECTOR;
 
+typedef struct {
+	short vx, vy;
+} DVECTOR;
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,8 +50,8 @@ int icos(int a);
 int hisin(int a);
 int hicos(int a);
 
-void PushMatrix();
-void PopMatrix();
+void PushMatrix(void);
+void PopMatrix(void);
 
 MATRIX *RotMatrix(SVECTOR *r, MATRIX *m);
 MATRIX *HiRotMatrix(VECTOR *r, MATRIX *m);

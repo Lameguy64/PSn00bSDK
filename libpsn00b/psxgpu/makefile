@@ -2,7 +2,7 @@
 # Part of the PSn00bSDK Project
 # 2019 Lameguy64 / Meido-Tek Productions
 
-PREFIX	= mipsel-unknown-elf-
+include ../common.mk
 
 TARGET	= ../libpsxgpu.a
 
@@ -10,10 +10,8 @@ CFILES	= $(notdir $(wildcard ./*.c))
 AFILES	= $(notdir $(wildcard ./*.s))
 OFILES	= $(addprefix build/,$(CFILES:.c=.o) $(AFILES:.s=.o))
 
-INCLUDE = -I../include
-
-CFLAGS	= -O2 -msoft-float -fno-builtin -Wa,--strip-local-absolute
-AFLAGS	= -msoft-float -Wa,--strip-local-absolute
+CFLAGS	= -g -O2 -msoft-float -fno-builtin -Wa,--strip-local-absolute
+AFLAGS	= -g -msoft-float -Wa,--strip-local-absolute
 
 CC		= $(PREFIX)gcc
 AS		= $(PREFIX)as

@@ -2,15 +2,13 @@
 # Part of the PSn00bSDK Project
 # 2019 Lameguy64 / Meido-Tek Productions
 
-PREFIX	= mipsel-unknown-elf-
+include ../common.mk
 
 TARGET	= ../libpsxetc.a
 
 CFILES	= $(notdir $(wildcard ./*.c))
 AFILES	= $(notdir $(wildcard ./*.s))
 OFILES	= $(addprefix build/,$(CFILES:.c=.o) $(AFILES:.s=.o))
-
-INCLUDE = -I../include
 
 CFLAGS	= -g -O2 -msoft-float -fno-builtin -nostdlib -Wa,--strip-local-absolute
 AFLAGS	= -g -msoft-float --strip-local-absolute

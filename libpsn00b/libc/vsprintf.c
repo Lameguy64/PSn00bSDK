@@ -86,7 +86,7 @@ enum
 	SPRINTF_SIZE_LONG_LONG,
 };
 
-unsigned int get_arg_in_size(int size, unsigned long long *arg, unsigned int check_sign)
+unsigned int get_arg_in_size(int size, unsigned long *arg, unsigned int check_sign)
 {
 	int s = 0;
 
@@ -125,7 +125,7 @@ unsigned int get_arg_in_size(int size, unsigned long long *arg, unsigned int che
 		case SPRINTF_SIZE_LONG:
 			*arg &= 0xffffffff;
 
-			if(check_sign)
+			/*if(check_sign)
 			{
 				if(*arg & (1<<31))
 				{
@@ -133,10 +133,10 @@ unsigned int get_arg_in_size(int size, unsigned long long *arg, unsigned int che
 					*arg = ~(*arg - 1);
 					s = 1;
 				}
-			}
+			}*/
 		break;
 
-		case SPRINTF_SIZE_LONG_LONG:
+		/*case SPRINTF_SIZE_LONG_LONG:
 			if(check_sign)
 			{
 				if(*arg & ((long long)1<<63))
@@ -145,7 +145,7 @@ unsigned int get_arg_in_size(int size, unsigned long long *arg, unsigned int che
 					s = 1;
 				}
 			}
-		break;
+		break;*/
 	}
 	
 	return s;
@@ -161,10 +161,10 @@ int put_in_string(char *string, unsigned int sz, char c, int pos)
 	return 1;
 }
 
-int libc_ulltoa(unsigned long long i, char *dst, int n)
+int libc_ulltoa(unsigned long i, char *dst, int n)
 {
 	int x, y;
-	unsigned long long a, b;
+	unsigned long a, b;
 	int empty_digit = 1;
 	int sp=0;
 	int n2=0;
@@ -356,11 +356,11 @@ void libc_double_to_string(double fl, char *dst, int n)
 
 char libc_sprintf_floatbuf[64];
 
-int vsnprintf(char *string, unsigned int size, char *fmt, va_list ap)
+int vsnprintf(char *string, unsigned int size, const char *fmt, va_list ap)
 {
 	int string_pos,fmt_pos;
 	int l;
-	unsigned long long arg;
+	unsigned long arg;
 	unsigned char *argcp;
 	unsigned char *argcp_tmp;
 	int directive_coming = 0;
@@ -368,7 +368,7 @@ int vsnprintf(char *string, unsigned int size, char *fmt, va_list ap)
 	int flags = 0;
 	int argsize = 2; // int
 	int x, y;
-	unsigned long long a, b;
+	unsigned long a, b;
 	int empty_digit;
 	int ssz = size - 1;
 	int zero_flag_imp = 0;
@@ -431,7 +431,7 @@ int vsnprintf(char *string, unsigned int size, char *fmt, va_list ap)
 				break;
 				case 'l': // Double argument size
 					if(argsize < 2) argsize = 2;
-					else if(argsize < SPRINTF_SIZE_LONG_LONG) argsize++;
+					//else if(argsize < SPRINTF_SIZE_LONG_LONG) argsize++;
 				break;
 				case 'd': // signed decimal
 				case 'i':
@@ -439,10 +439,10 @@ int vsnprintf(char *string, unsigned int size, char *fmt, va_list ap)
 				
 					//printf("argsize = %d\n", argsize);
 
-					if(argsize < SPRINTF_SIZE_LONG_LONG)
-						arg = (unsigned long long)va_arg(ap, unsigned int);
-					else
-						arg = va_arg(ap, unsigned long long);
+					//if(argsize < SPRINTF_SIZE_LONG_LONG)
+					arg = (unsigned long)va_arg(ap, unsigned int);
+					//else
+					//	arg = va_arg(ap, unsigned long);
 
 					if(get_arg_in_size(argsize, &arg, 1))
 					{
@@ -526,10 +526,10 @@ int vsnprintf(char *string, unsigned int size, char *fmt, va_list ap)
 				case 'u': // unsigned decimal
 					empty_digit = 1;
 				
-					if(argsize < SPRINTF_SIZE_LONG_LONG)
-						arg = (unsigned long long)va_arg(ap, unsigned int);
-					else
-						arg = va_arg(ap, unsigned long long);
+					//if(argsize < SPRINTF_SIZE_LONG_LONG)
+						arg = (unsigned long)va_arg(ap, unsigned int);
+					//else
+					//arg = va_arg(ap, unsigned long long);
 				
 					get_arg_in_size(argsize, &arg, 0);
 				
@@ -566,10 +566,10 @@ int vsnprintf(char *string, unsigned int size, char *fmt, va_list ap)
 				case 'p': // Hexadecimal with small letters with '0x' prefix
 					empty_digit = 1;
 
-					if(argsize < SPRINTF_SIZE_LONG_LONG)
-						arg = (unsigned long long)va_arg(ap, unsigned int);
-					else
-						arg = va_arg(ap, unsigned long long int);
+					//if(argsize < SPRINTF_SIZE_LONG_LONG)
+					arg = (unsigned long)va_arg(ap, unsigned int);
+					//else
+					//	arg = va_arg(ap, unsigned long int);
 
 					get_arg_in_size(argsize, &arg, 0);
 				
@@ -589,7 +589,7 @@ int vsnprintf(char *string, unsigned int size, char *fmt, va_list ap)
 					calculate_real_padding_hex();
 					write_padding();
 
-					for(x=15;x>=0;x--)
+					for(x=7;x>=0;x--)
 					{
 						y = arg >> (x << 2);
 						y &= 0xf;
@@ -676,10 +676,10 @@ int vsnprintf(char *string, unsigned int size, char *fmt, va_list ap)
 				case 'o': // Octal
 					empty_digit = 1;
 					
-					if(argsize < SPRINTF_SIZE_LONG_LONG)
-						arg = (unsigned long long)va_arg(ap, unsigned int);
-					else
-						arg = va_arg(ap, unsigned long long);
+					//if(argsize < SPRINTF_SIZE_LONG_LONG)
+					arg = (unsigned long)va_arg(ap, unsigned int);
+					//else
+					//	arg = va_arg(ap, unsigned long long);
 				
 					for(x=21;x>=0;x--)
 					{
@@ -698,12 +698,12 @@ int vsnprintf(char *string, unsigned int size, char *fmt, va_list ap)
 				case '@': // Binary
 					empty_digit = 1;
 					
-					if(argsize < SPRINTF_SIZE_LONG_LONG)
-						arg = (unsigned long long)va_arg(ap, unsigned int);
-					else
-						arg = va_arg(ap, unsigned long long);
+					//if(argsize < SPRINTF_SIZE_LONG_LONG)
+					arg = (unsigned long)va_arg(ap, unsigned int);
+					//else
+					//	arg = va_arg(ap, unsigned long long);
 				
-					for(x=63;x>=0;x--)
+					for(x=31;x>=0;x--)
 					{
 						y = (arg >> x);
 						y &= 1;
@@ -752,12 +752,12 @@ int vsnprintf(char *string, unsigned int size, char *fmt, va_list ap)
 	return string_pos;	
 }
 
-int vsprintf(char *string, char *fmt, va_list ap)
+int vsprintf(char *string, const char *fmt, va_list ap)
 {
 	return vsnprintf(string, 0xffffffff, fmt, ap);
 }
 
-int sprintf(char *string, char *fmt, ...)
+int sprintf(char *string, const char *fmt, ...)
 {
 	int r;
 
@@ -772,7 +772,7 @@ int sprintf(char *string, char *fmt, ...)
 	return r;
 }
 
-int snprintf(char *string, unsigned int size, char *fmt, ...)
+int snprintf(char *string, unsigned int size, const char *fmt, ...)
 {
 	int r;
 

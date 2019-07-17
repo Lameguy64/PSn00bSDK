@@ -1,5 +1,72 @@
 PSn00bSDK changelog
 
+Items that are lower in the log are more recently implemented.
+
+
+07-17-2019 by Lameguy64:
+
+* LibPSn00b run-time library is officially version 1.12b.
+
+* libc: Added basic C++ support (many thanks to ijacquez).
+
+* libc: Updated start function that should make it possible for a child
+  executable to return to a parent executable, return logic automatically
+  calls EnterCriticalSection().
+
+* libc: Updated build method which takes libgcc from the compiler and adds
+  its own object files into it, eliminating linker problems caused by having
+  to order libc and libgcc libraries in a specific manner.
+  
+* psxgpu: Added RestartCallback().
+
+* psxgpu: Added StoreImage() function.
+
+* psxgpu: Fixed bugged setRECT() macro.
+
+* libc: Added assert.h.
+
+* examples: Balls example now has 166% more balls.
+
+* psxgpu: Increased ISR stack size to 1024 bytes so printf can be used in
+  callbacks safely.
+
+* libc: Removed int64 (long long) printing in vsprintf() for better
+  performance, as the R3000 does not support 64-bit arithmetic natively
+  so its emulated like floats. int64 still used for processing floats and
+  doubles and old vsprintf.c file is still included for those who really
+  want int64 support for whatever reason.
+  
+* libc: Removed stdarg.h which is part of GCC and not license compatible
+  with MPL. The toolchain compiled with libgcc provides stdarg.h and other
+  standard headers.
+  
+* examples: Updated sdk-common.mk variable convention for better flexibility.
+
+* libpsn00b: Added common.mk file containing global values for all libraries.
+
+* Updated library and toolchain build instructions.
+
+* psxgpu: Fixed bug in DMACallback where the internal DMA handler would fail
+  to install due to GetInterruptCallback() retrieving the callback value
+  immediately in the branch delay slot of a jr instruction, which resuls to
+  an inconsistent return value. This also broke DrawSyncCallback().
+  
+* psxsio: Done fixes on _sio_control() from the aformentioned issues with load
+  instructions in delay slots.
+  
+* psxgte: Added DVECTOR struct.
+
+* psxgpu: Added setLineF2(), setLineG2(), setLineF3() and setLineG3()
+  primitive macros.
+  
+* Added more functions in documentation.
+  
+
+07-01-2019 by williamblair:
+
+* Fixed FntLoad() Y coordinate not working properly for debug font (due to
+  Y coordinate not being specified for the getTPage() macro.
+
 
 06-23-2019 by Lameguy64:
 

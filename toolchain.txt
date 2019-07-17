@@ -1,44 +1,119 @@
-If you wish to build the toolchain yourself, beware that this process can get pretty tedious. A system with at least 4 physical cores or 8 total threads is recommended. You may have better success building the toolchain in ArchLinux especially if you want to build the most recent version of GCC.
+If you wish to build the toolchain yourself, beware that this process can get
+pretty tedious. A system with at least 4 to 8 total threads or more is
+recommended. You may have better success building the toolchain in ArchLinux
+especially if you want to build the most recent versions.
 
-These instructions may work for Windows using MSys2 or Cygwin64.
+It is recommended to stick with GCC 7.4.0 and Binutils 2.31 as this is the
+version PSn00bSDK is most tested with.
+
+These instructions are only for Linux, though they can be adapted for
+building in Windows using MSys2 or Cygwin64. Beware that libgcc cannot
+be built under Windows as the libgcc build process depends on symlinks
+which is not supported in Msys2 and Cygwin64. The only workaround is to
+obtain a prebuilt copy of libgcc from a Linux build of GCC.
+
+
+Before building, the following packages must be installed:
+* make
+* texinfo
+* mpfr (development libs)
+* isl (development libs)
+* gmp (development libs)
+* mpc (development libs)
 
 
 Building binutils:
 
-* Download binutils source files at ftp://ftp.gnu.org and choose a version you prefer to use.
-* Extract the contents of the archive. Preferably to a directory called gcc for example.
+* Download binutils source files at ftp://ftp.gnu.org, choose a version you
+  with to use with PSn00bSDK.
+* Extract the contents of the archive, preferably to a directory called gcc
+  for example.
 * Create a directory named binutils-build inside the gcc directory.
-* Configure binutils from the binutils-build directory with the following parameters:
+* Configure binutils from the binutils-build directory with the following
+  command line:
 
-../binutils-<version>/configure --prefix=/usr/local/mipsel-unknown-elf --target=mipsel-unknown-elf --with-float=soft
+../binutils-<version>/configure --prefix=/usr/local/mipsel-unknown-elf \
+--target=mipsel-unknown-elf --with-float=soft
 
-Replace <version> with the version of binutils you downloaded. You may also want to change the prefix to a path you wish to install the toolchain to.
-* Run 'make -j 4' to compile binutils (-j specifies how many jobs to execute at once).
-* Run make install-strip to install binutils to the path specified by --prefix (may require root priviledges). Binutils needs to be installed in order for GCC to compile.
+Replace <version> with the version of binutils you wish to use. You may also
+want to change the prefix to a path you may wish to have the toolchain
+installed to (ie. in your home folder).
+
+* Run `make -j 4` to compile binutils (-j specifies how many simultaneously
+  jobs to spawn at once).
+* Run `make install-strip` to install binutils to the path specified by
+  --prefix (requires root privileges if you install at /usr/local). Binutils
+  needs to be built and installed first so that GCC can be build.
 
 
 Building gcc:
 
-* Download gcc source files at ftp://ftp.gnu.org and choose a version you prefer to use.
-* Extract it to the same directory you extracted binutils in.
+* Download gcc source files at ftp://ftp.gnu.org and choose a version you
+  wish to use with PSn00bSDK.
+* Extract it to the same gcc directory you extracted binutils in.
 * Create a directory named gcc-build inside the gcc directory.
-* Configure gcc from the gcc-build directory with the following parameters:
+* Configure gcc from the gcc-build directory with the following command
+  line:
 
-../gcc-<version>/configure --disable-nls --disable-libada --disable-libssp --disable-libquadmath --disable-libstdc++-v3 --target=mipsel-unknown-elf --prefix=/usr/local/mipsel-unknown-elf --with-float=soft --enable-languages=c,c++ --with-gnu-as --with-gnu-ld
+../gcc-<version>/configure --disable-nls --disable-libada --disable-libssp \
+--disable-libquadmath --disable-libstdc++-v3 --target=mipsel-unknown-elf \
+--prefix=/usr/local/mipsel-unknown-elf --with-float=soft \
+--enable-languages=c,c++ --with-gnu-as --with-gnu-ld
 
-Replace <version> with the version of gcc you downloaded. The prefix must be the same as the prefix you specified for binutils.
+Replace <version> with the version of gcc you downloaded. The prefix path
+must be the same as what you've specified for binutils.
+
 * Run make in the same manner as you built binutils to build gcc.
-* Run make install-strip to install gcc (may require root priviledges).
-* Include the path to the bin directory of the toolchain you just built into your PATH environment variable. The compiler and binutils programs are prefixed with mipsel-unknown-elf (ie. mipsel-unknown-elf-gcc).
+* Run `make install-strip` to install gcc (may require root privileges).
+* Include the path to the bin directory of the toolchain you just built
+  into your PATH environment variable. The compiler and binutils programs
+  are prefixed with mipsel-unknown-elf (ie. mipsel-unknown-elf-gcc).
+
+
+Update ldscript:
+
+* Go to mipsel-unknown-elf/lib/ldscripts in the mipsel-unknown-elf toolchain
+  directory.
+* Open elf32elmip.x in any text editor.
+* Locate the .text definition (with the {} brackets) and place the following
+  inside the bracket block:
+
+__CTOR_LIST__ = .;
+___CTOR_LIST__ = .;
+LONG (((__CTOR_END__ - __CTOR_LIST__) / 4) - 2)
+KEEP (*(SORT (.ctors.*)))
+KEEP (*(.ctors))
+LONG (0x00000000)
+__CTOR_END__ = .;
+. = ALIGN (0x10);
+
+__DTOR_LIST__ = .;
+___DTOR_LIST__ = .;
+LONG (((__DTOR_END__ - __DTOR_LIST__) / 4) - 2)
+KEEP (*(SORT (.dtors.*)))
+KEEP (*(.dtors))
+LONG (0x00000000)
+__DTOR_END__ = .;
+. = ALIGN (0x10);
+
+* Save script changes.
+
+This is mandatory in order for libc to link correctly. These symbols are
+necessary to get C++ constructors to work on program start and
+deconstructors on program end.
+
+Since there's no known way to configure GCC to always use customized
+scripts in the ldscripts directory, you must specify the modified
+script during the linking stage of your programs.
+
+Alternatively, you can make a copy of the ldscript if you wish to customize
+it for a specific project, particularly when using code overlays.
 
 
 Note regarding C++ support:
 
-By default C++ support such as classes are unavailable due to the lack of a C++ support library as GCC's stdc++-v3 never seems to compile for mipsel-unknown-elf which explains why the suggested config disables it. Newlib may work instead but it might be too bloated to be practical to use on the PS1 considering the system only has 2MB of DRAM so more than 200KB taken up by libraries to support C++ is considered unacceptable in the PSn00bSDK project.
-
-
-Note for Windows users:
-
-From my experience GCC won't build with libgcc even in Msys, Msys2 and Cygwin64. To get around this you'll have to steal a copy of the libgcc libraries from a Linux build. A complete binary download of PSn00bSDK for Windows should have this library included.
-
-If you don't compile with libgcc int64 and floating point emulation will be unavailable so the advice of getting GCC to compile by disabling libgcc is like repairing the flat tire of a car by taking out the tire entirely. Though use of in64 and floating point are not really optimal on the PS1 hardware to begin with.
+C++ support in PSn00bSDK only goes as far as basic classes, namespaces and
+the ability to dynamically create and delete class objects at any point of
+your program, the required dependencies are supplied by libc of libpsn00b.
+Standard C++ libraries are not implemented and likely never going to be
+implemented due to bloat concerns.

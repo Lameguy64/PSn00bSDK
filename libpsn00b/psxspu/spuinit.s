@@ -77,7 +77,7 @@ SpuInit:
 	or		$v0, $at
 	sw		$v0, DPCR($v1)
 	
-	li		$v0, 0xc000					# Enable SPU
+	li		$v0, 0x8001					# Enable SPU
 	sh		$v0, SPUCNT($v1)
 	jal		SpuCtrlSync
 	move	$a0, $v0
@@ -85,6 +85,9 @@ SpuInit:
 	li		$v0, 0x3fff					# Activate master volume
 	sh		$v0, SPU_MASTER_VOL($v1)
 	sh		$v0, SPU_MASTER_VOL+2($v1)
+	
+	sh		$v0, SPU_CD_VOL($v1)		# Activate CD volume
+	sh		$v0, SPU_CD_VOL+2($v1)
 	
 	sh		$v0, SPU_CD_VOL($v1)		# Activate CD volume
 	sh		$v0, SPU_CD_VOL+2($v1)

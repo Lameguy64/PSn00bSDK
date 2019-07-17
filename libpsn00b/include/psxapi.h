@@ -79,7 +79,7 @@ void SysDeqIntRP(int pri, INT_RP *rp);
 
 // Event handler stuff
 
-int OpenEvent(unsigned int class, int spec, int mode, void (*func)());
+int OpenEvent(unsigned int cl, int spec, int mode, void (*func)());
 int CloseEvent(int ev_desc);
 int EnableEvent(int ev_desc);
 int DisableEvent(int ev_desc);

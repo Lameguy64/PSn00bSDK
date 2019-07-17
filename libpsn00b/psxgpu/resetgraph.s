@@ -4,6 +4,7 @@
 
 .section .text
 
+.set ISR_STACK_SIZE, 1024
 
 .global ResetGraph						# Resets the GPU and installs a
 .type ResetGraph, @function				# VSync event handler
@@ -306,11 +307,12 @@ _vsync_irq_callback:
 
 .type _global_isr, @function
 _global_isr:
-
-	lui		$a0, IOBASE					# Get IRQ status
 	
 .Lisr_loop:
 
+	#la		$gp, _gp					# Keep restoring GP since it gets
+										# changed elsewhere sometimes
+	
 	lui		$a0, IOBASE					# Get IRQ status
 	lw		$v0, IMASK($a0)
 	nop
@@ -392,10 +394,11 @@ _irq_func_table:
 	.word	0
 
 # Global ISR hook structure
+.global _custom_exit
 .type _custom_exit, @object
 _custom_exit:
 	.word _global_isr			# pc
-	.word _custom_exit_stack	# sp
+	.word _custom_exit_stack+ISR_STACK_SIZE	# sp
 	.word 0						# fp
 	.word _irq_func_table		# s0
 	.word 0						# s1
@@ -408,10 +411,10 @@ _custom_exit:
 	.word _gp					# gp
 	
 # Global ISR stack
-	.fill 124
-_custom_exit_stack:
-	.fill 4
-	
+#	.fill 1024
+#_custom_exit_stack:
+#	.fill 4
+.comm _custom_exit_stack, ISR_STACK_SIZE+4
 	
 .type vsynctimeout_msg, @object
 vsynctimeout_msg:
