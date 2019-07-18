@@ -28,7 +28,7 @@ performance reasons.
 
 
 ## Notable features
-As of libpsn00b run-time library v0.11b
+As of libpsn00b run-time library v0.12b
 
 * Extensive GPU support with polygon primitives, high-speed DMA VRAM
   transfers and DMA ordering table processing. All video modes for both NTSC
@@ -66,7 +66,7 @@ As of libpsn00b run-time library v0.11b
 ## Obtaining PSn00bSDK
 
 Because PSn00bSDK is updated semi-regularly due to this project being in
-a work-in-progress state, it is better to obtain this SDK from source by
+a work-in-progress state, it is better to obtain this SDK from source and
 building it yourself in the long run. Prepared packages containing
 precompiled libpsn00b libraries, the toolchain and additional utilities
 not included in this repository for Windows users are planned, though some
@@ -77,7 +77,7 @@ A precompiled copy of the GCC 7.4.0 toolchain for Windows is available
 in the PSn00bSDK page of Lameguy64's website
 ( http://lameguy64.tk/?page=psn00bsdk ). This should make building PSn00bSDK
 under Windows a bit easier as building the toolchain is the hardest part
-of building PSn00bSDK as its more difficult to get it to compile correctly
+of building PSn00bSDK, as its more difficult to get it to compile correctly
 under Windows than on Linux and BSDs.
 
 
@@ -92,10 +92,10 @@ under Windows than on Linux and BSDs.
    following packages:
   * git
   * make
-  * mingw-w64-i686-gcc (for 32-bit) or mingw-w64-x86_64-gcc (64-bit)
+  * mingw-w64-i686-gcc (32-bit) or mingw-w64-x86_64-gcc (64-bit)
+    You will need to close and reopen MSys2 for the PATH environment to
+    update for MinGW.
   * mingw-w64-i686-tinyxml2 (32-bit) or mingw-w64-x86_64-tinyxml2 (64-bit)
-   You will need to close and reopen MSys2 for the PATH environment to
-   update for MinGW.
 3. Extract GCC 7.4.0 for mipsel-unknown-elf to the root of your C drive.
 4. Edit `mipsel-unknown-elf/mipsel-unknown-elf/lib/ldscripts/elf32elmip.x`
    and update the .text definitions as explained in toolchain.txt.
@@ -150,22 +150,27 @@ and contributed example programs are welcome.
 
 ## To-do List
 
-* psxgpu: VRAM move function, some primitives and macros yet to be
+* psxgpu: VRAM move function, few more primitives and macros yet to be
   implemented.
 
-* psxgte: Higher level GTE rotate translate and perspective functions
-  yet to be implemented.
+* psxgte: Higher level GTE rotate translate and perspective functions,
+  and many matrix transformation functions yet to be implemented.
 
 * psxspu: Plenty of work to be done.
 
-* psxapi: BIOS function calls intended for stdio may need to be in
-  libc instead.
+* psxapi: BIOS function calls intended for stdio may need to be moved
+  to libc instead.
 
 * psxetc: Text stream stuff (FntOpen(), FntPrint(), FndFlush()) for
   debug purposes yet to be implemented.
   
-* Libraries yet to be made: psxcd (for better CD-ROM support) and
-  psxmdec (MDEC support).
+* And many more.
+
+There's been some working prototype CD-ROM code in the works for PSn00bSDK
+that is functional enough to play CD Audio tracks. The prototype code can
+be found in the SVN repo of PSn00bSDK which can be found in the PSn00bSDK
+page of Lameguy64's website, if you're interested to work on the CD-ROM
+implementation yourself.
 
 
 ## Usage terms

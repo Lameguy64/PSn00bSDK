@@ -4,7 +4,9 @@
  * Balls Example
  * 2019 Meido-Tek Productions / PSn00bSDK Project
  *
- * To build, simply run make.
+ * Draws a bunch of ball sprites that bounce around the screen,
+ * along with a ball snake that might be difficult to see.
+ *
  *
  * Example by Lameguy64
  *

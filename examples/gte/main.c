@@ -4,7 +4,9 @@
  * GTE Graphics Example
  * 2019 Meido-Tek Productions / PSn00bSDK Project
  *
- * To build, simply run make.
+ * Renders a spinning 3D cube with light source calculation
+ * using GTE macros.
+ *
  *
  * Example by Lameguy64
  *
