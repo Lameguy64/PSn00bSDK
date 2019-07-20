@@ -77,7 +77,7 @@ SpuInit:
 	or		$v0, $at
 	sw		$v0, DPCR($v1)
 	
-	li		$v0, 0x8001					# Enable SPU
+	li		$v0, 0xC001					# Enable SPU
 	sh		$v0, SPUCNT($v1)
 	jal		SpuCtrlSync
 	move	$a0, $v0
