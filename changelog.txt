@@ -3,6 +3,32 @@ PSn00bSDK changelog
 Items that are lower in the log are more recently implemented.
 
 
+08-17-2019 by Lameguy64:
+
+* LibPSn00b run-time library is officially version 0.13b.
+
+* examples: updated balls and n00bdemo examples for the setDrawTPage()
+  correction.
+
+* psxgpu: Fixed error on setDrawTPage() syntax and removed setDrawTPageVal()
+  macro (not needed).
+
+* psxapi: Added event handler definitions related to memory cards.
+
+* psxapi: Added BIOS memory card functions.
+
+* examples: Added childexec example demonstrating a parent executable
+  transferring execution to a child executable and back.
+
+* elf2x: s_addr no longer set on PS-EXE header, console BIOS already sets it
+  by STACK value in SYSTEM.CNF and allows child executables to return to
+  parent if left zero.
+
+* psxapi: Renamed _InitPad(), _StartPad() and _StopPad() to InitPAD(),
+  StartPAD() and StopPAD() respectively. Fpscam example updated to new
+  syntax.
+
+
 07-18-2019 by Lameguy64:
 
 * Added fpscam example.
@@ -14,7 +40,7 @@ Items that are lower in the log are more recently implemented.
 
 07-17-2019 by Lameguy64:
 
-* LibPSn00b run-time library is officially version 1.12b.
+* LibPSn00b run-time library is officially version 0.12b.
 
 * libc: Added basic C++ support (many thanks to ijacquez).
 

@@ -67,7 +67,8 @@ Contributing:
 	  with -O2 optimization.
 	* Functions must work flawlessly on both emulators and real hardware.
 	* Don't forget to put your user name in the readme file of the library
-	  you've made a contribution on and details of what you've added/modified.
+	  you've made a contribution on, and details of what you've changed in the
+	  changelog.
 	* New functions that are not originally in the official SDK must be marked
 	  as original code in both the library headers and the libn00bref document.
 

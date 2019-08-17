@@ -31,13 +31,8 @@
 
 // Primitive macros	
 
-#define setDrawTPage( p, tp, abr, x, y ) \
-	( (p)->code[0] = getTPage( tp, abr, x, y ), \
-	setlen( p, 1 ), setcode( p, 0xe1 ) )
-
-/* ORIGINAL */	
-#define setDrawTPageVal( p, tp ) \
-	( (p)->code[0] = tp, \
+#define setDrawTPage( p, dfe, dtd, tpage ) \
+	( (p)->code[0] = tpage|(dfe<<10)|(dtd<<9), \
 	setlen( p, 1 ), setcode( p, 0xe1 ) )
 	
 /*#define setVram2Vram( p ) ( setlen( p, 8 ), setcode( p, 0x80 ), \

@@ -267,7 +267,7 @@ int main(int argc, char** argv) {
 	// Prepare PS-EXE header
 	memset( &exe, 0, sizeof(PSEXE) );
 
-	exe.params.sp_addr = 0x801FFFF0;
+	//exe.params.sp_addr = 0x801FFFF0;
 	exe.params.t_addr = exe_taddr;
 	exe.params.t_size = exe_tsize;
 	exe.params.pc0 = head.prg_entry_addr;

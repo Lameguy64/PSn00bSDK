@@ -617,10 +617,10 @@ void init() {
 	
 	// Init BIOS pad driver and set pad buffers (buffers are updated
 	// automatically on every V-Blank)
-	_InitPad(&pad_buff[0][0], 34, &pad_buff[1][0], 34);
+	InitPAD(&pad_buff[0][0], 34, &pad_buff[1][0], 34);
 	
 	// Start pad
-	_StartPad();
+	StartPAD();
 	
 	// Don't make pad driver acknowledge V-Blank IRQ (recommended)
 	ChangeClearPAD(0);

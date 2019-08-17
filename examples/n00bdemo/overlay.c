@@ -126,7 +126,7 @@ void sort_overlay(int showlotl) {
 	nextpri = (char*)line;
 	
 	tp = (DR_TPAGE*)nextpri;
-	setDrawTPageVal( tp, font_tpage );
+	setDrawTPage( tp, 0, 1, font_tpage );
 	addPrim( ot[db], tp );
 	nextpri += sizeof(DR_TPAGE);
 	
@@ -164,7 +164,7 @@ void sort_overlay(int showlotl) {
 	}
 	
 	tp = (DR_TPAGE*)nextpri;
-	setDrawTPageVal( tp, getTPage( 0, 2, 0, 0 )|0x200 );
+	setDrawTPage( tp, 0, 1, getTPage( 0, 2, 0, 0 ) );
 	addPrim( ot[db], tp );
 	nextpri += sizeof(DR_TPAGE);
 	
@@ -177,7 +177,7 @@ void sort_overlay(int showlotl) {
 		nextpri += sizeof(SPRT);
 		
 		tp = (DR_TPAGE*)nextpri;
-		setDrawTPageVal( tp, lamelotl_tpage );
+		setDrawTPage( tp, 0, 1, lamelotl_tpage );
 		addPrim( ot[db], tp );
 		nextpri += sizeof(DR_TPAGE);
 		
@@ -190,7 +190,7 @@ void sort_overlay(int showlotl) {
 	nextpri += sizeof(SPRT);
 	
 	tp = (DR_TPAGE*)nextpri;
-	setDrawTPageVal( tp, psn00b_tpage );
+	setDrawTPage( tp, 0, 1, psn00b_tpage );
 	addPrim( ot[db], tp );
 	nextpri += sizeof(DR_TPAGE);
 	

@@ -6,7 +6,7 @@ include ../common.mk
 
 TARGET	= ../libpsxapi.a
 
-SOURCES	= stdio fs sys pad
+SOURCES	= stdio fs sys
 
 AFILES	= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.s))
 OFILES	= $(addprefix build/,$(AFILES:.s=.o))

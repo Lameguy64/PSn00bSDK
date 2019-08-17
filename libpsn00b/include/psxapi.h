@@ -1,6 +1,22 @@
 #ifndef __PSXAPI__
 #define __PSXAPI__
 
+#define DescHW		0xf0000000
+#define DescSW		0xf4000000
+
+#define HwCARD		(DescHW|0x11)
+#define HwCARD_1	(DescHW|0x12)
+#define HwCARD_0	(DescHW|0x13)
+#define SwCARD		(DescHW|0x02)
+
+#define EvSpIOE		0x0004
+#define EvSpERROR	0x8000
+#define EvSpTIMOUT	0x0100
+#define EvSpNEW		0x0200
+
+#define EvMdINTR	0x1000
+#define EvMdNOINTR	0x2000
+
 typedef struct {			// Device control block
 	char	*name;
 	int		flags;
@@ -97,8 +113,10 @@ struct DIRENTRY *nextfile(struct DIRENTRY *entry);
 int erase(const char *name);
 int chdir(const char *path);
 
-#define delete( p )	erase( p )
-#define cd( p )		chdir( p )			// For compatibility
+//#define delete( p )	erase( p )	// May conflict with delete operator in C++
+#define cd( p )		chdir( p )		// For compatibility
+
+// BIOS device functions
 
 int AddDev(DCB *dcb);
 int DelDev(const char *name);
@@ -107,15 +125,34 @@ void ListDev(void);
 void EnterCriticalSection(void);
 void ExitCriticalSection(void);
 
+// BIOS CD functions
 void _InitCd(void);
 void _96_init(void);
 void _96_remove(void);
 
 // BIOS pad functions
-void _InitPad(char *buff1, int len1, char *buff2, int len2);
-void _StartPad(void);
-void _StopPad(void);
+void InitPAD(char *buff1, int len1, char *buff2, int len2);
+void StartPAD(void);
+void StopPAD(void);
 
+// BIOS memory card functions
+void InitCARD(int pad_enable);
+void StartCARD(void);
+void StopCARD(void);
+void _bu_init(void);
+
+int _card_load(int chan);
+int _card_info(int chan);
+int _card_status(int chan);
+int _card_wait(int chan);
+int _card_clear(int chan);
+int _card_chan(void);
+int _card_read(int chan, int sector, unsigned char *buf);
+int _card_write(int chan, int sector, unsigned char *buf);
+void _new_card(void);
+
+
+// Interrupt acknowledge control
 void ChangeClearPAD(int mode);
 void ChangeClearRCnt(int t, int m);
 

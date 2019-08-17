@@ -1,26 +1,24 @@
 /* 
  * LibPSn00b Example Programs
  *
- * Balls Example
+ * Child Program Execution Example
  * 2019 Meido-Tek Productions / PSn00bSDK Project
  *
- * Draws a bunch of ball sprites that bounce around the screen,
- * along with a ball snake that might be difficult to see.
- *
+ * This is a modification of the balls example, modified to execute
+ * a child program for this example.
  *
  * Example by Lameguy64
- *
- * Changelog:
- *
- *  November 20, 2018 - Initial version.
  *
  */
  
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <psxetc.h>
+#include <psxapi.h>
 #include <psxgte.h>
 #include <psxgpu.h>
+#include <psxpad.h>
 #include "ball16c.h"
 
 
@@ -57,6 +55,11 @@ BALL_TYPE balls[MAX_BALLS];
 
 /* TIM image parameters for loading the ball texture and drawing sprites */
 TIM_IMAGE tim;
+
+
+void run_child();
+
+char pad_buff[2][34];
 
 
 void init() {
@@ -124,6 +127,10 @@ void init() {
 	
 	printf("Done.\n");
 	
+	InitPAD(pad_buff[0], 34, pad_buff[1], 34);
+	StartPAD();
+	ChangeClearPAD(0);
+	
 }
 
 int main(int argc, const char* argv[]) {
@@ -142,6 +149,22 @@ int main(int argc, const char* argv[]) {
 	printf("Entering loop...\n");
 	
 	while(1) {
+		
+		PADTYPE *pad = (PADTYPE*)pad_buff[0];
+		
+		if( pad->stat == 0 ) {
+			
+			// For digital pad, dual-analog and dual-shock
+			if( ( pad->type == 0x4 ) || ( pad->type == 0x5 ) || ( pad->type == 0x7 ) ) {
+				
+				if( !(pad->btn&PAD_START) ) {
+					DrawSync(0);
+					run_child();
+				}
+				
+			}
+			
+		}
 		
 		/* Clear ordering table and set start address of primitive */
 		/* buffer for next frame */
@@ -200,8 +223,7 @@ int main(int argc, const char* argv[]) {
 		/* Sort a TPage primitive so the sprites will draw pixels from */
 		/* the correct texture page in VRAM */
 		tpri = (DR_TPAGE*)nextpri;
-		setDrawTPage( tpri, 0, 0, 
-			getTPage(0, 0, tim.prect->x, tim.prect->y ));
+		setDrawTPage( tpri, 0, 0, tim.prect->x, tim.prect->y );
 		addPrim( ot[db]+(OT_LEN-1), tpri );
 		nextpri += sizeof(DR_TPAGE);
 		
@@ -222,7 +244,61 @@ int main(int argc, const char* argv[]) {
 		counter++;
 		
 	}
-		
+	
 	return 0;
 
+}
+
+// PS-EXE header structure
+typedef struct {
+	char		id[16];
+	struct EXEC	param;
+	char		pad[1972];
+} EXE_HEAD;
+
+// Child program address
+extern char child_exe[];
+
+// Manually defined as its not defined in psxapi by default
+void SetDefaultExitFromException();
+
+void run_child() {
+	
+	// So child header is readable
+	EXE_HEAD *exe = (EXE_HEAD*)child_exe;
+	
+	// Copy child executable to its intended adddress
+	memcpy((void*)exe->param.t_addr, child_exe+2048, exe->param.t_size);
+	
+	// Enter critical section to prepare for program execution
+	EnterCriticalSection();
+
+	// Stop pads, enable auto acknowledge
+	StopPAD();
+	ChangeClearPAD(1);
+	ChangeClearRCnt(3, 1);
+	
+	// Set default exception handler just in case
+	//SetDefaultExitFromException();
+	
+	// Last three function calls could be relegated to
+	// a StopCallback() function in the future.
+	
+	// Execute child
+	printf("Child exec!\n");
+	Exec(&exe->param, 0, 0);
+	
+	// Reset previous handler
+	EnterCriticalSection();
+	RestartCallback();
+	ExitCriticalSection();
+
+	// Re-init and re-enable pads
+	InitPAD(pad_buff[0], 34, pad_buff[1], 34);
+	StartPAD();
+	ChangeClearPAD(0);
+	
+	// Set this program's display mode
+	PutDispEnv(&disp);
+	
 }
