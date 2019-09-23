@@ -56,6 +56,18 @@ char *strcpy(char *dst, const char *src)
 	return odst;
 }
 
+char *strcat(char *dst, const char *src)
+{
+	char *o=dst;
+	
+	while(*dst)
+		dst++;
+	
+	strcpy(dst, src);
+	
+	return o;
+}
+
 char *strncat(char *s, const char *append, int len)
 {
 	char *o=s;

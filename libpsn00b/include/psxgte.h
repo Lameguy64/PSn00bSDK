@@ -12,24 +12,24 @@
 #define rcos(a) icos(a)
 
 
-typedef struct {
+typedef struct MATRIX {
 	short	m[3][3];
 	int		t[3];
 } MATRIX;
 
-typedef struct {
+typedef struct VECTOR {
 	int		vx, vy, vz;
 } VECTOR;
 
-typedef struct {
+typedef struct SVECTOR {
 	short	vx, vy, vz, pad;
 } SVECTOR;
 
-typedef struct {
+typedef struct CVECTOR {
 	unsigned char r, g, b, cd;
 } CVECTOR;
 
-typedef struct {
+typedef struct DVECTOR {
 	short vx, vy;
 } DVECTOR;
 

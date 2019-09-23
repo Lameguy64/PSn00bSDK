@@ -206,6 +206,12 @@
 	: "r"( r0 ), "r"( r1 ), "r"( r2 ) \
 	: "memory" )
 
+#define gte_stsz( r0 ) __asm__ volatile ( \
+	"swc2	$19, 0( %0 );"	\
+	:						\
+	: "r"( r0 )				\
+	: "memory" )
+	
 #define gte_stotz( r0 ) __asm__ volatile ( \
 	"swc2	$7, 0( %0 );"	\
 	:						\
