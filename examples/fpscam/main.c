@@ -21,6 +21,7 @@
  *	R1			- Slide up
  *	R2			- Slide down
  *	L1			- Look at cube
+ *	Select		- Exit program (only works with CD loaders)
  *
  *
  * Example by Lameguy64
@@ -29,6 +30,8 @@
  *
  *  July 18, 2019 - Initial version.
  *
+ *  Sep 24, 2019 - Added camera position display and _boot() exit.
+ *
  */
  
 #include <stdio.h>
@@ -36,6 +39,7 @@
 #include <psxgte.h>
 #include <psxpad.h>
 #include <psxapi.h>
+#include <psxetc.h>
 #include <inline_c.h>
 
 #include "clip.h"
@@ -290,6 +294,10 @@ int main() {
 					
 				}
 				
+				if( !(pad->btn&PAD_SELECT) ) {
+					_boot();
+				}
+				
 			}
 			
 			// For dual-analog and dual-shock (analog input)
@@ -324,6 +332,15 @@ int main() {
 		
 		}
 		
+		// Print out some info
+		FntPrint(-1, "BUTTONS=%04x\n", pad->btn);
+		FntPrint(-1, "X=%d Y=%d Z=%d\n", 
+			cam_pos.vx>>12, 
+			cam_pos.vy>>12, 
+			cam_pos.vz>>12);
+		FntPrint(-1, "RX=%d RY=%d\n", 
+			cam_rot.vx>>12, 
+			cam_rot.vy>>12);
 		
 		// First-person camera mode
 		if( cam_mode == 0 ) {
@@ -439,6 +456,9 @@ int main() {
 		rot.vy += 8;
 		
 		
+		// Flush text to drawing area
+		FntFlush(-1);
+	
 		// Swap buffers and draw the primitives
 		display();
 		
@@ -624,6 +644,10 @@ void init() {
 	
 	// Don't make pad driver acknowledge V-Blank IRQ (recommended)
 	ChangeClearPAD(0);
+	
+	// Load font and open a text stream
+	FntLoad(960, 0);
+	FntOpen(0, 8, 320, 216, 0, 100);
 	
 }
 

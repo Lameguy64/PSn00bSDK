@@ -1,4 +1,4 @@
-// These are from Meido-Menu which was a very simple demo I made back in 2013
+// These are from Meido-Demo which was a very simple demo I made back in 2013
 // Man, time sure does fly.		- Lameguy64
 
 unsigned int plasma_colors[256] = {

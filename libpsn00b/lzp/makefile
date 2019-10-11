@@ -5,8 +5,7 @@ TARGET	= ../liblzp.a
 CFILES	= $(notdir $(wildcard ./*.c))
 OFILES	= $(addprefix build/,$(CFILES:.c=.o))
 
-CFLAGS	= -g -O2 -msoft-float -fno-builtin -nostdlib -Wa,--strip-local-absolute
-AFLAGS	= -g -msoft-float --strip-local-absolute
+CFLAGS	= -g -O2 -msoft-float -fno-builtin -nostdlib -fdata-sections -ffunction-sections -Wa,--strip-local-absolute
 
 CC		= $(PREFIX)gcc
 AR		= $(PREFIX)ar

@@ -2,6 +2,27 @@ PSn00bSDK changelog
 
 Items that are lower in the log are more recently implemented.
 
+10-11-2019 by Lameguy64:
+
+* psxetc: Added FntOpen(), FntPrint() and FntFlush() functions.
+
+* psxgpu: Fixed typo in termPrim() macro (value too long).
+
+* examples: Added billboarding sprites example.
+
+* psxapi: Transferred putchar() BIOS function to libc.
+
+* libpsn00b: Updated makefiles adding -fdata-sections and -ffunction-sections
+  so unused functions will be stripped out, which yields smaller executables.
+
+* libc: Fixed negative integers not displaying properly in vsprintf()/vsnprintf().
+  
+* libc: Fixed zero padding not working in vsprintf()/vsnprintf().
+
+* fpscam: Added debug text using FntOpen(), FntPrint() and FntFlush(). Also added
+  _boot() call for returning to CD based serial loaders.
+
+
 09-23-2019 by Lameguy64:
 
 * libc: Added strcat() function.
@@ -179,12 +200,10 @@ Items that are lower in the log are more recently implemented.
   SDK is currently unknown.
 
 
-
 06-07-2019 by qbradq:
 
 * lzpack: Swapped a buffer length litteral with sizeof operator, fixing a
   stack overflow bug in some instances.
-
 
 
 05-23-2019 by Lameguy64:
@@ -200,11 +219,11 @@ Items that are lower in the log are more recently implemented.
 * Added rgb24 example.
 
 * Got custom exit handler set using SetCustomExitFromException() (BIOS
- function B(19h)) working. Currently used to acknowledge VSync IRQ but
- actual VSync handling is still done with events and needs to be
- transferred to the custom exit handler. At least it lets BIOS
- controller functions to work now. See doc/dev notes.txt for details
- on how this handler behaves.
+  function B(19h)) working. Currently used to acknowledge VSync IRQ but
+  actual VSync handling is still done with events and needs to be
+  transferred to the custom exit handler. At least it lets BIOS
+  controller functions to work now. See doc/dev notes.txt for details
+  on how this handler behaves.
 
 * Made stack usage in ResetGraph() less wasteful. You only need to
   allocate N words on stack based on N arguments of the function

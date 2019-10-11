@@ -16,7 +16,3 @@ Library header(s):
 
 	psxetc.h
 	
-	
-Changelog:
-
-	None thus far...

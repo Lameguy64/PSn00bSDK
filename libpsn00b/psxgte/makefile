@@ -11,7 +11,7 @@ AFILES	= $(notdir $(wildcard ./*.s))
 OFILES	= $(addprefix build/,$(CFILES:.c=.o) $(AFILES:.s=.o))
 
 CFLAGS	= -g -O2 -msoft-float -fno-builtin -fdata-sections -ffunction-sections -Wa,--strip-local-absolute
-AFLAGS	= -g -msoft-float --strip-local-absolute
+AFLAGS	= -g -msoft-float -strip-local-absolute
 
 CC		= $(PREFIX)gcc
 AS		= $(PREFIX)as

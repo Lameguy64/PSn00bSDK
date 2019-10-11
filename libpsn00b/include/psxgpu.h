@@ -129,7 +129,7 @@
 #define addPrims(ot, p0, p1)	setaddr( p1, getaddr( ot ) ), setaddr( ot, p0 )
 
 #define catPrim( p0, p1 )		setaddr( p0, p1 )
-#define termPrim( p )			setaddr( p, 0xffffffff )
+#define termPrim( p )			setaddr( p, 0xffffff )
 
 #define setSemiTrans( p, abe ) \
 	( (abe)?setcode( p, getcode( p )|0x2 ):setcode( p, getcode( p )&~0x2 ) )

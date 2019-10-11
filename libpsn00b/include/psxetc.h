@@ -7,6 +7,9 @@ extern "C" {
 
 void FntLoad(int x, int y);
 char *FntSort(unsigned int *ot, char *pri, int x, int y, const char *text);
+int FntOpen(int x, int y, int w, int h, int isbg, int n);
+int FntPrint(int id, const char *fmt, ...);
+char *FntFlush(int id);
 
 #ifdef __cplusplus
 }

@@ -51,7 +51,7 @@
 	
 #define calculate_real_padding_hex() \
 	last = 0; \
-	for (x = 0; x < 16; x++) \
+	for (x = 0; x < 8; x++) \
 		if((arg >> (x * 4)) & 0xf) \
 			last = x; \
 	\
@@ -125,15 +125,15 @@ unsigned int get_arg_in_size(int size, unsigned long *arg, unsigned int check_si
 		case SPRINTF_SIZE_LONG:
 			*arg &= 0xffffffff;
 
-			/*if(check_sign)
+			if(check_sign)
 			{
 				if(*arg & (1<<31))
 				{
-					*arg |= (long long)0xffffffff00000000;
+					//*arg |= (long long)0xffffffff00000000;
 					*arg = ~(*arg - 1);
 					s = 1;
 				}
-			}*/
+			}
 		break;
 
 		/*case SPRINTF_SIZE_LONG_LONG:
@@ -440,7 +440,7 @@ int vsnprintf(char *string, unsigned int size, const char *fmt, va_list ap)
 					//printf("argsize = %d\n", argsize);
 
 					//if(argsize < SPRINTF_SIZE_LONG_LONG)
-					arg = (unsigned long)va_arg(ap, unsigned int);
+					arg = (unsigned long)va_arg(ap, unsigned long);
 					//else
 					//	arg = va_arg(ap, unsigned long);
 
@@ -527,7 +527,7 @@ int vsnprintf(char *string, unsigned int size, const char *fmt, va_list ap)
 					empty_digit = 1;
 				
 					//if(argsize < SPRINTF_SIZE_LONG_LONG)
-						arg = (unsigned long)va_arg(ap, unsigned int);
+					arg = (unsigned long)va_arg(ap, unsigned int);
 					//else
 					//arg = va_arg(ap, unsigned long long);
 				
