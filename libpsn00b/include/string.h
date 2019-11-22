@@ -29,8 +29,8 @@ char *strncat(char *s , const char *append, int n);
 char *strcpy(char *dst , const char *src);
 char *strncpy(char *dst , const char *src , int n);
 int strlen(const char *s);
-//char *strchr(const char *s , int c);
-//char *strrchr(const char *s , int c);
+char *strchr(const char *s , int c);
+char *strrchr(const char *s , int c);
 
 void *memmove(void *dst , const void *src , int n);
 void *memchr(void *s , int c , int n);

@@ -28,7 +28,7 @@ performance reasons.
 
 
 ## Notable features
-As of libpsn00b run-time library v0.12b
+As of LibPSn00b run-time library v0.15b
 
 * Extensive GPU support with polygon primitives, high-speed DMA VRAM
   transfers and DMA ordering table processing. All video modes for both NTSC
@@ -43,8 +43,8 @@ As of libpsn00b run-time library v0.12b
 
 * Stable interrupt service routine with easy to use callback system for
   simplified handling of hardware and DMA interrupts, no crude event handlers
-  or kernel hacks used and should be compatible with HLE BIOS implementations,
-  and should play well with writing loader programs.
+  or kernel hacks used and should be compatible with HLE BIOS implementations.
+  Should also play well with writing loader programs.
 
 * Complete Serial I/O support with SIOCONS driver for tty console access
   through serial interface.
@@ -53,10 +53,11 @@ As of libpsn00b run-time library v0.12b
   thanks to proper interrupt handling, no crude manual polling of controllers
   in your main loop.
 
-* BIOS CD-ROM support with a custom initialization function that doesn't
-  clear other DMA channel settings (such as GPU and SPU DMA) for easier
-  initialization.
-
+* Full CD-ROM support with data reading, CD audio and XA audio playback.
+  Features built-in ISO9660 file system parser for locating files and
+  supports directories containing more than 30 files. Data streaming
+  should also be possible.
+  
 * Uses Sony SDK library syntax for familiarity to experienced programmers
   and to make porting existing homebrew projects to PSn00bSDK easier.
 

@@ -3,7 +3,7 @@
 
 .include "hwregs_a.h"
 
-.section .data
+.section .text
 
 
 .global SpuInit

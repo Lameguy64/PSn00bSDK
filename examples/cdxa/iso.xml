@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<iso_project image_name="cdxa.iso">
+
+	<track type="data">
+
+		<identifiers
+			system			="PLAYSTATION"
+			application		="PLAYSTATION"
+			volume			="PSN00BSDK"
+			volume_set		="PSN00BSDK"
+			publisher		="MEIDOTEK"
+		/>
+
+		<directory_tree>
+
+			<file name="system.cnf"	type="data" source="system.cnf"/>
+			<file name="cdxa.exe" type="data" source="cdxa.exe"/>
+			
+			<!-- CD-XA file, you'll have to provide your own to make this example work -->
+			<file name="xasample.xa" type="xa" source="D:\str-temp\subcon.xa"/>
+
+			<dummy sectors="1024"/>
+
+		</directory_tree>
+
+	</track>
+
+</iso_project>

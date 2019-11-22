@@ -10,7 +10,7 @@ OFILES		= $(addprefix build/,$(CFILES:.c=.o) $(AFILES:.s=.o))
 INCLUDE	 	+= -I../../libpsn00b/lzp
 LIBDIRS		+= -L../../libpsn00b/lzp
 
-LIBS		= -llzp -lc -lpsxetc -lpsxgpu -lpsxgte -lpsxspu -lpsxapi -lgcc
+LIBS		= -llzp -lc -lpsxetc -lpsxgpu -lpsxgte -lpsxspu -lpsxapi -lc
 
 CFLAGS		= -g -O2 -fno-builtin -fdata-sections -ffunction-sections
 CPPFLAGS	= $(CFLAGS) -fno-exceptions

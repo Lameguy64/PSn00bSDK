@@ -32,12 +32,6 @@ Library header(s):
 	
 
 Todo list:
-
-	* Current vsprintf/sprintf implementation from PSXSDK needs to be replaced
-	  as it performs quite slow likely due to the unnecessary int64 arithmetic
-	  performed on any integer value which the compiler has to emulate on the
-	  R3000. A more efficient implementation that only uses int32 is much
-	  preferred.
 	  
 	* Many of the string manipulation and memory fill functions in string.c
 	  are yet to be replaced with more efficient assembly implementations.

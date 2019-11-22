@@ -29,7 +29,7 @@ Library header(s):
 	
 Todo list:
 
-	* Alternate RotMatrix() functions with different rotation order are yet to
+	* Alternate RotMatrix() functions with different rotation orders are yet to
 	  be implemented.
 	* Various high level RotTransPersp style functions not yet implemented.
 	

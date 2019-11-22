@@ -43,7 +43,7 @@ char *strncpy(char *dst, const char *src, int len)
 		len--;
 	}
 	
-	if(len)*dst = 0;
+	*dst = 0;
 	
 	return odst;
 }
@@ -139,13 +139,13 @@ char *strstr(const char *big, const char *little)
 
 int strcmp(const char *s1, const char *s2)
 {
-	while(*s1 && *s2 && (*s1 == *s2))
+	while((*s1) && (*s2) && (*s1 == *s2))
 	{
 		s1++;
 		s2++;
 	}
 
-	return *s1-*s2;
+	return(*s1-*s2);
 }
 
 int strncmp(const char *s1, const char *s2, int len)

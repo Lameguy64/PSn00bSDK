@@ -2,6 +2,47 @@ PSn00bSDK changelog
 
 Items that are lower in the log are more recently implemented.
 
+11-22-2019 by Lameguy64:
+
+* psxapi: Added root counter or timer functions and related definitions.
+
+* examples: Added timer example.
+
+* psxgpu: Added DR_AREA, DR_OFFSET and DR_TWIN primitives and accompanying
+  setDrawArea(), setDrawOffset() and setTexWindow() macros.
+
+* psxgpu: Added parenthesis to argument value in setlen(), setaddr() and
+  setcode() macros, preventing addPrims() from being used in a more
+  sensible manner (ie. addPrims(ot, sub_ot+3, sub_ot)).
+  
+* examples: Added render2tex render to texture example.
+
+* psxspu: Fixed typo in spuinit.s on section specifier specifying a data
+  section instead of text section, resulting to jump to
+  non-instruction-aligned linker errors.
+  
+* psxgpu: Increased ISR stack size to 2048 bytes.
+
+* psxsio: Added kbhit() to poll keyboard input asynchronously and stdin
+  is now buffered with an IRQ handler.
+
+* psxapi: Added AddDummyTty() (for psxsio DelSIO() fix).
+
+* psxsio: DelSIO() now calls AddDummyTty().
+
+* libc: Fixed bug in strncpy() not placing a NULL byte at end of string.
+
+* libc: Fixed strchr() and strrchr() declarations commented out in string.h.
+
+* libpsn00b: Added the long awaited libpsxcd library with cdxa example.
+  Documentation will come soon but existing libcd docs should be good
+  enough for awhile.
+
+* psxgpu: Fixed non functioning GPU DMA wait in DrawSync().
+
+* LibPSn00b run-time library is now officially 0.15b.
+
+
 10-11-2019 by Lameguy64:
 
 * psxetc: Added FntOpen(), FntPrint() and FntFlush() functions.

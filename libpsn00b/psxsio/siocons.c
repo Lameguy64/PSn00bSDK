@@ -1,9 +1,25 @@
 #include <stdio.h>
+#include <string.h>
 #include <psxapi.h>
 #include <psxgpu.h>
 #include <psxsio.h>
 
+#define SIO_BUFF_LEN	32
+
+static volatile int _sio_key_pending;
+
+static volatile int _sio_buff_rpos;
+static volatile int _sio_buff_wpos;
+static volatile char _sio_buff[SIO_BUFF_LEN];
+
 static void _sio_init() {
+	
+	_sio_key_pending = 0;
+	
+	memset((void*)_sio_buff, 0, SIO_BUFF_LEN);
+	_sio_buff_rpos = 0;
+	_sio_buff_wpos = 0;
+
 }
 
 static int _sio_open(FCB *fcb, const char* file, int mode) {
@@ -29,9 +45,25 @@ static int _sio_inout(FCB *fcb, int cmd) {
 		
 	} else if (cmd == 1) { // Read
 	
-		for(i=0; i<fcb->trns_len; i++) {
+		/*for(i=0; i<fcb->trns_len; i++) {
 			while(!(_sio_control(0, 0, 0) & SR_RXRDY));
 			((char*)fcb->trns_addr)[i] = _sio_control(0, 4, 0);
+		}*/
+		
+		
+		
+		for(i=0; i<fcb->trns_len; i++) {
+			
+			while( _sio_key_pending == 0 );
+			
+			((char*)fcb->trns_addr)[i] = _sio_buff[_sio_buff_rpos];
+			_sio_key_pending--;
+			_sio_buff_rpos++;
+			if( _sio_buff_rpos >= SIO_BUFF_LEN )
+			{
+				_sio_buff_rpos = 0;
+			}
+			
 		}
 		
 		return fcb->trns_len;
@@ -46,6 +78,29 @@ static int _sio_close(int h) {
 	
 	return h;
 	
+}
+
+static void _sio_tty_cb(void)
+{
+	_sio_key_pending++;
+	
+	// Get received byte
+	if( _sio_key_pending < SIO_BUFF_LEN )
+	{
+		_sio_buff[_sio_buff_wpos] = _sio_control(0, 4, 0);
+		_sio_buff_wpos++;
+		if( _sio_buff_wpos >= SIO_BUFF_LEN )
+		{
+			_sio_buff_wpos = 0;
+		}
+	}
+	else
+	{
+		_sio_control(0, 4, 0);
+	}
+	
+	// Acknowledge SIO IRQ
+	_sio_control(2, 1, 0);
 }
 
 static DCB _sio_dcb = {
@@ -74,21 +129,20 @@ static DCB _sio_dcb = {
 
 volatile void (*_sio_callback)(void) = NULL;
 
-extern void _sio_irq_handler(void);
-
-
 void AddSIO(int baud) {
 	
 	_sio_control(2, 0, 0);
 	_sio_control(1, 2, MR_SB_01|MR_CHLEN_8|0x02);
 	_sio_control(1, 3, baud);
-	_sio_control(1, 1, CR_RXEN|CR_TXEN);
+	_sio_control(1, 1, CR_RXEN|CR_TXEN|CR_RXIEN);
 	
 	close(0);
 	close(1);
 	
 	DelDev(_sio_dcb.name);
 	AddDev(&_sio_dcb);
+	
+	Sio1Callback(_sio_tty_cb);
 	
 	open(_sio_dcb.name, 2);
 	open(_sio_dcb.name, 1);
@@ -97,12 +151,17 @@ void AddSIO(int baud) {
 
 void DelSIO(void) {
 	
+	Sio1Callback(NULL);
+	
 	// Reset serial interface
 	_sio_control(2, 0, 0);
 	
 	// Remove TTY device
 	DelDev(_sio_dcb.name);
 	
+	// Add dummy TTY device
+	AddDummyTty();
+		
 }
 
 void WaitSIO(void) {
@@ -134,4 +193,9 @@ void *Sio1Callback(void (*func)()) {
 	
 	return old_isr;
 	
+}
+
+int kbhit()
+{
+	return(_sio_key_pending>0);
 }

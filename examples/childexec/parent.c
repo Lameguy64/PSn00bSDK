@@ -223,7 +223,8 @@ int main(int argc, const char* argv[]) {
 		/* Sort a TPage primitive so the sprites will draw pixels from */
 		/* the correct texture page in VRAM */
 		tpri = (DR_TPAGE*)nextpri;
-		setDrawTPage( tpri, 0, 0, tim.prect->x, tim.prect->y );
+		setDrawTPage( tpri, 0, 0, 
+			getTPage( 0, 0, tim.prect->x, tim.prect->y ) );
 		addPrim( ot[db]+(OT_LEN-1), tpri );
 		nextpri += sizeof(DR_TPAGE);
 		

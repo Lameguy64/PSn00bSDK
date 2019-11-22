@@ -4,7 +4,7 @@
 
 TOPTARGETS	= all clean
 
-LIBDIRS 	= libc lzp psxgpu psxgte psxapi psxetc psxspu psxsio
+LIBDIRS 	= libc lzp psxgpu psxgte psxapi psxetc psxspu psxsio libpsxcd
 
 
 $(TOPTARGETS): $(LIBDIRS)

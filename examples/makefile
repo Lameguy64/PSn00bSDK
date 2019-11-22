@@ -4,7 +4,7 @@
 
 TOPTARGETS	= all clean
 
-DIRS 		= balls gte n00bdemo
+DIRS 		= balls gte n00bdemo fpscam childexec render2tex rgb24 timer billboard
 
 
 $(TOPTARGETS): $(DIRS)

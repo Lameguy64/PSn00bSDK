@@ -24,7 +24,7 @@ DrawSync:
 	nop
 	
 .Ldma_wait:
-	lw		$v0, D2_CHCR
+	lw		$v0, D2_CHCR($a0)
 	nop
 	srl		$v0, 24
 	andi	$v0, 0x1

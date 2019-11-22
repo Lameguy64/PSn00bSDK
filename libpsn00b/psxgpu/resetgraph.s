@@ -4,7 +4,7 @@
 
 .section .text
 
-.set ISR_STACK_SIZE, 1024
+.set ISR_STACK_SIZE, 2048
 
 .global ResetGraph						# Resets the GPU and installs a
 .type ResetGraph, @function				# VSync event handler

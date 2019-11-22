@@ -1,23 +1,38 @@
 #ifndef __PSXAPI__
 #define __PSXAPI__
 
-#define DescHW		0xf0000000
-#define DescSW		0xf4000000
+#define DescHW			0xf0000000
+#define DescSW			0xf4000000
 
-#define HwCARD		(DescHW|0x11)
-#define HwCARD_1	(DescHW|0x12)
-#define HwCARD_0	(DescHW|0x13)
-#define SwCARD		(DescHW|0x02)
+#define HwCARD			(DescHW|0x11)
+#define HwCARD_1		(DescHW|0x12)
+#define HwCARD_0		(DescHW|0x13)
+#define SwCARD			(DescHW|0x02)
 
-#define EvSpIOE		0x0004
-#define EvSpERROR	0x8000
-#define EvSpTIMOUT	0x0100
-#define EvSpNEW		0x0200
+#define EvSpIOE			0x0004
+#define EvSpERROR		0x8000
+#define EvSpTIMOUT		0x0100
+#define EvSpNEW			0x0200
 
-#define EvMdINTR	0x1000
-#define EvMdNOINTR	0x2000
+#define EvMdINTR		0x1000
+#define EvMdNOINTR		0x2000
 
-typedef struct {			// Device control block
+// Root counter (timer) definitions
+#define DescRC			0xf2000000
+
+#define RCntCNT0		(DescRC|0x00)
+#define RCntCNT1		(DescRC|0x01)
+#define RCntCNT2		(DescRC|0x02)
+#define RCntCNT3		(DescRC|0x03)
+
+#define RCntMdINTR		0x1000		// Turns on IRQ
+#define RCntMdNOINTR	0x2000		// Polling mode
+#define RCntMdSC		0x0001		// IRQ when counter target
+#define RCntMdSP		0x0000
+#define RCntMdFR		0x0000
+#define RCntMdGATE		0x0010
+
+typedef struct {					// Device control block
 	char	*name;
 	int		flags;
 	int		ssize;
@@ -121,6 +136,7 @@ int chdir(const char *path);
 int AddDev(DCB *dcb);
 int DelDev(const char *name);
 void ListDev(void);
+void AddDummyTty(void);
 
 void EnterCriticalSection(void);
 void ExitCriticalSection(void);
@@ -151,8 +167,14 @@ int _card_read(int chan, int sector, unsigned char *buf);
 int _card_write(int chan, int sector, unsigned char *buf);
 void _new_card(void);
 
+// Timers
+int SetRCnt(int spec, unsigned short target, int mode);
+int GetRCnt(int spec);
+int StartRCnt(int spec);
+int StopRCnt(int spec);
+int ResetRCnt(int spec);
 
-// Interrupt acknowledge control
+// BIOS IRQ acknowledge control
 void ChangeClearPAD(int mode);
 void ChangeClearRCnt(int t, int m);
 

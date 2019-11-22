@@ -58,6 +58,7 @@ void *Sio1Callback(void (*func)(void));
 
 // ORIGINAL
 void WaitSIO(void);
+int kbhit();
 
 #ifdef __cplusplus
 }

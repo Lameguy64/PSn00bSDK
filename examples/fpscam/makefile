@@ -11,13 +11,7 @@ OFILES		= $(addprefix build/,$(CFILES:.c=.o) $(CPPFILES:.cpp=.o) $(AFILES:.s=.o)
 INCLUDE	 	+= 
 LIBDIRS		+= 
 
-<<<<<<< .mine
 LIBS		= -lpsxetc -lpsxgpu -lpsxgte -lpsxspu -lpsxapi -lc
-||||||| .r23
-LIBS		= -lc -lpsxetc -lpsxgpu -lpsxgte -lpsxspu -lpsxapi -lgcc
-=======
-LIBS		= -lc -lpsxetc -lpsxgpu -lpsxgte -lpsxspu -lpsxapi -lc
->>>>>>> .r27
 
 CFLAGS		= -g -O2 -fno-builtin -fdata-sections -ffunction-sections
 CPPFLAGS	= $(CFLAGS) -fno-exceptions

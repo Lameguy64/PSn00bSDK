@@ -114,9 +114,9 @@
 /*
  *	Primitive handling macros
  */
-#define setlen( p, _len )		( ((P_TAG*)(p))->len = (unsigned char)_len )
-#define setaddr( p, _addr )		( ((P_TAG*)(p))->addr = (unsigned int)_addr )
-#define setcode( p, _code )		( ((P_TAG*)(p))->code = (unsigned char)_code )
+#define setlen( p, _len )		( ((P_TAG*)(p))->len = (unsigned char)(_len) )
+#define setaddr( p, _addr )		( ((P_TAG*)(p))->addr = (unsigned int)(_addr) )
+#define setcode( p, _code )		( ((P_TAG*)(p))->code = (unsigned char)(_code) )
 
 #define getlen( p )				( ((P_TAG*)(p))->len )
 #define getaddr( p )			( ((P_TAG*)(p))->addr )
@@ -126,7 +126,7 @@
 #define isendprim( p )			((((P_TAG*)(p))->addr)==0xffffff)
 
 #define addPrim( ot, p )		setaddr( p, getaddr( ot ) ), setaddr( ot, p )
-#define addPrims(ot, p0, p1)	setaddr( p1, getaddr( ot ) ), setaddr( ot, p0 )
+#define addPrims( ot, p0, p1 )	setaddr( p1, getaddr( ot ) ), setaddr( ot, p0 )
 
 #define catPrim( p0, p1 )		setaddr( p0, p1 )
 #define termPrim( p )			setaddr( p, 0xffffff )
@@ -186,6 +186,22 @@
 			
 #define setFill( p ) 	setlen( p, 3 ), 	setcode( p, 0x02 )
 
+#define setDrawOffset( p, _x, _y ) \
+	setlen( p, 1 ), \
+	(p)->code[0] = (_x&0x3FF)|((_y&0x3FF)<<11), \
+	((char*)(p)->code)[3] = 0xE5
+	
+#define setDrawArea( p, r ) \
+	setlen( p, 2 ), \
+	(p)->code[0] = ((r)->x&0x3FF)|(((r)->y&0x1FF)<<10),	\
+	(p)->code[1] = (((r)->x+(r)->w-1)&0x3FF)|((((r)->y+(r)->h-1)&0x1FF)<<10), \
+	((char*)&(p)->code[0])[3] = 0xE3, \
+	((char*)&(p)->code[1])[3] = 0xE4
+
+#define setTexWindow( p, r ) \
+	setlen( p, 1 ), \
+	(p)->code[0] = ((r)->w&0x1F)|(((r)->h&0x1F)<<5)|(((r)->x&0x1F)<<10)|(((r)->y&0x1F)<<15), \
+	((char*)&(p)->code[0])[3] = 0xE2
 	
 /*
  *	Primitive definitions
@@ -427,34 +443,44 @@ typedef struct {
  *	VRAM fill and transfer primitive definitions
  */
 
-typedef struct {
+typedef struct DR_ENV {
 	unsigned int	tag;
 	unsigned int	code[15];
 } DR_ENV;
 
-typedef struct {
+typedef struct DR_AREA {
+	unsigned int	tag;
+	unsigned int	code[2];
+} DR_AREA;
+
+typedef struct DR_OFFSET {
+	unsigned int	tag;
+	unsigned int	code[1];
+} DR_OFFSET;
+
+typedef struct DR_TWIN {
 	unsigned int	tag;
 	unsigned int	code[2];
 } DR_TWIN;
 
-typedef struct {
+typedef struct DR_TPAGE {
 	unsigned int	tag;
 	unsigned int	code[1];
 } DR_TPAGE;
 
-typedef struct {	/* ORIGINAL */
+typedef struct DR_MASK {	/* ORIGINAL */
 	unsigned int	tag;
 	unsigned int	code[1];
 } DR_MASK;
 
-typedef struct {	/* ORIGINAL */
+typedef struct FILL {		/* ORIGINAL */
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	unsigned short	x0,y0;		// Note: coordinates must be in 16 pixel steps
 	unsigned short	w,h;
 } FILL;
 
-typedef struct {	/* ORIGINAL */
+typedef struct VRAM2VRAM {	/* ORIGINAL */
 	unsigned int	tag;
 	unsigned char	p0,p1,p2,code;
 	unsigned short	x0,y0;
@@ -465,18 +491,18 @@ typedef struct {	/* ORIGINAL */
 
 // General structs
 
-typedef struct {
+typedef struct RECT {
 	short x,y;
 	short w,h;
 } RECT;
 
-typedef struct {
+typedef struct DISPENV_RAW {
 	unsigned int vid_mode;		// Video mode
 	short vid_xpos,vid_ypos;	// Video position (not framebuffer)
 	short fb_x,fb_y;			// Framebuffer display position	
 } DISPENV_RAW;
 
-typedef struct {
+typedef struct DISPENV {
 	RECT	disp;
 	RECT	screen;
 	char	isinter;
@@ -485,7 +511,7 @@ typedef struct {
 	char	pad;
 } DISPENV;
 
-typedef struct {
+typedef struct DRAWENV {
 	RECT			clip;		// Drawing area
 	short			ofs[2];		// GPU draw offset (relative to draw area)
 	RECT			tw;			// Texture window (doesn't do anything atm)
@@ -497,7 +523,7 @@ typedef struct {
 	DR_ENV			dr_env;		// Draw mode packet area (used by PutDrawEnv)
 } DRAWENV;
 
-typedef struct {
+typedef struct TIM_IMAGE {
 	unsigned int mode;
 	RECT *crect;
 	unsigned int *caddr;

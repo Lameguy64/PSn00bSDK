@@ -82,6 +82,10 @@
 .set D2_BCR,	0x10a4
 .set D2_CHCR,	0x10a8
 
+.set D3_MADR,	0x10b0
+.set D3_BCR,	0x10b4
+.set D3_CHCR,	0x10b8
+
 .set D4_MADR,	0x10c0
 .set D4_BCR,	0x10c4
 .set D4_CHCR,	0x10c8

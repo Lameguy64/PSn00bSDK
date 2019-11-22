@@ -314,7 +314,7 @@ int main(int argc, const char* argv[]) {
 			
 			prim = (PRIM_ID*)priptr;
 			
-			if( smxPrimitive->IntAttribute( "double", 0 )  )
+			if( smxPrimitive->IntAttribute( "double" )  )
 				prim->nocull = true;
 			
 			if( ( strcasecmp( "F3", primType ) == 0 ) || 
