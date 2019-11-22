@@ -39,6 +39,9 @@ Brief summary of libraries:
 			  sample upload using DMA and playing samples are supported.
 			  Lacks support for reverb and various sequenced music related
 			  features.
+			  
+	psxcd	- CD-ROM support library. Provides greater CD-ROM functionality
+			  than what the BIOS subsystem can provide.
 			   
 	Each library has its own readme file that contains a todo list, credits
 	and some additional details of the library. Changelog of all libraries are
@@ -93,8 +96,6 @@ LibPSn00b to-do list:
 	Because the PSn00bSDK project still a work in progress, a number of
 	essential libraries are considered but not yet developed. The following
 	lists a number of essential libraries not yet developed.
-	
-	psxcd	 - Full CD-ROM support library.
 
 	psxpad	 - Pad/tap/gun library for better controller support. May support
 			   PS2 controllers natively. Should provide functions for directly
