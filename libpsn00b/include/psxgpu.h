@@ -140,7 +140,7 @@
 	
 /* ORIGINAl CODE */
 #define setDrawMask( p, sb, mt ) \
-	setlen( p, 1 ), p->code[0] = sb|(mt<<1), \
+	setlen( p, 1 ), (p)->code[0] = sb|(mt<<1), \
 	setcode( p, 0xe6 )
 	
 	
