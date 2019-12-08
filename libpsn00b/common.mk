@@ -2,7 +2,11 @@
 # You may need to modify these values to match with your toolchain setup.
 
 # GCC version
+ifndef GCC_VERSION
+
 GCC_VERSION	= 7.4.0
+
+endif
 
 # GCC base paths
 ifndef GCC_BASE

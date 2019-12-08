@@ -10,8 +10,11 @@ INCLUDE	 	= -I../../libpsn00b/include
 # Library directories, last entry must point toolchain libraries
 LIBDIRS		= -L../../libpsn00b
 
+ifndef GCC_VERSION
 
 GCC_VERSION	= 7.4.0
+
+endif
 
 ifndef GCC_BASE
 
