@@ -1,85 +1,118 @@
+/* 
+ * LibPSn00b Example Programs
+ *
+ * Hello World Example
+ * 2019-2020 Meido-Tek Productions / PSn00bSDK Project
+ *
+ * The obligatory hello world example normally included in nearly every
+ * SDK package. This example should also get you started in how to manage
+ * the display using psxgpu.
+ *
+ * Example by Lameguy64
+ *
+ *
+ * Changelog:
+ *
+ *	  January 1, 2020 - Initial version
+ */
+ 
 #include <stdio.h>
-#include <psxgpu.h>
-#include <psxgte.h>
+#include <sys/types.h>
 #include <psxetc.h>
+#include <psxgte.h>
+#include <psxgpu.h>
 
-#define PAL
 
-#ifdef PAL
+// Define display/draw environments for double buffering
+DISPENV disp[2];
+DRAWENV draw[2];
+int db;
 
-#define SCREEN_XRES	320
-#define SCREEN_YRES 256
 
-#else
-
-#define SCREEN_XRES	320
-#define SCREEN_YRES 240
-
-#endif
-
-typedef struct DB
-{
-	DISPENV disp;
-	DRAWENV draw;
-} DB;
-
-DB db[2];
-int db_active;
-
+// Init function
 void init(void)
 {
+	// This not only resets the GPU but it also installs the library's
+	// ISR subsystem to the kernel
 	ResetGraph(0);
 	
-	SetDefDispEnv(&db[0].disp, 0, 0, SCREEN_XRES, SCREEN_YRES);
-	SetDefDispEnv(&db[1].disp, 0, SCREEN_YRES, SCREEN_XRES, SCREEN_YRES);
+	// Define display environments, first on top and second on bottom
+	SetDefDispEnv(&disp[0], 0, 0, 320, 240);
+	SetDefDispEnv(&disp[1], 0, 240, 320, 240);
 	
-	SetDefDrawEnv(&db[0].draw, 0, SCREEN_YRES, SCREEN_XRES, SCREEN_YRES);
-	SetDefDrawEnv(&db[1].draw, 0, 0, SCREEN_XRES, SCREEN_YRES);
+	// Define drawing environments, first on bottom and second on top
+	SetDefDrawEnv(&draw[0], 0, 240, 320, 240);
+	SetDefDrawEnv(&draw[1], 0, 0, 320, 240);
 	
-	db[0].draw.isbg = 1;
-	setRGB0(&db[0].draw, 63, 0, 127);
-	db[1].draw.isbg = 1;
-	setRGB0(&db[1].draw, 63, 0, 127);
+	// Set and enable clear color
+	setRGB0(&draw[0], 0, 96, 0);
+	setRGB0(&draw[1], 0, 96, 0);
+	draw[0].isbg = 1;
+	draw[1].isbg = 1;
 	
-#ifdef PAL
-	SetVideoMode(MODE_PAL);
-	db[0].disp.screen.y = 18;
-	db[1].disp.screen.y = 18;
-	db[0].disp.screen.h = 256;
-	db[1].disp.screen.h = 256;
-#endif
+	// Clear double buffer counter
+	db = 0;
 	
-	PutDispEnv(&db[0].disp);
-	PutDrawEnv(&db[0].draw);
-	db_active = 0;
+	// Apply the GPU environments
+	PutDispEnv(&disp[db]);
+	PutDrawEnv(&draw[db]);
 	
+	// Load test font
 	FntLoad(960, 0);
-	FntOpen(0, 8, SCREEN_XRES, SCREEN_YRES-16, 0, 100);
+	
+	// Open up a test font text stream of 100 characters
+	FntOpen(0, 8, 320, 224, 0, 100);
 }
 
+// Display function
 void display(void)
 {
-	FntFlush(-1);
-	DrawSync(0);
-	VSync(0);
+	// Flip buffer index
+	db = !db;
 	
-	db_active = !db_active;
-	PutDispEnv(&db[db_active].disp);
-	PutDrawEnv(&db[db_active].draw);
+	// Wait for all drawing to complete
+	DrawSync(0);
+	
+	// Wait for vertical sync to cap the logic to 60fps (or 50 in PAL mode)
+	// and prevent screen tearing
+	VSync(0);
+
+	// Switch pages	
+	PutDispEnv(&disp[db]);
+	PutDrawEnv(&draw[db]);
+	
+	// Enable display output, ResetGraph() disables it by default
 	SetDispMask(1);
+	
 }
 
+// Main function, program entrypoint
 int main(int argc, const char *argv[])
 {
-	int count = 0;
-	
+	int counter;
+
+	// Init stuff	
 	init();
 	
+	// Main loop
+	counter = 0;
 	while(1)
 	{
+	
+		// Print the obligatory hello world and counter to show that the
+		// program isn't locking up to the last created text stream
 		FntPrint(-1, "HELLO WORLD\n");
-		FntPrint(-1, "COUNTER=%d\n", count);
+		FntPrint(-1, "COUNTER=%d\n", counter);
+		
+		// Draw the last created text stream
+		FntFlush(-1);
+		
+		// Update display
 		display();
-		count++;
+		
+		// Increment the counter
+		counter++;
 	}
+	
+	return 0;
 }
