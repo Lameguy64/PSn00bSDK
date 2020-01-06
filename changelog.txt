@@ -2,6 +2,16 @@ PSn00bSDK changelog
 
 Items that are lower in the log are more recently implemented.
 
+
+01-06-2020 by Lameguy64:
+
+* libpsn00b: Renamed libpsxcd directory to psxcd to match with other libraries.
+
+* examples: Added obligatory hello world example.
+
+* documentation: Added CD-ROM library documentation.
+
+
 11-22-2019 by Lameguy64:
 
 * psxapi: Added root counter or timer functions and related definitions.

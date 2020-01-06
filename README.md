@@ -33,30 +33,32 @@ As of LibPSn00b run-time library v0.15b
 * Extensive GPU support with polygon primitives, high-speed DMA VRAM
   transfers and DMA ordering table processing. All video modes for both NTSC
   and PAL standards also supported with fully adjustable display area and
-  automatic video standard detection based on last GPU mode, no BIOS ROM
+  automatic video standard detection based on last GPU mode. No BIOS ROM
   string checks used.
 
 * Extensive GTE support with rotate, translate, perspective correction and
   lighting through assembly macros (for both C and ASM) and high performance
-  matrix and vector functions, all calculations performed in fixed point
+  matrix and vector functions. All calculations performed in fixed point
   integer math.
 
 * Stable interrupt service routine with easy to use callback system for
-  simplified handling of hardware and DMA interrupts, no crude event handlers
-  or kernel hacks used and should be compatible with HLE BIOS implementations.
-  Should also play well with writing loader programs.
+  simplified handling and hooking of hardware and DMA interrupts, no crude
+  event handler hooks or kernel hacks used and should be compatible with
+  HLE BIOS implementations. Should also play well with writing loader
+  programs.
 
 * Complete Serial I/O support with SIOCONS driver for tty console access
   through serial interface.
 
 * BIOS controller functions for polling controller input work as intended
-  thanks to proper interrupt handling, no crude manual polling of controllers
+  thanks to proper interrupt handling. No crude manual polling of controllers
   in your main loop.
 
 * Full CD-ROM support with data reading, CD audio and XA audio playback.
   Features built-in ISO9660 file system parser for locating files and
-  supports directories containing more than 30 files. Data streaming
-  should also be possible.
+  supports directories containing more than 30 files (classic ISO9660 only,
+  no Rock Ridge or Joliet extensions support). Data streaming should also be
+  possible.
   
 * Uses Sony SDK library syntax for familiarity to experienced programmers
   and to make porting existing homebrew projects to PSn00bSDK easier.
@@ -157,21 +159,11 @@ and contributed example programs are welcome.
 * psxgte: Higher level GTE rotate translate and perspective functions,
   and many matrix transformation functions yet to be implemented.
 
-* psxspu: Plenty of work to be done.
-
-* psxapi: BIOS function calls intended for stdio may need to be moved
-  to libc instead.
-
-* psxetc: Text stream stuff (FntOpen(), FntPrint(), FndFlush()) for
-  debug purposes yet to be implemented.
+* psxspu: Plenty of work to be done. Hardware timer driven sound/music
+  system may need to be implemented (an equivalent to the Ss* series of
+  functions in libspu basically).
   
-* And many more.
-
-There's been some working prototype CD-ROM code in the works for PSn00bSDK
-that is functional enough to play CD Audio tracks. The prototype code can
-be found in the SVN repo of PSn00bSDK which can be found in the PSn00bSDK
-page of Lameguy64's website, if you're interested to work on the CD-ROM
-implementation yourself.
+* Support for MDEC.
 
 
 ## Usage terms
