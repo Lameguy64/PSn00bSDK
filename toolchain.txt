@@ -25,7 +25,7 @@ Before building, the following packages must be installed:
 Building binutils:
 
 * Download binutils source files at ftp://ftp.gnu.org, choose a version you
-  with to use with PSn00bSDK.
+  wish to use with PSn00bSDK.
 * Extract the contents of the archive, preferably to a directory called gcc
   for example.
 * Create a directory named binutils-build inside the gcc directory.

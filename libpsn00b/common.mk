@@ -2,9 +2,15 @@
 # You may need to modify these values to match with your toolchain setup.
 
 # GCC version
+ifndef GCC_VERSION
+
 GCC_VERSION	= 7.4.0
 
+endif
+
 # GCC base paths
+ifndef GCC_BASE
+
 ifeq "$(OS)" "Windows_NT"	# For Windows
 
 GCC_BASE	= /c/mipsel-unknown-elf
@@ -12,6 +18,8 @@ GCC_BASE	= /c/mipsel-unknown-elf
 else						# For Linux/BSDs
 
 GCC_BASE	= /usr/local/mipsel-unknown-elf
+
+endif
 
 endif
 
