@@ -78,7 +78,7 @@ considered halfway production ready.
 
 A precompiled copy of the GCC 7.4.0 toolchain for Windows is available
 in the PSn00bSDK page of Lameguy64's website
-( http://lameguy64.tk/?page=psn00bsdk ). This should make building PSn00bSDK
+( http://lameguy64.net/?page=psn00bsdk ). This should make building PSn00bSDK
 under Windows a bit easier as building the toolchain is the hardest part
 of building PSn00bSDK, as its more difficult to get it to compile correctly
 under Windows than on Linux and BSDs.
@@ -90,7 +90,7 @@ under Windows than on Linux and BSDs.
 1. Download the following:
   * MSys2 (32-bit or 64-bit version whichever you prefer)
   * GCC 7.4.0 for mipsel-unknown-elf (download from Lameguy64's website at
-    http://lameguy64.tk?page=psn00bsdk )
+    http://lameguy64.net?page=psn00bsdk )
 2. Install MSys2, update packages (with pacman -Syu) then install the
    following packages:
   * git
