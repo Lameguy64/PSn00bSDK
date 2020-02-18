@@ -171,7 +171,8 @@ int CdGetToc(CdlLOC *toc)
 	for(i=0; i<tracks; i++)
 	{
 		int t = itob(1+i);
-		if( !CdControl(CdlGetTD, (u_char*)&t, (u_char*)&toc[i]) )
+		struct { u_char status, toc_min, toc_sec; } res;
+		if( !CdControl(CdlGetTD, (u_char*)&t, (u_char*)&res) )
 		{
 			return 0;
 		}
@@ -179,6 +180,8 @@ int CdGetToc(CdlLOC *toc)
 		{
 			return 0;
 		}
+		toc[i].minute = res.toc_min;
+		toc[i].second = res.toc_sec;
 		toc[i].sector = 0;
 		toc[i].track = 1+i;
 	}
