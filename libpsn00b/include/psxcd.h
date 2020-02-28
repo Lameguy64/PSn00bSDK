@@ -65,13 +65,21 @@
 #define CdlDataEnd			0x04
 #define CdlDiskError		0x05
 
+/*
+ * CD-ROM file system error codes (original)
+ */
+#define CdlIsoOkay			0x00
+#define CdlIsoSeekError		0x01
+#define CdlIsoReadError		0x02
+#define CdlIsoInvalidFs		0x03
+
 #define btoi(b)		((b)/16*10+(b)%16)	/* Convert BCD value to integer */
 #define itob(i)		((i)/10*16+(i)%10)	/* Convert integer to BCD value */
 
 /*
  * CD-ROM disc location struct
  */
-typedef struct CdlLOC
+typedef struct _CdlLOC
 {
 	u_char	minute;
 	u_char	second;
@@ -82,7 +90,7 @@ typedef struct CdlLOC
 /*
  * CD-ROM audio attenuation struct (volume)
  */
-typedef struct CdlATV
+typedef struct _CdlATV
 {
 	u_char	val0;	/* L -> SPU L */
 	u_char	val1;	/* L -> SPU R */
@@ -93,19 +101,22 @@ typedef struct CdlATV
 /*
  * CD-ROM file information struct
  */
-typedef struct CdlFILE
+typedef struct _CdlFILE
 {
 	CdlLOC	loc;
 	u_int	size;
 	char	name[16];
 } CdlFILE;
 
-typedef struct CdlFILTER
+typedef struct _CdlFILTER
 {
 	u_char	file;
 	u_char	chan;
 	u_short	pad;
 } CdlFILTER;
+
+/* Directory query context */
+typedef void* CdlDIR;
 
 /* Data callback */
 typedef void (*CdlCB)(int, unsigned char *);
@@ -114,33 +125,41 @@ typedef void (*CdlCB)(int, unsigned char *);
 extern "C" {
 #endif
 
-int CdInit(int mode);
+int		CdInit(int mode);
 
-CdlLOC *CdIntToPos(int i, CdlLOC *p);
-int CdPosToInt(CdlLOC *p);
-int CdGetToc(CdlLOC *toc);
+CdlLOC*	CdIntToPos(int i, CdlLOC *p);
+int		CdPosToInt(CdlLOC *p);
+int		CdGetToc(CdlLOC *toc);
 
-int CdControl(unsigned char com, unsigned char *param, unsigned char *result);
-int CdControlB(unsigned char com, unsigned char *param, unsigned char *result);
-int CdControlF(unsigned char com, unsigned char *param);
-int CdSync(int mode, unsigned char *result);
+int		CdControl(unsigned char com, unsigned char *param, unsigned char *result);
+int		CdControlB(unsigned char com, unsigned char *param, unsigned char *result);
+int		CdControlF(unsigned char com, unsigned char *param);
+int		CdSync(int mode, unsigned char *result);
 unsigned int CdSyncCallback(CdlCB func);
 
-long CdReadyCallback(CdlCB func);
-int CdGetSector(void *madr, int size);
+long	CdReadyCallback(CdlCB func);
+int		CdGetSector(void *madr, int size);
 
-CdlFILE *CdSearchFile(CdlFILE *loc, const char *filename);
-int CdRead(int sectors, unsigned int *buf, int mode);
-int CdReadSync(int mode, unsigned char *result);
+CdlFILE* CdSearchFile(CdlFILE *loc, const char *filename);
+
+int		CdRead(int sectors, unsigned int *buf, int mode);
+int		CdReadSync(int mode, unsigned char *result);
 unsigned int CdReadCallback(CdlCB func);
 
-int CdStatus(void);
-int CdMode(void);
+int		CdStatus(void);
+int		CdMode(void);
 
-int CdMix(CdlATV *vol);
+int		CdMix(CdlATV *vol);
 
 /* ORIGINAL CODE */
-long *CdAutoPauseCallback(void(*func)());
+CdlDIR*	CdOpenDir(const char* path);
+int		CdReadDir(CdlDIR* dir, CdlFILE* file);
+void	CdCloseDir(CdlDIR* dir);
+
+int		CdGetVolumeLabel(char* label);
+
+long*	CdAutoPauseCallback(void(*func)());
+int		CdIsoError();
 
 #ifdef __cplusplus
 }

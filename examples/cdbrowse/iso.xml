@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<iso_project image_name="cdbrowse.iso">
+
+	<track type="data">
+
+		<identifiers
+			system			="PLAYSTATION"
+			application		="PLAYSTATION"
+			volume			="PSN00BSDK"
+			volume_set		="PSN00BSDK"
+			publisher		="MEIDOTEK"
+		/>
+
+		<directory_tree>
+
+			<file name="system.cnf"	type="data" source="system.cnf"/>
+			<file name="cdbrowse.exe" type="data" source="cdbrowse.exe"/>
+	
+			<dir name="dira">
+				<dir name="diraa">
+				</dir>
+			</dir>
+			<dir name="dirb">
+			</dir>
+
+			<dummy sectors="1024"/>
+
+		</directory_tree>
+
+	</track>
+
+</iso_project>

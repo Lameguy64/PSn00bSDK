@@ -3,6 +3,29 @@ PSn00bSDK changelog
 Items that are lower in the log are more recently implemented.
 
 
+02-28-2020 by Lameguy64:
+
+* documentation: Added docs for CdOpenDir(), CdReadDir() and CdCloseDir().
+
+* psxgpu: Added GetODE().
+
+* psxspu: Fixed SpuKeyOn() bug where only 16 of the 24 channels can be
+  activated, due to channel bits being written as a 16-bit word.
+
+* psxcd: Added CdOpenDir(), CdReadDir() and CdCloseDir() for parsing directories.
+
+* psxcd: Issuing CdlNop (GetStat) commands now triggers the media change flag
+  internal to the libraries when CD lid is opened, so file system functions can
+  update the cached ISO descriptor when the disc has been changed.
+  
+* psxcd: Made internal variables and functions for iso9660 parsing static.
+
+
+02-25-2020 by thp:
+
+* libc: Added abs and labs() functions.
+
+  
 01-06-2020 by Lameguy64:
 
 * libpsn00b: Renamed libpsxcd directory to psxcd to match with other libraries.

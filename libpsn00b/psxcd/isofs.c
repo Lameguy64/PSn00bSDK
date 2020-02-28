@@ -150,18 +150,27 @@ typedef struct ISO_DESCRIPTOR
 
 } ISO_DESCRIPTOR;
 
+typedef struct _CdlDIR_INT
+{
+	u_int	_pos;
+	u_int	_len;
+	u_char*	_dir;
+} CdlDIR_INT;
+
 // Leave non-aligned structure packing
 #pragma pack(pop)
 
 extern char _cd_media_changed;
-int _cd_iso_last_dir_lba;
 
-u_char _cd_iso_descriptor_buff[2048];
-u_char *_cd_iso_pathtable_buff=NULL;
-u_char *_cd_iso_directory_buff=NULL;
-int _cd_iso_directory_len;
 
-int _CdReadIsoDescriptor(int session_offs)
+static int		_cd_iso_last_dir_lba;
+static u_char	_cd_iso_descriptor_buff[2048];
+static u_char*	_cd_iso_pathtable_buff=NULL;
+static u_char*	_cd_iso_directory_buff=NULL;
+static int		_cd_iso_directory_len;
+static int		_cd_iso_error=0;
+
+static int _CdReadIsoDescriptor(int session_offs)
 {
 	int i;
 	CdlLOC loc;
@@ -174,6 +183,7 @@ int _CdReadIsoDescriptor(int session_offs)
 #ifdef DEBUG
 		printf("psxcd: Could not set seek destination.\n");
 #endif
+		_cd_iso_error = CdlIsoSeekError;
 		return -1;
 	}
 	
@@ -184,6 +194,7 @@ int _CdReadIsoDescriptor(int session_offs)
 #ifdef DEBUG
 		printf("psxcd: Error reading ISO volume descriptor.\n");
 #endif
+		_cd_iso_error = CdlIsoReadError;
 		return -1;
 	}
 	
@@ -195,6 +206,7 @@ int _CdReadIsoDescriptor(int session_offs)
 #ifdef DEBUG
 		printf("psxcd: Disc does not have a ISO9660 file system.\n");
 #endif
+		_cd_iso_error = CdlIsoInvalidFs;
 		return -1;
 	}
 	
@@ -224,15 +236,17 @@ int _CdReadIsoDescriptor(int session_offs)
 #ifdef DEBUG
 		printf("psxcd: Error reading ISO path table.\n");
 #endif
+		_cd_iso_error = CdlIsoReadError;
 		return -1;
 	}
 	
 	_cd_iso_last_dir_lba = 0;
+	_cd_iso_error = CdlIsoOkay;
 	
 	return 0;
 }
 
-int _CdReadIsoDirectory(int lba)
+static int _CdReadIsoDirectory(int lba)
 {
 	int i;
 	CdlLOC loc;
@@ -253,6 +267,7 @@ int _CdReadIsoDirectory(int lba)
 #ifdef DEBUG
 		printf("psxcd: Could not set seek destination.\n");
 #endif
+		_cd_iso_error = CdlIsoSeekError;
 		return -1;
 	}
 	
@@ -269,6 +284,7 @@ int _CdReadIsoDirectory(int lba)
 #ifdef DEBUG
 		printf("psxcd: Error reading initial directory record.\n");
 #endif
+		_cd_iso_error = CdlIsoReadError;
 		return -1;
 	}
 	
@@ -287,6 +303,7 @@ int _CdReadIsoDirectory(int lba)
 #ifdef DEBUG
 			printf("psxcd: Could not set seek destination.\n");
 #endif
+			_cd_iso_error = CdlIsoSeekError;
 			return -1;
 		}
 	
@@ -301,20 +318,22 @@ int _CdReadIsoDirectory(int lba)
 		if( CdReadSync(0, 0) )
 		{
 #ifdef DEBUG
-			printf("psxcd: Error reading initial directory record.\n");
+			printf("psxcd: Error reading remaining directory record.\n");
 #endif
+			_cd_iso_error = CdlIsoReadError;
 			return -1;
 		}
 	}
 	
 	_cd_iso_last_dir_lba = lba;
+	_cd_iso_error = CdlIsoOkay;
 	
 	return 0;
 }
 
 #ifdef DEBUG
 
-void dump_directory(void)
+static void dump_directory(void)
 {
 	int i;
 	int dir_pos;
@@ -355,7 +374,7 @@ void dump_directory(void)
 	
 }
 
-void dump_pathtable(void)
+static void dump_pathtable(void)
 {
 	u_char *tbl_pos;
 	ISO_PATHTABLE_ENTRY *tbl_entry;
@@ -389,7 +408,7 @@ void dump_pathtable(void)
 
 #endif
 
-int get_pathtable_entry(int entry, ISO_PATHTABLE_ENTRY *tbl, char *namebuff)
+static int get_pathtable_entry(int entry, ISO_PATHTABLE_ENTRY *tbl, char *namebuff)
 {
 	int i;
 	u_char *tbl_pos;
@@ -438,7 +457,7 @@ int get_pathtable_entry(int entry, ISO_PATHTABLE_ENTRY *tbl, char *namebuff)
 	return -1;
 }
 
-char *resolve_pathtable_path(int entry, char *rbuff)
+static char* resolve_pathtable_path(int entry, char *rbuff)
 {
 	char namebuff[16];
 	ISO_PATHTABLE_ENTRY tbl_entry;
@@ -465,7 +484,7 @@ char *resolve_pathtable_path(int entry, char *rbuff)
 	return rbuff;
 }
 
-int find_dir_entry(const char *name, ISO_DIR_ENTRY *dirent)
+static int find_dir_entry(const char *name, ISO_DIR_ENTRY *dirent)
 {
 	int i;
 	int dir_pos;
@@ -510,7 +529,7 @@ int find_dir_entry(const char *name, ISO_DIR_ENTRY *dirent)
 	return -1;
 }
 
-char *get_pathname(char *path, const char *filename)
+static char* get_pathname(char *path, const char *filename)
 {
 	char *c;
 	c = strrchr(filename, '\\');
@@ -526,7 +545,7 @@ char *get_pathname(char *path, const char *filename)
 	return path;
 }
 
-char *get_filename(char *name, const char *filename)
+static char* get_filename(char *name, const char *filename)
 {
 	char *c;
 	c = strrchr(filename, '\\');
@@ -660,4 +679,174 @@ CdlFILE *CdSearchFile(CdlFILE *fp, const char *filename)
 	fp->size = dir_entry.entrySize.lsb;
 	
 	return fp;
+}
+
+CdlDIR *CdOpenDir(const char* path)
+{
+	CdlDIR_INT*	dir;
+	int			num_dirs;
+	int			i,found_dir;
+	char		tpath_rbuff[128];
+	char*		rbuff;
+	
+	ISO_PATHTABLE_ENTRY tbl_entry;
+	
+	// Read ISO descriptor if changed flag is set
+	if( _cd_media_changed )
+	{
+		// Read ISO descriptor and path table
+		if( _CdReadIsoDescriptor( 0 ) )
+		{
+#ifdef DEBUG
+			printf( "psxcd: Could not read ISO file system.\n" );
+#endif
+			return NULL;
+		}
+#ifdef DEBUG
+		printf( "psxcd: ISO file system cache updated.\n" );
+#endif
+		_cd_media_changed = 0;
+	}
+	
+	num_dirs = get_pathtable_entry( 0, NULL, NULL );
+
+	found_dir = 0;
+	for( i=1; i<num_dirs; i++ )
+	{
+		rbuff = resolve_pathtable_path( i, tpath_rbuff+127 );
+#ifdef DEBUG
+		printf( "psxcd_dbg: Found = %s|\n", rbuff );
+#endif
+		if( rbuff )
+		{
+			if( strcmp( path, rbuff ) == 0 )
+			{
+				found_dir = i;
+				break;
+			}
+		}
+	}
+	
+	if( !found_dir )
+	{
+#ifdef DEBUG
+		printf( "psxcd_dbg: Directory path not found.\n" );
+#endif
+		return NULL;
+	}
+	
+#ifdef DEBUG
+	printf( "psxcd_dbg: Found directory at record %d!\n", found_dir );
+#endif
+
+	get_pathtable_entry( found_dir, &tbl_entry, NULL );
+	
+#ifdef DEBUG	
+	printf( "psxcd_dbg: Directory LBA = %d\n", tbl_entry.dirOffs );
+#endif
+
+	_CdReadIsoDirectory( tbl_entry.dirOffs );
+
+	dir = (CdlDIR_INT*)malloc( sizeof(CdlDIR_INT) );
+	
+	dir->_len = _cd_iso_directory_len;
+	dir->_dir = malloc( _cd_iso_directory_len );
+	
+	memcpy( dir->_dir, _cd_iso_directory_buff, _cd_iso_directory_len );
+	
+	dir->_pos = 0;
+	
+	if( found_dir == 1 )
+	{
+		ISO_DIR_ENTRY *dir_entry;
+	
+		for( i=0; i<2; i++ )
+		{
+			dir_entry = (ISO_DIR_ENTRY*)(dir->_dir+dir->_pos);
+			dir->_pos += dir_entry->entryLength;
+		}
+	}
+	
+	return (CdlDIR)dir;
+}
+
+int CdReadDir(CdlDIR *dir, CdlFILE* file)
+{
+	CdlDIR_INT*		d_dir;
+	ISO_DIR_ENTRY*	dir_entry;
+
+	d_dir = (CdlDIR_INT*)dir;
+	
+	if( d_dir->_pos >= _cd_iso_directory_len )
+		return 0;
+	
+	dir_entry = (ISO_DIR_ENTRY*)(d_dir->_dir+d_dir->_pos);
+		
+	if( d_dir->_dir[d_dir->_pos+sizeof(ISO_DIR_ENTRY)] == 0 )
+	{
+		strcpy( file->name, "." );
+	}
+	else if( d_dir->_dir[d_dir->_pos+sizeof(ISO_DIR_ENTRY)] == 1 )
+	{
+		strcpy( file->name, ".." );
+	}
+	else
+	{
+		strncpy( file->name, 
+			d_dir->_dir+d_dir->_pos+sizeof(ISO_DIR_ENTRY), 
+			dir_entry->identifierLen );
+	}
+	
+	CdIntToPos( dir_entry->entryOffs.lsb, &file->loc );
+	
+	file->size = dir_entry->entrySize.lsb;
+	
+	d_dir->_pos += dir_entry->entryLength;
+	
+	// Check if padding is reached (end of record sector)
+	if( d_dir->_dir[d_dir->_pos] == 0 )
+	{
+		// Snap it to next sector
+		d_dir->_pos = ((d_dir->_pos+2047)>>11)<<11;
+	}
+	
+	return 1;
+}
+
+void CdCloseDir(CdlDIR *dir)
+{
+	CdlDIR_INT*	d_dir;
+	
+	d_dir = (CdlDIR_INT*)dir;
+	
+	free( d_dir->_dir );
+	free( d_dir );
+}
+
+int CdIsoError()
+{
+	return _cd_iso_error;
+}
+
+int CdGetVolumeLabel(char* label)
+{
+	int i;
+	ISO_DESCRIPTOR* descriptor;
+	
+	if( _CdReadIsoDescriptor(0) )
+	{
+		return -1;
+	}
+	
+	descriptor = (ISO_DESCRIPTOR*)_cd_iso_descriptor_buff;
+	
+	i = 0;
+	for( i=0; (descriptor->volumeID[i]!=0x20)&&(i<32); i++ )
+	{
+		label[i] = descriptor->volumeID[i];
+	}
+	
+	label[i] = 0x00;
+	
+	return 0;
 }

@@ -371,6 +371,17 @@ _cd_fetch_result:
 
 .Lwrite_status:
 
+	andi	$v1, $v0, 0x10
+	
+	beqz	$v1, .Lno_disc_change
+	nop
+	
+	la		$v1, _cd_media_changed
+	addiu	$a1, $0 , 1
+	sw		$a1, 0($v1)
+	
+.Lno_disc_change:
+
 	sb		$v0, 0($a0)
 	
 .Lskip_status:

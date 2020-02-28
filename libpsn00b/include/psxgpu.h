@@ -540,8 +540,10 @@ extern "C" {
 
 void ResetGraph(int mode);
 
-int GetVideoMode();
+int GetVideoMode(void);
 void SetVideoMode(int mode);
+
+int GetODE(void);
 
 void PutDispEnvRaw(DISPENV_RAW *disp);
 void PutDispEnv(DISPENV *disp);
@@ -551,16 +553,16 @@ void SetDispMask(int mask);
 
 int VSync(int m);
 int DrawSync(int m);
-void WaitGPUcmd();
-void WaitGPUdma();
+void WaitGPUcmd(void);
+void WaitGPUdma(void);
 
 // Callback hook functions
-void *VSyncCallback(void (*func)());
-void *DrawSyncCallback(void (*func)());
+void *VSyncCallback(void (*func)(void));
+void *DrawSyncCallback(void (*func)(void));
 
 // Interrupt callback functions
-void *DMACallback(int dma, void (*func)());
-void *InterruptCallback(int irq, void (*func)());
+void *DMACallback(int dma, void (*func)(void));
+void *InterruptCallback(int irq, void (*func)(void));
 void *GetInterruptCallback(int irq);				// Original
 void RestartCallback();
 

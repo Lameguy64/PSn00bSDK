@@ -1,6 +1,6 @@
 include ../sdk-common.mk
 
-TARGET		= cdxa.elf
+TARGET		= cdbrowse.elf
 
 CFILES		= $(notdir $(wildcard *.c))
 CPPFILES 	= $(notdir $(wildcard *.cpp))
