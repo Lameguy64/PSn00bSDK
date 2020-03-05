@@ -12,7 +12,7 @@ LIBDIRS		= -L../../libpsn00b
 
 ifndef GCC_VERSION
 
-GCC_VERSION	= 7.4.0
+GCC_VERSION	= 8.2.0
 
 endif
 
@@ -27,6 +27,11 @@ else						# For Linux/BSDs
 GCC_BASE	= /usr/local/mipsel-unknown-elf
 
 endif
+
+CC			= $(GCC_BASE)/bin/$(PREFIX)gcc
+CXX			= $(GCC_BASE)/bin/$(PREFIX)g++
+AS			= $(GCC_BASE)/bin/$(PREFIX)as
+LD			= $(GCC_BASE)/bin/$(PREFIX)ld
 
 endif
 

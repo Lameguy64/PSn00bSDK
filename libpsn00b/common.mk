@@ -4,7 +4,7 @@
 # GCC version
 ifndef GCC_VERSION
 
-GCC_VERSION	= 7.4.0
+GCC_VERSION	= 8.2.0
 
 endif
 
@@ -26,6 +26,12 @@ endif
 
 # Toolchain prefix
 PREFIX		= mipsel-unknown-elf-
+
+CC		= $(GCC_BASE)/bin/$(PREFIX)gcc
+CXX		= $(GCC_BASE)/bin/$(PREFIX)g++
+AS		= $(GCC_BASE)/bin/$(PREFIX)as
+AR		= $(GCC_BASE)/bin/$(PREFIX)ar
+RANLIB	= $(GCC_BASE)/bin/$(PREFIX)ranlib
 
 # Include directories
 INCLUDE	 	= -I../include

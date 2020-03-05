@@ -12,13 +12,8 @@ OFILES	= $(addprefix build/,$(CFILES:.c=.o) $(AFILES:.s=.o))
 
 INCLUDE = -I../include
 
-CFLAGS	= -g -msoft-float -fno-builtin -fdata-sections -ffunction-sections -Wa,--strip-local-absolute 
-AFLAGS	= -g -msoft-float -Wa,--strip-local-absolute
-
-CC		= $(PREFIX)gcc
-AS		= $(PREFIX)as
-AR		= $(PREFIX)ar
-RANLIB	= $(PREFIX)ranlib
+CFLAGS	= -g -msoft-float -fno-builtin -fdata-sections -ffunction-sections -Wa,--strip-local-absolute
+AFLAGS	= -g -msoft-float -strip-local-absolute
 
 all: $(TARGET)
 
@@ -29,10 +24,10 @@ $(TARGET): $(OFILES)
 build/%.o: %.c
 	@mkdir -p $(dir $@)
 	$(CC) -O2 $(CFLAGS) $(INCLUDE) -c $< -o $@
-	
+
 build/%.o: %.s
 	@mkdir -p $(dir $@)
-	$(CC) $(AFLAGS) $(INCLUDE) -c $< -o $@
+	$(AS) $(AFLAGS) $(INCLUDE) $< -o $@
 
 clean:
 	rm -Rf build $(TARGET)
