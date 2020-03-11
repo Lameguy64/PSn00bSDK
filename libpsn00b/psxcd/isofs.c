@@ -675,7 +675,7 @@ CdlFILE *CdSearchFile(CdlFILE *fp, const char *filename)
 	printf("psxcd_dbg: Located file at LBA %d.\n", dir_entry.entryOffs.lsb);
 #endif
 
-	CdIntToPos(dir_entry.entryOffs.lsb, &fp->loc);
+	CdIntToPos(dir_entry.entryOffs.lsb, &fp->pos);
 	fp->size = dir_entry.entrySize.lsb;
 	
 	return fp;
@@ -797,7 +797,7 @@ int CdReadDir(CdlDIR *dir, CdlFILE* file)
 			dir_entry->identifierLen );
 	}
 	
-	CdIntToPos( dir_entry->entryOffs.lsb, &file->loc );
+	CdIntToPos( dir_entry->entryOffs.lsb, &file->pos );
 	
 	file->size = dir_entry->entrySize.lsb;
 	

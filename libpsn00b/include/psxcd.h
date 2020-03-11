@@ -103,7 +103,7 @@ typedef struct _CdlATV
  */
 typedef struct _CdlFILE
 {
-	CdlLOC	loc;
+	CdlLOC	pos;
 	u_int	size;
 	char	name[16];
 } CdlFILE;
@@ -125,7 +125,7 @@ typedef void (*CdlCB)(int, unsigned char *);
 extern "C" {
 #endif
 
-int		CdInit(int mode);
+int		CdInit(void);
 
 CdlLOC*	CdIntToPos(int i, CdlLOC *p);
 int		CdPosToInt(CdlLOC *p);

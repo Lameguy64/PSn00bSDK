@@ -159,7 +159,7 @@ void init()
 	/* Initialize SPU and CD-ROM */
 	printf("Initializing CD-ROM... ");
 	SpuInit();
-	CdInit(0);
+	CdInit();
 	printf("Done.\n");
 	
 	
@@ -367,7 +367,7 @@ int main(int argc, const char* argv[])
 				{
 					if( !p_circle )
 					{
-						strcpy( path, "\\ );
+						strcpy( path, "\\" );
 						update_listing = true;
 						p_circle = 1;
 					}

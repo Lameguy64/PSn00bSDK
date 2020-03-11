@@ -15,7 +15,7 @@ void _cd_control(unsigned char com, unsigned char *param, int plen);
 void _cd_wait_ack(void);
 void _cd_wait(void);
 
-int CdInit(int mode)
+int CdInit(void)
 {
 	// Sets up CD-ROM hardware and low-level subsystem
 	_cd_init();

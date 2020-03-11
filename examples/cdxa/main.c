@@ -248,7 +248,7 @@ void init()
 	/* Initialize SPU and CD-ROM */
 	printf("Initializing CD-ROM... ");
 	SpuInit();
-	CdInit(0);
+	CdInit();
 	printf("Done.\n");
 	
 	
@@ -342,12 +342,12 @@ int main(int argc, const char* argv[])
 	else
 	{
 		int sec;
-		sec = CdPosToInt(&file.loc);
+		sec = CdPosToInt(&file.pos);
 		printf("XA located at sector %d size %d.\n", sec, file.size);
 	}
 	
 	/* Save file location as XA location */
-	xa_loc = file.loc;
+	xa_loc = file.pos;
 	
 	/* Hook XA callback function to CdReadyCallback (for auto stop/loop */
 	CdReadyCallback(xa_callback);

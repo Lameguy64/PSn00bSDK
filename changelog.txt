@@ -3,6 +3,15 @@ PSn00bSDK changelog
 Items that are lower in the log are more recently implemented.
 
 
+03-11-2020 by Lameguy64:
+
+* psxcd: Fixed CdInit() syntax (there should be no arguments).
+
+* psxcd: Fixed CdlFILE, loc variable renamed to pos.
+
+* documentation: Improved and updated toolchain instructions a bit.
+
+
 02-28-2020 by Lameguy64:
 
 * documentation: Added docs for CdOpenDir(), CdReadDir() and CdCloseDir().
