@@ -12,13 +12,8 @@ AFILES		= $(notdir $(wildcard ./*.s))
 OFILES		= $(addprefix build/,$(CFILES:.c=.o) $(CXXFILES:.cxx=.o) $(AFILES:.s=.o))
 
 CFLAGS	= -g -O2 -msoft-float -fno-builtin -fdata-sections -ffunction-sections -Wa,--strip-local-absolute
-AFLAGS	= -g -msoft-float -Wa,-strip-local-absolute
+AFLAGS	= -g -msoft-float --strip-local-absolute
 
-CC		= $(PREFIX)gcc
-CXX		= $(PREFIX)g++
-AS		= $(PREFIX)as
-AR		= $(PREFIX)ar
-RANLIB	= $(PREFIX)ranlib
 
 all: $(TARGET)
 
@@ -34,10 +29,10 @@ build/%.o: %.c
 build/%.o: %.cxx
 	@mkdir -p $(dir $@)
 	$(CXX) $(CFLAGS) $(INCLUDE) -c $< -o $@
-	
+
 build/%.o: %.s
 	@mkdir -p $(dir $@)
-	$(CC) $(AFLAGS) $(INCLUDE) -c $< -o $@
+	$(AS) $(AFLAGS) $(INCLUDE) $< -o $@
 
 clean:
 	rm -Rf build $(TARGET)

@@ -11,22 +11,17 @@ SOURCES	= stdio fs sys
 AFILES	= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.s))
 OFILES	= $(addprefix build/,$(AFILES:.s=.o))
 
-AFLAGS	= -g -msoft-float -Wa,--strip-local-absolute
-
-CC		= $(PREFIX)gcc
-AS		= $(PREFIX)as
-AR		= $(PREFIX)ar
-RANLIB	= $(PREFIX)ranlib
+AFLAGS	= -g -msoft-float -strip-local-absolute
 
 all: $(TARGET)
-	
+
 $(TARGET): $(OFILES)
 	$(AR) cr $(TARGET) $(OFILES)
 	$(RANLIB) $(TARGET)
-	
+
 build/%.o: %.s
 	@mkdir -p $(dir $@)
-	$(CC) $(AFLAGS) $(INCLUDE) -c $< -o $@
+	$(AS) $(AFLAGS) $(INCLUDE) $< -o $@
 
 clean:
 	rm -Rf build $(TARGET)
