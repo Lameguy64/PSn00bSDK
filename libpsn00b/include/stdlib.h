@@ -53,6 +53,9 @@ long labs(long i);
 long long strtoll(const char *nptr, char **endptr, int base);
 long strtol(const char *nptr, char **endptr, int base);
 long double strtold(const char *nptr, char **endptr);
+// BIOS temporary
+int atoi(const char *s);
+long atol(const char *s);
 
 // Note: these use floats internally!
 double strtod(const char *nptr, char **endptr);

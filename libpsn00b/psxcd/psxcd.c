@@ -1,12 +1,21 @@
 #include <stdio.h>
+#include <psxgpu.h>
 #include "psxcd.h"
+
+#define READ_TIMEOUT	600		// 10 seconds for NTSC
 
 extern volatile char _cd_ack_wait;
 extern volatile unsigned char _cd_last_int;
 extern volatile unsigned char _cd_last_mode;
 extern volatile unsigned char _cd_status;
 extern volatile CdlCB _cd_callback_int1_data;
+
 volatile unsigned char *_cd_result_ptr;
+
+// For read retry
+volatile CdlLOC _cd_last_setloc;
+volatile unsigned int *_cd_last_read_addr;
+volatile int _cd_last_sector_count;
 
 extern volatile char _cd_media_changed;
 
@@ -76,6 +85,7 @@ int CdControlF(unsigned char com, unsigned char *param)
 	{
 		case CdlSetloc:
 			param_len = 3;
+			_cd_last_setloc = *((CdlLOC*)param);
 			break;
 		case CdlPlay:
 			if( param )
@@ -105,6 +115,7 @@ int CdControlF(unsigned char com, unsigned char *param)
 		if( param )
 		{
 			_cd_control(CdlSetloc, param, 3);
+			_cd_last_setloc = *((CdlLOC*)param);
 		}
 	}
 	
@@ -220,11 +231,17 @@ volatile unsigned int *_cd_read_addr;
 volatile unsigned char _cd_read_result[8];
 volatile unsigned int _cd_read_oldcb;
 volatile unsigned int _cd_read_sector_sz;
+volatile unsigned int _cd_read_counter;
+
+
+
 volatile CdlCB _cd_read_cb;
 
 // Sector callback
 static void _CdReadReadyCallback(int status, unsigned char *result)
 {
+	_cd_read_counter = VSync(-1);
+
 	if( status == CdlDataReady )
 	{
 		// Fetch sector from CD controller
@@ -259,6 +276,8 @@ int CdRead(int sectors, unsigned int *buf, int mode)
 {
 	// Set sectors to read count
 	_cd_sector_count = sectors;
+	_cd_last_sector_count = sectors;
+	_cd_last_read_addr = buf;
 	_cd_read_addr = buf;
 	
 	// Determine sector based on mode flags
@@ -275,7 +294,9 @@ int CdRead(int sectors, unsigned int *buf, int mode)
 		_cd_read_sector_sz = 2048;
 	}
 	
-	// Set readt callback
+	_cd_read_counter = VSync(-1);
+	
+	// Set read callback
 	_cd_read_oldcb = CdReadyCallback(_CdReadReadyCallback);
 	
 	// Set specified mode
@@ -287,8 +308,37 @@ int CdRead(int sectors, unsigned int *buf, int mode)
 	return 0;
 }
 
+static void CdDoRetry()
+{
+	int cb;
+	
+	printf( "CdRead: Retrying...\n" );
+	
+	// Stop reading
+	CdControl(CdlPause, 0, 0);
+	CdSync(0, 0);
+	
+	// Reset parameters for retrying read operation
+	_cd_sector_count	= _cd_last_sector_count;
+	_cd_read_addr		= _cd_last_read_addr;
+	
+	// Reset timeout
+	_cd_read_counter = VSync(-1);
+	
+	CdReadyCallback(_CdReadReadyCallback);
+	
+	// Retry read
+	CdControl(CdlSetloc, (void*)&_cd_last_setloc, 0);
+	CdControl(CdlReadN, 0, (unsigned char*)_cd_read_result);
+}
+
 int CdReadSync(int mode, unsigned char *result)
 {
+	if( (VSync(-1)-_cd_read_counter) > READ_TIMEOUT )
+	{
+		CdDoRetry();
+	}
+
 	if( mode )
 	{
 		if( CdSync(1, 0) == CdlDiskError )
@@ -298,7 +348,14 @@ int CdReadSync(int mode, unsigned char *result)
 		return _cd_sector_count;
 	}
 	
-	while(_cd_sector_count > 0);
+	while(_cd_sector_count > 0)
+	{
+		if( (VSync(-1)-_cd_read_counter) > READ_TIMEOUT )
+		{
+			CdDoRetry();
+		}
+	}
+	
 	if( CdSync(0, result) != CdlComplete )
 	{
 		return -1;

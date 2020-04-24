@@ -3,6 +3,22 @@ PSn00bSDK changelog
 Items that are lower in the log are more recently implemented.
 
 
+04-24-2020 by Lameguy64:
+
+* Refined toolchain instructions a bit.
+
+* psxcd: Added automatic read retry for CdRead() operations, as long as
+  CdReadSync() is called until read completion.
+
+* psxapi: Added BIOS atoi() and atol() calls. Temporary, may be replaced with
+  a faster implementation
+  
+* psxsio: Added ioctl() support for FIOCSCAN to probe for pending input in
+  serial tty driver.
+  
+* examples: Reorganized examples, added new tty and console examples.
+
+
 03-11-2020 by Lameguy64:
 
 * psxcd: Fixed CdInit() syntax (there should be no arguments).

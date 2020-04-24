@@ -1,6 +1,6 @@
-include ../sdk-common.mk
+include ../../sdk-common.mk
 
-TARGET		= rgb24.elf
+TARGET		= timer.elf
 
 CFILES		= $(notdir $(wildcard *.c))
 CPPFILES 	= $(notdir $(wildcard *.cpp))
@@ -8,10 +8,10 @@ AFILES		= $(notdir $(wildcard *.s))
 
 OFILES		= $(addprefix build/,$(CFILES:.c=.o) $(CPPFILES:.cpp=.o) $(AFILES:.s=.o))
 
-INCLUDE	 	+=
-LIBDIRS		+=
+INCLUDE	 	+= 
+LIBDIRS		+= 
 
-LIBS		= -lpsxgpu -lpsxapi -lc
+LIBS		= -lpsxetc -lpsxgpu -lpsxgte -lpsxspu -lpsxapi -lc
 
 CFLAGS		= -g -O2 -fno-builtin -fdata-sections -ffunction-sections
 CPPFLAGS	= $(CFLAGS) -fno-exceptions
@@ -35,7 +35,5 @@ build/%.o: %.s
 	@mkdir -p $(dir $@)
 	$(CC) $(AFLAGS) $(INCLUDE) -c $< -o $@
 	
-build/%.o: %.tim
-
 clean:
 	rm -rf build $(TARGET) $(TARGET:.elf=.exe)

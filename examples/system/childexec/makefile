@@ -1,4 +1,4 @@
-include ../sdk-common.mk
+include ../../sdk-common.mk
 
 INCLUDE	 	+= 
 LIBDIRS		+= 

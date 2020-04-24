@@ -1,6 +1,6 @@
-include ../sdk-common.mk
+include ../../sdk-common.mk
 
-TARGET		= render2tex.elf
+TARGET		= gte.elf
 
 CFILES		= $(notdir $(wildcard *.c))
 CPPFILES 	= $(notdir $(wildcard *.cpp))
@@ -11,7 +11,7 @@ OFILES		= $(addprefix build/,$(CFILES:.c=.o) $(CPPFILES:.cpp=.o) $(AFILES:.s=.o)
 INCLUDE	 	+= 
 LIBDIRS		+= 
 
-LIBS		= -lc -lpsxetc -lpsxgpu -lpsxgte -lpsxspu -lpsxapi -lgcc
+LIBS		= -lc -lpsxetc -lpsxgpu -lpsxgte -lpsxspu -lpsxapi -lc
 
 CFLAGS		= -g -O2 -fno-builtin -fdata-sections -ffunction-sections
 CPPFLAGS	= $(CFLAGS) -fno-exceptions

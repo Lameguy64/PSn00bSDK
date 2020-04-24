@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <ioctl.h>
 #include <psxapi.h>
 #include <psxgpu.h>
 #include <psxsio.h>
@@ -74,6 +75,19 @@ static int _sio_inout(FCB *fcb, int cmd) {
 	
 }
 
+static int _sio_ioctl(FCB *fcb, int cmd, int arg)
+{
+	if( cmd == FIOCSCAN )
+	{
+		if( _sio_key_pending )
+		{
+			return 0;
+		}
+	}
+	
+	return -1;
+}
+
 static int _sio_close(int h) {
 	
 	return h;
@@ -112,7 +126,7 @@ static DCB _sio_dcb = {
 	(void*)_sio_open,	// open
 	(void*)_sio_inout,	// inout
 	_sio_close,			// close
-	NULL,				// ioctl
+	_sio_ioctl,			// ioctl
 	NULL,				// read
 	NULL,				// write
 	NULL,				// erase

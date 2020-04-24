@@ -110,13 +110,12 @@ under Windows than on Linux and BSDs.
    Clone it in the root of your C drive or in any location you choose.
 7. Enter tools directory in PSn00bSDK and run `make` to build all tools.
    Then, run `make install` to consolidate all tools to a single bin
-   directory. Add this directory to your PATH variable
-   (with export=$PATH:<path to SDK>/tools/bin) and make sure `elf2x` can
-   be called from any directory.
+   directory. Add this directory to your PATH variable by adding
+   `export=$PATH:<path to SDK>/tools/bin` in your .bash_profile file. You'll
+   need to reload the MSys2 shell after making the changes.
 8. Enter libpsn00b directory and run `make` to build all libpsn00b libraries.
-9. Enter examples directory and run `make`, this also verifies if the SDK
-   has been set up correctly. Update directory paths in `sdk-common.mk` when
-   necessary.
+6. Compile the example programs to test if the SDK is set up correctly.
+   Update directory paths in `sdk-common.mk` when necessary.
    
 If you prefer to do things in the Command Prompt, you can add the paths
 c:\msys64\usr\bin, c:\msys64\mingw64\bin (mingw32 for 32-bit),

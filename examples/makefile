@@ -1,11 +1,27 @@
 # Run using make (Linux) or gmake (BSD)
 # Part of the PSn00bSDK Project
-# 2019 Lameguy64 / Meido-Tek Productions
+# 2019-2020 Lameguy64 / Meido-Tek Productions
 
 TOPTARGETS	= all clean
 
-DIRS 		= balls gte n00bdemo fpscam childexec render2tex rgb24 timer billboard
+# Beginner examples
+DIRS 		= beginner/hello
 
+# Graphics examples
+DIRS	   += graphics/balls graphics/billboard graphics/fpscam graphics/gte \
+			  graphics/render2tex graphics/rgb24
+
+# System related examples
+DIRS	   += system/childexec system/console system/timer
+
+# Low-level examples
+DIRS	   += lowlevel/cartrom
+
+# CD-ROM examples
+DIRS	   += cdrom/cdbrowse cdrom/cdxa
+
+# Demos
+DIRS	   += demos/n00bdemo
 
 $(TOPTARGETS): $(DIRS)
 $(DIRS):

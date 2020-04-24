@@ -1,6 +1,6 @@
-include ../sdk-common.mk
+include ../../sdk-common.mk
 
-TARGET		= gte.elf
+TARGET		= rgb24.elf
 
 CFILES		= $(notdir $(wildcard *.c))
 CPPFILES 	= $(notdir $(wildcard *.cpp))
@@ -8,10 +8,10 @@ AFILES		= $(notdir $(wildcard *.s))
 
 OFILES		= $(addprefix build/,$(CFILES:.c=.o) $(CPPFILES:.cpp=.o) $(AFILES:.s=.o))
 
-INCLUDE	 	+= 
-LIBDIRS		+= 
+INCLUDE	 	+=
+LIBDIRS		+=
 
-LIBS		= -lc -lpsxetc -lpsxgpu -lpsxgte -lpsxspu -lpsxapi -lc
+LIBS		= -lpsxgpu -lpsxapi -lc
 
 CFLAGS		= -g -O2 -fno-builtin -fdata-sections -ffunction-sections
 CPPFLAGS	= $(CFLAGS) -fno-exceptions
@@ -35,5 +35,7 @@ build/%.o: %.s
 	@mkdir -p $(dir $@)
 	$(CC) $(AFLAGS) $(INCLUDE) -c $< -o $@
 	
+build/%.o: %.tim
+
 clean:
 	rm -rf build $(TARGET) $(TARGET:.elf=.exe)

@@ -1,7 +1,7 @@
-include ../sdk-common.mk
+include ../../sdk-common.mk
 
 # Project target name
-TARGET		= balls.elf
+TARGET		= hello.elf
 
 # Searches for C, C++ and S (assembler) files in local directory
 CFILES		= $(notdir $(wildcard *.c))

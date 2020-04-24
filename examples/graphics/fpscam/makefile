@@ -1,6 +1,6 @@
-include ../sdk-common.mk
+include ../../sdk-common.mk
 
-TARGET		= timer.elf
+TARGET		= fpscam.elf
 
 CFILES		= $(notdir $(wildcard *.c))
 CPPFILES 	= $(notdir $(wildcard *.cpp))

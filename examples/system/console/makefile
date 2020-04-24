@@ -1,7 +1,7 @@
-include ../sdk-common.mk
+include ../../sdk-common.mk
 
 # Project target name
-TARGET		= hello.elf
+TARGET		= console.elf
 
 # Searches for C, C++ and S (assembler) files in local directory
 CFILES		= $(notdir $(wildcard *.c))
@@ -19,7 +19,7 @@ INCLUDE	 	+=
 LIBDIRS		+=
 
 # Libraries to link
-LIBS		= -lpsxetc -lpsxgpu -lpsxgte -lpsxspu -lpsxapi -lc
+LIBS		= -lpsxsio -lpsxetc -lpsxgpu -lpsxgte -lpsxspu -lpsxapi -lc
 
 # C compiler flags
 CFLAGS		= -g -O2 -fno-builtin -fdata-sections -ffunction-sections

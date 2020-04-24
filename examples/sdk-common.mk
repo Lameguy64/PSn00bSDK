@@ -5,10 +5,10 @@
 PREFIX		= mipsel-unknown-elf-
 
 # Include directories
-INCLUDE	 	= -I../../libpsn00b/include
+INCLUDE	 	= -I../../../libpsn00b/include
 
 # Library directories, last entry must point toolchain libraries
-LIBDIRS		= -L../../libpsn00b
+LIBDIRS		= -L../../../libpsn00b
 
 ifndef GCC_VERSION
 
