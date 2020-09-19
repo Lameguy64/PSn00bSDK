@@ -13,21 +13,25 @@ RestartCallback:
 	
 	la		$a0, _custom_exit
 	jal		SetCustomExitFromException
-	addiu	$sp, -12
+	addiu	$sp, -4
+	addiu	$sp, 4
 	
-	jal		ChangeClearPAD
 	move	$a0, $0
+	jal		ChangeClearPAD
+	addiu	$sp, -4
+	addiu	$sp, 4
 	
 	li		$a0, 3
-	jal		ChangeClearRCnt
 	move	$a1, $0
-	
+	jal		ChangeClearRCnt
+	addiu	$sp, -8
+	addiu	$sp, 8
 	
 	la		$a0, _irq_func_table
 	move	$a1, $0
 	move	$v0, $0
 	
-.Lcheck_cbs:
+.Lcheck_cbs:							# Set up the interrupt masks
 	lw		$v1, 0($a0)
 	nop
 	beqz	$v1, .Lno_cb
@@ -43,8 +47,8 @@ RestartCallback:
 	sw		$0 , ISTAT($a0)
 	sw		$v0, IMASK($a0)
 	
-	addiu	$sp, 12
 	lw		$ra, 0($sp)
-	nop
+	addiu	$sp, 4
 	jr		$ra
 	nop
+	

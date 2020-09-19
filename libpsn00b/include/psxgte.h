@@ -58,6 +58,7 @@ MATRIX *HiRotMatrix(VECTOR *r, MATRIX *m);
 
 MATRIX *TransMatrix(MATRIX *m, VECTOR *r);
 MATRIX *ScaleMatrix(MATRIX *m, VECTOR *s);
+MATRIX *ScaleMatrixL(MATRIX *m, VECTOR *s);
 
 MATRIX *MulMatrix(MATRIX *m0, MATRIX *m1);
 MATRIX *MulMatrix0(MATRIX *m0, MATRIX *m1, MATRIX *m2);

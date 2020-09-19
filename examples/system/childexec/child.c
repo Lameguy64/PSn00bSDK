@@ -102,7 +102,7 @@ void display();
 
 
 /* Main function */
-int main() {
+int main(int argc, const char *argv[]) {
 
 	int i,p,xy_temp;
 	
@@ -112,6 +112,12 @@ int main() {
 	
 	POLY_F4	*pol4;					/* Flat shaded quad primitive pointer */
 	
+	
+	printf( "Arguments passed: %d\n", argc );
+	for( i=0; i<argc; i++ )
+	{
+		printf( "%s\n", argv[i] );
+	}
 	
 	/* Init graphics and GTE */
 	init();

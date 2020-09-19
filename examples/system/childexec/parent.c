@@ -2,9 +2,14 @@
  * LibPSn00b Example Programs
  *
  * Child Program Execution Example
- * 2019 Meido-Tek Productions / PSn00bSDK Project
+ * 2020 Meido-Tek Productions / PSn00bSDK Project
  *
- * This is a modification of the balls example, modified to execute
+ * This example demonstrates how to execute a child PS-EXE from a parent
+ * PS-EXE using the Exec() function, and transferring execution back from
+ * the child PS-EXE to the parent PS-EXE. Passing arguments to the child
+ * PS-EXE is also demonstrated here.
+ *
+ * This is actually a modification of the balls example, modified to execute
  * a child program for this example.
  *
  * Example by Lameguy64
@@ -87,9 +92,6 @@ void init() {
 	/* Apply the display and drawing environments */
 	PutDispEnv( &disp );
 	PutDrawEnv( &draw );
-	
-	/* Enable video output */
-	SetDispMask( 1 );
 	
 	printf("Done.\n");
 	
@@ -232,6 +234,9 @@ int main(int argc, const char* argv[]) {
 		DrawSync( 0 );
 		VSync( 0 );
 		
+		/* Enable video output */
+		SetDispMask( 1 );
+	
 		/* Since draw.isbg is non-zero this clears the screen */
 		PutDrawEnv( &draw );
 		
@@ -265,6 +270,14 @@ void SetDefaultExitFromException();
 
 void run_child() {
 	
+	// Arguments for the child program
+	char *args[] =
+	{
+		"SAMPLE=0",
+		"SESSION=1",
+		"ARGH!"
+	};
+	
 	// So child header is readable
 	EXE_HEAD *exe = (EXE_HEAD*)child_exe;
 	
@@ -287,9 +300,9 @@ void run_child() {
 	
 	// Execute child
 	printf("Child exec!\n");
-	Exec(&exe->param, 0, 0);
+	Exec(&exe->param, 3, args);
 	
-	// Reset previous handler
+	// Restore interrupts for this PS-EXE
 	EnterCriticalSection();
 	RestartCallback();
 	ExitCriticalSection();
@@ -300,6 +313,7 @@ void run_child() {
 	ChangeClearPAD(0);
 	
 	// Set this program's display mode
+	SetDispMask(0);
 	PutDispEnv(&disp);
 	
 }

@@ -172,7 +172,7 @@ int main(int argc, const char* argv[]) {
 	
 	/* Uncomment this line if you don't have tty interfaces
 	 * provided by n00brom or similar development environments with tty */
-	AddSIO(115200);
+	//AddSIO(115200);
 	
 	
 	/* Main loop */

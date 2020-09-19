@@ -560,12 +560,6 @@ void WaitGPUdma(void);
 void *VSyncCallback(void (*func)(void));
 void *DrawSyncCallback(void (*func)(void));
 
-// Interrupt callback functions
-void *DMACallback(int dma, void (*func)(void));
-void *InterruptCallback(int irq, void (*func)(void));
-void *GetInterruptCallback(int irq);				// Original
-void RestartCallback();
-
 void LoadImage(RECT *rect, unsigned int *data);
 void StoreImage(RECT *rect, unsigned int *data);
 
@@ -581,6 +575,14 @@ int GetTimInfo(unsigned int *tim, TIM_IMAGE *timimg);
 
 DISPENV *SetDefDispEnv(DISPENV *disp, int x, int y, int w, int h);
 DRAWENV *SetDefDrawEnv(DRAWENV *draw, int x, int y, int w, int h);
+
+// Debug font functions
+
+void FntLoad(int x, int y);
+char *FntSort(unsigned int *ot, char *pri, int x, int y, const char *text);
+int FntOpen(int x, int y, int w, int h, int isbg, int n);
+int FntPrint(int id, const char *fmt, ...);
+char *FntFlush(int id);
 
 #ifdef __cplusplus
 }

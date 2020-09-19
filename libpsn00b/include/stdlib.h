@@ -45,6 +45,9 @@ void *realloc(void *buf , int n);
 extern "C" {
 #endif
 
+extern int __argc;
+extern char __argv[];
+
 int rand();
 void srand(unsigned long seed);
 

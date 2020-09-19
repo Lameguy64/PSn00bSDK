@@ -1,4 +1,4 @@
-include ../../sdk-common.mk
+include ../../examples-setup.mk
 
 TARGET		= demo.elf
 
@@ -9,7 +9,7 @@ OFILES		= $(addprefix build/,$(CFILES:.c=.o) $(AFILES:.s=.o))
 
 INCLUDE	 	+= -I../../../libpsn00b/lzp
 
-LIBS		= -llzp -lc -lpsxetc -lpsxgpu -lpsxgte -lpsxspu -lpsxapi -lc
+LIBS		= -llzp -lpsxgpu -lpsxgte -lpsxspu -lpsxetc -lpsxapi -lc
 
 CFLAGS		= -g -O2 -fno-builtin -fdata-sections -ffunction-sections
 CPPFLAGS	= $(CFLAGS) -fno-exceptions

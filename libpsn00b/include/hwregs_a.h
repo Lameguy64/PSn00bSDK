@@ -21,6 +21,7 @@
 .set CD_REG2,			0x1802
 .set CD_REG3,			0x1803
 
+.set SBUS_5,			0x1018
 .set COM_DELAY,			0x1020
 
 # SPU (must be used with 16-bit load/store instructions)

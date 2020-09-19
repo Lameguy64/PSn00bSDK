@@ -1,22 +1,25 @@
 # Run using make (Linux) or gmake (BSD)
 # Part of the PSn00bSDK Project
-# 2019 Lameguy64 / Meido-Tek Productions
+# 2019 - 2020 Lameguy64 / Meido-Tek Productions
 
-include ../common.mk
+include ../../psn00bsdk-setup.mk
 
-TARGET	= ../libpsxapi.a
+TARGET		= libpsxapi.a
 
-SOURCES	= stdio fs sys
+INCLUDE 	= -I../include
 
-AFILES	= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.s))
-OFILES	= $(addprefix build/,$(AFILES:.s=.o))
+SOURCES		= stdio fs sys
 
-AFLAGS	= -g -msoft-float -Wa,--strip-local-absolute
+AFILES		= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.s))
+OFILES		= $(addprefix build/,$(AFILES:.s=.o))
 
-CC		= $(PREFIX)gcc
-AS		= $(PREFIX)as
-AR		= $(PREFIX)ar
-RANLIB	= $(PREFIX)ranlib
+AFLAGS		= -g -msoft-float -Wa,--strip-local-absolute
+
+ifndef PSN00BSDK_LIBS
+
+PSN00BSDK_LIBS	= ..
+
+endif
 
 all: $(TARGET)
 	
@@ -27,6 +30,12 @@ $(TARGET): $(OFILES)
 build/%.o: %.s
 	@mkdir -p $(dir $@)
 	$(CC) $(AFLAGS) $(INCLUDE) -c $< -o $@
+
+install:
+ifneq ($(PSN00BSDK_LIBS), "..")
+	@mkdir -p $(PSN00BSDK_LIBS)
+endif
+	cp $(TARGET) $(PSN00BSDK_LIBS)/$(TARGET)
 
 clean:
 	rm -Rf build $(TARGET)

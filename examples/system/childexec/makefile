@@ -1,9 +1,9 @@
-include ../../sdk-common.mk
+include ../../examples-setup.mk
 
 INCLUDE	 	+= 
 LIBDIRS		+= 
 
-LIBS		= -lpsxetc -lpsxgpu -lpsxgte -lpsxspu -lc -lpsxapi
+LIBS		= -lpsxgpu -lpsxgte -lpsxspu -lpsxetc -lpsxapi -lc
 
 CFLAGS		= -g -O2 -fno-builtin -fdata-sections -ffunction-sections
 CPPFLAGS	= $(CFLAGS) -fno-exceptions
@@ -20,11 +20,11 @@ all: child parent
 
 child: build/child.o
 	$(LD) $(LDFLAGS_C) $(LIBDIRS) build/child.o $(LIBS) -o child.elf
-	elf2x child.elf
+	elf2x -q child.elf
 
 parent: build/parent.o build/child_exe.o
 	$(LD) $(LDFLAGS_P) $(LIBDIRS) build/parent.o build/child_exe.o $(LIBS) -o parent.elf
-	elf2x parent.elf
+	elf2x -q parent.elf
 	
 build/%.o: %.c
 	@mkdir -p $(dir $@)

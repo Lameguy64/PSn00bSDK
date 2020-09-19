@@ -15,6 +15,12 @@ _cd_init:
 	nop
 	
 	lui		$a3, IOBASE				# Acknowledge all CD IRQs
+	
+	li		$v0, 0x20943			# Set CD-ROM Delay/Size and common delay
+	sw		$v0, SBUS_5($a3)
+	li		$v0, 0x1325
+	sw		$v0, COM_DELAY($a3)
+	
 	li		$v0, 1
 	sb		$v0, CD_REG0($a3)
 	li		$v0, 0x1f
@@ -23,9 +29,6 @@ _cd_init:
 	
 	sb		$0 , CD_REG0($a3)
 	sb		$0 , CD_REG3($a3)
-	
-	li		$v0, 0x1325
-	sw		$v0, COM_DELAY($a3)
 	
 	la		$a1, _cd_handler
 	jal		InterruptCallback
@@ -75,29 +78,6 @@ _cd_init:
 	
 	jal		ExitCriticalSection
 	nop
-	
-	#li		$a0, 0x01				# GetStat
-	#jal		_cd_control
-	#move	$a2, $0
-	#jal		_cd_wait
-	#nop
-	
-	#li		$a0, 0x0a				# Init
-	#jal		_cd_control
-	#move	$a2, $0
-	#jal		_cd_wait
-	#nop
-	
-	#li		$a0, 0x0c				# Demute
-	#jal		_cd_control
-	#move	$a2, $0
-	#jal		_cd_wait
-	#nop
-	
-	#la		$a0, _cd_init_msg
-	#jal		printf
-	#addiu	$sp, -16
-	#addiu	$sp, 16
 	
 	lw		$ra, 0($sp)
 	addiu	$sp, 4
@@ -153,7 +133,7 @@ _cd_handler:
 	addiu	$sp, -4
 	sw		$ra, 0($sp)
 	
-	lui		$a3, IOBASE				# Print out IRQ number
+	lui		$a3, IOBASE				# Get IRQ number
 	li		$v0, 1
 	sb		$v0, CD_REG0($a3)
 
@@ -166,6 +146,11 @@ _cd_handler:
 	
 	bne		$v0, 0x1, .Lno_data
 	nop
+	
+	sb		$0 , CD_REG0($a3)
+	lbu		$v1, CD_REG0($a3)
+	sb		$0 , CD_REG3($a3)
+	lbu		$v1, CD_REG3($a3)
 	
 	sb		$0 , CD_REG0($a3)		# Load data FIFO on INT1
 	li		$v1, 0x80
@@ -188,6 +173,9 @@ _cd_handler:
 	sw		$v1, 0($0)
 	li		$v1, 3
 	sw		$v1, 0($0)
+	
+	la		$v1, _cd_last_int
+	lbu		$v0, 0($v1)
 	
 	beq		$v0, 0x1, .Lirq_1		# Data ready
 	nop
@@ -371,17 +359,6 @@ _cd_fetch_result:
 
 .Lwrite_status:
 
-	andi	$v1, $v0, 0x10
-	
-	beqz	$v1, .Lno_disc_change
-	nop
-	
-	la		$v1, _cd_media_changed
-	addiu	$a1, $0 , 1
-	sw		$a1, 0($v1)
-	
-.Lno_disc_change:
-
 	sb		$v0, 0($a0)
 	
 .Lskip_status:
@@ -394,22 +371,31 @@ _cd_fetch_result:
 	sb		$v0, 0($a0)
 	addiu	$a0, 1
 	
+	move	$a1, $0
 .Lread_futher_result:
 
 	lbu		$v0, CD_REG0($a3)
 	nop
 	andi	$v0, 0x20
 	beqz	$v0, .Lno_result
+	addu	$a1, 1
+	bge		$a1, 7, .Lno_result			# timeout (locks up here on PSIO)
 	nop
-
 	lbu		$v0, CD_REG1($a3)
 	lbu		$v1, CD_REG0($a3)
 	sb		$v0, 0($a0)
-	andi	$v1, 0x20
+	
+	andi	$v1, 0x20					# when performing a CD-ROM read
 	bnez	$v1, .Lread_futher_result
 	addiu	$a0, 1
 
 .Lno_result:
+
+#	lbu		$v0, CD_REG0($a3)			# Flush response FIFO
+#	nop
+#	andi	$v0, 0x20
+#	bnez	$v0, .Lno_result
+#	lbu		$v0, CD_REG1($a3)
 
 	jr		$ra
 	nop
@@ -509,11 +495,7 @@ CdSyncCallback:
 .type psxcd_credits, @object
 psxgpu_credits:
 	.ascii "psxcd library programs by Lameguy64\n"
-	.asciiz "2019 PSn00bSDK Project / Meido-Tek Productions\n"
-	
-_cd_init_msg:
-.asciiz "psxcd: Init OK\n"
-.align 4
+	.asciiz "2020 PSn00bSDK Project / Meido-Tek Productions\n"
 	
 .comm	_cd_last_cmd, 1, 1
 .comm	_cd_last_mode, 1, 1
@@ -523,9 +505,7 @@ _cd_init_msg:
 .comm	_cd_status, 1, 1
 .comm	_cd_last_int, 1, 1
 
-.comm	_cd_media_changed, 1, 1
-
 # Callback hooks
 .comm	_cd_callback_int1_data, 4, 4		# Data IRQ callback
-.comm	_cd_callback_int4, 4, 4		# Autopause callback
+.comm	_cd_callback_int4, 4, 4				# Autopause callback
 .comm	_cd_sync_cb, 4, 4

@@ -2,6 +2,71 @@ PSn00bSDK changelog
 
 Items that are lower in the log are more recently implemented.
 
+09-19-2020 by Lameguy64:
+
+* libpsn00b: Revised makefiles for building the libraries and examples in a
+  way to make building with different toolchain versions easier with the
+  PSN00BSDK_TC environment variable. Library installation and linking is
+  also made easier with the PSN00BSDK_LIBS environment variable. See readme
+  in the libpsn00b directory for details.
+  
+* examples: Fixed libgcc not found error when compiling some of the examples.
+
+* libc: Added strtok().
+
+* libc: Added support for command line arguments. Pass arguments via
+  SYSTEM.CNF BOOT= string or a string array with Exec(). Arguments can
+  be read via argc/argv[] in main() or __argc/__argv anywhere else.
+  
+* libc: Added SetHeapSize().
+
+* psxgpu: Moved ISR and callback subsystem to psxetc. You'll have to link
+  psxetc after psxgpu and psxapi after psxetc in your library string.
+
+* psxetc: Moved debug font functions (FntInit(), FntOpen(), etc) to psxgpu.
+
+* psxetc: Fixed stack management in RestartCallback().
+
+* examples: Added argument passing in childexec example.
+
+* psxcd: Fixed crashing on PSIO and possibly some emulators by implementing
+  a response buffer read limiter.
+  
+* psxgpu: Interrupts are now disabled before setting up ISR and callbacks
+  in ResetGraph(), as LoadExec() still has interrupts enabled when jumping
+  to the loaded PS-EXE's entrypoint. Fixes programs made with PSn00bSDK
+  crashing at ResetGraph() on PSIO when loading from the Menu System and
+  possibly some emulators.
+
+
+07-25-2020 by Lameguy64:
+
+* psxgte: Added ScaleMatrixL().
+
+* doc: Corrected documentation for CdReadSync() function.
+
+* psxcd: Added new define: CdlIsoLidOpen.
+
+* psxcd: Updated media change detection logic, media change is checked
+  by lid open status bit in all CD-ROM file functions. CdControl() calls will
+  also trigger the media change status on lid open.
+  
+* psxcd: Fixed bug in CdGetVolumeLabel() where it constantly reparses the file
+  system regardless of media change status.
+  
+* examples: Updated cdrom/cdbrowse example slightly.
+
+* psxcd: Added CdLoadSession().
+
+* psxcd: Fixed bug where CdReadDir() locks up in an infinite loop when it
+  encounters a NULL directory record, and the parser has not yet exceeded the
+  length of the directory record.
+  
+* doc: Replaced library version numbers with SVN revision numbers in the
+  introduced fields.
+  
+* doc: Started work on CD-ROM library overview.
+
 
 04-24-2020 by Lameguy64:
 

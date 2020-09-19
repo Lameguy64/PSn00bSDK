@@ -302,6 +302,48 @@ double strtod(const char *nptr, char **endptr)
 	return (i + d)*s;
 }
 
+/* implementation by Lameguy64, behaves like OpenWatcom's strtok() */
+/* BIOS strtok seemed either bugged, or designed for wide chars */
+
+static char *_strtok_curpos;
+static char *_strtok_endpos;
+
+char *strtok( char *s1, char *s2 )
+{
+	char *c,*t;
+	
+	if( s1 )
+	{
+		_strtok_curpos = s1;
+		_strtok_endpos = s1+strlen( s1 );
+	}
+	else
+	{
+		if( _strtok_curpos >= _strtok_endpos )
+			return( NULL );
+	}
+	
+	if( !*_strtok_curpos )
+		return( NULL );
+	
+	if( c = strstr( _strtok_curpos, s2 ) )
+	{
+		*c = 0;
+		t = _strtok_curpos;
+		_strtok_curpos = c+1;
+		return( t );
+	}
+	else
+	{
+		t = _strtok_curpos;
+		_strtok_curpos += strlen( t );
+		return( t );
+	}
+	
+	return( NULL );
+	
+} /* strtok */
+
 long double strtold(const char *nptr, char **endptr)
 {
 	return (long double)strtod(nptr, endptr);

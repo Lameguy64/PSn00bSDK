@@ -72,6 +72,7 @@
 #define CdlIsoSeekError		0x01
 #define CdlIsoReadError		0x02
 #define CdlIsoInvalidFs		0x03
+#define CdlIsoLidOpen		0x04
 
 #define btoi(b)		((b)/16*10+(b)%16)	/* Convert BCD value to integer */
 #define itob(i)		((i)/10*16+(i)%10)	/* Convert integer to BCD value */
@@ -160,6 +161,8 @@ int		CdGetVolumeLabel(char* label);
 
 long*	CdAutoPauseCallback(void(*func)());
 int		CdIsoError();
+
+int		CdLoadSession(int session);
 
 #ifdef __cplusplus
 }

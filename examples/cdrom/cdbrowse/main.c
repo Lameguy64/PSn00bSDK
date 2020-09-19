@@ -39,7 +39,7 @@
  *
  *	  Up/Down	- Move selection cursor.
  *	  Cross		- Enter directory.
- *	  Circle	- Go back to root directory.
+ *	  Circle	- Go back to parent directory.
  *
  *
  * Example by Lameguy64
@@ -48,6 +48,8 @@
  * Changelog:
  *
  *	February 25, 2020: Initial version.
+ *
+ *  July 12, 2020: Updated CD-ROM directory query logic on disc change slightly.
  */
  
 #include <stdio.h>
@@ -69,7 +71,6 @@
 #define MAX_BALLS	1536		/* Number of balls to display */
 
 #define OT_LEN 		8			/* Ordering table length */
-
 
 /* Screen coordinates */
 #define SCREEN_XRES	320
@@ -146,6 +147,9 @@ void init()
 {	
 	int i;
 	
+	/* Uncomment to send tty messages to SIO */
+	//AddSIO( 115200 );
+	
 	/* Reset GPU (also installs event handler for VSync) */
 	printf("Init GPU... ");
 	ResetGraph( 0 );
@@ -158,7 +162,7 @@ void init()
 	
 	/* Initialize SPU and CD-ROM */
 	printf("Initializing CD-ROM... ");
-	SpuInit();
+	//SpuInit();
 	CdInit();
 	printf("Done.\n");
 	
@@ -218,9 +222,13 @@ void init()
 	
 	
 	/* Initialize pad */
+	EnterCriticalSection();
+	
 	InitPAD(padbuff[0], 34, padbuff[1], 34);
 	StartPAD();
 	ChangeClearPAD(0);
+	
+	ExitCriticalSection();
 	
 }
 
@@ -257,6 +265,10 @@ int main(int argc, const char* argv[])
 	list_scroll = 0;
 	disc_present = false;
 	update_listing = true;
+	
+	printf( "Calling CdStatus()...\n" );
+	CdStatus();
+	printf( "Call done.\n" );
 	
 	while(1) {
 		
@@ -383,23 +395,19 @@ int main(int argc, const char* argv[])
 		/* Updates directory listing */
 		if( update_listing )
 		{
-			if ( (CdStatus()&0x12) == 0x2 )
+			/* Reset path and update label if new disc inserted */
+			if( !disc_present )
 			{
-			
-				/* Reset path and update label if new disc inserted */
-				if( !disc_present )
-				{
-					strcpy( path, "\\" );
-					CdGetVolumeLabel(disc_label);
-					disc_present = true;
-				}
-				
-				/* Query directory */
-				files_found = query_dir( path, files, 40 );
-				sel_channel = 0;
-				list_scroll = 0;
-				
+				strcpy( path, "\\" );
+				CdGetVolumeLabel(disc_label);
+				disc_present = true;
 			}
+				
+			/* Query directory */
+			files_found = query_dir( path, files, 40 );
+			sel_channel = 0;
+			list_scroll = 0;
+			
 			update_listing = false;
 		}
 		

@@ -1,4 +1,4 @@
-include ../../sdk-common.mk
+include ../../examples-setup.mk
 
 TARGET		= rgb24.elf
 
@@ -11,7 +11,7 @@ OFILES		= $(addprefix build/,$(CFILES:.c=.o) $(CPPFILES:.cpp=.o) $(AFILES:.s=.o)
 INCLUDE	 	+=
 LIBDIRS		+=
 
-LIBS		= -lpsxgpu -lpsxapi -lc
+LIBS		= -lpsxgpu -lpsxetc -lpsxapi -lc
 
 CFLAGS		= -g -O2 -fno-builtin -fdata-sections -ffunction-sections
 CPPFLAGS	= $(CFLAGS) -fno-exceptions

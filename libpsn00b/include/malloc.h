@@ -7,6 +7,7 @@ extern "C" {
 
 unsigned int *GetBSSend();
 void InitHeap(unsigned int *addr, int size);
+int SetHeapSize(int size);
 void *malloc(int size);
 void free(void *ptr);
 

@@ -17,7 +17,7 @@ volatile CdlLOC _cd_last_setloc;
 volatile unsigned int *_cd_last_read_addr;
 volatile int _cd_last_sector_count;
 
-extern volatile char _cd_media_changed;
+int _cd_media_changed;
 
 void _cd_init(void);
 void _cd_control(unsigned char com, unsigned char *param, int plen);
@@ -61,6 +61,12 @@ int CdControl(unsigned char com, unsigned char *param, unsigned char *result)
 	
 	CdControlF(com, param);
 	_cd_wait_ack();
+	
+	// Set media changed flag if lid had been opened
+	if( (CdStatus()&0x10) )
+	{
+		_cd_media_changed = 1;
+	}
 	
 	return 1;
 }

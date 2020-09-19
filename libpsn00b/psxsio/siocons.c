@@ -2,7 +2,7 @@
 #include <string.h>
 #include <ioctl.h>
 #include <psxapi.h>
-#include <psxgpu.h>
+#include <psxetc.h>
 #include <psxsio.h>
 
 #define SIO_BUFF_LEN	32

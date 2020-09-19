@@ -1,18 +1,26 @@
-include ../common.mk
+# Run using make (Linux) or gmake (BSD)
+# Part of the PSn00bSDK Project
+# 2019 - 2020 Lameguy64 / Meido-Tek Productions
 
-TARGET	= ../libpsxspu.a
+include ../../psn00bsdk-setup.mk
 
-CFILES	= $(notdir $(wildcard ./*.c))
-AFILES	= $(notdir $(wildcard ./*.s))
-OFILES	= $(addprefix build/,$(CFILES:.c=.o) $(AFILES:.s=.o))
+TARGET		= libpsxspu.a
 
-CFLAGS	= -g -O2 -msoft-float -fdata-sections -ffunction-sections -Wa,--strip-local-absolute
-AFLAGS	= -g -msoft-float -strip-local-absolute
+INCLUDE		= -I../include
 
-CC		= $(PREFIX)gcc
-AS		= $(PREFIX)as
-AR		= $(PREFIX)ar
-RANLIB	= $(PREFIX)ranlib
+CFILES		= $(notdir $(wildcard ./*.c))
+AFILES		= $(notdir $(wildcard ./*.s))
+OFILES		= $(addprefix build/,$(CFILES:.c=.o) $(AFILES:.s=.o))
+
+CFLAGS		= -g -O2 -msoft-float -fdata-sections -ffunction-sections \
+			  -Wa,--strip-local-absolute
+AFLAGS		= -g -msoft-float -strip-local-absolute
+
+ifndef PSN00BSDK_LIBS
+
+PSN00BSDK_LIBS	= ..
+
+endif
 
 all: $(TARGET)
 
@@ -27,6 +35,12 @@ build/%.o: %.c
 build/%.o: %.s
 	@mkdir -p $(dir $@)
 	$(AS) $(AFLAGS) $(INCLUDE) $< -o $@
+	
+install:
+ifneq ($(PSN00BSDK_LIBS), "..")
+	@mkdir -p $(PSN00BSDK_LIBS)
+endif
+	cp $(TARGET) $(PSN00BSDK_LIBS)/$(TARGET)
 
 clean:
 	rm -Rf build $(TARGET)

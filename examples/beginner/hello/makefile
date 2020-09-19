@@ -1,4 +1,4 @@
-include ../../sdk-common.mk
+include ../../examples-setup.mk
 
 # Project target name
 TARGET		= hello.elf
@@ -19,7 +19,7 @@ INCLUDE	 	+=
 LIBDIRS		+=
 
 # Libraries to link
-LIBS		= -lpsxetc -lpsxgpu -lpsxgte -lpsxspu -lpsxapi -lc
+LIBS		= -lpsxgpu -lpsxgte -lpsxspu -lpsxetc -lpsxapi -lc
 
 # C compiler flags
 CFLAGS		= -g -O2 -fno-builtin -fdata-sections -ffunction-sections

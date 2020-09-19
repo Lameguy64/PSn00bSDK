@@ -235,14 +235,13 @@ void init()
 {	
 	int i;
 	
+	/* Uncomment to direct tty messages to serial */
+	//AddSIO(115200);
+	
 	/* Reset GPU (also installs event handler for VSync) */
 	printf("Init GPU... ");
 	ResetGraph( 0 );
 	printf("Done.\n");
-
-	
-	/* Uncomment to direct tty messages to serial */
-	AddSIO(115200);
 	
 	
 	/* Initialize SPU and CD-ROM */

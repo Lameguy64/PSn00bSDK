@@ -1,5 +1,5 @@
 PSX CD-ROM library, part of PSn00bSDK
-2019 Lameguy64 / Meido-Tek Productions
+2020 Lameguy64 / Meido-Tek Productions
 
 Licensed under Mozilla Public License
 
@@ -43,6 +43,3 @@ Todo list:
 	* Data streaming functions (prefixed with St*) not yet implemented.
 	  Would require devising a PSn00bSDK equivalent of the STR file
 	  format.
-	
-	* Original functions for querying directory contents in the file
-	  system not yet implemented.

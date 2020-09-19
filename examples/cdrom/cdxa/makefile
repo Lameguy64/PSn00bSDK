@@ -1,4 +1,4 @@
-include ../../sdk-common.mk
+include ../../examples-setup.mk
 
 TARGET		= cdxa.elf
 
@@ -10,7 +10,7 @@ OFILES		= $(addprefix build/,$(CFILES:.c=.o) $(CPPFILES:.cpp=.o) $(AFILES:.s=.o)
 
 PREFIX		= mipsel-unknown-elf-
 
-LIBS		= -lpsxcd -lpsxetc -lpsxgpu -lpsxgte -lpsxspu -lpsxsio -lpsxapi -lc
+LIBS		= -lpsxcd -lpsxgpu -lpsxgte -lpsxspu -lpsxsio -lpsxetc -lpsxapi -lc
 
 CFLAGS		= -g -O2 -fno-builtin -fdata-sections -ffunction-sections
 CPPFLAGS	= $(CFLAGS) \

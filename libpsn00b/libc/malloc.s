@@ -38,6 +38,17 @@ InitHeap:
 	jr		$ra
 	sw		$0 , ND_SIZE($a0)
 	
+	
+# Changes the heap size without clearing or relocating the heap
+#   a0 - Size of memory heap in bytes
+.global SetHeapSize
+.type SetHeapSize, @function
+SetHeapSize:
+	la		$v1, _malloc_size
+	lw		$v0, 0($v1)
+	jr		$ra
+	sw		$a1, 0($v1)
+
 
 # Allocates a block of memory in the heap
 #   a0 - Size of memory block to allocate.

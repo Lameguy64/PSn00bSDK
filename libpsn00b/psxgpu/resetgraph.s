@@ -4,7 +4,7 @@
 
 .section .text
 
-.set ISR_STACK_SIZE, 2048
+.set ISR_STACK_SIZE, 4096
 
 .global ResetGraph						# Resets the GPU and installs a
 .type ResetGraph, @function				# VSync event handler
@@ -13,11 +13,30 @@ ResetGraph:
 	sw		$ra, 0($sp)					# you call BIOS functions from asm)
 	sw		$a0, 4($sp)
 
+	la		$a0, resetgraph_msg
+	move	$a1, $0
+	move	$a2, $0
+	la		$a1, _irq_func_table
+	la		$a2, _custom_exit
+	jal		printf
+	addiu	$sp, -16
+	addiu	$sp, 16
+	
+	la		$a0, sr_msg
+	mfc0	$a1, $12
+	jal		printf
+	addiu	$sp, -16
+	addiu	$sp, 16
+	
 	la		$v0, _hooks_installed		# Skip installing hooks if this function
 	lbu		$v0, 0($v0)					# has already been called before once
 	nop
 	bnez	$v0, .Lskip_hook_init
 	nop
+	
+	jal		EnterCriticalSection		# Disable interrupts as LoadExec() keeps
+	nop									# interrupts enabled when transferring 
+										# execution to the loaded program
 
 	lui		$a3, 0x1f80					# Base address for I/O
 
@@ -38,37 +57,30 @@ ResetGraph:
 	la		$a1, _vsync_irq_callback	# Install VSync interrupt callback
 	jal		InterruptCallback
 	li		$a0, 0
-	
-	la		$a0, _custom_exit			# Set custom exit handler
-	jal		SetCustomExitFromException
-	addiu	$sp, -4
-	addiu	$sp, 4
-	
-	move	$a0, $0
-	jal		ChangeClearPAD				# Disable VSync IRQ auto ack
-	addiu	$sp, -4
-	addiu	$sp, 4
 
-	li		$a0, 3
-	move	$a1, $0
-	jal		ChangeClearRCnt				# Remove RCnt timer IRQ auto ack
-	addiu	$sp, -8
-	addiu	$sp, 8
+	jal		RestartCallback
+	nop
 
+	la		$a0, cbhooks_msg
+	jal		printf
+	addiu	$sp, -16
+	addiu	$sp, 16
+	
 	jal		_96_remove					# Remove CD handling left by the BIOS
 	nop
 	
-	la		$a0, resetgraph_msg
-	move	$a1, $0
-	move	$a2, $0
-	la		$a1, _irq_func_table
-	la		$a2, _custom_exit
+	la		$a0, abouttoen_msg
 	jal		printf
 	addiu	$sp, -16
 	addiu	$sp, 16
 	
 	jal		ExitCriticalSection			# Re-enable interrupts
 	nop
+	
+	la		$a0, enableint_msg
+	jal		printf
+	addiu	$sp, -16
+	addiu	$sp, 16
 	
 .Lskip_hook_init:
 	
@@ -301,62 +313,6 @@ _vsync_irq_callback:
 	nop
 	
 
-# Global ISR handler of PSn00bSDK
-
-.set at
-
-.type _global_isr, @function
-_global_isr:
-	
-.Lisr_loop:
-
-	#la		$gp, _gp					# Keep restoring GP since it gets
-										# changed elsewhere sometimes
-	
-	lui		$a0, IOBASE					# Get IRQ status
-	lw		$v0, IMASK($a0)
-	nop
-	
-	srl		$v0, $s1					# Check IRQ mask bit if set
-	andi	$v0, 0x1
-	
-	beqz	$v0, .Lno_irq				# Don't execute callback if IRQ not enabled
-	nop
-	
-	lw		$v0, ISTAT($a0)
-	nop
-	srl		$v0, $s1					# Check IRQ status bit if set
-	andi	$v0, 0x1
-	beqz	$v0, .Lno_irq				# Don't execute callback if no IRQ
-	nop
-	
-	lw		$v1, 0($s0)					# Load IRQ callback function
-	nop
-	
-	lw		$v0, ISTAT($a0)				# Acknowledge the IRQ (by writing a 0 bit)
-	li		$a1, 1
-	sll		$a1, $s1
-	addiu	$a2, $0 , -1
-	xor		$a1, $a2
-	sw		$a1, ISTAT($a0)
-	
-	beqz	$v1, .Lno_irq				# Don't execute if callback is not set
-	nop
-
-	jalr	$v1							# Call interrupt handler
-	nop
-	
-.Lno_irq:
-
-	addiu	$s0, 4
-	
-	blt		$s1, 11, .Lisr_loop
-	addiu	$s1, 1
-
-	j		ReturnFromException
-	nop
-	
-
 .section .data
 
 # VSync root counter
@@ -374,59 +330,34 @@ _vsync_lasthblank:
 .comm	_gpu_current_field, 4, 4
 .comm	_hooks_installed, 4, 4
 
-
-# Global ISR callback table
-
-.global _irq_func_table
-.type _irq_func_table, @object
-_irq_func_table:
-	.word	0
-	.word	0
-	.word	0
-	.word	0
-	.word	0
-	.word	0
-	.word	0
-	.word	0
-	.word	0
-	.word	0
-	.word	0
-	.word	0
-
-# Global ISR hook structure
-.global _custom_exit
-.type _custom_exit, @object
-_custom_exit:
-	.word _global_isr			# pc
-	.word _custom_exit_stack+ISR_STACK_SIZE	# sp
-	.word 0						# fp
-	.word _irq_func_table		# s0
-	.word 0						# s1
-	.word 0						# s2
-	.word 0						# s3
-	.word 0						# s4
-	.word 0						# s5
-	.word 0						# s6
-	.word 0						# s7
-	.word _gp					# gp
-	
-# Global ISR stack
-#	.fill 1024
-#_custom_exit_stack:
-#	.fill 4
-.comm _custom_exit_stack, ISR_STACK_SIZE+4
 	
 .type vsynctimeout_msg, @object
 vsynctimeout_msg:
 	.asciiz "VSync: timeout\n"
-
+	
 .type resetgraph_msg, @object
 resetgraph_msg:
 	.asciiz "ResetGraph:itb=%08x,ehk=%08x\n"
+	
+.type enableint_msg, @object
+enableint_msg:
+	.asciiz "ResetGraph:Interrupts enabled!\n"
+	
+.type cbhooks_msg, @object
+cbhooks_msg:
+	.asciiz "ResetGraph:Interrupt hooks enabled.\n"
+	
+.type abouttoen_msg, @object
+abouttoen_msg:
+	.asciiz "ResetGraph:About to init interrupts.\n"
+	
+.type sr_msg, @object
+sr_msg:
+	.asciiz "ResetGraph:SR=%x\n"
 	
 .global psxgpu_credits
 .type psxgpu_credits, @object
 psxgpu_credits:
 	.ascii "psxgpu programs by Lameguy64\n"
-	.asciiz "2019 PSn00bSDK Project / Meido-Tek Productions\n"
+	.asciiz "2020 PSn00bSDK Project / Meido-Tek Productions\n"
 	

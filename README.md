@@ -28,7 +28,7 @@ performance reasons.
 
 
 ## Notable features
-As of LibPSn00b run-time library v0.15b
+As of September 19, 2020
 
 * Extensive GPU support with polygon primitives, high-speed DMA VRAM
   transfers and DMA ordering table processing. All video modes for both NTSC
@@ -48,7 +48,7 @@ As of LibPSn00b run-time library v0.15b
   programs.
 
 * Complete Serial I/O support with SIOCONS driver for tty console access
-  through serial interface.
+  through serial interface. Handshake and flow control also supported.
 
 * BIOS controller functions for polling controller input work as intended
   thanks to proper interrupt handling. No crude manual polling of controllers
@@ -57,8 +57,8 @@ As of LibPSn00b run-time library v0.15b
 * Full CD-ROM support with data reading, CD audio and XA audio playback.
   Features built-in ISO9660 file system parser for locating files and
   supports directories containing more than 30 files (classic ISO9660 only,
-  no Rock Ridge or Joliet extensions support). Data streaming should also be
-  possible.
+  no Rock Ridge or Joliet extensions support). Also supports multi-session
+  discs.
   
 * Uses Sony SDK library syntax for familiarity to experienced programmers
   and to make porting existing homebrew projects to PSn00bSDK easier.
@@ -85,6 +85,21 @@ under Windows than on Linux and BSDs.
 
 
 ## Building the SDK
+
+You may set one of the following variables either with set/export or on the
+make command line to specify various parameters in building PSn00bSDK and
+projects made with it.
+
+* ``GCC_VERSION`` specifies the GCC version number. This is only really
+  required for building the libc library. If not defined, the default value
+  of `7.4.0` is used.
+* ``PSN00BSDK_TC`` specifies the base directory of the GCC toolchain to
+  build PSn00bSDK with, otherwise the makefile assumes you have the
+  toolchain binaries in one of your PATH directories.
+* ``PSN00BSDK_LIBS`` specifies the target directory you wish to install
+  the compiled libpsn00b libraries to. If not specified, compiled
+  libraries are consolidated to the libpsn00b directory.
+
 
 ### Windows:
 1. Download the following:
@@ -127,20 +142,20 @@ programs with PSn00bSDK within the Command Prompt.
 
 ### Linux and Unix-likes:
 1. Install gcc, make, texinfo, git and development packages of mpfr, mpc,
-   gmp, isl and tinyxml2 libraries.
+   gmp, isl and tinyxml2 libraries for your distro.
 2. Build and install the GNU GCC toolchain targeting mipsel-unknown-elf
-   (see toolchain.txt for details). Update your PATH environment variable to
-   include the bin directory of the toolchain and make sure they can be
-   accessed from any directory.
+   (see toolchain.txt for details). Export a variable named `PSN00BSDK_TC`
+   containing a path to the installed toolchain's base directory. Also
+   export a `GCC_VERSION` variable if you're using a version of GCC other
+   than 7.4.0.
 3. Clone from PSn00bSDK source with
    `git clone https://github.com/lameguy64/psn00bsdk`
 4. Enter tools directory and run `make`, then `make install` to consolidate
    the tools to a bin directory. Add this directory to your PATH variable and
-   make sure `elf2x` is accessible from any directory.
-5. Enter the libpsn00b directory and run `make`. You may need to edit the
-   `common.mk` file to correspond with the GCC version you're using.
+   make sure `elf2x` and `lzpack` (required for n00bDEMO) is accessible from
+   any directory.
+5. Enter the libpsn00b directory and run `make`.
 6. Compile the example programs to test if the SDK is set up correctly.
-   Update directory paths in `sdk-common.mk` when necessary.
 
 
 ## Examples
@@ -177,6 +192,10 @@ If modifications to the SDK were made as part of the development of such
 projects that enhance its functionality, such changes must be contributed
 back in return.
 
+Homebrew made with PSn00bSDK may not be released under 'annoyingmous'. Although
+there's nothing that would enforce it, this term may as well be ignored despite
+it annoying this SDK's author.
+
 
 ## Credits
 
@@ -184,7 +203,7 @@ Main developer:
 * Lameguy64
 
 Honorable mentions:
-* ijacquez (for the helpful suggestions on getting C++ working)
+* ijacquez (for the helpful suggestions for getting C++ working)
 
 Helpful contributors can be found in the changelog.
 

@@ -10,12 +10,12 @@ CdGetSector:
 	
 	lui		$a2, IOBASE
 	
-.Lwait_fifo:
-	lbu		$v0, CD_REG0($a2)
-	nop
-	andi	$v0, 0x40
-	beqz	$v0, .Lwait_fifo
-	nop
+#.Lwait_fifo:					# Probably redundant as the BIOS CD-ROM
+#	lbu		$v0, CD_REG0($a2)	# routines do not not wait for this
+#	nop
+#	andi	$v0, 0x40
+#	beqz	$v0, .Lwait_fifo
+#	nop
 
 	lui		$v0, 0x1
 	srl		$a1, 2
@@ -27,11 +27,13 @@ CdGetSector:
 	sw		$v0, D3_CHCR($a2)
 	nop
 	nop
-.Ldma_wait:
+	
+.Ldma_wait:						# Ensure DMA transfer has completed
 	lw		$v0, D3_CHCR($a2)
 	nop
 	srl		$v0, 24
 	andi	$v0, 0x1
+
 	bnez	$v0, .Ldma_wait
 	nop
 	
