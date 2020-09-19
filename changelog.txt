@@ -4,11 +4,11 @@ Items that are lower in the log are more recently implemented.
 
 09-19-2020 by Lameguy64:
 
-* libpsn00b: Revised makefiles for building the libraries and examples in a
-  way to make building with different toolchain versions easier with the
-  PSN00BSDK_TC environment variable. Library installation and linking is
-  also made easier with the PSN00BSDK_LIBS environment variable. See readme
-  in the libpsn00b directory for details.
+* Revised makefiles for building the libraries and examples in a way to make
+  building with different toolchain versions easier with the PSN00BSDK_TC
+  environment variable. Library installation and linking is also made easier
+  with the PSN00BSDK_LIBS environment variable. See readme in the libpsn00b
+  directory for details.
   
 * examples: Fixed libgcc not found error when compiling some of the examples.
 
