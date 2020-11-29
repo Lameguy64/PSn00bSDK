@@ -60,4 +60,5 @@ CC			= $(GCC_BIN)$(PREFIX)gcc
 CXX			= $(GCC_BIN)$(PREFIX)g++
 AS			= $(GCC_BIN)$(PREFIX)as
 AR			= $(GCC_BIN)$(PREFIX)ar
+LD			= $(GCC_BIN)$(PREFIX)ld
 RANLIB		= $(GCC_BIN)$(PREFIX)ranlib

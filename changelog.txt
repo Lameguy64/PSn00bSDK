@@ -2,6 +2,20 @@ PSn00bSDK changelog
 
 Items that are lower in the log are more recently implemented.
 
+11-29-2020 by Lameguy64:
+
+* Defined MDEC hardware and related DMA registers in hwregs_a.h file.
+
+* Fixed entry typo in table of squareroot.s (pointed out by SoapyMan).
+
+* memmove updated to account for forward-looped memory move (by ckosmic).
+
+* Removed redundant toolchain executable definitions in the makefiles of
+  examples.
+  
+* Included HDTV example for Github repo.
+
+
 09-19-2020 by Lameguy64:
 
 * Revised makefiles for building the libraries and examples in a way to make

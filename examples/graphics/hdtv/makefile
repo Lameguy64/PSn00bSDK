@@ -1,22 +1,25 @@
 include ../../examples-setup.mk
 
-TARGET		= demo.elf
+TARGET		= hdtv.elf
 
 CFILES		= $(notdir $(wildcard *.c))
+CPPFILES 	= $(notdir $(wildcard *.cpp))
 AFILES		= $(notdir $(wildcard *.s))
 
-OFILES		= $(addprefix build/,$(CFILES:.c=.o) $(AFILES:.s=.o))
+OFILES		= $(addprefix build/,$(CFILES:.c=.o) $(CPPFILES:.cpp=.o) $(AFILES:.s=.o))
 
-INCLUDE	 	+= -I../../../libpsn00b/lzp
+INCLUDE	 	+= 
+LIBDIRS		+= 
 
-LIBS		= -llzp -lpsxgpu -lpsxgte -lpsxspu -lpsxetc -lpsxapi -lc
+LIBS		= -lpsxetc -lpsxgpu -lpsxgte -lpsxspu -lpsxetc -lpsxapi -lc
+LIBS		= -lpsxgpu -lpsxgte -lpsxspu -lpsxetc -lpsxapi -lc
 
 CFLAGS		= -g -O2 -fno-builtin -fdata-sections -ffunction-sections
 CPPFLAGS	= $(CFLAGS) -fno-exceptions
 AFLAGS		= -g -msoft-float
 LDFLAGS		= -g -Ttext=0x80010000 -gc-sections -T $(GCC_BASE)/mipsel-unknown-elf/lib/ldscripts/elf32elmip.x
 
-all: resources $(OFILES)
+all: $(OFILES)
 	$(LD) $(LDFLAGS) $(LIBDIRS) $(OFILES) $(LIBS) -o $(TARGET)
 	elf2x -q $(TARGET)
 	
@@ -28,12 +31,5 @@ build/%.o: %.s
 	@mkdir -p $(dir $@)
 	$(CC) $(AFLAGS) $(INCLUDE) -c $< -o $@
 	
-resources:
-	lzpack data.xml
-	touch data.s
-	
-iso:
-	mkpsxiso -y -q -o demo.iso iso.xml
-	
 clean:
-	rm -rf build *.lzp *.qlp $(TARGET) $(TARGET:.elf=.exe) $(TARGET:.elf=.iso)
+	rm -rf build $(TARGET) $(TARGET:.elf=.exe)

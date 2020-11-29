@@ -57,6 +57,10 @@
 .set SPU_VOICE_ADSR_H,	0x0a		
 .set SPU_VOICE_LOOP,	0x0e
 
+# MDEC
+.set MDEC0,				0x1820
+.set MDEC1,				0x1824
+
 # Pads
 .set JOY_TXRX,	0x1040
 .set JOY_STAT,	0x1044
@@ -78,6 +82,14 @@
 # DMA
 .set DPCR,		0x10f0     
 .set DICR,		0x10f4
+
+.set D0_MADR,	0x1080
+.set D0_BCR,	0x1084
+.set D0_CHCR,	0x1088
+
+.set D1_MADR,	0x1090
+.set D1_BCR,	0x1094
+.set D1_CHCR,	0x1098
 
 .set D2_MADR,	0x10a0
 .set D2_BCR,	0x10a4

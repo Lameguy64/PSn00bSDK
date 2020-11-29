@@ -391,7 +391,7 @@ static int find_dir_entry(const char *name, ISO_DIR_ENTRY *dirent)
 	char namebuff[16];
 	
 #ifdef DEBUG
-	printf("psxcd_dbg: Locating file %s.\n", name);
+	printf( "psxcd_dbg: Locating file %s.\n", name );
 #endif
 
 	i = 0;
@@ -399,13 +399,13 @@ static int find_dir_entry(const char *name, ISO_DIR_ENTRY *dirent)
 	while(dir_pos < _cd_iso_directory_len)
 	{
 		dir_entry = (ISO_DIR_ENTRY*)(_cd_iso_directory_buff+dir_pos);
-		
+
 		if( !(dir_entry->flags & 0x2) )
 		{
 			strncpy(namebuff, 
 				_cd_iso_directory_buff+dir_pos+sizeof(ISO_DIR_ENTRY), 
 				dir_entry->identifierLen);
-				
+			
 			if( strcmp(namebuff, name) == 0 )
 			{
 				*dirent = *dir_entry;

@@ -13,9 +13,6 @@ LDFLAGS		= -g -gc-sections -T $(GCC_BASE)/mipsel-unknown-elf/lib/ldscripts/elf32
 LDFLAGS_P	= $(LDFLAGS) -Ttext=0x80010000
 LDFLAGS_C	= $(LDFLAGS) -Ttext=0x80030000
 
-CC			= $(PREFIX)gcc
-LD			= $(PREFIX)ld
-
 all: child parent
 
 child: build/child.o
