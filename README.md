@@ -10,55 +10,58 @@ provide a basic framework for developing software for the PlayStation
 hardware, the compiler is separate (GCC) and should be acquired from GNU.
 The library API is intentionally written to resemble the library API of the
 official libraries as closely as possible. This design decision is not only
-for familiarity reasons and so that existing sample code and tutorials would
-still apply, but to also make porting existing homebrew originally made with
-official SDKs to PSn00bSDK easier with few modifications.
+for familiarity reasons to experienced programmers, but also so that existing
+sample code and tutorials would still apply to this SDK, as well as making
+the process of porting over existing homebrew originally made with official
+SDKs easier with minimal modification, provided it doesn't use libgs.
 
 PSn00bSDK is currently a work in progress and cannot really be considered
 production ready, but what is currently implemented should be enough to
-produce some interesting homebrew with the SDK, especially with extensive
+produce some interesting homebrew with the SDK, especially with its extensive
 support for the GPU and GTE hardware. There's no reason not to fully support
-the hardware features of the target platform when they have been fully
-documented for years (nocash's PSX specs document in this case).
+hardware features of a target platform when said hardware features have been
+fully documented for years (nocash's PSX specs document in this case).
 
-Most of libpsn00b is written mostly in MIPS assembly, more so functions that
-interface with hardware. Many of the standard C functions are implemented in
-custom MIPS assembly instead of equivalents found in the BIOS ROM for
-performance reasons.
+Most of libpsn00b is written mostly in MIPS assembly, moreso functions that
+interface with the hardware. Many of the standard C functions are implemented
+in custom MIPS assembly instead of equivalents found in the BIOS ROM, for both
+stability (the BIOS libc implementation of the PlayStation is actually buggy)
+and performance reasons.
 
 
 ## Notable features
-As of September 19, 2020
+As of January 5, 2021
 
-* Extensive GPU support with polygon primitives, high-speed DMA VRAM
-  transfers and DMA ordering table processing. All video modes for both NTSC
-  and PAL standards also supported with fully adjustable display area and
-  automatic video standard detection based on last GPU mode. No BIOS ROM
-  string checks used.
+* Extensive GPU support with polygon, line and sprite primitives, high-speed
+  DMA transfers for VRAM data and ordering tables. All video modes for both
+  NTSC and PAL standards also supported with fully adjustable display area
+  and automatic video standard detection based on last GPU mode. No BIOS
+  ROM checks used.
 
 * Extensive GTE support with rotate, translate, perspective correction and
-  lighting through assembly macros (for both C and ASM) and high performance
+  lighting fully supported via C and assembly GTE macros, with high speed
   matrix and vector functions. All calculations performed in fixed point
   integer math.
 
-* Stable interrupt service routine with easy to use callback system for
+* Flexible interrupt service routine with easy to use callback mechanism for
   simplified handling and hooking of hardware and DMA interrupts, no crude
-  event handler hooks or kernel hacks used and should be compatible with
-  HLE BIOS implementations. Should also play well with writing loader
+  event handler hooks or kernel hacks providing great compatibility with
+  HLE BIOS implementations. Should work without issue in loader/menu type
   programs.
 
-* Complete Serial I/O support with SIOCONS driver for tty console access
-  through serial interface. Handshake and flow control also supported.
+* Complete Serial I/O support with SIOCONS driver for tty stdin/stdout
+  console access. Hardware handshake for flow control also supported.
 
 * BIOS controller functions for polling controller input work as intended
-  thanks to proper interrupt handling. No crude manual polling of controllers
-  in your main loop.
+  thanks to proper handling of hardware interrupts. No crude manual polling
+  of controllers in a main loop. BIOS memory card functions may also work,
+  but not yet tested extensively.
 
-* Full CD-ROM support with data reading, CD audio and XA audio playback.
+* Full CD-ROM support with data read, CD audio and XA audio playback support.
   Features built-in ISO9660 file system parser for locating files and
   supports directories containing more than 30 files (classic ISO9660 only,
-  no Rock Ridge or Joliet extensions support). Also supports multi-session
-  discs.
+  no Rock Ridge or Joliet extensions). Also supports reading new disc
+  sessions in a multi-session disc.
   
 * Uses Sony SDK library syntax for familiarity to experienced programmers
   and to make porting existing homebrew projects to PSn00bSDK easier.
@@ -70,34 +73,30 @@ As of September 19, 2020
 
 Because PSn00bSDK is updated semi-regularly due to this project being in
 a work-in-progress state, it is better to obtain this SDK from source and
-building it yourself in the long run. Prepared packages containing
-precompiled libpsn00b libraries, the toolchain and additional utilities
-not included in this repository for Windows users are planned, though some
-arrangements would need to be made first. Perhaps once PSn00bSDK is
-considered halfway production ready.
+building it yourself in the long run. Pre-compiled packages for Debian and
+Msys2 are being planned however.
 
 A precompiled copy of the GCC 7.4.0 toolchain for Windows is available
 in the PSn00bSDK page of Lameguy64's website
 ( http://lameguy64.net/?page=psn00bsdk ). This should make building PSn00bSDK
-under Windows a bit easier as building the toolchain is the hardest part
-of building PSn00bSDK, as its more difficult to get it to compile correctly
-under Windows than on Linux and BSDs.
+under Windows a bit easier, as the GCC toolchain is quite difficult to
+compile correctly under Windows than it is on Linux and BSDs.
 
 
 ## Building the SDK
 
 You may set one of the following variables either with set/export or on the
-make command line to specify various parameters in building PSn00bSDK and
-projects made with it.
+make command line, to specify various parameters in building PSn00bSDK and
+projects made with it as you see fit.
 
-* ``GCC_VERSION`` specifies the GCC version number. This is only really
-  required for building the libc library. If not defined, the default value
-  of `7.4.0` is used.
+* ``GCC_VERSION`` specifies the GCC version number. This is only required for
+  building the libc library. If not defined, the default value of `7.4.0` is
+  used.
 * ``PSN00BSDK_TC`` specifies the base directory of the GCC toolchain to
-  build PSn00bSDK with, otherwise the makefile assumes you have the
-  toolchain binaries in one of your PATH directories.
+  build PSn00bSDK with, otherwise the makefile assumes you have the path to
+  the toolchain binaries in one of your PATH directories.
 * ``PSN00BSDK_LIBS`` specifies the target directory you wish to install
-  the compiled libpsn00b libraries to. If not specified, compiled
+  the compiled libpsn00b libraries to. If not defined, compiled
   libraries are consolidated to the libpsn00b directory.
 
 
@@ -128,7 +127,9 @@ projects made with it.
    directory. Add this directory to your PATH variable by adding
    `export=$PATH:<path to SDK>/tools/bin` in your .bash_profile file. You'll
    need to reload the MSys2 shell after making the changes.
-8. Enter libpsn00b directory and run `make` to build all libpsn00b libraries.
+8. Enter libpsn00b directory and run `make` to build all libpsn00b libraries,
+   then `make install` to consolidate the libraries to the parent directory
+   or the directory specified by ``PSN00BSDK_LIBS``.
 6. Compile the example programs to test if the SDK is set up correctly.
    Update directory paths in `sdk-common.mk` when necessary.
    
@@ -154,8 +155,10 @@ programs with PSn00bSDK within the Command Prompt.
    the tools to a bin directory. Add this directory to your PATH variable and
    make sure `elf2x` and `lzpack` (required for n00bDEMO) is accessible from
    any directory.
-5. Enter the libpsn00b directory and run `make`.
-6. Compile the example programs to test if the SDK is set up correctly.
+5. Enter the libpsn00b directory and run `make`. Then, run `make install` to
+   consolidate the libraries to the libpsn00b parent directory or the
+   directory specified by ``PSN00BSDK_LIBS``.
+6. Compile example programs to test if the SDK is set up correctly.
 
 
 ## Examples
@@ -166,12 +169,6 @@ and contributed example programs are welcome.
 
 
 ## To-do List
-
-* psxgpu: VRAM move function, few more primitives and macros yet to be
-  implemented.
-
-* psxgte: Higher level GTE rotate translate and perspective functions,
-  and many matrix transformation functions yet to be implemented.
 
 * psxspu: Plenty of work to be done. Hardware timer driven sound/music
   system may need to be implemented (an equivalent to the Ss* series of

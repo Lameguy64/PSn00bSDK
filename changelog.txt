@@ -2,18 +2,30 @@ PSn00bSDK changelog
 
 Items that are lower in the log are more recently implemented.
 
+01-05-2021 by Lameguy64:
+
+* psxgpu: Added struct names to many primitives.
+
+* psxgte: Defined SquareRoot0() and SquareRoot12().
+
+* psxgte: Added gte_lddp() C macro.
+
+* examples: Added C++ demo.
+
+* Updated readme a bit.
+
+
 11-29-2020 by Lameguy64:
 
-* Defined MDEC hardware and related DMA registers in hwregs_a.h file.
+* libpsn00b: Defined MDEC hardware and related DMA registers in hwregs_a.h file.
 
-* Fixed entry typo in table of squareroot.s (pointed out by SoapyMan).
+* psxgte: Fixed entry typo in table of squareroot.s (pointed out by SoapyMan).
 
-* memmove updated to account for forward-looped memory move (by ckosmic).
+* libc: memmove updated to account for forward-looped memory move (by ckosmic).
 
-* Removed redundant toolchain executable definitions in the makefiles of
-  examples.
+* examples: Removed redundant toolchain executable definitions in the makefiles.
   
-* Included HDTV example for Github repo.
+* examples: Included HDTV example for Github repo.
 
 
 09-19-2020 by Lameguy64:

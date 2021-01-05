@@ -56,12 +56,11 @@ VectorNormalS:
 	la		$t5, _norm_table
 	addu	$t5, $t4
 	lh		$t5, 0($t5)
-	nop
 	
-	mtc2	$t5, C2_IR0
 	mtc2	$t0, C2_IR1
 	mtc2	$t1, C2_IR2
 	mtc2	$t2, C2_IR3
+	mtc2	$t5, C2_IR0
 	
 	nGPF(0)
 	
@@ -81,6 +80,8 @@ VectorNormalS:
 
 .section .data
 
+.global _norm_table
+.type _norm_table, @object
 _norm_table:
 	.hword	0x1000, 0x0FE0, 0x0FC1, 0x0FA3, 0x0F85, 0x0F68, 0x0F4C, 0x0F30
 	.hword	0x0F15, 0x0EFB, 0x0EE1, 0x0EC7, 0x0EAE, 0x0E96, 0x0E7E, 0x0E66

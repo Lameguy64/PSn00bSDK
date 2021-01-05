@@ -70,6 +70,9 @@ void VectorNormalS(VECTOR *v0, SVECTOR *v1);
 
 void Square0(VECTOR *v0, VECTOR *v1);
 
+int SquareRoot12( int v );
+int SquareRoot0( int v );
+
 #ifdef __cplusplus
 }
 #endif

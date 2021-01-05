@@ -72,6 +72,11 @@
 	"lwc2	$10, 4( %0 );"	\
 	:						\
 	: "r"( r0 ) )
+
+#define gte_lddp( r0 ) __asm__ volatile ( \
+	"mtc2	%0, $8;"		\
+	:						\
+	: "r"( r0 ) )
 	
 /* Sets the GTE offset
  */

@@ -206,7 +206,7 @@
 /*
  *	Primitive definitions
  */
-typedef struct {
+typedef struct _P_TAG {
 	unsigned int addr:24;
 	unsigned int len:8;
 	unsigned char r,g,b;
@@ -216,7 +216,7 @@ typedef struct {
 /*
  *	Polygon primitive definitions
  */
-typedef struct {
+typedef struct _POLY_F3 {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
@@ -224,7 +224,7 @@ typedef struct {
 	short			x2,y2;
 } POLY_F3;
 
-typedef struct {
+typedef struct _POLY_F4 {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
@@ -233,7 +233,7 @@ typedef struct {
 	short			x3,y3;
 } POLY_F4;
 
-typedef struct {
+typedef struct _POLY_FT3 {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
@@ -247,7 +247,7 @@ typedef struct {
 	unsigned short	pad;
 } POLY_FT3;
 
-typedef struct {
+typedef struct _POLY_FT4 {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
@@ -264,7 +264,7 @@ typedef struct {
 	unsigned short	pad1;
 } POLY_FT4;
 
-typedef struct {
+typedef struct _POLY_G3 {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
@@ -274,7 +274,7 @@ typedef struct {
 	short			x2,y2;
 } POLY_G3;
 
-typedef struct {
+typedef struct _POLY_G4 {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
@@ -286,7 +286,7 @@ typedef struct {
 	short			x3,y3;
 } POLY_G4;
 
-typedef struct {
+typedef struct _POLY_GT3 {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
@@ -302,7 +302,7 @@ typedef struct {
 	unsigned short	pad2;
 } POLY_GT3;
 
-typedef struct {
+typedef struct _POLY_GT4 {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
@@ -325,14 +325,14 @@ typedef struct {
 /*
  *	Line primitive definitions
  */
-typedef struct {
+typedef struct _LINE_F2 {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
 	short			x1,y1;
 } LINE_F2;
 
-typedef struct {
+typedef struct _LINE_G2 {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
@@ -340,7 +340,7 @@ typedef struct {
 	short			x1,y1;
 } LINE_G2;
 
-typedef struct {
+typedef struct _LINE_F3 {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
@@ -349,7 +349,7 @@ typedef struct {
 	unsigned int	pad;
 } LINE_F3;
 
-typedef struct {
+typedef struct _LINE_G3 {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
@@ -360,7 +360,7 @@ typedef struct {
 	unsigned int	pad;
 } LINE_G3;
 
-typedef struct {
+typedef struct _LINE_F4 {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
@@ -370,7 +370,7 @@ typedef struct {
 	unsigned int	pad;
 } LINE_F4;
 
-typedef struct {
+typedef struct _LINE_G4 {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
@@ -386,26 +386,26 @@ typedef struct {
 /*
  *	Tile and sprite primitive definitions
  */
-typedef struct {
+typedef struct _TILE {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
 	short			w,h;
 } TILE;
 
-typedef struct {
+typedef struct _TILE_1 {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
 } TILE_1;
 
-typedef struct {
+typedef struct _TILE_8 {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
 } TILE_8;
 
-typedef struct {
+typedef struct _TILE_16 {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
@@ -414,7 +414,7 @@ typedef struct {
 /*
  *	Sprite primitive definitions
  */
-typedef struct {
+typedef struct _SPRT {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
@@ -423,7 +423,7 @@ typedef struct {
 	unsigned short	w,h;
 } SPRT;
 
-typedef struct {
+typedef struct _SPRT_8 {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
@@ -431,7 +431,7 @@ typedef struct {
 	unsigned short	clut;
 } SPRT_8;
 
-typedef struct {
+typedef struct _SPRT_16 {
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	short			x0,y0;
@@ -443,44 +443,44 @@ typedef struct {
  *	VRAM fill and transfer primitive definitions
  */
 
-typedef struct DR_ENV {
+typedef struct _DR_ENV {
 	unsigned int	tag;
 	unsigned int	code[15];
 } DR_ENV;
 
-typedef struct DR_AREA {
+typedef struct _DR_AREA {
 	unsigned int	tag;
 	unsigned int	code[2];
 } DR_AREA;
 
-typedef struct DR_OFFSET {
+typedef struct _DR_OFFSET {
 	unsigned int	tag;
 	unsigned int	code[1];
 } DR_OFFSET;
 
-typedef struct DR_TWIN {
+typedef struct _DR_TWIN {
 	unsigned int	tag;
 	unsigned int	code[2];
 } DR_TWIN;
 
-typedef struct DR_TPAGE {
+typedef struct _DR_TPAGE {
 	unsigned int	tag;
 	unsigned int	code[1];
 } DR_TPAGE;
 
-typedef struct DR_MASK {	/* ORIGINAL */
+typedef struct _DR_MASK {	/* ORIGINAL */
 	unsigned int	tag;
 	unsigned int	code[1];
 } DR_MASK;
 
-typedef struct FILL {		/* ORIGINAL */
+typedef struct _FILL {		/* ORIGINAL */
 	unsigned int	tag;
 	unsigned char	r0,g0,b0,code;
 	unsigned short	x0,y0;		// Note: coordinates must be in 16 pixel steps
 	unsigned short	w,h;
 } FILL;
 
-typedef struct VRAM2VRAM {	/* ORIGINAL */
+typedef struct _VRAM2VRAM {	/* ORIGINAL */
 	unsigned int	tag;
 	unsigned char	p0,p1,p2,code;
 	unsigned short	x0,y0;
@@ -491,18 +491,18 @@ typedef struct VRAM2VRAM {	/* ORIGINAL */
 
 // General structs
 
-typedef struct RECT {
+typedef struct _RECT {
 	short x,y;
 	short w,h;
 } RECT;
 
-typedef struct DISPENV_RAW {
+typedef struct _DISPENV_RAW {
 	unsigned int vid_mode;		// Video mode
 	short vid_xpos,vid_ypos;	// Video position (not framebuffer)
 	short fb_x,fb_y;			// Framebuffer display position	
 } DISPENV_RAW;
 
-typedef struct DISPENV {
+typedef struct _DISPENV {
 	RECT	disp;
 	RECT	screen;
 	char	isinter;
@@ -511,7 +511,7 @@ typedef struct DISPENV {
 	char	pad;
 } DISPENV;
 
-typedef struct DRAWENV {
+typedef struct _DRAWENV {
 	RECT			clip;		// Drawing area
 	short			ofs[2];		// GPU draw offset (relative to draw area)
 	RECT			tw;			// Texture window (doesn't do anything atm)
@@ -523,7 +523,7 @@ typedef struct DRAWENV {
 	DR_ENV			dr_env;		// Draw mode packet area (used by PutDrawEnv)
 } DRAWENV;
 
-typedef struct TIM_IMAGE {
+typedef struct _TIM_IMAGE {
 	unsigned int mode;
 	RECT *crect;
 	unsigned int *caddr;
