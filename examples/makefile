@@ -5,14 +5,14 @@
 TOPTARGETS	= all clean
 
 # Beginner examples
-DIRS 		= beginner/hello
+DIRS 		= beginner/hello beginner/cppdemo
 
 # Graphics examples
 DIRS	   += graphics/balls graphics/billboard graphics/fpscam graphics/gte \
-			  graphics/render2tex graphics/rgb24
+			  graphics/hdtv graphics/render2tex graphics/rgb24 
 
 # System related examples
-DIRS	   += system/childexec system/console system/timer
+DIRS	   += system/childexec system/console system/timer system/tty
 
 # Low-level examples
 DIRS	   += lowlevel/cartrom
