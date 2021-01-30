@@ -211,6 +211,70 @@
 	: "r"( r0 ), "r"( r1 ), "r"( r2 ) \
 	: "memory" )
 
+#define gte_stsxy3_f3( r0 ) __asm__ volatile (	\
+	"swc2	$12, 8( %0 );"	\
+	"swc2	$13, 12( %0 );"	\
+	"swc2	$14, 16( %0 )"	\
+	:						\
+	: "r"( r0 )	\
+	: "memory" )
+
+#define gte_stsxy3_g3( r0 ) __asm__ volatile (	\
+	"swc2	$12, 8( %0 );"	\
+	"swc2	$13, 16( %0 );"	\
+	"swc2	$14, 24( %0 )"	\
+	:						\
+	: "r"( r0 )	\
+	: "memory" )
+
+#define gte_stsxy3_ft3( r0 ) __asm__ volatile (	\
+	"swc2	$12, 8( %0 );"	\
+	"swc2	$13, 16( %0 );"	\
+	"swc2	$14, 24( %0 )"	\
+	:						\
+	: "r"( r0 )	\
+	: "memory" )
+
+#define gte_stsxy3_gt3( r0 ) __asm__ volatile (	\
+	"swc2	$12, 8( %0 );"	\
+	"swc2	$13, 20( %0 );"	\
+	"swc2	$14, 32( %0 )"	\
+	:						\
+	: "r"( r0 )	\
+	: "memory" )
+
+#define gte_stsxy3_f4( r0 ) __asm__ volatile (	\
+	"swc2	$12, 8( %0 );"	\
+	"swc2	$13, 12( %0 );"	\
+	"swc2	$14, 16( %0 )"	\
+	:						\
+	: "r"( r0 )	\
+	: "memory" )
+
+#define gte_stsxy3_g4( r0 ) __asm__ volatile (	\
+	"swc2	$12, 8( %0 );"	\
+	"swc2	$13, 16( %0 );"	\
+	"swc2	$14, 24( %0 )"	\
+	:						\
+	: "r"( r0 )	\
+	: "memory" )
+
+#define gte_stsxy3_ft4( r0 ) __asm__ volatile (	\
+	"swc2	$12, 8( %0 );"	\
+	"swc2	$13, 16( %0 );"	\
+	"swc2	$14, 24( %0 )"	\
+	:						\
+	: "r"( r0 )	\
+	: "memory" )
+
+#define gte_stsxy3_gt4( r0 ) __asm__ volatile (	\
+	"swc2	$12, 8( %0 );"	\
+	"swc2	$13, 20( %0 );"	\
+	"swc2	$14, 32( %0 )"	\
+	:						\
+	: "r"( r0 )	\
+	: "memory" )
+
 #define gte_stsz( r0 ) __asm__ volatile ( \
 	"swc2	$19, 0( %0 );"	\
 	:						\
