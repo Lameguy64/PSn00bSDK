@@ -39,34 +39,36 @@ As of January 5, 2021
   ROM checks used.
 
 * Extensive GTE support with rotate, translate, perspective correction and
-  lighting fully supported via C and assembly GTE macros, with high speed
-  matrix and vector functions. All calculations performed in fixed point
-  integer math.
+  lighting fully supported via C and assembly GTE macros paired with high
+  speed matrix and vector functions. All calculations performed in fixed
+  point integer math, not a single float defined.
 
 * Flexible interrupt service routine with easy to use callback mechanism for
   simplified handling and hooking of hardware and DMA interrupts, no crude
   event handler hooks or kernel hacks providing great compatibility with
-  HLE BIOS implementations. Should work without issue in loader/menu type
-  programs.
+  HLE BIOS implementations. Should work without issue for loader/menu type
+  programs as well.
 
 * Complete Serial I/O support with SIOCONS driver for tty stdin/stdout
-  console access. Hardware handshake for flow control also supported.
+  console access. Hardware flow control also supported.
 
 * BIOS controller functions for polling controller input work as intended
   thanks to proper handling of hardware interrupts. No crude manual polling
   of controllers in a main loop. BIOS memory card functions may also work,
   but not yet tested extensively.
 
-* Full CD-ROM support with data read, CD audio and XA audio playback support.
-  Features built-in ISO9660 file system parser for locating files and
-  supports directories containing more than 30 files (classic ISO9660 only,
-  no Rock Ridge or Joliet extensions). Also supports reading new disc
-  sessions in a multi-session disc.
+* Full CD-ROM support via libpsxcd with data read, CD audio and XA audio
+  playback support. Features built-in ISO9660 file system parser for locating
+  and querying files and directories. Supports directories containing more
+  than 30 files (classic ISO9660 only, no Rock Ridge or Joliet extensions)
+  and also supports reading new sessions on a multi-session disc.
   
 * Uses Sony SDK library syntax for familiarity to experienced programmers
   and to make porting existing homebrew projects to PSn00bSDK easier.
 
 * Works on real hardware and most popular emulators.
+
+* Fully expandable and customizable to your heart's content.
 
 
 ## Obtaining PSn00bSDK
@@ -90,48 +92,56 @@ make command line, to specify various parameters in building PSn00bSDK and
 projects made with it as you see fit.
 
 * ``GCC_VERSION`` specifies the GCC version number. This is only required for
-  building the libc library. If not defined, the default value of `7.4.0` is
+  building the libc library. If not defined, the default value of 7.4.0 is
   used.
 * ``PSN00BSDK_TC`` specifies the base directory of the GCC toolchain to
   build PSn00bSDK with, otherwise the makefile assumes you have the path to
-  the toolchain binaries in one of your PATH directories.
+  the toolchain binaries in one of your PATH directories. Alternatively,
+  ``GCC_BASE`` can be specified in place of ``PSN00BSDK_TC``. If not
+  specified psn00bsdk-setup.mk assumes the toolchain is at
+  C:\mipsel-unknown-elf in Win32 or /usr/local/mipsel-unknown-elf in Linux.
 * ``PSN00BSDK_LIBS`` specifies the target directory you wish to install
   the compiled libpsn00b libraries to. If not defined, compiled
-  libraries are consolidated to the libpsn00b directory.
+  libraries are consolidated to the libpsn00b directory and
+  psn00bsdk-setup.mk assumes the SDK libraries are at ../psn00bsdk/libpsn00b.
 
 
 ### Windows:
 1. Download the following:
   * MSys2 (32-bit or 64-bit version whichever you prefer)
   * GCC 7.4.0 for mipsel-unknown-elf (download from Lameguy64's website at
-    http://lameguy64.net?page=psn00bsdk )
+    http://lameguy64.net?page=psn00bsdk if you rather not build it yourself)
 2. Install MSys2, update packages (with pacman -Syu) then install the
    following packages:
   * git
   * make
   * mingw-w64-i686-gcc (32-bit) or mingw-w64-x86_64-gcc (64-bit)
-    You will need to close and reopen MSys2 for the PATH environment to
-    update for MinGW.
+    You may need to close and reopen MSys2 for the PATH environment in the
+	shell to update for MinGW.
   * mingw-w64-i686-tinyxml2 (32-bit) or mingw-w64-x86_64-tinyxml2 (64-bit)
+    Used by lzpack and smxlink.
 3. Extract GCC 7.4.0 for mipsel-unknown-elf to the root of your C drive.
 4. Edit `mipsel-unknown-elf/mipsel-unknown-elf/lib/ldscripts/elf32elmip.x`
-   and update the .text definitions as explained in toolchain.txt.
+   and append definitions to the .text definition as explained in
+   toolchain.txt.
 5. Add `export PATH=$PATH:/c/mipsel-unknown-elf/bin` to your `.bash_profile`
-   file in MSys2. Test if mipsel-unknown-elf-gcc can be called from any
-   directory in the terminal.
+   file in MSys2. Test if `mipsel-unknown-elf-gcc` can be called from any
+   directory in the terminal after reloading the MSys2 shell for the change
+   to take effect.
 6. Clone from PSn00bSDK source with
    `git clone https://github.com/lameguy64/psn00bsdk`
-   Clone it in the root of your C drive or in any location you choose.
-7. Enter tools directory in PSn00bSDK and run `make` to build all tools.
-   Then, run `make install` to consolidate all tools to a single bin
+   Clone it in the root of your C drive or in any location you prefer.
+7. Enter the tools directory in PSn00bSDK and run `make` to build all tools,
+   then run `make install` to consolidate all tools to a single bin
    directory. Add this directory to your PATH variable by adding
-   `export=$PATH:<path to SDK>/tools/bin` in your .bash_profile file. You'll
-   need to reload the MSys2 shell after making the changes.
+   `export=$PATH:<path to SDK>/tools/bin` in your .bash_profile. Reload
+   the MSys2 shell for the changes to take effect, then enter `elf2x` if
+   the tools can be executed from any directory.
 8. Enter libpsn00b directory and run `make` to build all libpsn00b libraries,
-   then `make install` to consolidate the libraries to the parent directory
-   or the directory specified by ``PSN00BSDK_LIBS``.
-6. Compile the example programs to test if the SDK is set up correctly.
-   Update directory paths in `sdk-common.mk` when necessary.
+   then `make install` to consolidate the libraries to either the parent
+   directory or the directory specified by ``PSN00BSDK_LIBS``.
+6. Compile the example programs by running `make` from the examples
+   directory to test the SDK.
    
 If you prefer to do things in the Command Prompt, you can add the paths
 c:\msys64\usr\bin, c:\msys64\mingw64\bin (mingw32 for 32-bit),
@@ -146,19 +156,20 @@ programs with PSn00bSDK within the Command Prompt.
    gmp, isl and tinyxml2 libraries for your distro.
 2. Build and install the GNU GCC toolchain targeting mipsel-unknown-elf
    (see toolchain.txt for details). Export a variable named `PSN00BSDK_TC`
-   containing a path to the installed toolchain's base directory. Also
-   export a `GCC_VERSION` variable if you're using a version of GCC other
-   than 7.4.0.
+   containing a path to the installed toolchain's base directory if
+   you've installed the toolchain in a location other than /usr/local.
+   Also export a `GCC_VERSION` variable if you're using a version of GCC
+   other than 7.4.0.
 3. Clone from PSn00bSDK source with
    `git clone https://github.com/lameguy64/psn00bsdk`
 4. Enter tools directory and run `make`, then `make install` to consolidate
-   the tools to a bin directory. Add this directory to your PATH variable and
-   make sure `elf2x` and `lzpack` (required for n00bDEMO) is accessible from
-   any directory.
-5. Enter the libpsn00b directory and run `make`. Then, run `make install` to
-   consolidate the libraries to the libpsn00b parent directory or the
+   the tools to the bin directory. Add this directory to your PATH variable
+   and make sure `elf2x` and other tools are accessible from any directory.
+5. Enter the libpsn00b directory and run `make`. Then, run `make install`
+   to consolidate the libraries to the libpsn00b parent directory, or the
    directory specified by ``PSN00BSDK_LIBS``.
-6. Compile example programs to test if the SDK is set up correctly.
+6. Compile the example programs by running `make` from the examples
+   directory to test the SDK.
 
 
 ## Examples
@@ -167,14 +178,23 @@ There are a few examples and complete source code of n00bdemo included in
 the examples directory. More example programs may be added in the future
 and contributed example programs are welcome.
 
+There's also Lameguy's PlayStation Programming Tutorial Series at
+http://lameguy64.net/tutorials/pstutorials/ for learning how to program
+for the PlayStation. The tutorials should still apply to PSn00bSDK.
+
 
 ## To-do List
 
 * psxspu: Plenty of work to be done. Hardware timer driven sound/music
   system may need to be implemented (an equivalent to the Ss* series of
-  functions in libspu basically).
+  functions in libspu basically). Need to figure out the correct frequency
+  table for playing sounds in musical note notation.
   
+* psxcd: Implement a command queue mechanism for the CD-ROM?
+
 * Support for MDEC.
+
+* Pad and memory card libraries that don't use the BIOS routines.
 
 
 ## Usage terms
@@ -200,10 +220,12 @@ Main developer:
 * Lameguy64
 
 Honorable mentions:
-* ijacquez (for the helpful suggestions for getting C++ working)
+* ijacquez - helpful suggestions for getting C++ working.
+* NicolasNoble - his OpenBIOS project gave insight to how the BIOS works
+  internally.
 
 Helpful contributors can be found in the changelog.
 
 References used:
 * nocash's PlayStation specs document (http://problemkaputt.de/psx-spx.htm)
-* Tails92's PSXSDK project.
+* Tails92's PSXSDK project (during PSn00bSDK's infancy).

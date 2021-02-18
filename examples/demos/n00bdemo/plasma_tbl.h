@@ -1,7 +1,7 @@
 #ifndef _PLASMA_TBL_H
 #define _PLASMA_TBL_H
 
-unsigned int plasma_colors[256];
+extern unsigned int plasma_colors[];
 extern short plasma_sin1[];
 extern short plasma_sin2[];
 extern short plasma_sin3[];

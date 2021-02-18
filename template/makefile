@@ -1,14 +1,14 @@
-include ../../examples-setup.mk
+include psn00bsdk-setup.mk
 
 # Project target name
-TARGET		= console.elf
+TARGET		= template.elf
 
 # Searches for C, C++ and S (assembler) files in local directory
 CFILES		= $(notdir $(wildcard *.c))
 CPPFILES 	= $(notdir $(wildcard *.cpp))
 AFILES		= $(notdir $(wildcard *.s))
 
-# Determine object files
+# Create names for object files
 OFILES		= $(addprefix build/,$(CFILES:.c=.o)) \
 			$(addprefix build/,$(CPPFILES:.cpp=.o)) \
 			$(addprefix build/,$(AFILES:.s=.o))
@@ -19,7 +19,7 @@ INCLUDE	 	+=
 LIBDIRS		+=
 
 # Libraries to link
-LIBS		= -lpsxsio -lpsxgpu -lpsxgte -lpsxspu -lpsxetc -lpsxapi -lc
+LIBS		= -lpsxgpu -lpsxgte -lpsxspu -lpsxetc -lpsxapi -lc
 
 # C compiler flags
 CFLAGS		= -g -O2 -fno-builtin -fdata-sections -ffunction-sections
@@ -28,9 +28,9 @@ CFLAGS		= -g -O2 -fno-builtin -fdata-sections -ffunction-sections
 CPPFLAGS	= $(CFLAGS) -fno-exceptions
 
 # Assembler flags
-AFLAGS		= -g -msoft-float
+AFLAGS		= -g
 
-# Linker flags
+# Linker flags (-Ttext specifies the program text address)
 LDFLAGS		= -g -Ttext=0x80010000 -gc-sections \
 			-T $(GCC_BASE)/$(PREFIX)/lib/ldscripts/elf32elmip.x
 

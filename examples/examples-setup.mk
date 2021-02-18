@@ -5,7 +5,7 @@
 # This is only for the PSn00bSDK example programs, not recommended
 # for use with user projects
 
-PREFIX		= mipsel-unknown-elf-
+PREFIX		= mipsel-unknown-elf
 
 ifndef GCC_VERSION
 
@@ -56,9 +56,9 @@ endif		# PSN00BSDK_TC
 
 endif		# GCC_BASE
 
-CC			= $(GCC_BIN)$(PREFIX)gcc
-CXX			= $(GCC_BIN)$(PREFIX)g++
-AS			= $(GCC_BIN)$(PREFIX)as
-AR			= $(GCC_BIN)$(PREFIX)ar
-LD			= $(GCC_BIN)$(PREFIX)ld
-RANLIB		= $(GCC_BIN)$(PREFIX)ranlib
+CC			= $(GCC_BIN)$(PREFIX)-gcc
+CXX			= $(GCC_BIN)$(PREFIX)-g++
+AS			= $(GCC_BIN)$(PREFIX)-as
+AR			= $(GCC_BIN)$(PREFIX)-ar
+LD			= $(GCC_BIN)$(PREFIX)-ld
+RANLIB		= $(GCC_BIN)$(PREFIX)-ranlib

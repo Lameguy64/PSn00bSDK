@@ -32,7 +32,7 @@ AFLAGS		= -g -msoft-float
 
 # Linker flags
 LDFLAGS		= -g -Ttext=0x80010000 -gc-sections \
-			-T $(GCC_BASE)/mipsel-unknown-elf/lib/ldscripts/elf32elmip.x
+			-T $(GCC_BASE)/$(PREFIX)/lib/ldscripts/elf32elmip.x
 
 all: $(OFILES)
 	$(LD) $(LDFLAGS) $(LIBDIRS) $(OFILES) $(LIBS) -o $(TARGET)

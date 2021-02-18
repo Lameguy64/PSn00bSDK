@@ -28,7 +28,7 @@ endif
 all: $(TARGET)
 
 $(TARGET): $(OFILES)
-	cp $(GCC_BASE)/lib/gcc/mipsel-unknown-elf/$(GCC_VERSION)/libgcc.a ./$(TARGET)
+	cp $(GCC_BASE)/lib/gcc/$(PREFIX)/$(GCC_VERSION)/libgcc.a ./$(TARGET)
 	$(AR) r $(TARGET) $(OFILES)
 	$(RANLIB) $(TARGET)
 

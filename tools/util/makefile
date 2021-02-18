@@ -10,6 +10,7 @@ endif
 
 all:
 	$(CC) $(CFLAGS) elf2x.c -o elf2x$(EXE_SUFFIX)
+	$(CC) $(CFLAGS) elf2cpe.c -o elf2cpe$(EXE_SUFFIX)
 	
 install:
 	mkdir -p ../bin

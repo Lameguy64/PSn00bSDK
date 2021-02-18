@@ -3,6 +3,9 @@
 #
 # TurboBoot Example by Lameguy64
 #
+# Note: This example is being obsoleted as GAS is not ideal for making
+# ROM firmwares. Use ARMIPS instead, but it cannot build this example
+# as it is not GAS syntax compatible.
 
 
 # Uncomment either PAR or XPLORER depending on the cartridge

@@ -5,7 +5,11 @@
 # This file may be copied for use with your projects, see the template
 # directory for a makefile template
 
-PREFIX		= mipsel-unknown-elf-
+ifndef PREFIX
+
+PREFIX		= mipsel-unknown-elf
+
+endif	# PREFIX
 
 ifndef GCC_VERSION
 
@@ -56,9 +60,9 @@ endif		# PSN00BSDK_TC
 
 endif		# GCC_BASE
 
-CC			= $(GCC_BIN)$(PREFIX)gcc
-CXX			= $(GCC_BIN)$(PREFIX)g++
-AS			= $(GCC_BIN)$(PREFIX)as
-AR			= $(GCC_BIN)$(PREFIX)ar
-LD			= $(GCC_BIN)$(PREFIX)ld
-RANLIB		= $(GCC_BIN)$(PREFIX)ranlib
+CC			= $(GCC_BIN)$(PREFIX)-gcc
+CXX			= $(GCC_BIN)$(PREFIX)-g++
+AS			= $(GCC_BIN)$(PREFIX)-as
+AR			= $(GCC_BIN)$(PREFIX)-ar
+LD			= $(GCC_BIN)$(PREFIX)-ld
+RANLIB		= $(GCC_BIN)$(PREFIX)-ranlib

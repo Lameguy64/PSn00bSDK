@@ -31,14 +31,14 @@ Make sure the following packages are installed prior to building:
 Building binutils:
 
 Binutils must be built first as GCC depends on binutils built for the same
-target architecture. In this case, to compile GCC targetting mipsel-unknown-elf,
-there must be a build of binutils targetting mipsel-unknown-elf as well.
+target architecture. In this case, building binutils and GCC to target
+mipsel-unknown-elf.
 
 * Download binutils source files at ftp://ftp.gnu.org. Choose a version you
-  wish to use with PSn00bSDK.
+  wish to use with PSn00bSDK. The reference version that PSn00bSDK is tested
+  with most is 2.31.
   
-* Extract the contents of the archive, preferably in a directory named gcc
-  for example.
+* Extract the contents of the archive, preferably in a directory named gcc.
   
 * Create a directory named binutils-build inside the gcc directory. Do not
   create it inside the binutils directory with the source files.
@@ -59,17 +59,19 @@ root privileges to install).
   system has available to speed up compiling).
   
 * Run `make install-strip` to install binutils to the path specified by the
-  --prefix argument (requires root privileges if you install to /usr/local).
+  --prefix argument (root privileges are required if the prefix points to
+  /usr/local).
 
 
 Building gcc:
 
-With binutils built it should be possible to build the GCC compilers. Since
+With binutils built it should be possible to build the GCC toolchain. Since
 GCC is considerably larger than binutils, compile time is going to be much
-longer so it's going to take a longer while to finish building.
+longer so it's going to take a longer while to build this.
 
-* Download gcc source files at ftp://ftp.gnu.org and choose a version you
-  wish to use with PSn00bSDK.
+* Download gcc source files at ftp://ftp.gnu.org and choose the version you
+  wish to use with PSn00bSDK. The reference version that PSn00bSDK is tested
+  with most is 7.4.0.
 
 * Extract it to the same gcc directory you extracted binutils in.
 
@@ -85,18 +87,19 @@ longer so it's going to take a longer while to finish building.
 
 Replace <version> with the version of gcc you downloaded. The prefix path
 must match to what you've specified for binutils earlier, if you've decided
-on a different path to install the toolchain to.
+to use a different prefix path for binutils.
 
-When building under Windows you must additionally specify --disable-libgcc, so
-libgcc won't be built as it requires symlinks not supported by the host system.
+When building under Windows you must additionally specify --disable-libgcc,
+as libgcc cannot be built under Windows as it needs symlinks which are not
+supported by the operating system.
 
-* Run make in the same manner as you built binutils to build gcc.
+* Run make in the same manner you built binutils with.
 
 * Run `make install-strip` to install gcc to the path specified by --prefix
-  (may require root privileges if you set the prefix to /usr/local).
+  (root privileges are required if the prefix points to /usr/local).
   
 * Add a path to the bin directory of the toolchain into your PATH environment
-  variable by adding the following line in your .bashrc file:
+  variable by adding the following line in your .bashrc or .bash_profile file:
   
 export PATH=$PATH:/usr/local/mipsel-unknown-elf/bin
 
@@ -109,13 +112,13 @@ Updating the ldscript:
 The following changes are required in order for basic C++ functionality to work
 in PSn00bSDK. The changes define the constructor and deconstructor sections
 which are required for the relevant support functions in PSn00bSDK's libc
-library to be linked properly.
+library to be linked properly for C++.
 
 * Go to mipsel-unknown-elf/lib/ldscripts in the toolchain directory.
   
 * Open elf32elmip.x in any text editor.
 
-* Locate the .text definition (with the {} brackets) and place the following
+* Locate the .text definition (with the {} brackets) and add the following
   inside the bracket block:
 
 __CTOR_LIST__ = .;
@@ -138,13 +141,14 @@ __DTOR_END__ = .;
 
 * Save script changes.
 
-Since there's no known way (at least to me, Lameguy64) to configure GCC to use
-one of the scripts in ldscripts directory as a default, you must specify
-the modified script during the linking stage of your projects with the -T
+Since there's no known way (at least to me -Lameguy64) to configure GCC such
+that it uses the modified ldscript as the default, you must specify the
+modified script during the linking stage of your projects with the -T
 argument, when invoking mipsel-unknown-elf-ld.
 
 Alternatively, you can make a copy of the ldscript file and modify it within
-your project directory. This is especially useful when code overlaying is used.
+your project directory. This is especially useful if your project uses code
+overlays.
 
 
 Note regarding C++ support:
@@ -156,3 +160,6 @@ the program. The required dependencies are supplied by libc of libpsn00b.
 Standard C++ libraries are not implemented and likely never going to be
 implemented due to bloat concerns that it may introduce. Besides, the official
 SDK lacks full C++ support as well.
+
+If you're trying to compile with C++ code and you get a linker error about
+undefined vtables, try specifying --fno-rtti to the g++ command line.

@@ -16,7 +16,8 @@ LIBS		= -lpsxgpu -lpsxgte -lpsxspu -lpsxetc -lpsxapi -lc
 CFLAGS		= -g -O2 -fno-builtin -fdata-sections -ffunction-sections
 CPPFLAGS	= $(CFLAGS) -fno-exceptions
 AFLAGS		= -g -msoft-float
-LDFLAGS		= -g -Ttext=0x80010000 -gc-sections -T $(GCC_BASE)/mipsel-unknown-elf/lib/ldscripts/elf32elmip.x
+LDFLAGS		= -g -Ttext=0x80010000 -gc-sections \
+				-T $(GCC_BASE)/$(PREFIX)/lib/ldscripts/elf32elmip.x
 
 all: $(OFILES)
 	$(LD) $(LDFLAGS) $(LIBDIRS) $(OFILES) $(LIBS) -o $(TARGET)

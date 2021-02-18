@@ -2,6 +2,29 @@ PSn00bSDK changelog
 
 Items that are lower in the log are more recently implemented.
 
+02-17-2021 by Lameguy64:
+
+* Improved build instructions in readme file and fixed some typos.
+
+* Improved toolchain.txt instructions.
+
+* tools: Added experimental elf2cpe converter for executing PSn00bSDK
+  programs in official development units. No debug symbols however.
+
+* Fixed prefixes to allow SDK libraries and examples to be built
+  with mipsel-none-elf.
+  
+* examples: Fixed typo in plasma_tbl.h causing multiple definitions when
+  compiling with newer versions of GCC in n00bdemo.
+
+* examples: cartrom example now marked as obsoleted, but still kept for
+  reference purposes.
+  
+* Includes alextrevisan's GTE macros in inline_c.h.
+
+* Added makefile template.
+
+
 01-05-2021 by Lameguy64:
 
 * psxgpu: Added struct names to many primitives.
