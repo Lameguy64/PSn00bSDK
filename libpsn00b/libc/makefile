@@ -2,7 +2,7 @@
 # Part of the PSn00bSDK Project
 # 2019 - 2020 Lameguy64 / Meido-Tek Productions
 
-include ../../psn00bsdk-setup.mk
+include ../../template/psn00bsdk-setup.mk
 
 TARGET	= libc.a
 
