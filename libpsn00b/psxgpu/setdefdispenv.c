@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #include <psxgpu.h>
 
 DISPENV *SetDefDispEnv(DISPENV *disp, int x, int y, int w, int h) {

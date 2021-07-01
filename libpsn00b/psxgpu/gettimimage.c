@@ -1,8 +1,9 @@
+#include <sys/types.h>
 #include <psxgpu.h>
 
-int GetTimInfo(unsigned int *tim, TIM_IMAGE *timimg) {
+int GetTimInfo(u_long *tim, TIM_IMAGE *timimg) {
 
-	unsigned int *rtim;
+	u_long *rtim;
 
 	// Check ID
 	if( ( tim[0]&0xff ) != 0x10 ) {
@@ -21,7 +22,7 @@ int GetTimInfo(unsigned int *tim, TIM_IMAGE *timimg) {
 	if( timimg->mode & 0x8 ) {
 
 		timimg->crect = (RECT*)(rtim+1);
-		timimg->caddr = (unsigned int*)(rtim+3);
+		timimg->caddr = (u_long*)(rtim+3);
 
 		rtim += rtim[0]>>2;
 
@@ -32,7 +33,7 @@ int GetTimInfo(unsigned int *tim, TIM_IMAGE *timimg) {
 	}
 
 	timimg->prect = (RECT*)(rtim+1);
-	timimg->paddr = (unsigned int*)(rtim+3);
+	timimg->paddr = (u_long*)(rtim+3);
 
 	return 0;
 

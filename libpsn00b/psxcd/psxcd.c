@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #include <stdio.h>
 #include <psxgpu.h>
 #include "psxcd.h"
@@ -5,16 +6,16 @@
 #define READ_TIMEOUT	600		// 10 seconds for NTSC
 
 extern volatile char _cd_ack_wait;
-extern volatile unsigned char _cd_last_int;
-extern volatile unsigned char _cd_last_mode;
-extern volatile unsigned char _cd_status;
+extern volatile u_char _cd_last_int;
+extern volatile u_char _cd_last_mode;
+extern volatile u_char _cd_status;
 extern volatile CdlCB _cd_callback_int1_data;
 
-volatile unsigned char *_cd_result_ptr;
+volatile u_char *_cd_result_ptr;
 
 // For read retry
 volatile CdlLOC _cd_last_setloc;
-volatile unsigned int *_cd_last_read_addr;
+volatile u_long *_cd_last_read_addr;
 volatile int _cd_last_sector_count;
 
 int _cd_media_changed;
@@ -233,11 +234,11 @@ int CdMode(void)
 
 // CD data read routines
 volatile int _cd_sector_count = 0;
-volatile unsigned int *_cd_read_addr;
-volatile unsigned char _cd_read_result[8];
-volatile unsigned int _cd_read_oldcb;
-volatile unsigned int _cd_read_sector_sz;
-volatile unsigned int _cd_read_counter;
+volatile u_long *_cd_read_addr;
+volatile u_char _cd_read_result[8];
+volatile u_long _cd_read_oldcb;
+volatile u_long _cd_read_sector_sz;
+volatile u_long _cd_read_counter;
 
 
 
@@ -278,7 +279,7 @@ static void _CdReadReadyCallback(int status, unsigned char *result)
 	}
 }
 
-int CdRead(int sectors, unsigned int *buf, int mode)
+int CdRead(int sectors, u_long *buf, int mode)
 {
 	// Set sectors to read count
 	_cd_sector_count = sectors;
@@ -306,10 +307,10 @@ int CdRead(int sectors, unsigned int *buf, int mode)
 	_cd_read_oldcb = CdReadyCallback(_CdReadReadyCallback);
 	
 	// Set specified mode
-	CdControl(CdlSetmode, (unsigned char*)&mode, 0);
+	CdControl(CdlSetmode, (u_char*)&mode, 0);
 	
 	// Begin reading sectors
-	CdControl(CdlReadN, 0, (unsigned char*)_cd_read_result);
+	CdControl(CdlReadN, 0, (u_char*)_cd_read_result);
 	
 	return 0;
 }
@@ -335,10 +336,10 @@ static void CdDoRetry()
 	
 	// Retry read
 	CdControl(CdlSetloc, (void*)&_cd_last_setloc, 0);
-	CdControl(CdlReadN, 0, (unsigned char*)_cd_read_result);
+	CdControl(CdlReadN, 0, (u_char*)_cd_read_result);
 }
 
-int CdReadSync(int mode, unsigned char *result)
+int CdReadSync(int mode, u_char *result)
 {
 	if( (VSync(-1)-_cd_read_counter) > READ_TIMEOUT )
 	{
@@ -370,7 +371,7 @@ int CdReadSync(int mode, unsigned char *result)
 	return 0;
 }
 
-unsigned int CdReadCallback(CdlCB func)
+u_long CdReadCallback(CdlCB func)
 {
 	unsigned int old_func;
 	

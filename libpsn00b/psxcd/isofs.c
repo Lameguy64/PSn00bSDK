@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
@@ -11,8 +12,8 @@
 
 typedef struct _CdlDIR_INT
 {
-	u_int	_pos;
-	u_int	_len;
+	u_long	_pos;
+	u_long	_len;
 	u_char*	_dir;
 } CdlDIR_INT;
 
@@ -81,7 +82,7 @@ static int _CdReadIsoDescriptor(int session_offs)
 	printf("psxcd: Read sectors.\n");
 #endif
 	// Read volume descriptor
-	CdRead(1, (u_int*)_cd_iso_descriptor_buff, CdlModeSpeed);
+	CdRead(1, (u_long*)_cd_iso_descriptor_buff, CdlModeSpeed);
 	
 	if( CdReadSync(0, 0) )
 	{
@@ -127,7 +128,7 @@ static int _CdReadIsoDescriptor(int session_offs)
 	// Read path table
 	CdIntToPos(descriptor->pathTable1Offs, &loc);
 	CdControl(CdlSetloc, (u_char*)&loc, 0);
-	CdRead(i>>11, (u_int*)_cd_iso_pathtable_buff, CdlModeSpeed);
+	CdRead(i>>11, (u_long*)_cd_iso_pathtable_buff, CdlModeSpeed);
 	if( CdReadSync(0, 0) )
 	{
 #ifdef DEBUG
@@ -177,7 +178,7 @@ static int _CdReadIsoDirectory(int lba)
 	
 	// Read first sector of directory record
 	_cd_iso_directory_buff = (u_char*)malloc(2048);
-	CdRead(1, (u_int*)_cd_iso_directory_buff, CdlModeSpeed);
+	CdRead(1, (u_long*)_cd_iso_directory_buff, CdlModeSpeed);
 	if( CdReadSync(0, 0) )
 	{
 #ifdef DEBUG
@@ -213,7 +214,7 @@ static int _CdReadIsoDirectory(int lba)
 		printf("psxcd_dbg: Allocated %d bytes for directory record.\n", i);
 #endif
 
-		CdRead(i>>11, (u_int*)_cd_iso_directory_buff, CdlModeSpeed);
+		CdRead(i>>11, (u_long*)_cd_iso_directory_buff, CdlModeSpeed);
 		if( CdReadSync(0, 0) )
 		{
 #ifdef DEBUG

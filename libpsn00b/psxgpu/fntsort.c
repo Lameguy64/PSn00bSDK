@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <psxgpu.h>
@@ -5,7 +6,7 @@
 extern unsigned short _font_tpage;
 extern unsigned short _font_clut;
 
-char *FntSort(unsigned int *ot, char *pri, int x, int y, const char *text) {
+char *FntSort(u_long *ot, char *pri, int x, int y, const char *text) {
 	
 	DR_TPAGE *tpage;
 	SPRT_8 *sprt = (SPRT_8*)pri;

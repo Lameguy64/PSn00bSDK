@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #include <psxgpu.h>
 
 DRAWENV *SetDefDrawEnv(DRAWENV *draw, int x, int y, int w, int h) {
