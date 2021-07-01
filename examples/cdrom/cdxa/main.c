@@ -2,7 +2,7 @@
  * LibPSn00b Example Programs
  *
  * CD-XA Audio Example
- * 2019 Meido-Tek Productions / PSn00bSDK Project
+ * 2019 - 2021 Meido-Tek Productions / PSn00bSDK Project
  *
  * Demonstrates playback and looping of CD-XA audio using the
  * new libpsxcd library.
@@ -110,10 +110,13 @@
  *
  * Changelog:
  *
- *	  November 22, 2019 - Initial version
+ *	May 10, 2021		- Variable types updated for psxgpu.h changes.
+ *
+ *	November 22, 2019	- Initial version
  *
  */
  
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -148,7 +151,7 @@ DISPENV disp[2];
 DRAWENV draw[2];
 
 char pribuff[2][65536];			/* Primitive packet buffers */
-unsigned int ot[2][OT_LEN];		/* Ordering tables */
+u_long ot[2][OT_LEN];		/* Ordering tables */
 char *nextpri;					/* Pointer to next packet buffer offset */
 int db = 0;						/* Double buffer index */
 
@@ -274,7 +277,7 @@ void init()
 	
 	
 	/* Upload the ball texture */
-	GetTimInfo((unsigned int*)ball16c, &tim); /* Get TIM parameters */
+	GetTimInfo((u_long*)ball16c, &tim); /* Get TIM parameters */
 	LoadImage(tim.prect, tim.paddr);		/* Upload texture to VRAM */
 	if( tim.mode & 0x8 )
 	{

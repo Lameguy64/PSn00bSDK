@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <psxetc.h>
@@ -22,23 +23,23 @@ typedef struct {
 } PARTICLE;
 
 typedef struct {
-	unsigned int	tag;
-	unsigned int	tpage;
-	unsigned int	mask1;
-	unsigned char	r0,g0,b0,code;
-	short			x0,y0;
-	short			x1,y1;
-	short			x2,y2;
-	short			x3,y3;
-	unsigned int	mask2;
+	u_long	tag;
+	u_long	tpage;
+	u_long	mask1;
+	u_char	r0,g0,b0,code;
+	short	x0,y0;
+	short	x1,y1;
+	short	x2,y2;
+	short	x3,y3;
+	u_long	mask2;
 } MASKP_F4;
 
 typedef struct {
-	unsigned int	tag;
-	unsigned int	tpage;
-	unsigned char	r0,g0,b0,code;
-	short			x0,y0;
-	short			w,h;
+	u_long	tag;
+	u_long	tpage;
+	u_char	r0,g0,b0,code;
+	short	x0,y0;
+	short	w,h;
 } FADERECT;
 
 
@@ -46,8 +47,8 @@ SMD *o_psn00b, *o_n00blogo;
 
 
 typedef struct {
-	unsigned int *prev;
-	unsigned int *next;
+	u_long *prev;
+	u_long *next;
 	int size;
 } NODE;
 

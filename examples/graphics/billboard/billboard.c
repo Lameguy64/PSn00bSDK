@@ -2,7 +2,7 @@
  * LibPSn00b Example Programs
  *
  * GTE Billboarding Sprites Example
- * 2019 Meido-Tek Productions / PSn00bSDK Project
+ * 2019 - 2021 Meido-Tek Productions / PSn00bSDK Project
  *
  * Displays a bunch of sprites placed on the screen using 3D coordinates
  * that scale according to the distance from the screen. This is a quick
@@ -16,10 +16,13 @@
  *
  * Changelog:
  *
+ *	May 10, 2021 - Variable types updated for psxgpu.h changes.
+ *
  *  Sep 24, 2019 - Initial version.
  *
  */
  
+#include <sys/types.h>
 #include <stdio.h>
 #include <psxgpu.h>
 #include <psxgte.h>
@@ -42,7 +45,7 @@
 typedef struct {
 	DISPENV	disp;			/* Display environment */
 	DRAWENV	draw;			/* Drawing environment */
-	int 	ot[OT_LEN];		/* Ordering table */
+	u_long 	ot[OT_LEN];		/* Ordering table */
 	char 	p[PACKET_LEN];	/* Packet buffer */
 } DB;
 
@@ -51,8 +54,8 @@ DB		db[2];
 int		db_active = 0;
 char	*db_nextpri;
 
-extern int	tim_image[];
-TIM_IMAGE 	tim;
+extern u_long	tim_image[];
+TIM_IMAGE 		tim;
 
 /* For easier handling of vertex indices */
 typedef struct {
@@ -224,7 +227,7 @@ void init() {
 	/* Set screen depth (basically FOV control, W/2 works best) */
 	gte_SetGeomScreen( CENTERX );
 	
-	GetTimInfo(tim_image, &tim);
+	GetTimInfo( tim_image, &tim);
 	
 	LoadImage(tim.prect, tim.paddr);
 	DrawSync(0);

@@ -2,7 +2,7 @@
  * LibPSn00b Example Programs
  *
  * Child Program Execution Example
- * 2020 Meido-Tek Productions / PSn00bSDK Project
+ * 2020 - 2021 Meido-Tek Productions / PSn00bSDK Project
  *
  * This example demonstrates how to execute a child PS-EXE from a parent
  * PS-EXE using the Exec() function, and transferring execution back from
@@ -14,8 +14,13 @@
  *
  * Example by Lameguy64
  *
+ * Changelog:
+ *
+ *	May 10, 2021		- Variable types updated for psxgpu.h changes.
+ *
  */
  
+#include <sys/types.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -43,7 +48,7 @@ DISPENV disp;
 DRAWENV draw;
 
 char pribuff[2][65536];			/* Primitive packet buffers */
-unsigned int ot[2][OT_LEN];		/* Ordering tables */
+u_long ot[2][OT_LEN];			/* Ordering tables */
 char *nextpri;					/* Pointer to next packet buffer offset */
 int db = 0;						/* Double buffer index */
 
@@ -98,7 +103,7 @@ void init() {
 	
 	/* Upload the ball texture */
 	printf("Upload texture... ");
-	GetTimInfo( (unsigned int*)ball16c, &tim ); /* Get TIM parameters */
+	GetTimInfo( (u_long*)ball16c, &tim ); /* Get TIM parameters */
 	
 	LoadImage( tim.prect, tim.paddr );		/* Upload texture to VRAM */
 	if( tim.mode & 0x8 ) {

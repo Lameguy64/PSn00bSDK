@@ -1,6 +1,7 @@
 #ifndef _DISP_H
 #define _DISP_H
 
+#include <sys/types.h>
 #include <psxgte.h>
 
 #define SCENE_TIME	60*15
@@ -13,7 +14,7 @@
 void initDisplay();
 void display();
 
-extern unsigned int ot[2][OT_LEN];
+extern u_long ot[2][OT_LEN];
 extern char *nextpri;
 extern int db;
 

@@ -105,7 +105,7 @@ typedef struct _CdlATV
 typedef struct _CdlFILE
 {
 	CdlLOC	pos;
-	u_int	size;
+	u_long	size;
 	char	name[16];
 } CdlFILE;
 
@@ -120,7 +120,7 @@ typedef struct _CdlFILTER
 typedef void* CdlDIR;
 
 /* Data callback */
-typedef void (*CdlCB)(int, unsigned char *);
+typedef void (*CdlCB)(int, u_char *);
 
 #ifdef __cplusplus
 extern "C" {
@@ -132,20 +132,20 @@ CdlLOC*	CdIntToPos(int i, CdlLOC *p);
 int		CdPosToInt(CdlLOC *p);
 int		CdGetToc(CdlLOC *toc);
 
-int		CdControl(unsigned char com, unsigned char *param, unsigned char *result);
-int		CdControlB(unsigned char com, unsigned char *param, unsigned char *result);
-int		CdControlF(unsigned char com, unsigned char *param);
-int		CdSync(int mode, unsigned char *result);
-unsigned int CdSyncCallback(CdlCB func);
+int		CdControl(u_char com, u_char *param, u_char *result);
+int		CdControlB(u_char com, u_char *param, u_char *result);
+int		CdControlF(u_char com, u_char *param);
+int		CdSync(int mode, u_char *result);
+u_long	CdSyncCallback(CdlCB func);
 
 long	CdReadyCallback(CdlCB func);
 int		CdGetSector(void *madr, int size);
 
 CdlFILE* CdSearchFile(CdlFILE *loc, const char *filename);
 
-int		CdRead(int sectors, unsigned int *buf, int mode);
-int		CdReadSync(int mode, unsigned char *result);
-unsigned int CdReadCallback(CdlCB func);
+int		CdRead(int sectors, u_long *buf, int mode);
+int		CdReadSync(int mode, u_char *result);
+u_long	CdReadCallback(CdlCB func);
 
 int		CdStatus(void);
 int		CdMode(void);

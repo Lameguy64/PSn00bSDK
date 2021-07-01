@@ -1,6 +1,7 @@
 #ifndef _CLIP_H
 #define _CLIP_H
 
+#include <sys/types.h>
 #include <psxgte.h>
 #include <psxgpu.h>
 

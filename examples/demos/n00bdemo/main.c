@@ -2,7 +2,7 @@
  * LibPSn00b Example Programs
  *
  * n00bDEMO Source Code
- * 2019 Meido-Tek Productions / PSn00bSDK Project
+ * 2019 - 2021 Meido-Tek Productions / PSn00bSDK Project
  *
  * To build, simply run make. Make sure you have the lzpack tool accessible
  * through your PATH environment variable.
@@ -11,12 +11,15 @@
  *
  * Changelog:
  *
+ *	May 10, 2021 - Variable types updated for psxgpu.h changes.
+ *
  *	Apr 4, 2019	 - Some code clean-up and added more comments.
  *
  *  Mar 20, 2019 - Initial completed version.
  *
  */
  
+#include <sys/types.h>
 #include <sys/fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -92,7 +95,7 @@ void loadTextures() {
 	
 	for( j=0; j<qlpFileCount( tex_buff )-4; j++ ) {
 		
-		if( !GetTimInfo( (unsigned int*)qlpFileAddr( j, tex_buff ), &tim ) ) {
+		if( !GetTimInfo( (u_long*)qlpFileAddr( j, tex_buff ), &tim ) ) {
 		
 			UploadTIM( &tim );
 			
@@ -101,7 +104,7 @@ void loadTextures() {
 	}
 	
 	
-	GetTimInfo( (unsigned int*)qlpFileAddr( 
+	GetTimInfo( (u_long*)qlpFileAddr( 
 		qlpFindFile( "n00blogo", tex_buff ), tex_buff ), &tim );
 	
 	UploadTIM( &tim );
@@ -114,7 +117,7 @@ void loadTextures() {
 	setRGB0( &psn00b_sprite, 128, 128, 128 );
 	
 	
-	GetTimInfo( (unsigned int*)qlpFileAddr( 
+	GetTimInfo( (u_long*)qlpFileAddr( 
 		qlpFindFile( "lamelotl", tex_buff ), tex_buff ), &tim );
 	
 	UploadTIM( &tim );
@@ -127,7 +130,7 @@ void loadTextures() {
 	setRGB0( &llotl_sprite, 128, 128, 128 );
 	
 	
-	GetTimInfo( (unsigned int*)qlpFileAddr( 
+	GetTimInfo( (u_long*)qlpFileAddr( 
 		qlpFindFile( "celmap", tex_buff ), tex_buff ), &tim );
 		
 	UploadTIM( &tim );
@@ -137,7 +140,7 @@ void loadTextures() {
 	smdSetCelParam( 3, 3, 0x4f4f4f );
 	
 	
-	GetTimInfo( (unsigned int*)qlpFileAddr( 
+	GetTimInfo( (u_long*)qlpFileAddr( 
 		qlpFindFile( "font", tex_buff ), tex_buff ), &tim );
 		
 	UploadTIM( &tim );
@@ -545,7 +548,7 @@ void hatkidstuff() {
 
 // Plasma stuff
 void genPlasma(char *out, int count);
-char *sortPlasma(int *ot, char *pri, char *map);
+char *sortPlasma(u_long *ot, char *pri, char *map);
 
 void plasmastuff() {
 	

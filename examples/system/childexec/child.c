@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #include <stdio.h>
 #include <psxapi.h>
 #include <psxgpu.h>
@@ -22,7 +23,7 @@
 typedef struct {
 	DISPENV	disp;			/* Display environment */
 	DRAWENV	draw;			/* Drawing environment */
-	int 	ot[OT_LEN];		/* Ordering table */
+	u_long 	ot[OT_LEN];		/* Ordering table */
 	char 	p[PACKET_LEN];	/* Packet buffer */
 } DB;
 

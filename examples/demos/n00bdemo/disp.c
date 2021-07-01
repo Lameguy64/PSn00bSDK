@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #include <stdio.h>
 #include <psxgpu.h>
 #include <psxgte.h>
@@ -9,7 +10,7 @@ DISPENV disp;
 DRAWENV draw;
 
 char pribuff[2][131072];
-unsigned int ot[2][OT_LEN];
+u_long ot[2][OT_LEN];
 char *nextpri;
 int db = 0;
 

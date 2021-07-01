@@ -2,7 +2,7 @@
  * LibPSn00b Example Programs
  *
  * Full-resolution, Anamorphic Widescreen 3D Example
- * 2020 Meido-Tek Productions / PSn00bSDK Project
+ * 2020 - 2021 Meido-Tek Productions / PSn00bSDK Project
  *
  * This example is a modification of the fpscam example demonstrating
  * a method for taking advantage of widescreen HDTVs by means of a
@@ -51,10 +51,13 @@
  *
  * Changelog:
  *
- *  November 27, 2020 - Initial version.
+ *	May 10, 2021		- Variable types updated for psxgpu.h changes.
+ *
+ *  November 27, 2020	- Initial version.
  *
  */
  
+#include <sys/types.h>
 #include <stdio.h>
 #include <psxgpu.h>
 #include <psxgte.h>
@@ -83,7 +86,7 @@
 typedef struct {
 	DISPENV	disp;			// Display environment
 	DRAWENV	draw;			// Drawing environment
-	int 	ot[OT_LEN];		// Ordering table
+	u_long 	ot[OT_LEN];		// Ordering table
 	char 	p[PACKET_LEN];	// Packet buffer
 } DB;
 

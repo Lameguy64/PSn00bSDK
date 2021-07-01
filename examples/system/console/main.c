@@ -2,7 +2,7 @@
  * LibPSn00b Example Programs
  *
  * Text Console Example
- * 2020 Meido-Tek Productions / PSn00bSDK Project
+ * 2020 - 2021 Meido-Tek Productions / PSn00bSDK Project
  *
  * This example demonstrates a tty text console implementation for gameplay 
  * sections, or sections with continuously updating graphics. The console is
@@ -15,10 +15,13 @@
  *
  * Changelog:
  *
- *  April 23, 2020 - Initial version.
+ *	May 10, 2021		- Variable types updated for psxgpu.h changes.
+ *
+ *  April 23, 2020		- Initial version.
  *
  */
- 
+
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,7 +51,7 @@ DISPENV disp;
 DRAWENV draw;
 
 char pribuff[2][65536];			/* Primitive packet buffers */
-unsigned int ot[2][OT_LEN];		/* Ordering tables */
+u_long ot[2][OT_LEN];		/* Ordering tables */
 char *nextpri;					/* Pointer to next packet buffer offset */
 int db = 0;						/* Double buffer index */
 
@@ -101,7 +104,7 @@ void init() {
 	
 	/* Upload the ball texture */
 	printf("Upload texture... ");
-	GetTimInfo( (unsigned int*)ball16c, &tim ); /* Get TIM parameters */
+	GetTimInfo( (u_long*)ball16c, &tim ); /* Get TIM parameters */
 	
 	LoadImage( tim.prect, tim.paddr );		/* Upload texture to VRAM */
 	if( tim.mode & 0x8 ) {

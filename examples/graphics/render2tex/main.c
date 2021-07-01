@@ -2,7 +2,7 @@
  * LibPSn00b Example Programs
  *
  * Off-screen Render to Texture Example
- * 2019 Meido-Tek Productions / PSn00bSDK Project
+ * 2019 - 2021 Meido-Tek Productions / PSn00bSDK Project
  *
  * Demonstrates quick render to texture for multi-texture style effects,
  * view screens and more. This example also shows how to use multiple
@@ -13,10 +13,13 @@
  *
  * Changelog:
  *
- *  Oct 26, 2019 - Initial version.
+ *	May 10, 2021		- Variable types updated for psxgpu.h changes.
+ *
+ *  Oct 26, 2019		- Initial version.
  *
  */
  
+#include <sys/types.h>
 #include <stdio.h>
 #include <psxgpu.h>
 #include <psxgte.h>
@@ -44,8 +47,8 @@ typedef struct DB
 {
 	DISPENV	disp;			/* Display environment */
 	DRAWENV	draw;			/* Drawing environment */
-	int 	ot[OT_LEN];		/* Main ordering table */
-	int		sub_ot[2][4];	/* Second ordering table for r2t stuff */
+	u_long 	ot[OT_LEN];		/* Main ordering table */
+	u_long	sub_ot[2][4];	/* Second ordering table for r2t stuff */
 	char 	p[PACKET_LEN];	/* Packet buffer */
 } DB;
 
@@ -113,7 +116,7 @@ MATRIX light_mtx = {
 
 
 /* Reference texture data */
-extern int tim_blendpattern[];
+extern u_long tim_blendpattern[];
 
 
 /* TPage and CLUT values */
@@ -128,8 +131,8 @@ void display();
 
 /* This function sorts a cube that is drawn
  * to an offscreen area specified by *area */
-void sort_cube(int *ot, RECT *area);
-void sort_multitex(int *ot, RECT *area, int count);
+void sort_cube(u_long *ot, RECT *area);
+void sort_multitex(u_long *ot, RECT *area, int count);
 
 /* Main function */
 int main() {
@@ -393,7 +396,7 @@ void display() {
 	
 }
 
-void sort_multitex(int *ot, RECT *area, int count)
+void sort_multitex(u_long *ot, RECT *area, int count)
 {
 	DR_TPAGE	*ptpage;
 	FILL		*pfill;
@@ -526,7 +529,7 @@ void sort_multitex(int *ot, RECT *area, int count)
 	
 }
 
-void sort_cube(int *ot, RECT *area)
+void sort_cube(u_long *ot, RECT *area)
 {
 	int i,p;
 	POLY_FT4* 	pol4;

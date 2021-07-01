@@ -2,6 +2,21 @@ PSn00bSDK changelog
 
 Items that are lower in the log are more recently implemented.
 
+07-01-2021 by Lameguy64:
+
+* Libpsn00b: Added int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t,
+  uint32_t and uint64_t variable types in sys/types.h.
+  
+* psxgte: Replaced unsigned int variable types with u_long to further
+  improve compatibility with code written for the official Sony SDK and
+  to make my tutorial examples easier to compile on PSn00bSDK. Example
+  programs have been updated to account for this change.
+  
+* psxcd: Changed type of 2nd argument of CdRead() from u_int to u_long,
+  as well as changing the type of the size element in CdlFILE from u_int
+  to u_long.
+  
+
 02-17-2021 by Lameguy64:
 
 * Improved build instructions in readme file and fixed some typos.

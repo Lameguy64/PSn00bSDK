@@ -3,7 +3,12 @@
  * Basically a quick little example that showcases C++ classes are
  * functioning in PSn00bSDK. - Lameguy64
  *
- * Written in December ‎18, ‎2020.
+ * First written in December ‎18, ‎2020.
+ *
+ * Changelog:
+ *
+ *	May 10, 2021		- Variable types updated for psxgpu.h changes.
+ *
  */
  
 #include <sys/types.h>
@@ -14,7 +19,7 @@
 
 class GraphClass
 {
-	u_int	*_ot[2];
+	u_long	*_ot[2];
 	u_char	*_pri[2];
 	u_char	*_nextpri;
 
@@ -28,8 +33,8 @@ public:
 
 	GraphClass( int ot_len = 8, int pri_len = 8192 )
 	{
-		_ot[0] = (u_int*)malloc( sizeof(u_int)*ot_len );
-		_ot[1] = (u_int*)malloc( sizeof(u_int)*ot_len );
+		_ot[0] = (u_long*)malloc( sizeof(u_long)*ot_len );
+		_ot[1] = (u_long*)malloc( sizeof(u_long)*ot_len );
 		
 		_db = 0;
 		_ot_count = ot_len;
@@ -96,7 +101,7 @@ public:
 		
 	} /* GetNextPri */
 	
-	u_int *GetOt( void )
+	u_long *GetOt( void )
 	{
 		return( _ot[_db] );
 		

@@ -1,6 +1,7 @@
 #ifndef _LOOKAT_H
 #define _LOOKAT_H
 
+#include <sys/types.h>
 #include <psxgte.h>
 #include <psxgpu.h>
 

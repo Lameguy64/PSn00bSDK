@@ -12,16 +12,19 @@
  *
  * Changelog:
  *
- *   05-03-2019 - Initial version.
+ *	May 10, 2021		- Variable types updated for psxgpu.h changes.
+ *
+ *	May 3, 2019			- Initial version.
  *
  */
 
+#include <sys/types.h>
 #include <stdio.h>
 #include <psxgte.h>
 #include <psxgpu.h>
 
 // So data from tim.s can be accessed
-extern unsigned int tim_image[];
+extern u_long tim_image[];
 
 int main() {
 

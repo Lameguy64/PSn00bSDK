@@ -2,7 +2,7 @@
  * LibPSn00b Example Programs
  *
  * Balls Example
- * 2019 Meido-Tek Productions / PSn00bSDK Project
+ * 2019 - 2021 Meido-Tek Productions / PSn00bSDK Project
  *
  * Draws a bunch of ball sprites that bounce around the screen,
  * along with a ball snake that might be difficult to see.
@@ -12,10 +12,13 @@
  *
  * Changelog:
  *
- *  November 20, 2018 - Initial version.
+ *	May 10, 2021		- Variable types updated for psxgpu.h changes.
+ *
+ *  November 20, 2018	- Initial version.
  *
  */
  
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <psxetc.h>
@@ -39,10 +42,10 @@
 DISPENV disp;
 DRAWENV draw;
 
-char pribuff[2][65536];			/* Primitive packet buffers */
-unsigned int ot[2][OT_LEN];		/* Ordering tables */
-char *nextpri;					/* Pointer to next packet buffer offset */
-int db = 0;						/* Double buffer index */
+char	pribuff[2][65536];		/* Primitive packet buffers */
+u_long	ot[2][OT_LEN];			/* Ordering tables */
+char	*nextpri;				/* Pointer to next packet buffer offset */
+int		db = 0;					/* Double buffer index */
 
 
 /* Ball struct and array */
@@ -93,7 +96,7 @@ void init() {
 	
 	/* Upload the ball texture */
 	printf("Upload texture... ");
-	GetTimInfo( (unsigned int*)ball16c, &tim ); /* Get TIM parameters */
+	GetTimInfo( (u_long*)ball16c, &tim ); /* Get TIM parameters */
 	
 	LoadImage( tim.prect, tim.paddr );		/* Upload texture to VRAM */
 	if( tim.mode & 0x8 ) {

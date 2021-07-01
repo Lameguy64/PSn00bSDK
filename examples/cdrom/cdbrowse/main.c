@@ -2,7 +2,7 @@
  * LibPSn00b Example Programs
  *
  * CD File Browser Example
- * 2020 Meido-Tek Productions / PSn00bSDK Project
+ * 2020 - 2021 Meido-Tek Productions / PSn00bSDK Project
  *
  * Demonstrates listing and browsing directory contents of a CD-ROM containing
  * an ISO9660 file system, using the directory query functions of the libpsxcd
@@ -47,11 +47,14 @@
  *
  * Changelog:
  *
+ *	May 10, 2021: Variable types updated for psxgpu.h changes.
+ *
  *	February 25, 2020: Initial version.
  *
  *  July 12, 2020: Updated CD-ROM directory query logic on disc change slightly.
  */
  
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -85,7 +88,7 @@ DISPENV disp[2];
 DRAWENV draw[2];
 
 char pribuff[2][65536];			/* Primitive packet buffers */
-unsigned int ot[2][OT_LEN];		/* Ordering tables */
+u_long ot[2][OT_LEN];		/* Ordering tables */
 char *nextpri;					/* Pointer to next packet buffer offset */
 int db = 0;						/* Double buffer index */
 
@@ -190,7 +193,7 @@ void init()
 	
 	
 	/* Upload the ball texture */
-	GetTimInfo((unsigned int*)ball16c, &tim); /* Get TIM parameters */
+	GetTimInfo((u_long*)ball16c, &tim); /* Get TIM parameters */
 	LoadImage(tim.prect, tim.paddr);		/* Upload texture to VRAM */
 	if( tim.mode & 0x8 )
 	{

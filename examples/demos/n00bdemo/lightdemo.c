@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #include <string.h>
 #include <psxgte.h>
 #include <psxgpu.h>

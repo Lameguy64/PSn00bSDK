@@ -2,7 +2,7 @@
  * LibPSn00b Example Programs
  *
  * GTE Graphics Example
- * 2019 Meido-Tek Productions / PSn00bSDK Project
+ * 2019 - 2021 Meido-Tek Productions / PSn00bSDK Project
  *
  * Renders a spinning 3D cube with light source calculation
  * using GTE macros.
@@ -12,10 +12,13 @@
  *
  * Changelog:
  *
- *  Jan 26, 2019 - Initial version.
+ *	May 10, 2021		- Variable types updated for psxgpu.h changes.
+ *
+ *  Jan 26, 2019		- Initial version.
  *
  */
  
+#include <sys/types.h>
 #include <stdio.h>
 #include <psxgpu.h>
 #include <psxgte.h>
@@ -38,7 +41,7 @@
 typedef struct {
 	DISPENV	disp;			/* Display environment */
 	DRAWENV	draw;			/* Drawing environment */
-	int 	ot[OT_LEN];		/* Ordering table */
+	u_long 	ot[OT_LEN];		/* Ordering table */
 	char 	p[PACKET_LEN];	/* Packet buffer */
 } DB;
 

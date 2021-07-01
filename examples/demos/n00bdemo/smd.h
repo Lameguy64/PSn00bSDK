@@ -2,7 +2,7 @@
 #define _SMD_H
 
 typedef struct {
-	int				*ot;
+	u_long			*ot;
 	short			otlen;
 	unsigned char	zdiv,zoff;
 } SC_OT;
@@ -59,7 +59,7 @@ SMD *smdInitData(void *data);
 void smdSetBaseTPage(unsigned short tpage);
 
 char *smdSortModel(SC_OT *ot, char* pribuff, SMD *smd);
-char *smdSortModelFlat(unsigned int *ot, char* pribuff, SMD *smd);
+char *smdSortModelFlat(u_long *ot, char* pribuff, SMD *smd);
 
 void smdSetCelTex(unsigned short tpage, unsigned short clut);
 void smdSetCelParam(int udiv, int vdiv, unsigned int col);

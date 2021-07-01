@@ -33,7 +33,8 @@
  *  Sep 24, 2019 - Added camera position display and _boot() exit.
  *
  */
- 
+
+#include <sys/types.h>
 #include <stdio.h>
 #include <psxgpu.h>
 #include <psxgte.h>
@@ -62,7 +63,7 @@
 typedef struct {
 	DISPENV	disp;			// Display environment
 	DRAWENV	draw;			// Drawing environment
-	int 	ot[OT_LEN];		// Ordering table
+	u_long 	ot[OT_LEN];		// Ordering table
 	char 	p[PACKET_LEN];	// Packet buffer
 } DB;
 

@@ -2,7 +2,7 @@
  * LibPSn00b Example Programs
  *
  * Teletype Example
- * 2020 Meido-Tek Productions / PSn00bSDK Project
+ * 2020 - 2021 Meido-Tek Productions / PSn00bSDK Project
  *
  * This example showcases the uses of tty through stdio facilities. If you've
  * written text console applications before, this one is not too dissimilar to
@@ -14,10 +14,13 @@
  *
  * Changelog:
  *
- *  April 23, 2020 - Initial version.
+ *	May 10, 2021		- Variable types updated for psxgpu.h changes.
+ *
+ *  April 23, 2020		- Initial version.
  *
  */
- 
+
+#include <sys/types.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <psxgpu.h>
