@@ -1,5 +1,10 @@
 # Custom first-fit malloc routines by Lameguy64
 # Part of the PSn00bSDK Project
+#
+# NOTE: there reportedly is a GCC bug which messes up .weak functions written
+# in assembly if LTO is enabled. I haven't tested but, according to the
+# internet, this bug has never been fixed.
+# https://gcc.gnu.org/legacy-ml/gcc-help/2019-10/msg00092.html
 
 .set noreorder
 
@@ -9,7 +14,6 @@
 .set ND_HSIZ,	12
 
 .section .text
-
 
 # Stupid small function just to get bss end
 # due to GCC insisting externs to be gp relative
@@ -27,6 +31,7 @@ GetBSSend:
 #
 .global InitHeap
 .type InitHeap, @function
+.weak InitHeap
 InitHeap:
 	la		$v0, _malloc_addr
 	sw		$a0, 0($v0)
@@ -43,6 +48,7 @@ InitHeap:
 #   a0 - Size of memory heap in bytes
 .global SetHeapSize
 .type SetHeapSize, @function
+.weak SetHeapSize
 SetHeapSize:
 	la		$v1, _malloc_size
 	lw		$v0, 0($v1)
@@ -55,6 +61,7 @@ SetHeapSize:
 #
 .global malloc
 .type malloc, @function
+.weak malloc
 malloc:
 	addiu	$a0, 3					# Round size to a multiple of 4
 	srl		$a0, 2
@@ -170,6 +177,7 @@ malloc:
 #
 .global calloc
 .type calloc, @function
+.weak calloc
 calloc:
 	mult	$a0, $a1
 	addiu	$sp, -4
@@ -199,6 +207,7 @@ calloc:
 #
 .global free
 .type free, @function
+.weak free
 free:
 
 	addiu	$a0, -ND_HSIZ

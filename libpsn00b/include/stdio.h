@@ -56,6 +56,9 @@ int vsprintf(char *string, const char *fmt, va_list ap);
 int sprintf(char *string, const char *fmt, ...);
 int snprintf(char *string, unsigned int size, const char *fmt, ...);
 
+int vsscanf(const char *str, const char *format, va_list ap);
+int sscanf(const char *str, const char *fmt, ...);
+
 #ifdef __cplusplus
 }
 #endif

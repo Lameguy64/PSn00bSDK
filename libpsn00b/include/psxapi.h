@@ -180,6 +180,7 @@ void ChangeClearRCnt(int t, int m);
 
 // Executable functions
 int Exec(struct EXEC *exec, int argc, char **argv);
+void FlushCache(void);
 
 void _boot(void);
 

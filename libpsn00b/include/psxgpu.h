@@ -1,6 +1,8 @@
 #ifndef __PSXGPU_H
 #define __PSXGPU_H
 
+#include <sys/types.h>
+
 // Low-level display parameters for DISPENV_RAW. A leftover from prototyping
 #define DISP_WIDTH_256		0
 #define DISP_WIDTH_320		1
