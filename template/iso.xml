@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <iso_project
-	image_name="build/cdbrowse.bin"
-	cue_sheet="build/cdbrowse.cue"
+	image_name="build/template.bin"
+	cue_sheet="build/template.cue"
 >
 	<track type="data">
 		<identifiers
 			system			="PLAYSTATION"
-			volume			="CDBROWSE"
-			volume_set		="CDBROWSE"
+			volume			="PSN00BSDK"
+			volume_set		="PSN00BSDK"
 			publisher		="MEIDOTEK"
 			data_preparer	="PSN00BSDK BUILD SCRIPT"
 			application		="PLAYSTATION"
@@ -16,15 +16,8 @@
 
 		<directory_tree>
 			<file name="SYSTEM.CNF"		type="data" source="system.cnf" />
-			<file name="CDBROWSE.EXE"	type="data" source="build/cdbrowse.exe" />
-			<file name="CDBROWSE.MAP"	type="data" source="build/cdbrowse.map" />
-
-			<dir name="DIRA">
-				<dir name="DIRAA">
-				</dir>
-			</dir>
-			<dir name="DIRB">
-			</dir>
+			<file name="TEMPLATE.EXE"	type="data" source="build/template.exe" />
+			<file name="TEMPLATE.MAP"	type="data" source="build/template.map" />
 
 			<dummy sectors="1024"/>
 		</directory_tree>

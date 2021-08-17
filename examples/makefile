@@ -13,8 +13,8 @@ DIRS	   += graphics/balls graphics/billboard graphics/fpscam \
 			  graphics/rgb24 
 
 # System related examples
-DIRS	   += system/childexec system/console system/timer \
-			  system/tty
+DIRS	   += system/childexec system/console system/dynlink \
+			  system/timer system/tty
 
 # Low-level examples
 DIRS	   += 

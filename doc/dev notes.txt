@@ -50,3 +50,45 @@ DRAWENV.isbg is not effective in the official SDK.
 * In the official SDK, DMA IRQs appear to be enabled only when a callback
 function is set (ie. DrawSyncCallback() enables IRQ for DMA channel 2). DMA
 IRQs are only triggered on transfer completion.
+
+Additional notes by spicyjpeg:
+
+* The SDK provides no support yet for replacing the BIOS exception handler with
+a custom one, however it can be done (if you are ok with losing all BIOS
+controller, memory card and file functionality). In order not to break anything
+your exception handler must do the following:
+
+ * prevent GTE opcodes from being executed twice due to a hardware glitch (the
+   nocash docs explain how to do this);
+ * define _irq_func_table[12] as an *extern* array of function pointers, call
+   the appropriate entry when an IRQ occurs and clear the respective flag in
+   register 1F801070h;
+ * handle syscalls 01h-02h, i.e. EnterCriticalSection and ExitCriticalSection
+   properly. You should also handle syscall FF00h (invalid API usage), as well
+   as breaks 1800h and 1C00h (division errors injected by GCC), by locking up
+   and maybe showing a BSOD or similar;
+ * overwrite the default BIOS API vectors with a passthrough that checks no
+   controller- or interrupt-related function is being called. This is necessary
+   (although ugly) as libpsn00b often calls such functions internally.
+
+* For some reason mipsel-unknown-elf-nm (symbol map generator) insists on
+outputting 64-bit addresses (with the top 32 bits set, e.g. FFFFFFFF80010000)
+even when feeding it a regular 32-bit MIPS executable, while the standard x86
+nm tool that ships with most GCC packages prints the proper 32-bit address.
+Unclear whether this is a bug, intended behavior or the result of some ancient
+ELF ABI flag crap. DL_ParseSymbolMap() will ignore the top 32 bits, so this
+should only bother you if you're implementing your own symbol map parser.
+
+* I haven't worked on psxspu but, for those willing to write some code, this is
+the formula to calculate SPU pitch values for playing musical notes ("^" is the
+power operator, not xor):
+
+ frequency = (ref / 32) * (2 ^ ((note - 9) / 12))
+ spu_pitch = frequency / 44100 * 4096
+
+ ref  = frequency the sample should be played at to play a middle A (MIDI note 69)
+ note = MIDI note number (usually 0-127, 60 is middle C)
+
+* If you are overriding any of the memory allocation functions, DO NOT ENABLE
+LINK-TIME OPTIMIZATION. GCC has a long-standing bug with LTO and weak functions
+written in assembly, also LTO hasn't been tested at all yet.

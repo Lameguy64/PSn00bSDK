@@ -3,7 +3,7 @@
 .global lz_resources
 .type lz_resources, @object
 lz_resources:
-	.incbin "data.lzp"
+	.incbin "build/data.lzp"
 
 #.global smd_mtekdisk
 #.type smd_mtekdisk, @object
