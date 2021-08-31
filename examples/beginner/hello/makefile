@@ -1,54 +1,65 @@
-include ../../examples-setup.mk
+# PSn00bSDK makefile template
+# Part of the PSn00bSDK Project
+# 2019 - 2021 Lameguy64 / Meido-Tek Productions
+
+## Settings
+
+PSN00BSDK_LIBS	?= ../../../libpsn00b
+
+# Edit this to point to psn00bsdk-setup.mk, or copy that over to your project's
+# root folder (it only depends on environment variables).
+include ../../../psn00bsdk-setup.mk
 
 # Project target name
-TARGET		= hello.elf
+TARGET	= hello
+
+## Files
 
 # Searches for C, C++ and S (assembler) files in local directory
-CFILES		= $(notdir $(wildcard *.c))
-CPPFILES 	= $(notdir $(wildcard *.cpp))
-AFILES		= $(notdir $(wildcard *.s))
+CFILES	= $(notdir $(wildcard *.c))
+CPPFILES= $(notdir $(wildcard *.cpp))
+AFILES	= $(notdir $(wildcard *.s))
 
-# Determine object files
-OFILES		= $(addprefix build/,$(CFILES:.c=.o)) \
-			$(addprefix build/,$(CPPFILES:.cpp=.o)) \
-			$(addprefix build/,$(AFILES:.s=.o))
+# Create names for object files
+OFILES	= $(addprefix build/,$(CFILES:.c=.o)) \
+	$(addprefix build/,$(CPPFILES:.cpp=.o)) \
+	$(addprefix build/,$(AFILES:.s=.o))
 
-# Project specific include and library directories
-# (use -I for include dirs, -L for library dirs)
-INCLUDE	 	+=
-LIBDIRS		+=
+# Project specific includes and libraries
+# (use -I for include dirs, -L for library dirs, -l for static libraries)
+INCLUDE	+=
+LIBDIRS	+=
+LIBS	+=
 
-# Libraries to link
-LIBS		= -lpsxgpu -lpsxgte -lpsxspu -lpsxetc -lpsxapi -lc
+## Build rules
 
-# C compiler flags
-CFLAGS		= -g -O2 -fno-builtin -fdata-sections -ffunction-sections
+#all: iso
+all: build/$(TARGET)
 
-# C++ compiler flags
-CPPFLAGS	= $(CFLAGS) -fno-exceptions
+iso: build/$(TARGET) resources
+	$(MKPSXISO) -y -q iso.xml
 
-# Assembler flags
-AFLAGS		= -g -msoft-float
+resources:
+	# Add commands to build/convert your assets here
+	#$(LZPACK) data.xml
 
-# Linker flags
-LDFLAGS		= -g -Ttext=0x80010000 -gc-sections \
-			-T $(GCC_BASE)/$(PREFIX)/lib/ldscripts/elf32elmip.x
+build/$(TARGET): $(OFILES)
+	@mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS_EXE) $(LIBDIRS) $^ $(LIBS) -o $@
+	$(NM) -f posix -l -n $@ >$@.map
+	$(ELF2X) -q $@ $@.exe
 
-all: $(OFILES)
-	$(LD) $(LDFLAGS) $(LIBDIRS) $(OFILES) $(LIBS) -o $(TARGET)
-	elf2x -q $(TARGET)
-	
 build/%.o: %.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
-	
+	$(CC) $(CFLAGS_EXE) $(INCLUDE) -c $< -o $@
+
 build/%.o: %.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) $(AFLAGS) $(INCLUDE) -c $< -o $@
-	
+	$(CXX) $(CPPFLAGS_EXE) $(INCLUDE) -c $< -o $@
+
 build/%.o: %.s
 	@mkdir -p $(dir $@)
-	$(CC) $(AFLAGS) $(INCLUDE) -c $< -o $@
-	
+	$(CC) $(AFLAGS_EXE) $(INCLUDE) -c $< -o $@
+
 clean:
-	rm -rf build $(TARGET) $(TARGET:.elf=.exe)
+	rm -rf build

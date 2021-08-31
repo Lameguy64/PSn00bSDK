@@ -107,12 +107,27 @@ Under Windows, you'll have to add the path to the PATH environment variable
 through System Properties.
 
 
-Updating the ldscript:
+Note regarding C++ support:
 
-The following changes are required in order for basic C++ functionality to work
-in PSn00bSDK. The changes define the constructor and deconstructor sections
-which are required for the relevant support functions in PSn00bSDK's libc
-library to be linked properly for C++.
+C++ support in PSn00bSDK only goes as far as basic classes, namespaces and
+the ability to dynamically create and delete class objects at any point of
+the program. The required dependencies are supplied by libc of libpsn00b.
+
+Standard C++ libraries are not implemented and likely never going to be
+implemented due to bloat concerns that it may introduce. Besides, the official
+SDK lacks full C++ support as well.
+
+If you're trying to compile with C++ code and you get a linker error about
+undefined vtables, try specifying --fno-rtti to the g++ command line.
+
+-----------------------------------------------------------------------------
+Updating the ldscript (NO LONGER REQUIRED as PSn00bSDK now ships with its own
+linker scripts, the section below is only kept for reference):
+
+The following changes used to be required in order for basic C++ functionality
+to work in older PSn00bSDK versions. The changes define the constructor and
+deconstructor sections which are required for the relevant support functions
+in PSn00bSDK's libc library to be linked properly for C++.
 
 * Go to mipsel-unknown-elf/lib/ldscripts in the toolchain directory.
   
@@ -150,16 +165,3 @@ Alternatively, you can make a copy of the ldscript file and modify it within
 your project directory. This is especially useful if your project uses code
 overlays.
 
-
-Note regarding C++ support:
-
-C++ support in PSn00bSDK only goes as far as basic classes, namespaces and
-the ability to dynamically create and delete class objects at any point of
-the program. The required dependencies are supplied by libc of libpsn00b.
-
-Standard C++ libraries are not implemented and likely never going to be
-implemented due to bloat concerns that it may introduce. Besides, the official
-SDK lacks full C++ support as well.
-
-If you're trying to compile with C++ code and you get a linker error about
-undefined vtables, try specifying --fno-rtti to the g++ command line.

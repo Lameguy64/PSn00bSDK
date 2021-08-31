@@ -1,46 +1,59 @@
-# Run using make (Linux) or gmake (BSD)
+# PSn00bSDK library makefile
 # Part of the PSn00bSDK Project
-# 2019 - 2020 Lameguy64 / Meido-Tek Productions
+# 2019 - 2021 Lameguy64 / Meido-Tek Productions
 
-include ../../template/psn00bsdk-setup.mk
+## Settings
 
-TARGET		= libpsxgte.a
+PSN00BSDK_LIBS	?= ..
 
-INCLUDE		= -I../include
+include ../../psn00bsdk-setup.mk
 
-CFILES		= $(notdir $(wildcard ./*.c))
-AFILES		= $(notdir $(wildcard ./*.s))
-OFILES		= $(addprefix build/,$(CFILES:.c=.o) $(AFILES:.s=.o))
+# Project target name
+TARGET	= libpsxgte.a
 
-CFLAGS		= -g -O2 -msoft-float -fno-builtin -fdata-sections \
-			  -ffunction-sections -Wa,--strip-local-absolute
-AFLAGS		= -g -msoft-float -strip-local-absolute
+## Files
 
-ifndef PSN00BSDK_LIBS
+# Searches for C, C++ and S (assembler) files in local directory
+CFILES	= $(notdir $(wildcard *.c))
+CXXFILES= $(notdir $(wildcard *.cxx))
+AFILES	= $(notdir $(wildcard *.s))
 
-PSN00BSDK_LIBS	= ..
+# Create names for object files
+OFILES	= $(addprefix build/,$(CFILES:.c=.o)) \
+	$(addprefix build/,$(CXXFILES:.cxx=.o)) \
+	$(addprefix build/,$(AFILES:.s=.o))
 
-endif
+# Project specific includes and libraries
+# (use -I for include dirs, -L for library dirs, -l for static libraries)
+INCLUDE	+=
+LIBDIRS	+=
+LIBS	+=
 
-all: $(TARGET)
+## Build rules
 
-$(TARGET): $(OFILES)
-	$(AR) cr $(TARGET) $(OFILES)
-	$(RANLIB) $(TARGET)
+all: build/$(TARGET)
+
+build/$(TARGET): $(OFILES)
+	@mkdir -p $(dir $@)
+	$(AR) crs $@ $(OFILES)
 
 build/%.o: %.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+	$(CC) $(CFLAGS_LIB) $(INCLUDE) -c $< -o $@
+
+build/%.o: %.cxx
+	@mkdir -p $(dir $@)
+	$(CXX) $(CPPFLAGS_LIB) $(INCLUDE) -c $< -o $@
 	
 build/%.o: %.s
 	@mkdir -p $(dir $@)
-	$(AS) $(AFLAGS) $(INCLUDE) $< -o $@
+	$(CC) $(AFLAGS_LIB) $(INCLUDE) -c $< -o $@
 
 install:
 ifneq ($(PSN00BSDK_LIBS), "..")
 	@mkdir -p $(PSN00BSDK_LIBS)
 endif
-	cp $(TARGET) $(PSN00BSDK_LIBS)/$(TARGET)
+	cp build/$(TARGET) $(PSN00BSDK_LIBS)/$(TARGET)
 	
 clean:
-	rm -Rf build $(TARGET)
+	rm -rf build

@@ -20,7 +20,8 @@ SpuSetTransferStartAddr:
 	li		$v0, 0x1000				# Check if value is valid
 	blt		$a0, $v0, .Lbad_value
 	nop
-	li		$v0, 0xffff
+	lui		$v0, 8					# 0x7ffff = (8<<16)-1
+	addiu	$v0, -1
 	bgt		$a0, $v0, .Lbad_value
 	nop
 	

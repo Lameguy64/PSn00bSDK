@@ -30,7 +30,8 @@ and performance reasons.
 
 
 ## Notable features
-As of January 5, 2021
+
+As of August 16, 2021
 
 * Extensive GPU support with polygon, line and sprite primitives, high-speed
   DMA transfers for VRAM data and ordering tables. All video modes for both
@@ -62,7 +63,12 @@ As of January 5, 2021
   and querying files and directories. Supports directories containing more
   than 30 files (classic ISO9660 only, no Rock Ridge or Joliet extensions)
   and also supports reading new sessions on a multi-session disc.
-  
+
+* Experimental support for compiling separate sections of an executable into
+  shared library files (DLLs) and linking them dynamically at runtime, plus
+  support for function and variable introspection by loading a map file
+  generated at build time.
+
 * Uses Sony SDK library syntax for familiarity to experienced programmers
   and to make porting existing homebrew projects to PSn00bSDK easier.
 
@@ -91,15 +97,15 @@ You may set one of the following variables either with set/export or on the
 make command line, to specify various parameters in building PSn00bSDK and
 projects made with it as you see fit.
 
-* ``GCC_VERSION`` specifies the GCC version number. This is only required for
-  building the libc library. If not defined, the default value of 7.4.0 is
-  used.
 * ``PSN00BSDK_TC`` specifies the base directory of the GCC toolchain to
   build PSn00bSDK with, otherwise the makefile assumes you have the path to
   the toolchain binaries in one of your PATH directories. Alternatively,
   ``GCC_BASE`` can be specified in place of ``PSN00BSDK_TC``. If not
   specified psn00bsdk-setup.mk assumes the toolchain is at
   C:\mipsel-unknown-elf in Win32 or /usr/local/mipsel-unknown-elf in Linux.
+* ``GCC_VERSION`` specifies the GCC version number. This is only used for
+  building the libc library. If not defined, it will be auto-detected by
+  searching ``PSN00BSDK_TC`` or ``GCC_BASE`` for a valid GCC installation.
 * ``PSN00BSDK_LIBS`` specifies the target directory you wish to install
   the compiled libpsn00b libraries to. If not defined, compiled
   libraries are consolidated to the libpsn00b directory and
@@ -158,8 +164,6 @@ programs with PSn00bSDK within the Command Prompt.
    (see toolchain.txt for details). Export a variable named `PSN00BSDK_TC`
    containing a path to the installed toolchain's base directory if
    you've installed the toolchain in a location other than /usr/local.
-   Also export a `GCC_VERSION` variable if you're using a version of GCC
-   other than 7.4.0.
 3. Clone from PSn00bSDK source with
    `git clone https://github.com/lameguy64/psn00bsdk`
 4. Enter tools directory and run `make`, then `make install` to consolidate
@@ -188,14 +192,25 @@ for the PlayStation. The tutorials should still apply to PSn00bSDK.
 * psxspu: Plenty of work to be done. Hardware timer driven sound/music
   system may need to be implemented (an equivalent to the Ss* series of
   functions in libspu basically). Need to figure out the correct frequency
-  table for playing sounds in musical note notation.
-  
+  table for playing sounds in musical note notation. Functions that make use of
+  the SPU RAM interrupt feature to play or capture streamed audio should also
+  be added.
+
 * psxcd: Implement a command queue mechanism for the CD-ROM?
 
-* Support for MDEC.
+* libc: Improve the memory allocation framework with multiple allocators, GC
+  and maybe helpers to manage swapping between main RAM and VRAM/SPU RAM.
+
+* Support for MDEC, and tooling to transcode videos to .STR files (either
+  reimplementing the container and compression format used by the Sony SDK, or
+  a custom format with better compression).
 
 * Pad and memory card libraries that don't use the BIOS routines.
 
+* Switching to, or adding support for a build system that's easier to use with
+  IDEs and/or under Windows, which would also make asset conversion pipelines
+  easier to manage. CMake might be a good option here but more discussion is
+  needed.
 
 ## Usage terms
 

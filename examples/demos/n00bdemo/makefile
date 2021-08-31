@@ -1,39 +1,65 @@
-include ../../examples-setup.mk
+# PSn00bSDK makefile template
+# Part of the PSn00bSDK Project
+# 2019 - 2021 Lameguy64 / Meido-Tek Productions
 
-TARGET		= demo.elf
+## Settings
 
-CFILES		= $(notdir $(wildcard *.c))
-AFILES		= $(notdir $(wildcard *.s))
+PSN00BSDK_LIBS	?= ../../../libpsn00b
 
-OFILES		= $(addprefix build/,$(CFILES:.c=.o) $(AFILES:.s=.o))
+# Edit this to point to psn00bsdk-setup.mk, or copy that over to your project's
+# root folder (it only depends on environment variables).
+include ../../../psn00bsdk-setup.mk
 
-INCLUDE	 	+= -I../../../libpsn00b/lzp
+# Project target name
+TARGET	= demo
 
-LIBS		= -llzp -lpsxgpu -lpsxgte -lpsxspu -lpsxetc -lpsxapi -lc
+## Files
 
-CFLAGS		= -g -O2 -fno-builtin -fdata-sections -ffunction-sections
-CPPFLAGS	= $(CFLAGS) -fno-exceptions
-AFLAGS		= -g -msoft-float
-LDFLAGS		= -g -Ttext=0x80010000 -gc-sections -T $(GCC_BASE)/$(PREFIX)/lib/ldscripts/elf32elmip.x
+# Searches for C, C++ and S (assembler) files in local directory
+CFILES	= $(notdir $(wildcard *.c))
+CPPFILES= $(notdir $(wildcard *.cpp))
+AFILES	= $(notdir $(wildcard *.s))
 
-all: resources $(OFILES)
-	$(LD) $(LDFLAGS) $(LIBDIRS) $(OFILES) $(LIBS) -o $(TARGET)
-	elf2x -q $(TARGET)
-	
+# Create names for object files
+OFILES	= $(addprefix build/,$(CFILES:.c=.o)) \
+	$(addprefix build/,$(CPPFILES:.cpp=.o)) \
+	$(addprefix build/,$(AFILES:.s=.o))
+
+# Project specific includes and libraries
+# (use -I for include dirs, -L for library dirs, -l for static libraries)
+INCLUDE	+=
+LIBDIRS	+=
+LIBS	+= -llzp
+
+## Build rules
+
+#all: iso
+all: build/$(TARGET)
+
+iso: build/$(TARGET)
+	$(MKPSXISO) -y -q iso.xml
+
+resources:
+	$(LZPACK) data.xml
+	touch data.s
+
+build/$(TARGET): $(OFILES)
+	@mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS_EXE) $(LIBDIRS) $^ $(LIBS) -o $@
+	$(NM) -f posix -l -n $@ >$@.map
+	$(ELF2X) -q $@ $@.exe
+
 build/%.o: %.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
-	
-build/%.o: %.s
+	$(CC) $(CFLAGS_EXE) $(INCLUDE) -c $< -o $@
+
+build/%.o: %.cpp
 	@mkdir -p $(dir $@)
-	$(CC) $(AFLAGS) $(INCLUDE) -c $< -o $@
-	
-resources:
-	lzpack data.xml
-	touch data.s
-	
-iso:
-	mkpsxiso -y -q -o demo.iso iso.xml
-	
+	$(CXX) $(CPPFLAGS_EXE) $(INCLUDE) -c $< -o $@
+
+build/%.o: %.s resources
+	@mkdir -p $(dir $@)
+	$(CC) $(AFLAGS_EXE) $(INCLUDE) -c $< -o $@
+
 clean:
-	rm -rf build *.lzp *.qlp $(TARGET) $(TARGET:.elf=.exe) $(TARGET:.elf=.iso)
+	rm -rf build

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<iso_project
+	image_name="build/dynlink.bin"
+	cue_sheet="build/dynlink.cue"
+>
+	<track type="data">
+		<identifiers
+			system			="PLAYSTATION"
+			volume			="DYNLINK"
+			volume_set		="DYNLINK"
+			publisher		="MEIDOTEK"
+			data_preparer	="PSN00BSDK BUILD SCRIPT"
+			application		="PLAYSTATION"
+			copyright		="README.TXT;1"
+		/>
+
+		<directory_tree>
+			<file name="SYSTEM.CNF"	type="data" source="system.cnf" />
+			<file name="MAIN.EXE"	type="data" source="build/main.exe" />
+			<file name="MAIN.MAP"	type="data" source="build/main.map" />
+
+			<file name="CUBE.DLL"	type="data" source="build/library/cube.dll" />
+			<file name="BALLS.DLL"	type="data" source="build/library/balls.dll" />
+
+			<dummy sectors="1024"/>
+		</directory_tree>
+	</track>
+
+	<!--<track type="audio" source="track2.wav" />-->
+</iso_project>

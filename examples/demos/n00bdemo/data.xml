@@ -1,6 +1,6 @@
 <lzp_project>
 
-	<create packname="textures.qlp" format="qlp">
+	<create packname="build/textures.qlp" format="qlp">
 		
 		<file alias="petscum">data/petscum16c.tim</file>
 		<file alias="bungirl">data/bungirl.tim</file>
@@ -19,7 +19,7 @@
 		
 	</create>
 
-	<create packname="data.lzp" format="lzp">
+	<create packname="build/data.lzp" format="lzp">
 
 		<!-- intro assets -->
 		<file alias="mtekdisk">data/mtekdisk.smd</file>
@@ -42,7 +42,7 @@
 		<file alias="hatkid">data/hatkid.smd</file>
 		
 		<!-- Global textures -->
-		<file alias="textures">textures.qlp</file>
+		<file alias="textures">build/textures.qlp</file>
 		
 	</create>
 	

@@ -2,6 +2,35 @@ PSn00bSDK changelog
 
 Items that are lower in the log are more recently implemented.
 
+08-16-2021 by spicyjpeg:
+
+* psxetc: Added dynamic linking APIs (dl*, DL_*), implemented in dl.c and
+  _dl_resolve_wrapper.s. The APIs can be accessed by including dlfcn.h, while
+  another header (elf.h) provides structs and enums to help with manual parsing
+  of library headers.
+
+* libc: Removed _mem_init.s, improved heap initialization code. Added support
+  for setting how much RAM to use for the stack (by defining STACK_MAX_SIZE)
+  and for overriding/replacing the default memory allocator.
+
+* psxapi: Added wrapper around BIOS function FlushCache().
+
+* psxspu: Fixed wrong bounds check in SpuSetTransferStartAddr().
+
+* examples: Added an example showing how to compile dynamically-loaded
+  libraries (DLLs) and load them at runtime using the new dynamic linker.
+
+* libpsn00b: Added libpsn00b/ldscripts directory and linker scripts for both
+  executables and DLLs. Also fixed several broken header files (psxgpu.h not
+  including sys/types.h, missing scanf() declarations, ...).
+
+* Rewritten most makefiles (both for libraries and examples) and centralized
+  all compiler flags into a single psn00bsdk-setup.mk file for consistency and
+  easier editing. Added flags to build libpsn00b without gp-relative addressing
+  for compatibility with the dynamic linker. Also added nm commands to generate
+  symbol maps required by the linker.
+
+
 07-01-2021 by Lameguy64:
 
 * Libpsn00b: Added int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t,

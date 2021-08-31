@@ -1,54 +1,61 @@
-# Run using make (Linux) or gmake (BSD)
+# PSn00bSDK library makefile
 # Part of the PSn00bSDK Project
-# 2019 - 2020 Lameguy64 / Meido-Tek Productions
+# 2019 - 2021 Lameguy64 / Meido-Tek Productions
 
-include ../../template/psn00bsdk-setup.mk
+## Settings
 
+PSN00BSDK_LIBS	?= ..
+
+include ../../psn00bsdk-setup.mk
+
+# Project target name
 TARGET	= libc.a
 
-INCLUDE			= -I../include
+## Files
 
-CFLAGS			= -g -O2 -msoft-float -fno-builtin -fdata-sections \
-				  -ffunction-sections -Wa,--strip-local-absolute
-AFLAGS			= -g -msoft-float -Wa,-strip-local-absolute
+# Searches for C, C++ and S (assembler) files in local directory
+CFILES	= $(notdir $(wildcard *.c))
+CXXFILES= $(notdir $(wildcard *.cxx))
+AFILES	= $(notdir $(wildcard *.s))
 
-CFILES			= $(notdir $(wildcard ./*.c))
-CXXFILES		= $(notdir $(wildcard ./*.cxx))
-AFILES			= $(notdir $(wildcard ./*.s))
+# Create names for object files
+OFILES	= $(addprefix build/,$(CFILES:.c=.o)) \
+	$(addprefix build/,$(CXXFILES:.cxx=.o)) \
+	$(addprefix build/,$(AFILES:.s=.o))
 
-OFILES			= $(addprefix build/,$(CFILES:.c=.o) $(CXXFILES:.cxx=.o) \
-				  $(AFILES:.s=.o))
+# Project specific includes and libraries
+# (use -I for include dirs, -L for library dirs, -l for static libraries)
+INCLUDE	+=
+LIBDIRS	+=
+LIBS	+=
 
-ifndef PSN00BSDK_LIBS
+## Build rules
 
-PSN00BSDK_LIBS	= ..
+all: build/$(TARGET)
 
-endif
-
-all: $(TARGET)
-
-$(TARGET): $(OFILES)
-	cp $(GCC_BASE)/lib/gcc/$(PREFIX)/$(GCC_VERSION)/libgcc.a ./$(TARGET)
-	$(AR) r $(TARGET) $(OFILES)
-	$(RANLIB) $(TARGET)
+build/$(TARGET): $(OFILES)
+	@mkdir -p $(dir $@)
+	# "Import" libgcc's contents
+	cp $(GCC_BASE)/lib/gcc/$(PREFIX)/$(GCC_VERSION)/libgcc.a ./$@
+	$(AR) rs $@ $(OFILES)
 
 build/%.o: %.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+	$(CC) $(CFLAGS_LIB) $(INCLUDE) -c $< -o $@
 
 build/%.o: %.cxx
 	@mkdir -p $(dir $@)
-	$(CXX) $(CFLAGS) $(INCLUDE) -c $< -o $@
+	$(CXX) $(CPPFLAGS_LIB) $(INCLUDE) -c $< -o $@
 	
 build/%.o: %.s
 	@mkdir -p $(dir $@)
-	$(CC) $(AFLAGS) $(INCLUDE) -c $< -o $@
+	$(CC) $(AFLAGS_LIB) $(INCLUDE) -c $< -o $@
 
 install:
 ifneq ($(PSN00BSDK_LIBS), "..")
 	@mkdir -p $(PSN00BSDK_LIBS)
 endif
-	cp $(TARGET) $(PSN00BSDK_LIBS)/$(TARGET)
+	cp build/$(TARGET) $(PSN00BSDK_LIBS)/$(TARGET)
 	
 clean:
-	rm -Rf build $(TARGET)
+	rm -rf build
