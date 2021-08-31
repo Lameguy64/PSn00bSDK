@@ -18,17 +18,17 @@ typedef struct _fnt_stream {
 static _fnt_stream _stream[8];
 static int _nstreams = 0;
 
-unsigned short _font_tpage;
-unsigned short _font_clut;
+u_short _font_tpage;
+u_short _font_clut;
 
-extern unsigned char dbugfont[];
+extern u_char dbugfont[];
 
 void FntLoad(int x, int y) {
 
 	RECT pos;
 	TIM_IMAGE tim;
 	
-	GetTimInfo( (unsigned int*)dbugfont, &tim );
+	GetTimInfo( (u_long*)dbugfont, &tim );
 	
 	// Load font image
 	pos = *tim.prect;
@@ -215,7 +215,7 @@ char *FntFlush(int id) {
 	
 	// Draw the primitives
 	DrawSync(0);
-	DrawOTag((unsigned int*)_stream[id].pribuff);
+	DrawOTag((u_long*)_stream[id].pribuff);
 	DrawSync(0);
 	
 	_stream[id].txtnext = _stream[id].txtbuff;
