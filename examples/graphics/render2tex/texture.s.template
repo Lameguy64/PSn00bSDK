@@ -5,5 +5,4 @@
 .global tim_blendpattern
 .type tim_blendpattern, @object
 tim_blendpattern:
-	.incbin "blendpattern-16c.tim"
-	
+	.incbin "${PROJECT_SOURCE_DIR}/blendpattern-16c.tim"

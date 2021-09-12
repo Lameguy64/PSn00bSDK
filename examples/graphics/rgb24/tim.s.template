@@ -3,5 +3,4 @@
 .global tim_image
 .type tim_image, @object
 tim_image:
-	.incbin "texture64.tim"
-	
+	.incbin "${PROJECT_SOURCE_DIR}/bunpattern.tim"

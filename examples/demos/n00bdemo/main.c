@@ -29,8 +29,8 @@
 #include <psxspu.h>
 #include <inline_c.h>
 #include <string.h>
-#include <lzp.h>
-#include <lzqlp.h>
+#include <lzp/lzp.h>
+#include <lzp/lzqlp.h>
 
 #include "malloc.h"
 #include "smd.h"

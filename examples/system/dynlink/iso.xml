@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <iso_project
-	image_name="build/dynlink.bin"
-	cue_sheet="build/dynlink.cue"
+	image_name="${CD_IMAGE_NAME}.bin"
+	cue_sheet="${CD_IMAGE_NAME}.cue"
 >
 	<track type="data">
 		<identifiers
@@ -9,18 +9,18 @@
 			volume			="DYNLINK"
 			volume_set		="DYNLINK"
 			publisher		="MEIDOTEK"
-			data_preparer	="PSN00BSDK BUILD SCRIPT"
+			data_preparer	="PSN00BSDK ${PSN00BSDK_VERSION}"
 			application		="PLAYSTATION"
 			copyright		="README.TXT;1"
 		/>
 
 		<directory_tree>
-			<file name="SYSTEM.CNF"	type="data" source="system.cnf" />
-			<file name="MAIN.EXE"	type="data" source="build/main.exe" />
-			<file name="MAIN.MAP"	type="data" source="build/main.map" />
+			<file name="SYSTEM.CNF"	type="data" source="${PROJECT_SOURCE_DIR}/system.cnf" />
+			<file name="MAIN.EXE"	type="data" source="dynlink_main.exe" />
+			<file name="MAIN.MAP"	type="data" source="dynlink_main.map" />
 
-			<file name="CUBE.DLL"	type="data" source="build/library/cube.dll" />
-			<file name="BALLS.DLL"	type="data" source="build/library/balls.dll" />
+			<file name="CUBE.DLL"	type="data" source="dynlink_cube.dll" />
+			<file name="BALLS.DLL"	type="data" source="dynlink_balls.dll" />
 
 			<dummy sectors="1024"/>
 		</directory_tree>
