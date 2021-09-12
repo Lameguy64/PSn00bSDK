@@ -35,7 +35,7 @@
 /* Compile options */
 
 // Uncomment before building to enable debug logging (via printf()).
-#define DEBUG
+//#define DEBUG
 
 // Comment before building to disable functions that rely on BIOS file APIs,
 // i.e. DL_LoadSymbolMap() and dlopen().

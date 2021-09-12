@@ -49,7 +49,7 @@ Brief summary of libraries:
 	must be covered in the changelog.txt file.
 
 
-Compiling:
+Compiling (OUTDATED):
 
 	To compile the LibPSn00b libraries, you will first need a working GCC
 	toolchain which you can either build yourself as described in the
