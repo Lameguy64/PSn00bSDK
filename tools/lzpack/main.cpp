@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <tinyxml2.h>
 
-#include "lzp/lzconfig.h"
-#include "lzp/lzp.h"
+#include "lzconfig.h"
+#include "lzp.h"
 #include "filelist.h"
 
 
