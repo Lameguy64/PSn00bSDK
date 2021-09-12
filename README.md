@@ -79,102 +79,14 @@ As of August 16, 2021
 
 ## Obtaining PSn00bSDK
 
+PSn00bSDK has switched to a CMake-based build and installation system. See
+[INSTALL.md](INSTALL.md) for details.
+
 Because PSn00bSDK is updated semi-regularly due to this project being in
 a work-in-progress state, it is better to obtain this SDK from source and
 building it yourself in the long run. Pre-compiled packages for Debian and
-Msys2 are being planned however.
-
-A precompiled copy of the GCC 7.4.0 toolchain for Windows is available
-in the PSn00bSDK page of Lameguy64's website
-( http://lameguy64.net/?page=psn00bsdk ). This should make building PSn00bSDK
-under Windows a bit easier, as the GCC toolchain is quite difficult to
-compile correctly under Windows than it is on Linux and BSDs.
-
-
-## Building the SDK
-
-You may set one of the following variables either with set/export or on the
-make command line, to specify various parameters in building PSn00bSDK and
-projects made with it as you see fit.
-
-* ``PSN00BSDK_TC`` specifies the base directory of the GCC toolchain to
-  build PSn00bSDK with, otherwise the makefile assumes you have the path to
-  the toolchain binaries in one of your PATH directories. Alternatively,
-  ``GCC_BASE`` can be specified in place of ``PSN00BSDK_TC``. If not
-  specified psn00bsdk-setup.mk assumes the toolchain is at
-  C:\mipsel-unknown-elf in Win32 or /usr/local/mipsel-unknown-elf in Linux.
-* ``GCC_VERSION`` specifies the GCC version number. This is only used for
-  building the libc library. If not defined, it will be auto-detected by
-  searching ``PSN00BSDK_TC`` or ``GCC_BASE`` for a valid GCC installation.
-* ``PSN00BSDK_LIBS`` specifies the target directory you wish to install
-  the compiled libpsn00b libraries to. If not defined, compiled
-  libraries are consolidated to the libpsn00b directory and
-  psn00bsdk-setup.mk assumes the SDK libraries are at ../psn00bsdk/libpsn00b.
-
-
-### Windows:
-1. Download the following:
-  * MSys2 (32-bit or 64-bit version whichever you prefer)
-  * GCC 7.4.0 for mipsel-unknown-elf (download from Lameguy64's website at
-    http://lameguy64.net?page=psn00bsdk if you rather not build it yourself)
-2. Install MSys2, update packages (with pacman -Syu) then install the
-   following packages:
-  * git
-  * make
-  * mingw-w64-i686-gcc (32-bit) or mingw-w64-x86_64-gcc (64-bit)
-    You may need to close and reopen MSys2 for the PATH environment in the
-	shell to update for MinGW.
-  * mingw-w64-i686-tinyxml2 (32-bit) or mingw-w64-x86_64-tinyxml2 (64-bit)
-    Used by lzpack and smxlink.
-3. Extract GCC 7.4.0 for mipsel-unknown-elf to the root of your C drive.
-4. Edit `mipsel-unknown-elf/mipsel-unknown-elf/lib/ldscripts/elf32elmip.x`
-   and append definitions to the .text definition as explained in
-   toolchain.txt.
-5. Add `export PATH=$PATH:/c/mipsel-unknown-elf/bin` to your `.bash_profile`
-   file in MSys2. Test if `mipsel-unknown-elf-gcc` can be called from any
-   directory in the terminal after reloading the MSys2 shell for the change
-   to take effect.
-6. Clone from PSn00bSDK source with
-   `git clone https://github.com/lameguy64/psn00bsdk`
-   Clone it in the root of your C drive or in any location you prefer.
-7. Enter the tools directory in PSn00bSDK and run `make` to build all tools,
-   then run `make install` to consolidate all tools to a single bin
-   directory. Add this directory to your PATH variable by adding
-   `export=$PATH:<path to SDK>/tools/bin` in your .bash_profile. Reload
-   the MSys2 shell for the changes to take effect, then enter `elf2x` if
-   the tools can be executed from any directory.
-8. Enter libpsn00b directory and run `make` to build all libpsn00b libraries,
-   then `make install` to consolidate the libraries to either the parent
-   directory or the directory specified by ``PSN00BSDK_LIBS``.
-6. Compile the example programs by running `make` from the examples
-   directory to test the SDK.
-   
-If you prefer to do things in the Command Prompt, you can add the paths
-c:\msys64\usr\bin, c:\msys64\mingw64\bin (mingw32 for 32-bit),
-c:\mipsel-unknown-elf\bin and c:\psn00bsdk\tools\bin (paths may vary
-depending on where you've installed/extracted them) to your system's
-PATH environment variable. This way, you can invoke make and compile
-programs with PSn00bSDK within the Command Prompt.
-   
-
-### Linux and Unix-likes:
-1. Install gcc, make, texinfo, git and development packages of mpfr, mpc,
-   gmp, isl and tinyxml2 libraries for your distro.
-2. Build and install the GNU GCC toolchain targeting mipsel-unknown-elf
-   (see toolchain.txt for details). Export a variable named `PSN00BSDK_TC`
-   containing a path to the installed toolchain's base directory if
-   you've installed the toolchain in a location other than /usr/local.
-3. Clone from PSn00bSDK source with
-   `git clone https://github.com/lameguy64/psn00bsdk`
-4. Enter tools directory and run `make`, then `make install` to consolidate
-   the tools to the bin directory. Add this directory to your PATH variable
-   and make sure `elf2x` and other tools are accessible from any directory.
-5. Enter the libpsn00b directory and run `make`. Then, run `make install`
-   to consolidate the libraries to the libpsn00b parent directory, or the
-   directory specified by ``PSN00BSDK_LIBS``.
-6. Compile the example programs by running `make` from the examples
-   directory to test the SDK.
-
+Msys2 are being planned however (it is already possible to build installers,
+DEB and RPM packages through CPack so it's only a matter of time).
 
 ## Examples
 
@@ -206,11 +118,6 @@ for the PlayStation. The tutorials should still apply to PSn00bSDK.
   a custom format with better compression).
 
 * Pad and memory card libraries that don't use the BIOS routines.
-
-* Switching to, or adding support for a build system that's easier to use with
-  IDEs and/or under Windows, which would also make asset conversion pipelines
-  easier to manage. CMake might be a good option here but more discussion is
-  needed.
 
 ## Usage terms
 

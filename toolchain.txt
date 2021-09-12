@@ -20,12 +20,8 @@ the libgcc.a library from it to the Windows build.
 
 Make sure the following packages are installed prior to building:
 * make
-* texinfo
-* mpfr (development libs, if your distro offers it in a separate package)
-* isl (development libs, if your distro offers it in a separate package)
-* gmp (development libs, if your distro offers it in a separate package)
-* mpc (development libs, if your distro offers it in a separate package)
-* build-essential or build-essentials, if you don't have GCC installed yet.
+* build-essential or build-essentials, if you don't have GCC installed yet
+  (a host toolchain is required to build the rest of the SDK anyway).
 
 
 Building binutils:
@@ -38,16 +34,17 @@ mipsel-unknown-elf.
   wish to use with PSn00bSDK. The reference version that PSn00bSDK is tested
   with most is 2.31.
   
-* Extract the contents of the archive, preferably in a directory named gcc.
+* Extract the contents of the archive, preferably in a directory named
+  "toolchain" (or whatever).
   
-* Create a directory named binutils-build inside the gcc directory. Do not
-  create it inside the binutils directory with the source files.
+* Create a directory named binutils-build inside the toolchain directory. Do
+  not create it inside the binutils directory with the source files.
   
 * Enter the binutils-build directory and configure binutils from there
   with the following command line:
 
 ../binutils-<version>/configure --prefix=/usr/local/mipsel-unknown-elf \
---target=mipsel-unknown-elf --with-float=soft
+--target=mipsel-unknown-elf --disable-docs --disable-nls --with-float=soft
 
 Replace <version> with the version of binutils you wish to use. You may also
 want to change the prefix argument to a path you prefer to have the toolchain
@@ -73,17 +70,23 @@ longer so it's going to take a longer while to build this.
   wish to use with PSn00bSDK. The reference version that PSn00bSDK is tested
   with most is 7.4.0.
 
-* Extract it to the same gcc directory you extracted binutils in.
+* Extract it to the same toolchain directory you extracted binutils in.
 
-* Create a directory named gcc-build inside the gcc directory.
+* Enter the extracted "gcc-<version>" folder and run the following command
+  from there to download the required dependencies:
+
+./contrib/download_prerequisites
+
+* Go back and create a directory named gcc-build inside the toolchain
+  directory.
 
 * Enter the gcc-build directory and configure gcc from there with the
   following command line:
 
-../gcc-<version>/configure --disable-nls --disable-libada --disable-libssp \
---disable-libquadmath --disable-libstdc++-v3 --target=mipsel-unknown-elf \
---prefix=/usr/local/mipsel-unknown-elf --with-float=soft \
---enable-languages=c,c++ --with-gnu-as --with-gnu-ld
+../gcc-<version>/configure --prefix=/usr/local/mipsel-unknown-elf \
+--target=mipsel-unknown-elf --disable-docs --disable-nls --disable-libada \
+--disable-libssp --disable-libquadmath --disable-libstdc++-v3 \
+--with-float=soft --enable-languages=c,c++ --with-gnu-as --with-gnu-ld
 
 Replace <version> with the version of gcc you downloaded. The prefix path
 must match to what you've specified for binutils earlier, if you've decided
@@ -109,9 +112,10 @@ through System Properties.
 
 Note regarding C++ support:
 
-C++ support in PSn00bSDK only goes as far as basic classes, namespaces and
-the ability to dynamically create and delete class objects at any point of
-the program. The required dependencies are supplied by libc of libpsn00b.
+C++ support in PSn00bSDK, besides compile-time features like constexpr, only
+goes as far as basic classes, namespaces and the ability to dynamically create
+and delete class objects at any point of the program. The required dependencies
+are supplied by libc of libpsn00b.
 
 Standard C++ libraries are not implemented and likely never going to be
 implemented due to bloat concerns that it may introduce. Besides, the official
