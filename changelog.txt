@@ -2,6 +2,31 @@ PSn00bSDK changelog
 
 Items that are lower in the log are more recently implemented.
 
+09-13-2021 by spicyjpeg:
+
+* Migrated libpsn00b, tools, examples and template to CMake, added a top-level
+  CMakeLists.txt and the libpsn00b/cmake directory for CMake setup scripts, got
+  rid of the old makefiles and installation method.
+
+* Updated docs to match the new build system, moved installation instructions
+  to INSTALL.md and added doc/cmake_reference.md describing the SDK's CMake
+  API and variables.
+
+* mkpsxiso: Added rules to automatically download, build and install mkpsxiso
+  (as well as its dependencies) as part of the SDK.
+
+* cpack: Added initial CPack support and created the cpack directory containing
+  branding assets for installers built through CPack. A shell script is
+  provided to regenerate the assets from their source SVGs.
+
+* liblzp: Copied library headers to libpsn00b/include/lzp.
+
+* psxetc: Fixed a random typo in a javadoc comment (those should be eventually
+  rewritten into proper documentation anyway).
+
+* Added CMake, VS Code and DLL related entries to .gitignore.
+
+
 08-16-2021 by spicyjpeg:
 
 * psxetc: Added dynamic linking APIs (dl*, DL_*), implemented in dl.c and

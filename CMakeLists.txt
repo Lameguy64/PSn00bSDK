@@ -39,7 +39,7 @@ set(
 )
 set(
 	SKIP_EXAMPLES OFF
-	CACHE BOOL    "Skip building SDK examples (which are never installed)"
+	CACHE BOOL    "Skip building SDK examples (not required for installation)"
 )
 
 # Forward some important variables to mkpsxiso and to the subprojects (they are
@@ -54,6 +54,7 @@ set(
 	-DPSN00BSDK_TARGET:STRING=${PSN00BSDK_TARGET}
 	-DCMAKE_TOOLCHAIN_FILE:FILEPATH=${CMAKE_TOOLCHAIN_FILE}
 	-DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_BINARY_DIR}/install_tree
+	-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
 )
 set(
 	EXAMPLES_ARGS
@@ -61,6 +62,7 @@ set(
 	-DPSN00BSDK_TARGET:STRING=${PSN00BSDK_TARGET}
 	-DCMAKE_TOOLCHAIN_FILE:FILEPATH=${PROJECT_BINARY_DIR}/install_tree/${CMAKE_INSTALL_LIBDIR}/libpsn00b/cmake/sdk.cmake
 	-DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_BINARY_DIR}/examples
+	-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
 )
 
 ## External dependencies
@@ -130,9 +132,11 @@ install(
 
 ## CPack configuration
 
-# TODO: add a macOS installer and related options
 if(WIN32)
 	set(CPACK_GENERATOR ZIP NSIS)
+elseif(APPLE)
+	# TODO: add a macOS installer and related options
+	set(CPACK_GENERATOR ZIP)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	set(CPACK_GENERATOR ZIP DEB RPM)
 else()
