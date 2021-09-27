@@ -7,6 +7,9 @@
 cmake_minimum_required(VERSION 3.21)
 include(GNUInstallDirs)
 
+# IMPORTANT TODO: set a version number
+set(PSN00BSDK_VERSION 0.1.0)
+
 ## Settings (can be overridden by projects)
 
 set(PSN00BSDK_EXECUTABLE_SUFFIX     ".exe")

@@ -182,6 +182,10 @@ the build script.
 
 ## Read-only variables
 
+- `PSN00BSDK_VERSION`
+
+  The SDK's version number (`major.minor.patch`).
+
 - `PSN00BSDK_TOOLS`, `PSN00BSDK_INCLUDE`, `PSN00BSDK_LDSCRIPTS`
 
   Lists of paths used internally. Should not be set, manipulated or overridden
@@ -200,4 +204,4 @@ the build script.
   LZP archives as part of the build pipeline.
 
 -----------------------------------------
-_Last updated on 2021-09-12 by spicyjpeg_
+_Last updated on 2021-09-27 by spicyjpeg_

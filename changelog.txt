@@ -2,6 +2,22 @@ PSn00bSDK changelog
 
 Items that are lower in the log are more recently implemented.
 
+09-27-2021 by spicyjpeg:
+
+* liblzp, tools: Fixed tools not building on MSVC and cleaned up LZP API
+  declarations (replaced meaningless void* pointers with proper types).
+
+* libpsn00b: Added missing PSN00BSDK_VERSION CMake variable.
+
+* examples: Fixed childexec (parent.exe) example crashing due to the child
+  executable not being relocated in the new build script. Patched n00bdemo to
+  suppress liblzp pointer type warnings.
+
+* Fixed another MSVC linker error when building tinyxml2 automatically, as well
+  as various toolchain/compiler test errors sometimes thrown by CMake. Updated
+  INSTALL.md with more details.
+
+
 09-13-2021 by spicyjpeg:
 
 * Migrated libpsn00b, tools, examples and template to CMake, added a top-level

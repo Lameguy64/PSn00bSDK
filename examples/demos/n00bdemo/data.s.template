@@ -1,8 +1,8 @@
 .section .data
 
-.global lz_resources
-.type lz_resources, @object
-lz_resources:
+.global _lz_resources
+.type _lz_resources, @object
+_lz_resources:
 	.incbin "${PROJECT_BINARY_DIR}/data.lzp"
 
 #.global smd_mtekdisk

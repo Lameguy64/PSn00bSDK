@@ -73,9 +73,9 @@ unsigned short lzCRC16(const void* buff, int bytes, unsigned short crc) {
 unsigned int lzCRC32(const void* buff, int bytes, unsigned int crc) {
 
 	int	i;
-	unsigned char*	byteBuff = (const unsigned char*)buff;
-	unsigned int	byte;
-	unsigned int	crcTable[256];
+	const unsigned char*	byteBuff = (const unsigned char*)buff;
+	unsigned int			byte;
+	unsigned int			crcTable[256];
 
     initTable32(crcTable);
 

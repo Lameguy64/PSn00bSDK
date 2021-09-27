@@ -178,7 +178,7 @@ int CreateLZPfile(const char* packFile, FileListClass* fileList) {
             printf("ERROR: Entry '%s' has more than 15 characters.\n", name);
             fclose(packp);
             unlink(packFile);
-            delete entry;
+            delete[] entry;
 
             return(0);
 
@@ -216,8 +216,8 @@ int CreateLZPfile(const char* packFile, FileListClass* fileList) {
 
         fwrite(compBuff, compSize, 1, packp);
 
-        delete compBuff;
-        delete fileBuff;
+        delete[] compBuff;
+        delete[] fileBuff;
 
 		printf("Ok. (%.02f%%)\n", 100.f*((float)compSize/fileSize));
 
@@ -238,7 +238,7 @@ int CreateLZPfile(const char* packFile, FileListClass* fileList) {
     fwrite(entry, sizeof(LZP_FILE), fileList->EntryCount(), packp);
 
 	fclose(packp);
-	delete entry;
+	delete[] entry;
 
     printf("Packed %d file(s) totaling %d bytes (%.02f%% compression ratio).\n",
 		fileList->EntryCount(),
@@ -285,7 +285,7 @@ int CreateQLPfile(const char* packFile, FileListClass* fileList) {
             printf("ERROR: Entry '%s' has more than 15 characters.\n", name);
             fclose(packp);
             unlink(packFile);
-            delete fileEntry;
+            delete[] fileEntry;
 
             return(0);
 
@@ -328,7 +328,7 @@ int CreateQLPfile(const char* packFile, FileListClass* fileList) {
 
 		}
 
-		delete copyBuff;
+		delete[] copyBuff;
 		fclose(fp);
 
 		fileEntry[i].fileSize = bytesCopied;
@@ -345,7 +345,7 @@ int CreateQLPfile(const char* packFile, FileListClass* fileList) {
 	fwrite(fileEntry, sizeof(QLP_FILE), head.numFiles, packp);
 
 	fclose(packp);
-	delete fileEntry;
+	delete[] fileEntry;
 
 	return(true);
 
@@ -417,7 +417,7 @@ int CreatePCKfile(const char* packFile, FileListClass* fileList) {
         }
 
 		fclose(fp);
-		delete buff;
+		delete[] buff;
 
 		toc.file[i].size = bytesTotal;
 
@@ -428,7 +428,7 @@ int CreatePCKfile(const char* packFile, FileListClass* fileList) {
 
 			memset(padding, 0x00, pad);
 			fwrite(padding, pad, 1, packp);
-			delete padding;
+			delete[] padding;
 		}
 
 		printf("Done.\n");
