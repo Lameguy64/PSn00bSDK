@@ -6,6 +6,10 @@
 #include <string.h>
 #include "elf.h"
 
+#ifdef WIN32
+#define strcasecmp _stricmp
+#endif
+
 #define	MAX_prg_entry_count	128
 #define	true	(1)
 #define	false	(0)
@@ -233,9 +237,12 @@ int main(int argc, char** argv) {
 	exe.params.t_size = exe_tsize;
 	exe.params.pc0 = head.prg_entry_addr;
 
+	// Some later PAL BIOS versions seem to actually verify the license string
+	// in the executable (despite what the nocash docs claim) and display the
+	// dreaded "insert PlayStation CD-ROM" screen if it's not valid.
 	strncpy( exe.header, "PS-X EXE", 8 );
 	strcpy( exe.license,
-		"Not Licensed or Endorsed by Sony Computer Entertainment Inc." );
+		"Sony Computer Entertainment Inc. for Europe area" );
 	strcpy( exe.pad2, "Built using GCC and PSn00bSDK libraries" );
 
 

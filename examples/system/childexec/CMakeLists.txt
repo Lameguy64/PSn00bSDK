@@ -27,6 +27,13 @@ psn00bsdk_add_executable(
 psn00bsdk_add_executable(child STATIC ${_child_sources})
 #psn00bsdk_add_cd_image(childexec_iso childexec iso.xml DEPENDS parent)
 
+# Relocate the child executable to a non-default address to prevent it from
+# overlapping with the main one at 0x80010000.
+# NOTE: child executables are not position-independent and can't be relocated
+# at runtime. If you need your code to be relocatable (e.g. to load it into a
+# dynamically-allocated buffer), consider using a DLL instead.
+target_link_options(child PRIVATE -Ttext=0x80030000)
+
 # Make sure the child executable is built before the parent (so it can be
 # embedded via child_exe.s).
 add_dependencies(parent child)

@@ -73,7 +73,9 @@ if(NOT SKIP_DOWNLOAD)
 	ExternalProject_Add(
 		tinyxml2
 		GIT_REPOSITORY   "https://github.com/leethomason/tinyxml2"
-		CMAKE_CACHE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_BINARY_DIR}/install_temp
+		CMAKE_CACHE_ARGS
+			-DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_BINARY_DIR}/install_temp
+			-DCMAKE_MSVC_RUNTIME_LIBRARY:STRING=MultiThreaded$<$<CONFIG:Debug>:Debug>
 		INSTALL_DIR      install_temp
 	)
 	ExternalProject_Add(
@@ -153,7 +155,6 @@ set(CPACK_RESOURCE_FILE_WELCOME    ${PROJECT_SOURCE_DIR}/cpack/welcome.txt)
 set(CPACK_RESOURCE_FILE_README     ${PROJECT_SOURCE_DIR}/README.md)
 set(CPACK_RESOURCE_FILE_LICENSE    ${PROJECT_SOURCE_DIR}/LICENSE.md)
 set(CPACK_PRE_BUILD_SCRIPTS        ${PROJECT_SOURCE_DIR}/cpack/fakeroot_fix.cmake)
-
 
 set(CPACK_DEBIAN_PACKAGE_DEPENDS  "libc6 (>= 2.28), cmake (>= 3.21), gcc-mipsel-unknown-elf")
 set(CPACK_DEBIAN_PACKAGE_SUGGESTS "git")

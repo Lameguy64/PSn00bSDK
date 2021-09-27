@@ -102,6 +102,15 @@ project() command. The poorly documented solution to this is to move such
 commands to a separate file and set CMAKE_PROJECT_INCLUDE to point to it, so
 project() will execute it immediately after initialization.
 
+* After executing the toolchain file, CMake generates and attempts to build
+several dummy projects to test the compiler. Each of these projects re-includes
+the toolchain script (which is why you'll see commands executed multiple times)
+and uses the same variable values as the main project, however CMake will *NOT*
+pass custom variables through by default. If your toolchain script has options
+that can be set via custom variables (like PSN00BSDK_TC and PSN00BSDK_PREFIX in
+PSn00bSDK), you'll have to set CMAKE_TRY_COMPILE_PLATFORM_VARIABLES to a list
+of variable names to be exported to generated dummy projects.
+
 * There is no way to use multiple toolchains (PS1 + host) in a single project,
 even if you use add_subdirectory() to execute multiple project files (which,
 confusingly, adds their targets to the parent project rather than treating them

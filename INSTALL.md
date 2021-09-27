@@ -11,22 +11,29 @@ tested but should work.
    install the `build-essential` package provided by most Linux distros.
 
 2. Install Git and CMake. Note that some Linux distros ship relatively old
-   versions of CMake, so make sure you have at least CMake 3.21. You may also
-   want to grab [Ninja](https://ninja-build.org) (it is a single executable, you
-   have to copy it to any directory listed in the `PATH` environment variable)
-   as a faster alternative to `make`.
+   versions of CMake, so make sure you have at least CMake 3.21. You will also
+   need [Ninja](https://ninja-build.org) (it is a single executable, you have to
+   copy it to any directory listed in the `PATH` environment variable) on
+   Windows as there is no preinstalled build system; on Linux you can use `make`
+   instead, but Ninja is still recommended.
 
 3. Build and install a GCC toolchain for `mipsel-unknown-elf`. As GCC is
    notoriously hard to compile under Windows, you may download a precompiled
-   version from [Lameguy64's website](http://lameguy64.net?page=psn00bsdk)
-   and extract it to the root of your C drive instead. See
-   [toolchain.txt](toolchain.txt) for details on compiling GCC.
+   version from [Lameguy64's website](http://lameguy64.net?page=psn00bsdk) and
+   and extract it into Program Files instead. See [toolchain.txt](toolchain.txt)
+   for details on compiling GCC.
 
-4. Set the `PSN00BSDK_TC` environment variable to point to the location you
-   installed or extracted the toolchain to. The default is
-   `C:\Program Files\PSn00bSDK\mips-unknown-elf` on Windows or
-   `/usr/local/mips-unknown-elf` on Linux; installing to a different path is
-   not recommended.
+4. If you chose a non-standard install location for the toolchain, set the
+   `PSN00BSDK_TC` environment variable to point to the toolchain's root
+   directory. This step is unnecessary if you installed/extracted the toolchain
+   into any of these directories:
+
+   - `C:\Program Files\mipsel-unknown-elf`
+   - `C:\Program Files (x86)\mipsel-unknown-elf`
+   - `C:\mipsel-unknown-elf`
+   - `/usr/local/mipsel-unknown-elf`
+   - `/usr/mipsel-unknown-elf`
+   - `/opt/mipsel-unknown-elf`
 
 5. Clone/download the PSn00bSDK repo and run the following commands:
 
@@ -55,9 +62,10 @@ with debugging capabilities such as [no$psx](https://problemkaputt.de/psx.htm)
 
 ## Building installer packages
 
-CPack can be used to build NSIS-based installers on Windows or DEB/RPM packages
-on Linux, plus zipped packages on all platforms. Note that currently none of the
-built packages include the GCC toolchain, thus their usefulness is limited.
+CPack can be used to build NSIS-based installers, DEB/RPM packages and zipped
+releases. Note that currently none of the built packages include the toolchain,
+thus their usefulness is limited. Distributing prebuilt releases is discouraged
+anyway since PSn00bSDK is still far from being feature-complete.
 
 1. Follow steps 1-4 above to set up the toolchain, then install NSIS on Windows
    or `dpkg` and `rpm` on Linux.
@@ -97,4 +105,4 @@ The toolchain script defines a few CMake macros to create PS1 executables, DLLs
 and CD images. See the [reference](doc/cmake_reference.md) for details.
 
 -----------------------------------------
-_Last updated on 2021-09-12 by spicyjpeg_
+_Last updated on 2021-09-26 by spicyjpeg_

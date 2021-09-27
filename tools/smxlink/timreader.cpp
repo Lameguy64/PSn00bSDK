@@ -2,6 +2,10 @@
 #include <string.h>
 #include "timreader.h"
 
+#ifdef WIN32
+#define strcasecmp _stricmp
+#endif
+
 int GetTimCoords(const char* fileName, TIM_COORDS *coords) {
 
     FILE* fp = fopen(fileName, "rb");

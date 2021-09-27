@@ -4,8 +4,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <limits.h>
+
+#ifdef WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 
 #ifndef MAX_PATH
 #define MAX_PATH PATH_MAX

@@ -49,7 +49,7 @@ void initTable32(unsigned int* table) {
 
 }
 
-unsigned short lzCRC16(void* buff, int bytes, unsigned short crc) {
+unsigned short lzCRC16(const void* buff, int bytes, unsigned short crc) {
 
 	int i;
 	unsigned short tmp, short_c;
@@ -59,7 +59,7 @@ unsigned short lzCRC16(void* buff, int bytes, unsigned short crc) {
 
 	for(i=0; i<bytes; i++) {
 
-		short_c = 0x00ff & (unsigned short)((unsigned char*)buff)[i];
+		short_c = 0x00ff & (unsigned short)((const unsigned char*)buff)[i];
 
 		tmp =  crc       ^ short_c;
 		crc = (crc >> 8) ^ crcTable[tmp&0xff];
@@ -70,10 +70,10 @@ unsigned short lzCRC16(void* buff, int bytes, unsigned short crc) {
 
 }
 
-unsigned int lzCRC32(void* buff, int bytes, unsigned int crc) {
+unsigned int lzCRC32(const void* buff, int bytes, unsigned int crc) {
 
 	int	i;
-	unsigned char*	byteBuff = (unsigned char*)buff;
+	unsigned char*	byteBuff = (const unsigned char*)buff;
 	unsigned int	byte;
 	unsigned int	crcTable[256];
 

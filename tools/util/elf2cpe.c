@@ -3,6 +3,10 @@
 #include <malloc.h>
 #include "elf.h"
 
+#ifdef WIN32
+#define strcasecmp _stricmp
+#endif
+
 #define	MAX_prg_entry_count	128
 
 #ifndef false

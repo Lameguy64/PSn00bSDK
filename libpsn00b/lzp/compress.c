@@ -107,7 +107,7 @@ int get_penalty(int a, int b) {
 
 }
 
-int lzCompress(void* outBuff, void* inBuff, int inSize, int level) {
+int lzCompress(void* outBuff, const void* inBuff, int inSize, int level) {
 
 	#if LZP_USE_MALLOC == FALSE
 	int head[HASH1_SIZE+HASH2_SIZE];
@@ -347,7 +347,7 @@ void lzResetHashSizes() {
 
 #endif // LZP_NO_COMPRESS
 
-int lzDecompress(void* outBuff, void* inBuff, int inSize) {
+int lzDecompress(void* outBuff, const void* inBuff, int inSize) {
 
 	int p=0;
 	int len;
@@ -355,7 +355,7 @@ int lzDecompress(void* outBuff, void* inBuff, int inSize) {
 	int s;
 	int windowSize;
 
-    inPtr = (unsigned char*)inBuff;
+    inPtr = (const unsigned char*)inBuff;
     outPtr = (unsigned char*)outBuff;
     inBytes = 0;
     outBytes = 0;
@@ -408,7 +408,7 @@ int lzDecompress(void* outBuff, void* inBuff, int inSize) {
 
 }
 
-int lzDecompressLen(void* outBuff, int outSize, void* inBuff, int inSize) {
+int lzDecompressLen(void* outBuff, int outSize, const void* inBuff, int inSize) {
 
 	int p=0;
 	int len;
@@ -416,7 +416,7 @@ int lzDecompressLen(void* outBuff, int outSize, void* inBuff, int inSize) {
 	int s;
 	int windowSize;
 
-    inPtr = (unsigned char*)inBuff;
+    inPtr = (const unsigned char*)inBuff;
     outPtr = (unsigned char*)outBuff;
     inBytes = 0;
     outBytes = 0;
