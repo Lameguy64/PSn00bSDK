@@ -2,6 +2,15 @@ PSn00bSDK changelog
 
 Items that are lower in the log are more recently implemented.
 
+10-06-2021 by Lameguy64:
+
+* psxspu: Fixed register typo in SpyKeyOn causing unpredictable instability.
+
+* psxspu: Fixed bug where SpuKeyOn does not set the key-on bits for voices 16 to 23.
+
+* examples: Added vagsample SPU example.
+  
+
 08-16-2021 by spicyjpeg:
 
 * psxetc: Added dynamic linking APIs (dl*, DL_*), implemented in dl.c and
