@@ -2,6 +2,7 @@ PSn00bSDK changelog
 
 Items that are lower in the log are more recently implemented.
 
+
 10-06-2021 by Lameguy64:
 
 * psxspu: Fixed register typo in SpyKeyOn causing unpredictable instability.
@@ -9,7 +10,48 @@ Items that are lower in the log are more recently implemented.
 * psxspu: Fixed bug where SpuKeyOn does not set the key-on bits for voices 16 to 23.
 
 * examples: Added vagsample SPU example.
-  
+
+
+09-27-2021 by spicyjpeg:
+
+* liblzp, tools: Fixed tools not building on MSVC and cleaned up LZP API
+  declarations (replaced meaningless void* pointers with proper types).
+
+* libpsn00b: Added missing PSN00BSDK_VERSION CMake variable.
+
+* examples: Fixed childexec (parent.exe) example crashing due to the child
+  executable not being relocated in the new build script. Patched n00bdemo to
+  suppress liblzp pointer type warnings.
+
+* Fixed another MSVC linker error when building tinyxml2 automatically, as well
+  as various toolchain/compiler test errors sometimes thrown by CMake. Updated
+  INSTALL.md with more details.
+
+
+09-13-2021 by spicyjpeg:
+
+* Migrated libpsn00b, tools, examples and template to CMake, added a top-level
+  CMakeLists.txt and the libpsn00b/cmake directory for CMake setup scripts, got
+  rid of the old makefiles and installation method.
+
+* Updated docs to match the new build system, moved installation instructions
+  to INSTALL.md and added doc/cmake_reference.md describing the SDK's CMake
+  API and variables.
+
+* mkpsxiso: Added rules to automatically download, build and install mkpsxiso
+  (as well as its dependencies) as part of the SDK.
+
+* cpack: Added initial CPack support and created the cpack directory containing
+  branding assets for installers built through CPack. A shell script is
+  provided to regenerate the assets from their source SVGs.
+
+* liblzp: Copied library headers to libpsn00b/include/lzp.
+
+* psxetc: Fixed a random typo in a javadoc comment (those should be eventually
+  rewritten into proper documentation anyway).
+
+* Added CMake, VS Code and DLL related entries to .gitignore.
+
 
 08-16-2021 by spicyjpeg:
 

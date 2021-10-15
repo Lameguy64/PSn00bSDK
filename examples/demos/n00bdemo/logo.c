@@ -7,7 +7,7 @@
 #include <inline_c.h>
 #include "malloc.h"
 #include "smd.h"
-#include "lzp.h"
+#include <lzp/lzp.h>
 
 #include "disp.h"
 #include "data.h"

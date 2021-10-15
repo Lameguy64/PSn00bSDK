@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <tinyxml2.h>
 
-#include "lzp/lzconfig.h"
-#include "lzp/lzp.h"
+#include "lzconfig.h"
+#include "lzp.h"
 #include "filelist.h"
 
 
@@ -151,10 +151,9 @@ int main(int argc, const char* argv[]) {
 int CreateLZPfile(const char* packFile, FileListClass* fileList) {
 
 	FILE*		packp;
-	LZP_FILE	entry[fileList->EntryCount()];
+	LZP_FILE*	entry=new LZP_FILE[fileList->EntryCount()];
 	int			overallSize=0;
 	int			overallPackedSize=0;
-
 
     packp = fopen(packFile, "wb");
 
@@ -179,6 +178,7 @@ int CreateLZPfile(const char* packFile, FileListClass* fileList) {
             printf("ERROR: Entry '%s' has more than 15 characters.\n", name);
             fclose(packp);
             unlink(packFile);
+            delete[] entry;
 
             return(0);
 
@@ -199,13 +199,13 @@ int CreateLZPfile(const char* packFile, FileListClass* fileList) {
         int fileSize = ftell(fp);
 		fseek(fp, 0, SEEK_SET);
 
-        void* fileBuff = malloc(fileSize);
+        char* fileBuff = new char[fileSize];
 		fread(fileBuff, fileSize, 1, fp);
 
 		fclose(fp);
 
 
-        void*	compBuff = malloc(fileSize+16384);
+        char*	compBuff = new char[fileSize+16384];
         int		compSize = lzCompress(compBuff, fileBuff, fileSize, 2);
 
 
@@ -216,8 +216,8 @@ int CreateLZPfile(const char* packFile, FileListClass* fileList) {
 
         fwrite(compBuff, compSize, 1, packp);
 
-        free(compBuff);
-        free(fileBuff);
+        delete[] compBuff;
+        delete[] fileBuff;
 
 		printf("Ok. (%.02f%%)\n", 100.f*((float)compSize/fileSize));
 
@@ -238,7 +238,7 @@ int CreateLZPfile(const char* packFile, FileListClass* fileList) {
     fwrite(entry, sizeof(LZP_FILE), fileList->EntryCount(), packp);
 
 	fclose(packp);
-
+	delete[] entry;
 
     printf("Packed %d file(s) totaling %d bytes (%.02f%% compression ratio).\n",
 		fileList->EntryCount(),
@@ -255,7 +255,7 @@ int CreateQLPfile(const char* packFile, FileListClass* fileList) {
 
     FILE*		packp;
 	QLP_HEAD	head;
-	QLP_FILE	fileEntry[fileList->EntryCount()];
+	QLP_FILE*	fileEntry=new QLP_FILE[fileList->EntryCount()];
 
 	strncpy(head.id, "QLP", 3);
 	head.numFiles = fileList->EntryCount();
@@ -285,6 +285,7 @@ int CreateQLPfile(const char* packFile, FileListClass* fileList) {
             printf("ERROR: Entry '%s' has more than 15 characters.\n", name);
             fclose(packp);
             unlink(packFile);
+            delete[] fileEntry;
 
             return(0);
 
@@ -315,7 +316,7 @@ int CreateQLPfile(const char* packFile, FileListClass* fileList) {
 		FILE* fp = fopen(fileList->Entry(i)->fileName, "rb");
 
 		int bytesCopied = 0;
-		void* copyBuff = malloc(BUFF_SIZE);
+		char* copyBuff = new char[BUFF_SIZE];
 
 		while(!feof(fp)) {
 
@@ -327,7 +328,7 @@ int CreateQLPfile(const char* packFile, FileListClass* fileList) {
 
 		}
 
-		free(copyBuff);
+		delete[] copyBuff;
 		fclose(fp);
 
 		fileEntry[i].fileSize = bytesCopied;
@@ -344,6 +345,7 @@ int CreateQLPfile(const char* packFile, FileListClass* fileList) {
 	fwrite(fileEntry, sizeof(QLP_FILE), head.numFiles, packp);
 
 	fclose(packp);
+	delete[] fileEntry;
 
 	return(true);
 
@@ -402,7 +404,7 @@ int CreatePCKfile(const char* packFile, FileListClass* fileList) {
 		}
 
 		FILE* fp = fopen(fileList->Entry(i)->fileName, "rb");
-		void* buff = malloc(BUFF_SIZE);
+		char* buff = new char[BUFF_SIZE];
 
 		int bytesTotal = 0;
 
@@ -415,18 +417,18 @@ int CreatePCKfile(const char* packFile, FileListClass* fileList) {
         }
 
 		fclose(fp);
-		free(buff);
+		delete[] buff;
 
 		toc.file[i].size = bytesTotal;
 
 		if ((2048*((ftell(packp)+2047)/2048)) != ftell(packp)) {
 
 			int pad = (2048*(((ftell(packp)%2048)+2047)/2048))-(ftell(packp)%2048);
-			char padding[pad];
+			char* padding = new char[pad];
 
 			memset(padding, 0x00, pad);
 			fwrite(padding, pad, 1, packp);
-
+			delete[] padding;
 		}
 
 		printf("Done.\n");

@@ -1,7 +1,7 @@
 #ifndef _LZP_BIT_H
 #define _LZP_BIT_H
 
-extern unsigned char* inPtr;
+extern const unsigned char* inPtr;
 extern int inBytes;
 extern unsigned char* outPtr;
 extern int outBytes;

@@ -29,8 +29,8 @@
 #include <psxspu.h>
 #include <inline_c.h>
 #include <string.h>
-#include <lzp.h>
-#include <lzqlp.h>
+#include <lzp/lzp.h>
+#include <lzp/lzqlp.h>
 
 #include "malloc.h"
 #include "smd.h"
@@ -85,11 +85,12 @@ void loadTextures() {
 		Unpack textures from an embedded LZP archive and upload them to VRAM.
 	*/
 	int i;
-	int *tex_buff,*ttim,j;
+	int *ttim,j;
+	QLP_HEAD *tex_buff;
 	TIM_IMAGE tim;
 	
 	i = lzpSearchFile( "textures", lz_resources );
-	tex_buff = (int*)malloc( lzpFileSize( lz_resources, i ) );
+	tex_buff = (QLP_HEAD*)malloc( lzpFileSize( lz_resources, i ) );
 	lzpUnpackFile( tex_buff, lz_resources, i );
 
 	
@@ -148,6 +149,7 @@ void loadTextures() {
 	font_tpage	= getTPage( 0, 1, tim.prect->x, tim.prect->y )|0x200;
 	font_clut	= getClut( tim.crect->x, tim.crect->y );
 	
+	free( tex_buff );
 }
 	
 void unpackModels() {

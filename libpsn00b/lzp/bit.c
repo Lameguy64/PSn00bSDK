@@ -3,7 +3,7 @@
 // Bit I/O
 //
 
-unsigned char* inPtr = 0;
+const unsigned char* inPtr = 0;
 int inBytes = 0;
 unsigned char* outPtr = 0;
 int outBytes = 0;

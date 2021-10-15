@@ -119,7 +119,7 @@ void    DL_SetResolveCallback(void *(*callback)(DLL *, const char *));
  *
  * The third argument specifies when symbols in the DLL should be resolved.
  * Setting it to RTLD_LAZY defers resolution of undefined functions to when
- * they are first called, while RTLD_DEFAULT forces all symbols to be resolved
+ * they are first called, while RTLD_NOW forces all symbols to be resolved
  * immediately. If a custom resolver has been set via DL_SetResolveCallback(),
  * it will be called for each symbol to resolve.
  *

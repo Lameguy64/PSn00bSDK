@@ -1,0 +1,3 @@
+This installer will set up PSn00bSDK, including prebuilt libraries, CMake scripts as well as several command-line utilities for PlayStation 1 homebrew development.
+
+NOTE: CMake and the GCC toolchain must be installed separately.

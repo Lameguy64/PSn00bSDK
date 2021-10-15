@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <iso_project
-	image_name="build/cdxa.bin"
-	cue_sheet="build/cdxa.cue"
+	image_name="${CD_IMAGE_NAME}.bin"
+	cue_sheet="${CD_IMAGE_NAME}.cue"
 >
 	<track type="data">
 		<identifiers
@@ -9,18 +9,18 @@
 			volume			="CDXA"
 			volume_set		="CDXA"
 			publisher		="MEIDOTEK"
-			data_preparer	="PSN00BSDK BUILD SCRIPT"
+			data_preparer	="PSN00BSDK ${PSN00BSDK_VERSION}"
 			application		="PLAYSTATION"
 			copyright		="README.TXT;1"
 		/>
 
 		<directory_tree>
-			<file name="SYSTEM.CNF"		type="data" source="system.cnf" />
-			<file name="CDXA.EXE"		type="data" source="build/cdxa.exe" />
-			<file name="CDXA.MAP"		type="data" source="build/cdxa.map" />
+			<file name="SYSTEM.CNF"		type="data" source="${PROJECT_SOURCE_DIR}/system.cnf" />
+			<file name="CDXA.EXE"		type="data" source="cdxa.exe" />
+			<file name="CDXA.MAP"		type="data" source="cdxa.map" />
 
 			<!-- CD-XA file, you'll have to provide your own to make this example work -->
-			<file name="XASAMPLE.XA"	type="mixed" source="xasample.xa"/>
+			<file name="XASAMPLE.XA"	type="mixed" source="${PROJECT_SOURCE_DIR}/xasample.xa"/>
 
 			<dummy sectors="1024"/>
 		</directory_tree>

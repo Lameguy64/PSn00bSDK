@@ -1,0 +1,49 @@
+<lzp_project>
+
+	<create packname="textures.qlp" format="qlp">
+		
+		<file alias="petscum">${DATA_DIR}/petscum16c.tim</file>
+		<file alias="bungirl">${DATA_DIR}/bungirl.tim</file>
+		
+		<!-- These are for the timerift background -->
+		<file alias="clocktex">${DATA_DIR}/clktower.tim</file>
+		<file alias="riftbldg1">${DATA_DIR}/riftbld1.tim</file>
+		<file alias="riftbldg2">${DATA_DIR}/riftbld2.tim</file>
+		<file alias="hatkid">${DATA_DIR}/hatkid.tim</file>
+		
+		<file alias="celmap">${DATA_DIR}/celmapi.tim</file>
+		
+		<file alias="lamelotl">${DATA_DIR}/lamelotl16c.tim</file>
+		<file alias="n00blogo">${DATA_DIR}/n00blogo-pixel.tim</file>
+		<file alias="font">${DATA_DIR}/font.tim</file>
+		
+	</create>
+
+	<create packname="data.lzp" format="lzp">
+
+		<!-- intro assets -->
+		<file alias="mtekdisk">${DATA_DIR}/mtekdisk.smd</file>
+		<file alias="mtektext">${DATA_DIR}/mtektext.smd</file>
+		<file alias="starsprite">${DATA_DIR}/star.smd</file>
+		<file alias="psn00blogo">${DATA_DIR}/psn00blogo.smd</file>
+		<file alias="n00blogo">${DATA_DIR}/logo.smd</file>
+		
+		<!-- lighting demo assets -->
+		<file alias="lightworld">${DATA_DIR}/petscum.smd</file>
+		<file alias="lightbulb">${DATA_DIR}/bulb.smd</file>
+		
+		<!-- Hi-res bungirl demo assets -->
+		<file alias="bungirl">${DATA_DIR}/bungirl.smd</file>
+		
+		<file alias="starmask">${DATA_DIR}/star_mask.smd</file>
+		<file alias="timerift">${DATA_DIR}/timerift.smd</file>
+		<file alias="rbowshade">${DATA_DIR}/rbowshade.smd</file>
+		
+		<file alias="hatkid">${DATA_DIR}/hatkid.smd</file>
+		
+		<!-- Global textures -->
+		<file alias="textures">textures.qlp</file>
+		
+	</create>
+	
+</lzp_project>

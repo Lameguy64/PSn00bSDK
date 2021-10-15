@@ -92,3 +92,68 @@ power operator, not xor):
 * If you are overriding any of the memory allocation functions, DO NOT ENABLE
 LINK-TIME OPTIMIZATION. GCC has a long-standing bug with LTO and weak functions
 written in assembly, also LTO hasn't been tested at all yet.
+
+Obscure CMake issues and related stuff:
+
+* Toolchain files are loaded "early" according to the CMake docs. What this
+means in practice is that a lot of commands, such as find_*(), won't work
+properly in a toolchain script as they rely on variables initialized by the
+project() command. The poorly documented solution to this is to move such
+commands to a separate file and set CMAKE_PROJECT_INCLUDE to point to it, so
+project() will execute it immediately after initialization.
+
+* After executing the toolchain file, CMake generates and attempts to build
+several dummy projects to test the compiler. Each of these projects re-includes
+the toolchain script (which is why you'll see commands executed multiple times)
+and uses the same variable values as the main project, however CMake will *NOT*
+pass custom variables through by default. If your toolchain script has options
+that can be set via custom variables (like PSN00BSDK_TC and PSN00BSDK_PREFIX in
+PSn00bSDK), you'll have to set CMAKE_TRY_COMPILE_PLATFORM_VARIABLES to a list
+of variable names to be exported to generated dummy projects.
+
+* There is no way to use multiple toolchains (PS1 + host) in a single project,
+even if you use add_subdirectory() to execute multiple project files (which,
+confusingly, adds their targets to the parent project rather than treating them
+as separate projects). Thankfully though CMake provides support for automating
+the build process of independent CMake projects via the ExternalProject module.
+Which brings me to the next issue...
+
+* If you run CPack on a "superbuild" project (i.e. a project that calls
+ExternalProject_Add() to configure, compile and install subprojects at build
+time), you'll likely run into a weird issue with CPack bundling folders from
+your build directory into DEB and RPM packages. This is caused by the DEB/RPM
+generators running "cmake --install" in a chroot/fakeroot to prepare the files
+to be packaged, which seems to interfere with absolute paths in the project
+cache or something like that (?). The only workaround I know of is to use
+CPACK_PRE_BUILD_SCRIPTS to trigger a custom script that deletes anything other
+than the actual files to be packaged (see cpack/fakeroot_fix.cmake).
+
+* Depending on how you find external dependencies (find_package(), vcpkg,
+pkg-config...), CMake may end up outputting an executable that relies on a DLL
+installed system-wide. To correctly install the DLL alongside the executable
+you have to specify a regex as follows:
+
+ install(
+   TARGETS my_executable
+   RUNTIME_DEPENDENCIES
+   PRE_EXCLUDE_REGEXES ".*"
+   PRE_INCLUDE_REGEXES "tinyxml2"
+ )
+
+CMake will scan the executable at install time and copy all the required DLLs
+that match the second regex. If no regex is specified CMake will also copy OS
+DLLs like libc or msvcrt, which usually isn't the desired behavior.
+
+* Using interface targets to set include directories can be finicky. Not only
+do you have to use generator expressions to conditionally use different paths
+depending on whether the targets are installed, but CMake can get confused on
+which options to pass to the compiler. I spent hours trying to get CMake to use
+-I rather than -isystem for include directories (for some reason GCC would
+ignore -isystem completely). I eventually gave up and just set the include
+directories manually for each target, and for some reason CMake actually
+started passing -I instead of -isystem to GCC.
+
+* Not a CMake/CPack bug per se, but NSIS is picky about the banner and header
+images shown in generated installers. They must be Windows BMP version 3 files
+with no alpha channel, no compression and no metadata. They can either be
+24-bit RGB or indexed, though it's common to use indexed colors to save space.

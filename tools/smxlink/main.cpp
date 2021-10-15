@@ -15,6 +15,10 @@
 //#include <windef.h>
 #include "timreader.h"
 
+#ifdef WIN32
+#define strcasecmp _stricmp
+#endif
+
 #define VERSION "0.25b"
 
 namespace param
