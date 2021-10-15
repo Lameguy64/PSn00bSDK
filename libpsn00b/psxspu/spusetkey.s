@@ -17,10 +17,10 @@ SpuSetKey:
 	nop
 	
 	jr		$ra
-	sh		$a1, SPU_KEY_ON($v1)
+	sw		$a1, SPU_KEY_ON($a2)
 	
 .Lkey_off:
 
 	jr		$ra
-	sh		$a1, SPU_KEY_OFF($v1)
+	sw		$a1, SPU_KEY_OFF($a2)
 	
