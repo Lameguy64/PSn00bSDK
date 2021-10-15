@@ -81,7 +81,7 @@ if(NOT SKIP_DOWNLOAD)
 	ExternalProject_Add(
 		mkpsxiso
 		# IMPORTANT TODO: migrate to Lameguy64/mkpsxiso once PR #18 is merged
-		GIT_REPOSITORY   "https://github.com/spicyjpeg/mkpsxiso"
+		GIT_REPOSITORY   "https://github.com/Lameguy64/mkpsxiso"
 		GIT_TAG          cmake
 		#GIT_REPOSITORY   "https://github.com/Lameguy64/mkpsxiso"
 		CMAKE_CACHE_ARGS ${SUBPROJECT_ARGS}
