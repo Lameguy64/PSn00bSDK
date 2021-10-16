@@ -11,11 +11,11 @@ from scratch in a mix of C and hand optimized assembly language for optimal
 software performance.
 
 These libraries can only be compiled using a build of GCC that targets
-mipsel-unknown-elf. Compiler version shouldn't matter much and it should work
-fine with GCC 9.1.0, though 7.4.0 is the recommended version as that is what
-LibPSn00b is most tested most on.
+mipsel-unknown-elf (or mipsel-none-elf). Compiler version shouldn't matter
+much and it should work fine with the latest GCC release, though 7.4.0 is the
+recommended version as that is what LibPSn00b is most tested most on.
 
-	
+
 Brief summary of libraries:
 
 	libc	- Standard C library. Covers only a small subset of the full
@@ -33,7 +33,8 @@ Brief summary of libraries:
 	psxapi	- Provides function calls for using functions provided by the PS1
 			  BIOS.
 			  
-	psxetc	- Provides some miscellaneous features such as debug font.
+	psxetc	- Provides some miscellaneous features used by the other libraries
+			  as well as a dynamic linker for loading DLLs at runtime.
 
 	psxspu	- SPU library (work in progress). Currently supports hardware
 			  init, sample data upload via DMA and playing sound samples.
@@ -49,7 +50,12 @@ Brief summary of libraries:
 	must be covered in the changelog.txt file.
 
 
-Compiling (OUTDATED):
+Compiling:
+
+	Refer to INSTALL.md in the parent directory for up-to-date installation
+	instructions.
+
+	--- THE SECTION BELOW IS OUTDATED AND ONLY KEPT FOR REFERENCE ---
 
 	To compile the LibPSn00b libraries, you will first need a working GCC
 	toolchain which you can either build yourself as described in the
@@ -93,6 +99,10 @@ Documentation:
 	document  complete with the same document formatting as found in official
 	library documents. It may be wise to export the document as a PDF
 	document for easier viewing.
+
+	The PSn00bSDK CMake toolchain script also defines several macros and
+	helpers that can be used in project build scripts, documented in
+	cmake_reference.md.
 
 
 Contributing:
@@ -139,3 +149,11 @@ LibPSn00b Library to-do list:
 			   for compressing MDEC data instead of Huffman as used in the
 			   official libraries. It may yield better compression which may
 			   potentially result in higher quality FMVs.
+
+	psxexp   - Support library for various devices connected to the serial or
+			   expansion port, including both official ones (e.g. PCMCIA cards
+			   and IDE drives used by some PS1-based arcade systems) as well
+			   as cheat devices, RAM expanders or even ESP8266/ESP32 wireless
+			   modules. May also include APIs for accessing the filesystem on
+			   a connected drive (possibly by overriding psxcd and psxmcrd
+			   functions) or reliably transferring data from/to a PC.

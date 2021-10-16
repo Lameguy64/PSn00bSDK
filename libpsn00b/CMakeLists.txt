@@ -40,12 +40,13 @@ foreach(_library IN LISTS PSN00BSDK_LIBRARIES)
 	psn00bsdk_add_library(${_library} STATIC ${_sources})
 endforeach()
 
-# Extract libgcc's contents and merge them into libc after building.
+# Copy libgcc.a and merge the PSn00bSDK libc into it after building.
 add_custom_command(
 	TARGET  c POST_BUILD
-	COMMAND ${CMAKE_AR} x ${PSN00BSDK_LIBGCC}
-	COMMAND ${CMAKE_AR} rsuU $<TARGET_FILE:c> *.o
-	COMMENT "Merging libgcc contents into SDK libc"
+	COMMAND ${CMAKE_COMMAND} -E copy ${PSN00BSDK_LIBGCC} $<TARGET_FILE:c>
+	#COMMAND ${CMAKE_AR} rsuU $<TARGET_FILE:c> *.o
+	COMMAND ${CMAKE_AR} rsuU $<TARGET_FILE:c> $<JOIN:"$<TARGET_OBJECTS:c>"," ">
+	COMMENT "Merging SDK libc contents into libgcc"
 )
 
 ## Installation
