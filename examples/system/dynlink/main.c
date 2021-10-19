@@ -62,7 +62,9 @@ const void *const DO_NOT_STRIP[] __attribute__((section(".dummy"))) = {
 	&InitGeom,
 	&RotMatrix,
 	&TransMatrix,
-	&MulMatrix0
+	&MulMatrix0,
+	&GetTimInfo,
+	&LoadImage
 };
 
 static const char *const DLL_FILENAMES[] = {
@@ -141,7 +143,7 @@ void load_dll(const char *filename) {
 
 	dll = dlopen(filename, RTLD_LAZY);
 	if (!dll)
-		SHOW_ERROR("FAILED TO LOAD %s\n%s\n", filename, dlerror());
+		SHOW_ERROR("FAILED TO LOAD %s\nERROR=%d\n", filename, (int32_t) dlerror());
 
 	dll_api.init   = dlsym(dll, "init");
 	dll_api.render = dlsym(dll, "render");
@@ -168,12 +170,12 @@ int main(int argc, const char* argv[]) {
 	SHOW_STATUS("LOADING SYMBOL MAP\n");
 
 	if (!DL_LoadSymbolMap("cdrom:MAIN.MAP;1"))
-		SHOW_ERROR("FAILED TO LOAD SYMBOL MAP\n%s\n", dlerror());
+		SHOW_ERROR("FAILED TO LOAD SYMBOL MAP\nERROR=%d\n", (int32_t) dlerror());
 
 	// Try to obtain a reference to a local function.
 	void (*_display)() = DL_GetSymbolByName("display");
 	if (!_display)
-		SHOW_ERROR("FAILED TO LOOK UP LOCAL FUNCTION\n%s\n", dlerror());
+		SHOW_ERROR("FAILED TO LOOK UP LOCAL FUNCTION\nERROR=%d\n", (int32_t) dlerror());
 
 	printf("Symbol map test, display() @ %08x\n", _display);
 

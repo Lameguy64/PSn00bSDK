@@ -48,42 +48,19 @@ typedef struct {
 	void     *ptr;
 } MapEntry;
 
-typedef enum {
-	ERR_NONE,
-	ERR_FILE,
-	ERR_FILE_MALLOC,
-	ERR_FILE_READ,
-	ERR_NO_MAP,
-	ERR_MAP_MALLOC,
-	ERR_NO_SYMBOLS,
-	ERR_DLL_NULL,
-	ERR_DLL_MALLOC,
-	ERR_DLL_FORMAT,
-	ERR_NO_FILE_API,
-	ERR_MAP_SYMBOL,
-	ERR_DLL_SYMBOL
-} ErrorCode;
+typedef struct {
+	uint32_t nbucket;
+	uint32_t nchain;
+
+	MapEntry *entries;
+	uint32_t *bucket;
+	uint32_t *chain;
+} SymbolMap;
 
 /* Data */
 
-static const char *const DL_ERROR_MESSAGES[] = {
-	"Unable to find file",
-	"Unable to allocate buffer to load file into",
-	"Failed to read file",
-	"No symbol map has been loaded yet",
-	"Unable to allocate symbol map structures",
-	"No symbols found in symbol map",
-	"Unable to initialize DLL from null pointer",
-	"Unable to allocate DLL metadata structures",
-	"Unsupported DLL type or format",
-	"psxetc has been built without file support",
-	"Symbol not found in symbol map",
-	"Symbol not found in DLL"
-};
-
-static ErrorCode _error_code       = ERR_NONE;
-static uint32_t  *_map_hash_table  = 0;
-static MapEntry  *_map_entry_table = 0;
+static DL_Error  _error_code = RTLD_E_NONE;
+static SymbolMap _symbol_map;
 
 // Accessed by _dl_resolve_helper, stores the pointer to the current resolver
 // function. Can be changed using DL_SetResolveCallback().
@@ -93,18 +70,14 @@ void *(*_dl_resolve_callback)(DLL *, const char *) = 0;
 
 #ifdef DEBUG
 #define _LOG(...) printf(__VA_ARGS__)
-#define _ERROR(code, ret) { \
-	_LOG("psxetc: ERROR! %s\n", DL_ERROR_MESSAGES[code - 1]); \
-	_error_code = code; \
-	return ret; \
-}
 #else
 #define _LOG(...)
+#endif
+
 #define _ERROR(code, ret) { \
 	_error_code = code; \
 	return ret; \
 }
-#endif
 
 void _dl_resolve_wrapper(void);
 
@@ -161,8 +134,10 @@ static uint32_t _elf_hash(const char *str) {
 #ifdef USE_FILE_API
 static uint8_t *_load_file(const char *filename, size_t *size_output) {
 	int32_t fd = open(filename, 1);
-	if (fd < 0)
-		_ERROR(ERR_FILE, 0);
+	if (fd < 0) {
+		_LOG("psxetc: Can't open %s, error = %d\n", filename, fd);
+		_ERROR(RTLD_E_FILE_OPEN, 0);
+	}
 
 	// Extract file size from the file's associated control block.
 	// https://problemkaputt.de/psx-spx.htm#biosmemorymap
@@ -170,8 +145,10 @@ static uint8_t *_load_file(const char *filename, size_t *size_output) {
 	size_t size = fcb[fd].filesize;
 
 	uint8_t *buffer = malloc(size);
-	if (!buffer)
-		_ERROR(ERR_FILE_MALLOC, 0);
+	if (!buffer) {
+		_LOG("psxetc: Unable to allocate %d bytes for %s\n", size, filename);
+		_ERROR(RTLD_E_FILE_ALLOC, 0);
+	}
 
 	_LOG("psxetc: Loading %s (%d bytes)..", filename, size);
 
@@ -181,7 +158,9 @@ static uint8_t *_load_file(const char *filename, size_t *size_output) {
 		if (length <= 0) {
 			close(fd);
 			free(buffer);
-			_ERROR(ERR_FILE_READ, 0);
+
+			_LOG("failed, error = %d\n", length);
+			_ERROR(RTLD_E_FILE_READ, 0);
 		}
 
 		_LOG(".");
@@ -213,20 +192,29 @@ int32_t DL_ParseSymbolMap(const char *ptr, size_t size) {
 
 	// TODO: find a way to calculate the optimal number of hash table "buckets"
 	// in order to minimize hash table size
-	uint32_t nbucket = entries;
-	_LOG("psxetc: Predicted %d entries, %d hash buckets\n", entries, nbucket);
+	_symbol_map.nbucket = entries;
+	_symbol_map.nchain  = entries;
+	_LOG(
+		"psxetc: Allocating nbucket = %d, nchain = %d\n",
+		_symbol_map.nbucket,
+		entries
+	);
 
 	// Allocate an entry table to store parsed symbols in, and an associated
 	// hash table (same format as .hash section, with 8-byte header).
-	_map_hash_table  = malloc(sizeof(uint32_t) * (2 + nbucket + entries));
-	_map_entry_table = malloc(sizeof(MapEntry) * entries);
-	if (!_map_hash_table || !_map_entry_table)
-		_ERROR(ERR_MAP_MALLOC, -1);
+	_symbol_map.entries = malloc(sizeof(MapEntry) * entries);
+	_symbol_map.bucket  = malloc(sizeof(uint32_t) * _symbol_map.nbucket);
+	_symbol_map.chain   = malloc(sizeof(uint32_t) * entries);
 
-	_map_hash_table[0] = nbucket;
-	_map_hash_table[1] = entries;
-	for (uint32_t i = 0; i < (nbucket + entries); i++)
-		_map_hash_table[2 + i] = 0xffffffff;
+	if (!_symbol_map.entries || !_symbol_map.bucket || !_symbol_map.chain) {
+		_LOG("psxetc: Unable to allocate symbol map table\n");
+		_ERROR(RTLD_E_MAP_ALLOC, -1);
+	}
+
+	for (uint32_t i = 0; i < _symbol_map.nbucket; i++)
+		_symbol_map.bucket[i] = 0xffffffff;
+	for (uint32_t i = 0; i < entries; i++)
+		_symbol_map.chain[i]  = 0xffffffff;
 
 	// Go again through the symbol map and fill in the hash table.
 	uint32_t index = 0;
@@ -254,7 +242,7 @@ int32_t DL_ParseSymbolMap(const char *ptr, size_t size) {
 			void     *address = (void *) address64;
 			char     _type    = toupper(type_string[0]);
 			uint32_t hash     = _elf_hash(name);
-			uint32_t hash_mod = hash % nbucket;
+			uint32_t hash_mod = hash % _symbol_map.nbucket;
 
 			if (address && (
 				(_type == 'T') || // .text
@@ -270,15 +258,15 @@ int32_t DL_ParseSymbolMap(const char *ptr, size_t size) {
 					name
 				);
 
-				MapEntry *entry = &(_map_entry_table[index]);
+				MapEntry *entry = &(_symbol_map.entries[index]);
 				entry->hash     = hash;
 				entry->ptr      = address;
 
 				// Append a reference to the entry to the hash table's chain
 				// for the current hash_mod. I can't explain this properly.
-				uint32_t *hash_entry = &(_map_hash_table[2 + hash_mod]);
+				uint32_t *hash_entry = &(_symbol_map.bucket[hash_mod]);
 				while (*hash_entry != 0xffffffff)
-					hash_entry = &(_map_hash_table[2 + nbucket + *hash_entry]);
+					hash_entry = &(_symbol_map.chain[*hash_entry]);
 
 				*hash_entry = index;
 				index++;
@@ -291,9 +279,9 @@ int32_t DL_ParseSymbolMap(const char *ptr, size_t size) {
 			pos++;
 	}
 
-	_LOG("psxetc: Parsed %d symbols from map\n", entries);
+	_LOG("psxetc: Parsed %d symbols\n", entries);
 	if (!entries)
-		_ERROR(ERR_NO_SYMBOLS, -1);
+		_ERROR(RTLD_E_NO_SYMBOLS, -1);
 
 	return entries;
 }
@@ -310,42 +298,54 @@ int32_t DL_LoadSymbolMap(const char *filename) {
 
 	return entries;
 #else
-	_ERROR(ERR_NO_FILE_API, -1);
+	_ERROR(RTLD_E_NO_FILE_API, -1);
 #endif
 }
 
 void DL_UnloadSymbolMap(void) {
-	if (!_map_hash_table)
+	if (!_symbol_map.entries)
 		return;
 
-	free(_map_hash_table);
-	free(_map_entry_table);
-	_map_hash_table = 0;
+	free(_symbol_map.entries);
+	free(_symbol_map.bucket);
+	free(_symbol_map.chain);
+	_symbol_map.entries = 0;
 }
 
 void *DL_GetSymbolByName(const char *name) {
-	if (!_map_hash_table)
-		_ERROR(ERR_NO_MAP, 0);
+	if (!_symbol_map.entries) {
+		_LOG("psxetc: Attempted lookup with no map loaded\n");
+		_ERROR(RTLD_E_NO_MAP, 0);
+	}
 
 	// https://docs.oracle.com/cd/E23824_01/html/819-0690/chapter6-48031.html
-	uint32_t nbucket  = _map_hash_table[0];
 	uint32_t hash     = _elf_hash(name);
-	uint32_t hash_mod = hash % nbucket;
+	uint32_t hash_mod = hash % _symbol_map.nbucket;
 
 	// Go through the hash table's chain until the symbol hash matches the one
 	// calculated.
-	for (uint32_t i = _map_hash_table[2 + hash_mod]; i;) {
-		MapEntry *entry = &(_map_entry_table[i]);
+	for (uint32_t i = _symbol_map.bucket[hash_mod]; i != 0xffffffff;) {
+		if (i >= _symbol_map.nchain) {
+			_LOG(
+				"psxetc: GetSymbolByName() index out of bounds (i = %d, n = %d)\n",
+				i,
+				_symbol_map.nchain
+			);
+			_ERROR(RTLD_E_HASH_LOOKUP, 0);
+		}
+
+		MapEntry *entry = &(_symbol_map.entries[i]);
 
 		if (hash == entry->hash) {
 			_LOG("psxetc: Map lookup [%s = %08x]\n", name, entry->ptr);
 			return entry->ptr;
 		}
 
-		i = _map_hash_table[2 + nbucket + i];
+		i = _symbol_map.chain[i];
 	}
 
-	_ERROR(ERR_MAP_SYMBOL, 0);
+	_LOG("psxetc: Map lookup [%s not found]\n", name);
+	_ERROR(RTLD_E_MAP_SYMBOL, 0);
 }
 
 void DL_SetResolveCallback(void *(*callback)(DLL *, const char *)) {
@@ -356,11 +356,13 @@ void DL_SetResolveCallback(void *(*callback)(DLL *, const char *)) {
 
 DLL *dlinit(void *ptr, size_t size, DL_ResolveMode mode) {
 	if (!ptr)
-		_ERROR(ERR_DLL_NULL, 0);
+		_ERROR(RTLD_E_DLL_NULL, 0);
 
 	DLL *dll = malloc(sizeof(DLL));
-	if (!dll)
-		_ERROR(ERR_DLL_MALLOC, 0);
+	if (!dll) {
+		_LOG("psxetc: Unable to allocate DLL struct\n");
+		_ERROR(RTLD_E_DLL_ALLOC, 0);
+	}
 
 	dll->ptr        = ptr;
 	dll->malloc_ptr = 0;
@@ -417,7 +419,9 @@ DLL *dlinit(void *ptr, size_t size, DL_ResolveMode mode) {
 				// Only 16-byte symbol table entries are supported.
 				if (dyn->d_un.d_val != sizeof(Elf32_Sym)) {
 					free(dll);
-					_ERROR(ERR_DLL_FORMAT, 0);
+
+					_LOG("psxetc: Invalid symtab entry size %d\n", dyn->d_un.d_val);
+					_ERROR(RTLD_E_DLL_FORMAT, 0);
 				}
 				break;
 
@@ -428,7 +432,9 @@ DLL *dlinit(void *ptr, size_t size, DL_ResolveMode mode) {
 				// Versions other than 1 are unsupported (do they even exist?).
 				if (dyn->d_un.d_val != 1) {
 					free(dll);
-					_ERROR(ERR_DLL_FORMAT, 0);
+
+					_LOG("psxetc: Invalid DLL version %d\n", dyn->d_un.d_val);
+					_ERROR(RTLD_E_DLL_FORMAT, 0);
 				}
 				break;
 
@@ -439,7 +445,9 @@ DLL *dlinit(void *ptr, size_t size, DL_ResolveMode mode) {
 				// Shortcut pointers (whatever they are) are not supported.
 				if (dyn->d_un.d_val & RHF_QUICKSTART) {
 					free(dll);
-					_ERROR(ERR_DLL_FORMAT, 0);
+
+					_LOG("psxetc: Invalid flags\n");
+					_ERROR(RTLD_E_DLL_FORMAT, 0);
 				}
 				break;
 
@@ -458,7 +466,9 @@ DLL *dlinit(void *ptr, size_t size, DL_ResolveMode mode) {
 				// be easy enough to support them, but why?
 				if (dyn->d_un.d_val) {
 					free(dll);
-					_ERROR(ERR_DLL_FORMAT, 0);
+
+					_LOG("psxetc: Invalid base address %08x\n", dyn->d_un.d_val);
+					_ERROR(RTLD_E_DLL_FORMAT, 0);
 				}
 				break;
 
@@ -558,7 +568,7 @@ DLL *dlinit(void *ptr, size_t size, DL_ResolveMode mode) {
 
 				if (!dll->got[2 + j]) {
 					free(dll);
-					_ERROR(ERR_MAP_SYMBOL, 0);
+					_ERROR(RTLD_E_MAP_SYMBOL, 0);
 				}
 			}
 
@@ -600,7 +610,7 @@ DLL *dlopen(const char *filename, DL_ResolveMode mode) {
 
 	return dll;
 #else
-	_ERROR(ERR_NO_FILE_API, 0);
+	_ERROR(RTLD_E_NO_FILE_API, 0);
 #endif
 }
 
@@ -633,13 +643,21 @@ void *dlsym(DLL *dll, const char *name) {
 		//return _dl_resolve_callback(RTLD_DEFAULT, name);
 
 	// https://docs.oracle.com/cd/E23824_01/html/819-0690/chapter6-48031.html
-	const uint32_t *hash_table = dll->hash;
-	uint32_t       nbucket     = hash_table[0];
-	uint32_t       hash_mod    = _elf_hash(name) % nbucket;
+	uint32_t       nbucket = dll->hash[0];
+	uint32_t       nchain  = dll->hash[1];
+	const uint32_t *bucket = &(dll->hash[2]);
+	const uint32_t *chain  = &(dll->hash[2 + nbucket]);
+
+	uint32_t hash_mod = _elf_hash(name) % nbucket;
 
 	// Go through the hash table's chain until the symbol name matches the one
 	// provided.
-	for (uint32_t i = hash_table[2 + hash_mod]; i;) {
+	for (uint32_t i = bucket[hash_mod]; i != 0xffffffff;) {
+		if (i >= nchain) {
+			_LOG("psxetc: dlsym() index out of bounds (i = %d, n = %d)\n", i, nchain);
+			_ERROR(RTLD_E_HASH_LOOKUP, 0);
+		}
+
 		Elf32_Sym  *sym   = &(dll->symtab[i]);
 		const char *_name = &(dll->strtab[sym->st_name]);
 
@@ -648,18 +666,16 @@ void *dlsym(DLL *dll, const char *name) {
 			return sym->st_value;
 		}
 
-		i = hash_table[2 + nbucket + i];
+		i = chain[i];
 	}
 
-	_ERROR(ERR_DLL_SYMBOL, 0);
+	_LOG("psxetc: DLL lookup [%s not found]\n", name);
+	_ERROR(RTLD_E_DLL_SYMBOL, 0);
 }
 
-const char *const dlerror(void) {
-	uint32_t last = _error_code;
-	_error_code   = ERR_NONE;
+DL_Error dlerror(void) {
+	DL_Error last = _error_code;
+	_error_code   = RTLD_E_NONE;
 
-	if (last)
-		return DL_ERROR_MESSAGES[last - 1];
-
-	return 0;
+	return last;
 }

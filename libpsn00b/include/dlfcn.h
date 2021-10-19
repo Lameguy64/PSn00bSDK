@@ -20,6 +20,23 @@
 
 #define RTLD_DEFAULT ((DLL *) 0)
 
+typedef enum _DL_Error {
+	RTLD_E_NONE        =  0, // No error
+	RTLD_E_FILE_OPEN   =  1, // Unable to find or open file
+	RTLD_E_FILE_ALLOC  =  2, // Unable to allocate buffer to load file into
+	RTLD_E_FILE_READ   =  3, // Failed to read file
+	RTLD_E_NO_MAP      =  4, // No symbol map has been loaded yet
+	RTLD_E_MAP_ALLOC   =  5, // Unable to allocate symbol map structures
+	RTLD_E_NO_SYMBOLS  =  6, // No symbols found in symbol map
+	RTLD_E_DLL_NULL    =  7, // Unable to initialize DLL from null pointer
+	RTLD_E_DLL_ALLOC   =  8, // Unable to allocate DLL metadata structures
+	RTLD_E_DLL_FORMAT  =  9, // Unsupported DLL type or format
+	RTLD_E_NO_FILE_API = 10, // psxetc has been built without file support
+	RTLD_E_MAP_SYMBOL  = 11, // Symbol not found in symbol map
+	RTLD_E_DLL_SYMBOL  = 12, // Symbol not found in DLL
+	RTLD_E_HASH_LOOKUP = 13  // Hash table lookup failed due to internal error
+} DL_Error;
+
 typedef enum _DL_ResolveMode {
 	RTLD_LAZY = 1, // Resolve functions when they are first called (default)
 	RTLD_NOW  = 2  // Resolve all symbols immediately on load
@@ -161,13 +178,13 @@ void dlclose(DLL *dll);
  */
 void *dlsym(DLL *dll, const char *name);
 /**
- * @brief Returns a string describing the last error that occurred, or null if
- * no error has occurred since the last call to dlerror() (i.e. calling this
+ * @brief Returns a code describing the last error that occurred, or DL_E_NONE
+ * if no error has occurred since the last call to dlerror() (i.e. calling this
  * also resets the internal error flags).
  *
- * @return NULL or pointer to const string
+ * @return NULL or member of DL_Error enum
  */
-const char *const dlerror(void);
+DL_Error dlerror(void);
 
 #ifdef __cplusplus
 }
