@@ -2,6 +2,12 @@ PSn00bSDK changelog
 
 Items that are lower in the log are more recently implemented.
 
+10-25-2021 by Lameguy64:
+
+* Made a very tiny change in the readme file.
+
+* Included some of the indev directory from the SVN repository.
+
 
 10-17-2021 by spicyjpeg:
 
