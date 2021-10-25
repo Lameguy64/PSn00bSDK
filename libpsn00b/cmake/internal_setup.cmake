@@ -79,6 +79,12 @@ function(psn00bsdk_add_executable name type)
 		message(FATAL_ERROR "Invalid executable type: ${type} (must be STATIC or DYNAMIC)")
 	endif()
 
+	# Throw an error if elf2x was not found (which should never happen if the
+	# SDK is installed properly).
+	if(ELF2X STREQUAL "ELF2X-NOTFOUND")
+		message(FATAL_ERROR "Failed to locate elf2x. Check your PATH environment variable.")
+	endif()
+
 	add_executable       (${name} ${ARGN})
 	target_link_libraries(${name} psn00bsdk_${_type}_exe)
 	set_target_properties(${name} PROPERTIES PREFIX "" SUFFIX ".elf")
@@ -146,6 +152,13 @@ endfunction()
 #   [additional options passed to add_custom_target()]
 # )
 function(psn00bsdk_add_cd_image name image_name config_file)
+	# Throw an error if mkpsxiso was not found. Performing this check manually
+	# (instead of just marking mkpsxiso as required) allows simple projects to
+	# be built even if mkpsxiso is not installed.
+	if(MKPSXISO STREQUAL "MKPSXISO-NOTFOUND")
+		message(FATAL_ERROR "Failed to locate mkpsxiso. If mkpsxiso wasn't installed alongside the SDK, check your PATH environment variable.")
+	endif()
+
 	set(CD_IMAGE_NAME ${image_name})
 	configure_file(${config_file} _gen_${config_file})
 
@@ -158,4 +171,6 @@ function(psn00bsdk_add_cd_image name image_name config_file)
 	)
 endfunction()
 
-## Helper functions for assets (TODO)
+## Helper functions for assets
+
+# TODO: add them

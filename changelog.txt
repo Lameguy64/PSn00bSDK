@@ -3,6 +3,22 @@ PSn00bSDK changelog
 Items that are lower in the log are more recently implemented.
 
 
+10-17-2021 by spicyjpeg:
+
+* Added SKIP_TINYXML2 and SKIP_MKPSXISO build options in place of the old
+  SKIP_DOWNLOAD option, and a new BUNDLE_TOOLCHAIN option for building packages.
+  Updated INSTALL.md accordingly and fixed git branch error when downloading
+  mkpsxiso during build.
+
+* Rewritten toolchain.txt (which is now TOOLCHAIN.md) and added proper Windows
+  toolchain build instructions.
+
+* Added safety checks in CMake scripts to ensure elf2x/mkpsxiso are installed
+  before attempting to build an executable or CD image.
+
+* examples: Added CMake build script to (and removed makefile from) vagsample.
+
+
 10-06-2021 by Lameguy64:
 
 * psxspu: Fixed register typo in SpyKeyOn causing unpredictable instability.

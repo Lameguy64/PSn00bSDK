@@ -153,6 +153,26 @@ ignore -isystem completely). I eventually gave up and just set the include
 directories manually for each target, and for some reason CMake actually
 started passing -I instead of -isystem to GCC.
 
+* When using CPack with NSIS, all CPACK_NSIS_* variables are passed to NSIS
+verbatim, i.e. without the usual slash-to-backslash path conversion that CMake
+does on Windows. Most Windows programs accept paths with slashes without issue,
+unfortunately the NSIS builder is not one of those. To add insult to injury,
+CMake doesn't even escape backslashes by default when quoting strings in the
+generated CPack config file! So you have to convert the paths manually *and*
+tell CMake to enable escaping by setting CPACK_VERBATIM_VARIABLES, like this:
+
+ set(CPACK_VERBATIM_VARIABLES ON)
+ foreach(
+   _var IN ITEMS
+     CPACK_NSIS_MUI_ICON
+     CPACK_NSIS_MUI_UNIICON
+     CPACK_NSIS_MUI_HEADERIMAGE
+     CPACK_NSIS_MUI_WELCOMEFINISHPAGE_BITMAP
+     CPACK_NSIS_MUI_UNWELCOMEFINISHPAGE_BITMAP
+ )
+   cmake_path(NATIVE_PATH ${_var} ${_var})
+ endforeach()
+
 * Not a CMake/CPack bug per se, but NSIS is picky about the banner and header
 images shown in generated installers. They must be Windows BMP version 3 files
 with no alpha channel, no compression and no metadata. They can either be
