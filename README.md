@@ -119,7 +119,7 @@ for the PlayStation. The tutorials should still apply to PSn00bSDK.
 
 * Pad and memory card libraries that don't use the BIOS routines.
 
-## Usage terms
+## Usage terms (or lack thereof)
 
 PSn00bSDK falls under the terms and conditions of the Mozilla Public
 License. A quick summary of this license is that PSn00bSDK can be used
