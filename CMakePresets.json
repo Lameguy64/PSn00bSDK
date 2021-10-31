@@ -1,0 +1,29 @@
+{
+	"version": 3,
+	"cmakeMinimumRequired": {
+		"major": 3,
+		"minor": 21,
+		"patch": 0
+	},
+	"configurePresets": [
+		{
+			"name":        "default",
+			"displayName": "Default configuration",
+			"description": "Use this preset when building the SDK for local installation.",
+			"generator":   "Ninja",
+			"binaryDir":   "${sourceDir}/build"
+		},
+		{
+			"name":        "package",
+			"displayName": "Installer package",
+			"description": "Use this preset to build installer packages via CPack.",
+			"generator":   "Ninja",
+			"binaryDir":   "${sourceDir}/build",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Release",
+				"SKIP_EXAMPLES":    "ON",
+				"BUNDLE_TOOLCHAIN": "ON"
+			}
+		}
+	]
+}

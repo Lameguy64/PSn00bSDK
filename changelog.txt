@@ -2,6 +2,14 @@ PSn00bSDK changelog
 
 Items that are lower in the log are more recently implemented.
 
+10-26-2021 by spicyjpeg:
+
+* Added tinyxml2 and mkpsxiso as git submodules and removed the (admittedly
+  short-lived) SKIP_* options completely. CMake's ExternalProject is no longer
+  used to download dependencies at build time.
+
+* Added CMake presets file with presets for building installer packages.
+
 
 10-17-2021 by spicyjpeg:
 

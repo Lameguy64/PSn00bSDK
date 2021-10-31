@@ -25,7 +25,8 @@ the latest stable release of GCC and binutils. If for some reason you are having
 problems you may try building one of the following versions, which have been
 tested extensively:
 
-- GCC **7.4.0** with binutils **2.31**
+- ~~GCC 7.4.0 with binutils 2.31~~ (the linker fails to build PS1 DLLs)
+- GCC **11.1.0** with binutils **2.36**
 - GCC **11.2.0** with binutils **2.37**
 
 If you wish to pick an older GCC release but don't know which binutils version
@@ -220,4 +221,4 @@ implemented due to bloat concerns that it may introduce. Besides, the official
 SDK lacks full C++ support as well.
 
 -----------------------------------------
-_Last updated on 2021-10-18 by spicyjpeg_
+_Last updated on 2021-10-31 by spicyjpeg_
