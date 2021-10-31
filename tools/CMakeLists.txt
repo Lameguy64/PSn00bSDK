@@ -12,22 +12,22 @@ project(
 
 include(GNUInstallDirs)
 
-## External dependencies
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+set(CMAKE_C_STANDARD           11)
+set(CMAKE_CXX_STANDARD         11)
 
-# Let CMake attempt to find tinyxml2 on its own first. This avoids invoking
-# pkg-config where it might not be installed, and allows usage of package
-# managers like vcpkg. The path to tinyxml2 can also be specified manually by
-# passing -Dtinyxml2_ROOT.
-find_package(tinyxml2 CONFIG)
+## Dependencies
 
-if(NOT tinyxml2_FOUND)
-	find_package(PkgConfig REQUIRED)
-	pkg_search_module(_tinyxml2 REQUIRED IMPORTED_TARGET tinyxml2)
-
-	add_library(tinyxml2::tinyxml2 ALIAS PkgConfig::_tinyxml2)
+if(NOT EXISTS ${PROJECT_SOURCE_DIR}/tinyxml2/tinyxml2.cpp)
+	message(FATAL_ERROR "The tinyxml2 directory is empty. Run 'git submodule update --init --recursive' to populate it.")
 endif()
 
-## Internal dependencies
+# Build tinyxml2. I didn't bother with tinyxml2's actual CMake integration
+# because it's far easier do do this. It is a single-file library after all.
+add_library               (tinyxml2 STATIC tinyxml2/tinyxml2.cpp)
+target_include_directories(tinyxml2 PUBLIC tinyxml2)
+
+#add_subdirectory(tinyxml2)
 
 # Build liblzp using sources from the libpsn00b tree. Hacky but it works.
 set(LIBPSN00B_PATH ${PROJECT_SOURCE_DIR}/../libpsn00b)
@@ -46,27 +46,22 @@ target_include_directories(
 
 ## Executables
 
-# This is required in order to properly link against tinyxml2 under MSVC.
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-set(CMAKE_C_STANDARD           11)
-set(CMAKE_CXX_STANDARD         11)
-
 add_executable(elf2x   util/elf2x.c)
 add_executable(elf2cpe util/elf2cpe.c)
 add_executable(smxlink smxlink/main.cpp smxlink/timreader.cpp)
 add_executable(lzpack  lzpack/main.cpp lzpack/filelist.cpp)
-target_link_libraries(smxlink tinyxml2::tinyxml2)
-target_link_libraries(lzpack  tinyxml2::tinyxml2 lzp)
+target_link_libraries(smxlink tinyxml2)
+target_link_libraries(lzpack  tinyxml2 lzp)
 
 ## Installation
 
-# Install the executables alongside the tinyxml2 DLL (if any) and copy the
-# Blender SMX export plugin to the data directory (for manual installation).
+# Install the executables and copy the Blender SMX export plugin to the data
+# directory (for manual installation).
 install(
 	TARGETS elf2x elf2cpe smxlink lzpack
-	RUNTIME_DEPENDENCIES
-	PRE_EXCLUDE_REGEXES ".*"
-	PRE_INCLUDE_REGEXES "tinyxml2"
+	#RUNTIME_DEPENDENCIES
+	#PRE_EXCLUDE_REGEXES ".*"
+	#PRE_INCLUDE_REGEXES "tinyxml2"
 )
 install(
 	DIRECTORY   plugin

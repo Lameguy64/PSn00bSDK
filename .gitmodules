@@ -1,0 +1,6 @@
+[submodule "tools/tinyxml2"]
+	path = tools/tinyxml2
+	url = https://github.com/leethomason/tinyxml2
+[submodule "tools/mkpsxiso"]
+	path = tools/mkpsxiso
+	url = ../mkpsxiso
