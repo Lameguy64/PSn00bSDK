@@ -88,9 +88,9 @@ void _start(int32_t override_argc, const char **override_argv) {
 
 	// Calculate how much RAM is available after the loaded executable and
 	// initialize heap accordingly.
-	void         *exe_end = _end + 4;
-	unsigned int exe_size = (unsigned int) exe_end - (unsigned int) __text_start;
-	InitHeap(exe_end, 0x200000 - (exe_size + STACK_MAX_SIZE));
+	void   *exe_end = _end + 4;
+	size_t exe_size = (size_t) exe_end - (size_t) __text_start;
+	InitHeap(exe_end, 0x1f0000 - (exe_size + STACK_MAX_SIZE) & 0xfffffffc);
 
 	if (override_argv) {
 		__argc = override_argc;

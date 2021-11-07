@@ -617,7 +617,13 @@ void transition() {
 		
 		if( comp >= 16 )
 			break;
-		
+
+		// FIXME: for some reason this loop glitches out and hangs indefinitely
+		// in no$psx, *unless* there's a function somewhere that gets called
+		// with a pointer/string as first argument... wtf. It works fine in
+		// other emulators. If you are reading this, please help and enlighten
+		// me. -- spicyjpeg
+		puts(".");
 	}
 	
 	DrawSync(0);
