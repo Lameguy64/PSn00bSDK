@@ -2,7 +2,7 @@
 # rules to bundle the GCC toolchain and CMake in packages. It is included by
 # the main CMakeLists.txt script.
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.20)
 
 ## Settings
 

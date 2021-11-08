@@ -1,7 +1,7 @@
 # PSn00bSDK tools build script
 # (C) 2021 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.20)
 
 project(
 	PSn00bSDK-tools
@@ -57,12 +57,7 @@ target_link_libraries(lzpack  tinyxml2 lzp)
 
 # Install the executables and copy the Blender SMX export plugin to the data
 # directory (for manual installation).
-install(
-	TARGETS elf2x elf2cpe smxlink lzpack
-	#RUNTIME_DEPENDENCIES
-	#PRE_EXCLUDE_REGEXES ".*"
-	#PRE_INCLUDE_REGEXES "tinyxml2"
-)
+install(TARGETS elf2x elf2cpe smxlink lzpack)
 install(
 	DIRECTORY   plugin
 	DESTINATION ${CMAKE_INSTALL_DATADIR}/psn00bsdk

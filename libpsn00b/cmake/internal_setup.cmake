@@ -4,7 +4,7 @@
 # This script is included automatically when using the toolchain file and
 # defines helper functions.
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.20)
 include(GNUInstallDirs)
 
 # IMPORTANT TODO: set a version number
