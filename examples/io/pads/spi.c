@@ -2,9 +2,9 @@
  * PSn00bSDK controller polling example (SPI driver)
  * (C) 2021 spicyjpeg - MPL licensed
  *
- * This is a fairly complete timer driven high-speed SPI driver, with support
- * for sending custom commands (including memory card reads/writes), in about
- * 200 lines of code. Feel free to copypaste and adapt it.
+ * This is a fairly complete timer driven, asynchronous high-speed SPI driver,
+ * with support for sending custom commands (including memory card access), in
+ * about 200 lines of code. Feel free to copypaste and adapt it.
  *
  * The way this works is by maintaining a queue of requests to send, each with
  * its own payload and callback. Timer 2 is configured to trigger an IRQ at
@@ -42,8 +42,12 @@
 #define TIM_VALUE(N)	*((volatile uint32_t *) 0x1f801100 + 4 * (N))
 #define TIM_CTRL(N)		*((volatile uint32_t *) 0x1f801104 + 4 * (N))
 #define TIM_RELOAD(N)	*((volatile uint32_t *) 0x1f801108 + 4 * (N))
-#define JOY_TXRX		*((volatile uint32_t *) 0x1f801040)
-#define JOY_STAT		*((volatile uint32_t *) 0x1f801044)
+
+// IMPORTANT: even though JOY_TXRX is a 32-bit register, it should only be
+// accessed as 8-bit. Reading it as 16 or 32-bit works fine on real hardware,
+// but leads to problems in some emulators.
+#define JOY_TXRX		*((volatile uint8_t *)  0x1f801040)
+#define JOY_STAT		*((volatile uint16_t *) 0x1f801044)
 #define JOY_MODE		*((volatile uint16_t *) 0x1f801048)
 #define JOY_CTRL		*((volatile uint16_t *) 0x1f80104a)
 #define JOY_BAUD		*((volatile uint16_t *) 0x1f80104e)
@@ -142,11 +146,9 @@ static void spi_ack_handler(void) {
 	if (!ctx.rx_len) {
 		// We just sent the first address byte. Obviously the response we
 		// received was read from an open bus, so the SPI port's internal FIFO
-		// must be flushed to ensure we are only going to read valid data from
-		// now on.
-		volatile uint32_t dummy;
-		while (JOY_STAT & 0x0002)
-			dummy = JOY_TXRX;
+		// must be flushed (by performing dummy reads) to ensure we are only
+		// going to read valid data from now on.
+		JOY_TXRX;
 
 	} else if (ctx.rx_len <= SPI_BUFF_LEN) {
 		// If this is not the first byte, put it in the RX buffer.

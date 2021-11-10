@@ -86,7 +86,7 @@ function(psn00bsdk_add_executable name type)
 	endif()
 
 	add_executable       (${name} ${ARGN})
-	target_link_libraries(${name} psn00bsdk_${_type}_exe)
+	target_link_libraries(${name} psn00bsdk_${_type}_exe ${PSN00BSDK_LIBRARIES})
 	set_target_properties(${name} PROPERTIES PREFIX "" SUFFIX ".elf")
 	target_link_options  (${name} PRIVATE -T${PSN00BSDK_LDSCRIPTS}/exe.ld)
 
