@@ -25,5 +25,5 @@ install(
 		#${PROJECT_BINARY_DIR}/cdxa.bin
 		#${PROJECT_BINARY_DIR}/cdxa.cue
 		${PROJECT_BINARY_DIR}/cdxa.exe
-	DESTINATION .
+	TYPE BIN
 )

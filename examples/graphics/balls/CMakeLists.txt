@@ -19,4 +19,4 @@ file(GLOB _sources *.c)
 psn00bsdk_add_executable(balls STATIC ${_sources})
 #psn00bsdk_add_cd_image(balls_iso balls iso.xml DEPENDS balls)
 
-install(FILES ${PROJECT_BINARY_DIR}/balls.exe DESTINATION .)
+install(FILES ${PROJECT_BINARY_DIR}/balls.exe TYPE BIN)

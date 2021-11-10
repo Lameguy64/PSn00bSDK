@@ -28,5 +28,5 @@ install(
 	FILES
 		${PROJECT_BINARY_DIR}/dynlink.bin
 		${PROJECT_BINARY_DIR}/dynlink.cue
-	DESTINATION .
+	TYPE BIN
 )

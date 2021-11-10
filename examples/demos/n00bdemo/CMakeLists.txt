@@ -47,4 +47,4 @@ target_include_directories(n00bdemo PRIVATE ${PROJECT_SOURCE_DIR})
 add_custom_target(n00bdemo_data DEPENDS data.lzp)
 add_dependencies(n00bdemo n00bdemo_data)
 
-install(FILES ${PROJECT_BINARY_DIR}/n00bdemo.exe DESTINATION .)
+install(FILES ${PROJECT_BINARY_DIR}/n00bdemo.exe TYPE BIN)

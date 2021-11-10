@@ -23,5 +23,5 @@ install(
 	FILES
 		${PROJECT_BINARY_DIR}/cdbrowse.bin
 		${PROJECT_BINARY_DIR}/cdbrowse.cue
-	DESTINATION .
+	TYPE BIN
 )

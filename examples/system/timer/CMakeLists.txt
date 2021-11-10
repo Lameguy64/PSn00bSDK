@@ -19,4 +19,4 @@ file(GLOB _sources *.c)
 psn00bsdk_add_executable(timer STATIC ${_sources})
 #psn00bsdk_add_cd_image(timer_iso timer iso.xml DEPENDS timer)
 
-install(FILES ${PROJECT_BINARY_DIR}/timer.exe DESTINATION .)
+install(FILES ${PROJECT_BINARY_DIR}/timer.exe TYPE BIN)

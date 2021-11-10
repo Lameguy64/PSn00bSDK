@@ -38,4 +38,4 @@ target_link_options(child PRIVATE -Ttext=0x80030000)
 # embedded via child_exe.s).
 add_dependencies(parent child)
 
-install(FILES ${PROJECT_BINARY_DIR}/parent.exe DESTINATION .)
+install(FILES ${PROJECT_BINARY_DIR}/parent.exe TYPE BIN)

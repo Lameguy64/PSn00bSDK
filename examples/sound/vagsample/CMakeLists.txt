@@ -19,4 +19,4 @@ file(GLOB _sources *.c)
 psn00bsdk_add_executable(vagsample STATIC ${_sources})
 #psn00bsdk_add_cd_image(vagsample_iso vagsample iso.xml DEPENDS vagsample)
 
-install(FILES ${PROJECT_BINARY_DIR}/vagsample.exe DESTINATION .)
+install(FILES ${PROJECT_BINARY_DIR}/vagsample.exe TYPE BIN)

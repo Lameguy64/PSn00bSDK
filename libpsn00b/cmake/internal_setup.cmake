@@ -93,9 +93,7 @@ function(psn00bsdk_add_executable name type)
 	target_include_directories(${name} PRIVATE ${PSN00BSDK_INCLUDE})
 
 	# Add post-build steps to generate the .exe and symbol map once the
-	# executable is built. CMake 3.21 added support for target-dependent
-	# generator expressions (catchy name lol) in add_custom_command(), so I'm
-	# making heavy use of those here.
+	# executable is built.
 	add_custom_command(
 		TARGET     ${name} POST_BUILD
 		COMMAND    ${ELF2X} -q ${name}.elf ${name}${PSN00BSDK_EXECUTABLE_SUFFIX}

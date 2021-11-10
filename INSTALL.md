@@ -12,7 +12,7 @@ tested.
    - `git`
    - `build-essential`, `base-devel` or similar
    - `ninja-build`
-   - `cmake` (3.21+ is required, download it from
+   - `cmake` (3.20+ is required, download it from
      [here](https://cmake.org/download) if your package manager only provides
      older versions)
 

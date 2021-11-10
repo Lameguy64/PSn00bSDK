@@ -19,4 +19,4 @@ file(GLOB _sources *.cpp)
 psn00bsdk_add_executable(cppdemo STATIC ${_sources})
 #psn00bsdk_add_cd_image(cppdemo_iso cppdemo iso.xml DEPENDS cppdemo)
 
-install(FILES ${PROJECT_BINARY_DIR}/cppdemo.exe DESTINATION .)
+install(FILES ${PROJECT_BINARY_DIR}/cppdemo.exe TYPE BIN)

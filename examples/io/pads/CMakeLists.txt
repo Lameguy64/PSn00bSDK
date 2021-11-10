@@ -19,4 +19,4 @@ file(GLOB _sources *.c *.s)
 psn00bsdk_add_executable(pads STATIC ${_sources})
 #psn00bsdk_add_cd_image(pads_iso pads iso.xml DEPENDS pads)
 
-install(FILES ${PROJECT_BINARY_DIR}/pads.exe DESTINATION .)
+install(FILES ${PROJECT_BINARY_DIR}/pads.exe TYPE BIN)

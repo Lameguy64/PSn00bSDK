@@ -25,4 +25,4 @@ psn00bsdk_add_executable(
 )
 #psn00bsdk_add_cd_image(render2tex_iso render2tex iso.xml DEPENDS render2tex)
 
-install(FILES ${PROJECT_BINARY_DIR}/render2tex.exe DESTINATION .)
+install(FILES ${PROJECT_BINARY_DIR}/render2tex.exe TYPE BIN)

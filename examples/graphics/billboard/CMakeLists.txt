@@ -25,4 +25,4 @@ psn00bsdk_add_executable(
 )
 #psn00bsdk_add_cd_image(billboard_iso billboard iso.xml DEPENDS billboard)
 
-install(FILES ${PROJECT_BINARY_DIR}/billboard.exe DESTINATION .)
+install(FILES ${PROJECT_BINARY_DIR}/billboard.exe TYPE BIN)

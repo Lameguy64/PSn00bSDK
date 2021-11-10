@@ -19,4 +19,4 @@ file(GLOB _sources *.c)
 psn00bsdk_add_executable(hello STATIC ${_sources})
 #psn00bsdk_add_cd_image(hello_iso hello iso.xml DEPENDS hello)
 
-install(FILES ${PROJECT_BINARY_DIR}/hello.exe DESTINATION .)
+install(FILES ${PROJECT_BINARY_DIR}/hello.exe TYPE BIN)

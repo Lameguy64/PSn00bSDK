@@ -19,4 +19,4 @@ file(GLOB _sources *.c)
 psn00bsdk_add_executable(console STATIC ${_sources})
 #psn00bsdk_add_cd_image(console_iso console iso.xml DEPENDS console)
 
-install(FILES ${PROJECT_BINARY_DIR}/console.exe DESTINATION .)
+install(FILES ${PROJECT_BINARY_DIR}/console.exe TYPE BIN)

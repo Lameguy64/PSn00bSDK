@@ -19,4 +19,4 @@ file(GLOB _sources *.c)
 psn00bsdk_add_executable(tty STATIC ${_sources})
 #psn00bsdk_add_cd_image(tty_iso tty iso.xml DEPENDS tty)
 
-install(FILES ${PROJECT_BINARY_DIR}/tty.exe DESTINATION .)
+install(FILES ${PROJECT_BINARY_DIR}/tty.exe TYPE BIN)

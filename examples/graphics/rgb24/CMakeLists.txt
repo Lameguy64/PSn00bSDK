@@ -25,4 +25,4 @@ psn00bsdk_add_executable(
 )
 #psn00bsdk_add_cd_image(rgb24_iso rgb24 iso.xml DEPENDS rgb24)
 
-install(FILES ${PROJECT_BINARY_DIR}/rgb24.exe DESTINATION .)
+install(FILES ${PROJECT_BINARY_DIR}/rgb24.exe TYPE BIN)
