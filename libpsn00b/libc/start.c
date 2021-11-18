@@ -3,9 +3,9 @@
  * (C) 2021 Lameguy64, spicyjpeg - MPL licensed
  */
 
-#include <sys/types.h>
+#include <stdint.h>
 #include <string.h>
-#include <malloc.h>
+#include <stdlib.h>
 
 #define KERNEL_ARG_STRING   ((const char *)   0x80000180)
 #define KERNEL_RETURN_VALUE ((volatile int *) 0x8000dffc)
@@ -47,13 +47,7 @@ static void _parse_kernel_args() {
 	}
 }
 
-/* Main */
-
-// How much space at the end of RAM to leave for the stack (instead of using it
-// as heap). By default 128 KB are reserved for the stack, but this constant
-// can be overridden in main.c (or anywhere else) simply by redeclaring it
-// without the weak attribute.
-const int32_t __attribute__((weak)) STACK_MAX_SIZE = 0x20000;
+/* Heap initialization */
 
 // These are defined by the linker script. Note that these are *NOT* pointers,
 // they are virtual symbols whose location matches their value. The simplest
@@ -62,6 +56,20 @@ extern uint8_t __text_start[];
 extern uint8_t __bss_start[];
 extern uint8_t _end[];
 //extern uint8_t _gp[];
+
+// This function should not be called manually in most cases. It might be
+// useful though to change the stack size and/or reinitialize the heap on
+// systems that have more than 2 MB of RAM (e.g. emulators, devkits, PS1-based
+// arcade boards).
+void _mem_init(size_t ram_size, size_t stack_max_size) {
+	void   *exe_end = _end + 4;
+	size_t exe_size = (size_t) exe_end - (size_t) __text_start;
+	size_t ram_used = (0x10000 + exe_size + stack_max_size) & 0xfffffffc;
+
+	InitHeap(exe_end, ram_size - ram_used);
+}
+
+/* Main */
 
 extern void (*__CTOR_LIST__[])(void);
 extern void (*__DTOR_LIST__[])(void);
@@ -73,24 +81,16 @@ extern int32_t main(int32_t argc, const char* argv[]);
 // to overwrite the arg strings in kernel RAM.
 void _start(int32_t override_argc, const char **override_argv) {
 	__asm__ volatile("la $gp, _gp;");
-	
-	// Mem init assembly function (clears BSS and InitHeap to _end which is
-	// not possible to do purely in C because the linker complains about
-	// relocation truncated to fit: R_MIPS_GPREL16 against `_end'
-	// Workaround is to do it in assembly because la pseudo-op doesn't use
-	// stupid gp relative addressing
-	//_mem_init();
 
 	// Clear BSS 4 bytes at a time. BSS is always aligned to 4 bytes by the
 	// linker script.
 	for (uint32_t *i = (uint32_t *) __bss_start; i < (uint32_t *) _end; i++)
 		*i = 0;
 
-	// Calculate how much RAM is available after the loaded executable and
-	// initialize heap accordingly.
-	void   *exe_end = _end + 4;
-	size_t exe_size = (size_t) exe_end - (size_t) __text_start;
-	InitHeap(exe_end, 0x1f0000 - (exe_size + STACK_MAX_SIZE) & 0xfffffffc);
+	// Initialize the heap, assuming 2 MB of RAM and reserving 128 KB for the
+	// stack. Note that _mem_init() can be called again in main() to change
+	// these values.
+	_mem_init(0x200000, 0x20000);
 
 	if (override_argv) {
 		__argc = override_argc;

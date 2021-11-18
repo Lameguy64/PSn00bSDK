@@ -32,6 +32,35 @@
 #define RCntMdFR		0x0000
 #define RCntMdGATE		0x0010
 
+typedef struct {	// Thread control block
+	int						status;
+	int						mode;
+	union {
+		unsigned int		reg[37];
+		struct {
+			unsigned int	zero, at;
+			unsigned int	v0, v1;
+			unsigned int	a0, a1, a2, a3;
+			unsigned int	t0, t1, t2, t3, t4, t5, t6, t7;
+			unsigned int	s0, s1, s2, s3, s4, s5, s6, s7;
+			unsigned int	t8, t9;
+			unsigned int	k0, k1;
+			unsigned int	gp, sp, fp, ra;
+
+			unsigned int	cop0r14;
+			unsigned int	hi;
+			unsigned int	lo;
+			unsigned int	cop0r12;
+			unsigned int	cop0r13;
+		};
+	};
+	int						_reserved[9];
+} TCB;
+
+typedef struct {	// Process control block
+	TCB *thread;
+} PCB;
+
 typedef struct {					// Device control block
 	char	*name;
 	int		flags;
@@ -181,6 +210,9 @@ void ChangeClearRCnt(int t, int m);
 // Executable functions
 int Exec(struct EXEC *exec, int argc, char **argv);
 void FlushCache(void);
+
+// Misc functions
+int GetSystemInfo(int index);
 
 void _boot(void);
 
