@@ -3,7 +3,7 @@
  * (C) 2021 spicyjpeg - MPL licensed
  */
 
-#include <sys/types.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <psxgpu.h>

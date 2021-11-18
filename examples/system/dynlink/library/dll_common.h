@@ -6,6 +6,7 @@
 #ifndef __DLL_COMMON_H
 #define __DLL_COMMON_H
 
+#include <stdint.h>
 #include <psxgpu.h>
 
 /* Common structures shared by the main executable and DLLs */

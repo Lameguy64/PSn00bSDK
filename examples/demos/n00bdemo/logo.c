@@ -5,7 +5,6 @@
 #include <psxgte.h>
 #include <psxgpu.h>
 #include <inline_c.h>
-#include "malloc.h"
 #include "smd.h"
 #include <lzp/lzp.h>
 

@@ -23,9 +23,9 @@
  *   of entries
  */
 
-#include <sys/types.h>
+#include <stdint.h>
 #include <stdio.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include <elf.h>
 #include <dlfcn.h>

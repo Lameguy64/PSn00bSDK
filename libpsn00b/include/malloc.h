@@ -1,18 +1,8 @@
 #ifndef _MALLOC_H
 #define _MALLOC_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#warning "<malloc.h> is deprecated, include <stdlib.h> instead"
 
-unsigned int *GetBSSend();
-void InitHeap(unsigned int *addr, int size);
-int SetHeapSize(int size);
-void *malloc(int size);
-void free(void *ptr);
-
-#ifdef __cplusplus
-}
-#endif
+#include <stdlib.h>
 
 #endif // _MALLOC_H

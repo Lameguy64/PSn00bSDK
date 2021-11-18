@@ -32,7 +32,6 @@
 #include <lzp/lzp.h>
 #include <lzp/lzqlp.h>
 
-#include "malloc.h"
 #include "smd.h"
 #include "data.h"
 #include "disp.h"

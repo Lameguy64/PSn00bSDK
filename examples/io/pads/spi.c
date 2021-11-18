@@ -26,9 +26,9 @@
  * card APIs) alongside it.
  */
 
-#include <sys/types.h>
+#include <stdint.h>
 #include <string.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <psxetc.h>
 #include <psxapi.h>
 #include <psxpad.h>
