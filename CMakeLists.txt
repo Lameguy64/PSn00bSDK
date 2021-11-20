@@ -98,12 +98,21 @@ ExternalProject_Add(
 
 # Install all files in the temporary installation tree, as well as static files
 # from the source tree, when "cmake --install" is invoked.
-install(
-	DIRECTORY   ${PROJECT_BINARY_DIR}/install_tree/ # THE TRAILING SLASH IS IMPORTANT
-	DESTINATION .
-	COMPONENT   sdk
-	USE_SOURCE_PERMISSIONS
+foreach(
+	_subdir IN ITEMS
+		${CMAKE_INSTALL_BINDIR}
+		${CMAKE_INSTALL_LIBDIR}
+		${CMAKE_INSTALL_DATADIR}
 )
+	install(
+		# THE TRAILING SLASH IS IMPORTANT
+		DIRECTORY   ${PROJECT_BINARY_DIR}/install_tree/${_subdir}/
+		DESTINATION ${_subdir}
+		COMPONENT   sdk
+		USE_SOURCE_PERMISSIONS
+	)
+endforeach()
+
 install(
 	DIRECTORY   doc template
 	DESTINATION ${CMAKE_INSTALL_DATADIR}/psn00bsdk

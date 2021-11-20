@@ -4,14 +4,15 @@
 ## Building and installing
 
 The instructions below are for Windows and Linux. Building on macOS hasn't been
-tested.
+tested extensively yet, however it should work once the GCC toolchain is built
+and installed properly.
 
 1. Install prerequisites and a host compiler toolchain. On Linux (most distros)
    install the following packages from your distro's package manager:
 
    - `git`
    - `build-essential`, `base-devel` or similar
-   - `ninja-build`
+   - `make` or `ninja-build`
    - `cmake` (3.20+ is required, download it from
      [here](https://cmake.org/download) if your package manager only provides
      older versions)
@@ -20,11 +21,11 @@ tested.
    MSYS" shell and run this command:
 
    ```bash
-   pacman -Syu git mingw-w64-x86_64-ninja mingw-w64-x86_64-cmake mingw-w64-x86_64-g++
+   pacman -Syu git mingw-w64-x86_64-make mingw-w64-x86_64-ninja mingw-w64-x86_64-cmake mingw-w64-x86_64-gcc
    ```
 
-   **NOTE**: if you are prompted to close the shell, you may have to reopen it
-   afterwards and rerun the command to finish installation.
+   If you are prompted to close the shell, you may have to reopen it afterwards
+   and rerun the command to finish installation.
    **Do not use the MSys2 shell for the next steps**, use a regular command
    prompt or PowerShell instead.
 
@@ -39,6 +40,12 @@ tested.
    [TOOLCHAIN.md](TOOLCHAIN.md). On Windows, you may download a precompiled
    version from [Lameguy64's website](http://lameguy64.net?page=psn00bsdk) and
    extract it into one of the directories listed below instead.
+
+   **NOTE**: PSn00bSDK is also compatible with toolchains that target
+   `mipsel-none-elf`. If you already have such a toolchain (e.g. because you
+   have another PS1 SDK installed) you can skip this step. Make sure you pass
+   `-DPSN00BSDK_TARGET=mipsel-none-elf` to CMake when configuring the SDK
+   though (see step 5).
 
 3. If you chose a non-standard install location for the toolchain, add the
    `bin` subfolder (inside the top-level toolchain directory) to the `PATH`
@@ -68,7 +75,14 @@ tested.
 
    If you want to install the SDK to a custom location rather than the default
    one (`C:\Program Files\PSn00bSDK` or `/usr/local` depending on your OS), add
-   `--install-prefix <INSTALL_PATH>` to the first command.
+   `--install-prefix <INSTALL_PATH>` to the first command. Add
+   `-DPSN00BSDK_TARGET=mipsel-none-elf` if your toolchain targets
+   `mipsel-none-elf` rather than `mipsel-unknown-elf`.
+
+   **NOTE**: Ninja is used by default to build the SDK. If you can't get it to
+   work or don't have it installed, pass `-G "Unix Makefiles"` (or
+   `-G "MSYS Makefiles"` on Windows) to the first command to build using `make`
+   instead.
 
 6. Install the SDK to the path you chose (add `sudo` or run it from a command
    prompt with admin privileges if necessary):
@@ -104,7 +118,8 @@ far from being feature-complete.
    [NSIS](https://nsis.sourceforge.io/Download) on Windows or `dpkg` and `rpm`
    on Linux.
 
-2. Run the following commands from the PSn00bSDK directory:
+2. Run the following commands from the PSn00bSDK directory (pass the
+   appropriate options to the first command if necessary):
 
    ```bash
    cmake --preset package .
@@ -121,7 +136,7 @@ far from being feature-complete.
 2. Configure and build the template by running:
 
    ```bash
-   cmake -S . -B ./build -G Ninja
+   cmake -S . -B ./build
    cmake --build ./build
    ```
 
@@ -138,4 +153,4 @@ The toolchain script defines a few CMake macros to create PS1 executables, DLLs
 and CD images. See the [reference](doc/cmake_reference.md) for details.
 
 -----------------------------------------
-_Last updated on 2021-10-31 by spicyjpeg_
+_Last updated on 2021-11-19 by spicyjpeg_
