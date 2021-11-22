@@ -1,7 +1,7 @@
 # PSn00bSDK example CMake script
 # (C) 2021 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.20)
 
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE AND DEFINED ENV{PSN00BSDK_LIBS})
 	set(CMAKE_TOOLCHAIN_FILE $ENV{PSN00BSDK_LIBS}/cmake/sdk.cmake)
@@ -38,4 +38,4 @@ target_link_options(child PRIVATE -Ttext=0x80030000)
 # embedded via child_exe.s).
 add_dependencies(parent child)
 
-install(FILES ${PROJECT_BINARY_DIR}/parent.exe DESTINATION .)
+install(FILES ${PROJECT_BINARY_DIR}/parent.exe TYPE BIN)

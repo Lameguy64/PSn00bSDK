@@ -2,7 +2,7 @@
 # rules to bundle the GCC toolchain and CMake in packages. It is included by
 # the main CMakeLists.txt script.
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.20)
 
 ## Settings
 
@@ -111,11 +111,11 @@ set(CPACK_PACKAGE_INSTALL_DIRECTORY PSn00bSDK)
 
 ## DEB/RPM variables
 
-set(CPACK_DEBIAN_PACKAGE_DEPENDS    "libc6 (>= 2.28), cmake (>= 3.21)")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS    "libc6 (>= 2.28), cmake (>= 3.20)")
 set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "ninja-build (>= 1.10)")
 set(CPACK_DEBIAN_PACKAGE_SUGGESTS   "git (>= 2.25)")
 set(CPACK_DEBIAN_PACKAGE_SECTION    devel)
-set(CPACK_RPM_PACKAGE_REQUIRES      "cmake >= 3.21")
+set(CPACK_RPM_PACKAGE_REQUIRES      "cmake >= 3.20")
 set(CPACK_RPM_PACKAGE_SUGGESTS      "ninja-build >= 1.10, git >= 2.25")
 #set(CPACK_RPM_PACKAGE_RELOCATABLE   ON)
 

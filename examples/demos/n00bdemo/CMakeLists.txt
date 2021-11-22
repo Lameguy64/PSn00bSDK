@@ -1,7 +1,7 @@
 # PSn00bSDK example CMake script
 # (C) 2021 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.20)
 
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE AND DEFINED ENV{PSN00BSDK_LIBS})
 	set(CMAKE_TOOLCHAIN_FILE $ENV{PSN00BSDK_LIBS}/cmake/sdk.cmake)
@@ -47,4 +47,4 @@ target_include_directories(n00bdemo PRIVATE ${PROJECT_SOURCE_DIR})
 add_custom_target(n00bdemo_data DEPENDS data.lzp)
 add_dependencies(n00bdemo n00bdemo_data)
 
-install(FILES ${PROJECT_BINARY_DIR}/n00bdemo.exe DESTINATION .)
+install(FILES ${PROJECT_BINARY_DIR}/n00bdemo.exe TYPE BIN)

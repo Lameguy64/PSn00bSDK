@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <malloc.h>
 #include <psxetc.h>
 #include <psxgte.h>
 #include <psxgpu.h>

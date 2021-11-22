@@ -1,7 +1,7 @@
 # PSn00bSDK example CMake script
 # (C) 2021 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.20)
 
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE AND DEFINED ENV{PSN00BSDK_LIBS})
 	set(CMAKE_TOOLCHAIN_FILE $ENV{PSN00BSDK_LIBS}/cmake/sdk.cmake)
@@ -23,5 +23,5 @@ install(
 	FILES
 		${PROJECT_BINARY_DIR}/cdbrowse.bin
 		${PROJECT_BINARY_DIR}/cdbrowse.cue
-	DESTINATION .
+	TYPE BIN
 )

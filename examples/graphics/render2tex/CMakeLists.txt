@@ -1,7 +1,7 @@
 # PSn00bSDK example CMake script
 # (C) 2021 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.20)
 
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE AND DEFINED ENV{PSN00BSDK_LIBS})
 	set(CMAKE_TOOLCHAIN_FILE $ENV{PSN00BSDK_LIBS}/cmake/sdk.cmake)
@@ -25,4 +25,4 @@ psn00bsdk_add_executable(
 )
 #psn00bsdk_add_cd_image(render2tex_iso render2tex iso.xml DEPENDS render2tex)
 
-install(FILES ${PROJECT_BINARY_DIR}/render2tex.exe DESTINATION .)
+install(FILES ${PROJECT_BINARY_DIR}/render2tex.exe TYPE BIN)

@@ -1,7 +1,6 @@
 #include <assert.h>
-#include <sys/types.h>
+#include <stdint.h>
 #include <stdlib.h>
-#include <malloc.h>
 
 extern "C"
 

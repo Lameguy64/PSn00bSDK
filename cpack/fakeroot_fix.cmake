@@ -7,7 +7,7 @@
 # script does is simply finding and deleting all directories that do not match
 # the installation prefix before CPack generates the package.
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.20)
 
 set(_prefix ${CPACK_TEMPORARY_INSTALL_DIRECTORY}${CPACK_PACKAGING_INSTALL_PREFIX})
 

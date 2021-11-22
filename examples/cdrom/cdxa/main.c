@@ -129,7 +129,6 @@
 #include <psxspu.h>
 #include <psxcd.h>
 
-#include <malloc.h>
 #include "ball16c.h"
 
 

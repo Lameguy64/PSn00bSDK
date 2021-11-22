@@ -2,6 +2,34 @@ PSn00bSDK changelog
 
 Items that are lower in the log are more recently implemented.
 
+11-19-2021 by spicyjpeg:
+
+* libc: Removed STACK_MAX_SIZE and added _mem_init() back. RAM and stack size
+  can now be set by calling _mem_init() manually before allocating any memory.
+
+* libc: sprintf() now supports fixed padding when using %@ (binary integer). 
+
+* psxapi: Added wrapper around BIOS function GetSystemInfo().
+
+* examples: Added pads example. Also added CMake build script to cartrom, which
+  is now built alongside all other examples.
+
+* Deprecated malloc.h and removed all references to it (stdlib.h should be used
+  instead). Moved int*_t and uint*_t types to stdint.h.
+
+* Fixed file permission errors when attempting to install the SDK on macOS.
+  Made some small updates to INSTALL.md.
+
+
+10-31-2021 by spicyjpeg:
+
+* Added tinyxml2 and mkpsxiso as git submodules and removed the (admittedly
+  short-lived) SKIP_* options completely. CMake's ExternalProject is no longer
+  used to download dependencies at build time.
+
+* Added CMake presets file with presets for building installer packages.
+
+
 10-25-2021 by Lameguy64:
 
 * Made a very tiny change in the readme file.

@@ -10,6 +10,10 @@
 #define SCREEN_XRES 320
 #define SCREEN_YRES 240
 
+#define BGCOLOR_R 48
+#define BGCOLOR_G 24
+#define BGCOLOR_B  0
+
 /* Display/GPU context utilities */
 
 void init_context(CONTEXT *ctx) {
@@ -23,14 +27,14 @@ void init_context(CONTEXT *ctx) {
 	db = &(ctx->db[0]);
 	SetDefDispEnv(&(db->disp),           0, 0, SCREEN_XRES, SCREEN_YRES);
 	SetDefDrawEnv(&(db->draw), SCREEN_XRES, 0, SCREEN_XRES, SCREEN_YRES);
-	setRGB0(&(db->draw), 63, 0, 127);
+	setRGB0(&(db->draw), BGCOLOR_R, BGCOLOR_G, BGCOLOR_B);
 	db->draw.isbg = 1;
 	db->draw.dtd  = 1;
 
 	db = &(ctx->db[1]);
 	SetDefDispEnv(&(db->disp), SCREEN_XRES, 0, SCREEN_XRES, SCREEN_YRES);
 	SetDefDrawEnv(&(db->draw),           0, 0, SCREEN_XRES, SCREEN_YRES);
-	setRGB0(&(db->draw), 63, 0, 127);
+	setRGB0(&(db->draw), BGCOLOR_R, BGCOLOR_G, BGCOLOR_B);
 	db->draw.isbg = 1;
 	db->draw.dtd  = 1;
 

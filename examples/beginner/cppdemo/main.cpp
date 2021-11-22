@@ -13,7 +13,7 @@
  
 #include <sys/types.h>
 #include <stdio.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <psxgte.h>
 #include <psxgpu.h>
 

@@ -1,0 +1,7 @@
+[submodule "tools/tinyxml2"]
+	path = tools/tinyxml2
+	url = https://github.com/leethomason/tinyxml2
+[submodule "tools/mkpsxiso"]
+	path = tools/mkpsxiso
+	url = https://github.com/spicyjpeg/mkpsxiso
+	branch = cmake

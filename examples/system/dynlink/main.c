@@ -36,12 +36,11 @@
  * as plugins/mods/patches stored on a memory card.
  */
 
-#include <sys/types.h>
+#include <stdint.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <malloc.h>
 #include <dlfcn.h>
 #include <psxapi.h>
 #include <psxetc.h>

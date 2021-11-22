@@ -4,35 +4,53 @@
 ## Building and installing
 
 The instructions below are for Windows and Linux. Building on macOS hasn't been
-tested but should work.
+tested extensively yet, however it should work once the GCC toolchain is built
+and installed properly.
 
-1. Set up a host compiler. Most Linux distros provide a `build-essential`,
-   `base-devel` or similar all-in-one package. You'll also need to install the
-   [Ninja](https://ninja-build.org) build engine (it's usually in a package
-   called `ninja-build`). On Windows install [MSys2](https://www.msys2.org),
-   then run the following command in the MSys2 shell to install MinGW and Ninja:
+1. Install prerequisites and a host compiler toolchain. On Linux (most distros)
+   install the following packages from your distro's package manager:
+
+   - `git`
+   - `build-essential`, `base-devel` or similar
+   - `make` or `ninja-build`
+   - `cmake` (3.20+ is required, download it from
+     [here](https://cmake.org/download) if your package manager only provides
+     older versions)
+
+   On Windows install [MSys2](https://www.msys2.org), then open the "MSys2
+   MSYS" shell and run this command:
 
    ```bash
-   pacman -Syu mingw-w64-x86_64-gcc mingw-w64-x86_64-ninja
+   pacman -Syu git mingw-w64-x86_64-make mingw-w64-x86_64-ninja mingw-w64-x86_64-cmake mingw-w64-x86_64-gcc
    ```
 
-   Add `C:\msys64\mingw64\bin` (replace `C:\msys64` if you installed MSys2 to a
+   If you are prompted to close the shell, you may have to reopen it afterwards
+   and rerun the command to finish installation.
+   **Do not use the MSys2 shell for the next steps**, use a regular command
+   prompt or PowerShell instead.
+
+   Add these directories (replace `C:\msys64` if you installed MSys2 to a
    different location) to the `PATH` environment variable using System
-   Properties.
+   Properties:
 
-2. Install Git and CMake. Note that MSys2 and some Linux distros ship relatively
-   old versions (PSn00bSDK requires 3.21+), so grab the latest CMake release
-   from [here](https://cmake.org) instead of through your package manager.
+   - `C:\msys64\mingw64\bin`
+   - `C:\msys64\usr\bin`
 
-3. Build and install a GCC toolchain for `mipsel-unknown-elf`, as detailed in
+2. Build and install a GCC toolchain for `mipsel-unknown-elf`, as detailed in
    [TOOLCHAIN.md](TOOLCHAIN.md). On Windows, you may download a precompiled
    version from [Lameguy64's website](http://lameguy64.net?page=psn00bsdk) and
    extract it into one of the directories listed below instead.
 
-4. If you chose a non-standard install location for the toolchain, add the `bin`
-   subfolder (inside the top-level toolchain directory) to the `PATH`
-   environment variable. This step is unnecessary if you installed/extracted the
-   toolchain into any of these directories:
+   **NOTE**: PSn00bSDK is also compatible with toolchains that target
+   `mipsel-none-elf`. If you already have such a toolchain (e.g. because you
+   have another PS1 SDK installed) you can skip this step. Make sure you pass
+   `-DPSN00BSDK_TARGET=mipsel-none-elf` to CMake when configuring the SDK
+   though (see step 5).
+
+3. If you chose a non-standard install location for the toolchain, add the
+   `bin` subfolder (inside the top-level toolchain directory) to the `PATH`
+   environment variable. This step is unnecessary if you installed/extracted
+   the toolchain into any of these directories:
 
    - `C:\Program Files\mipsel-unknown-elf`
    - `C:\Program Files (x86)\mipsel-unknown-elf`
@@ -41,25 +59,33 @@ tested but should work.
    - `/usr/mipsel-unknown-elf`
    - `/opt/mipsel-unknown-elf`
 
-5. Clone/download the PSn00bSDK repo and run the following commands from its
-   directory:
+4. Clone the PSn00bSDK repo, then run the following command from the PSn00bSDK
+   repository to download additional dependencies:
 
    ```bash
-   cmake -S . -B ./build -G Ninja
+   git submodule update --init --recursive --remote
+   ```
+
+5. Compile the libraries, tools and examples using CMake:
+
+   ```bash
+   cmake --preset default .
    cmake --build ./build
    ```
 
    If you want to install the SDK to a custom location rather than the default
    one (`C:\Program Files\PSn00bSDK` or `/usr/local` depending on your OS), add
-   `--install-prefix <INSTALL_PATH>` to the first command. Remove `-G Ninja` to
-   use `make` instead of Ninja (slower, not recommended).
+   `--install-prefix <INSTALL_PATH>` to the first command. Add
+   `-DPSN00BSDK_TARGET=mipsel-none-elf` if your toolchain targets
+   `mipsel-none-elf` rather than `mipsel-unknown-elf`.
 
-   If you run into errors, try passing `-DSKIP_TINYXML2=ON` to the first command
-   after installing `tinyxml2` manually. [See below](#advanced-build-options)
-   for more details.
+   **NOTE**: Ninja is used by default to build the SDK. If you can't get it to
+   work or don't have it installed, pass `-G "Unix Makefiles"` (or
+   `-G "MSYS Makefiles"` on Windows) to the first command to build using `make`
+   instead.
 
-6. Install the SDK to the path you chose by running this command (add `sudo` if
-   necessary):
+6. Install the SDK to the path you chose (add `sudo` or run it from a command
+   prompt with admin privileges if necessary):
 
    ```bash
    cmake --install ./build
@@ -81,23 +107,7 @@ with debugging capabilities such as [no$psx](https://problemkaputt.de/psx.htm)
 [pcsx-redux](https://github.com/grumpycoders/pcsx-redux).
 **Avoid ePSXe and anything based on MAME** as they are inaccurate.
 
-## Advanced build options
-
-### Skipping external dependency downloads
-
-By default [mkpsxiso](https://github.com/Lameguy64/mkpsxiso) (required for
-building CD images) and [tinyxml2](https://github.com/leethomason/tinyxml2)
-(required to build mkpsxiso and other SDK tools) are automatically cloned from
-their respective repos and built as part of the PSn00bSDK build process,
-*even if they are already installed*.
-
-If you wish to disable this behavior (e.g. because it leads to errors, or to
-perform an offline build), invoke CMake with the `-DSKIP_MKPSXISO=ON` and/or
-`-DSKIP_TINYXML2=ON` options when configuring the SDK. Note that you must have
-`mkpsxiso` and/or `tinyxml2` already installed (either manually or via vcpkg or
-your distro's package manager) to be able to skip them.
-
-### Building installer packages
+## Building installer packages
 
 CPack can be used to build NSIS-based installers, DEB/RPM packages and zipped
 releases that include built SDK libraries, headers as well as the GCC toolchain.
@@ -108,27 +118,25 @@ far from being feature-complete.
    [NSIS](https://nsis.sourceforge.io/Download) on Windows or `dpkg` and `rpm`
    on Linux.
 
-2. Run the following commands from the PSn00bSDK directory:
+2. Run the following commands from the PSn00bSDK directory (pass the
+   appropriate options to the first command if necessary):
 
    ```bash
-   cmake -S . -B ./build -G Ninja -DBUNDLE_TOOLCHAIN=ON
+   cmake --preset package .
    cmake --build ./build -t package
    ```
 
    All built packages will be copied to the `build/packages` folder.
 
-   **NOTE**: do not use `-DSKIP_MKPSXISO=ON`, otherwise the mkpsxiso binary will
-   not be included in the packages.
-
 ## Creating a project
 
-1. Copy the contents of `INSTALL_PATH/share/psn00bsdk/template` (or the
+1. Copy the contents of `<INSTALL_PATH>/share/psn00bsdk/template` (or the
    `template` folder within the repo) to your new project's root directory.
 
 2. Configure and build the template by running:
 
    ```bash
-   cmake -S . -B ./build -G Ninja
+   cmake -S . -B ./build
    cmake --build ./build
    ```
 
@@ -138,11 +146,11 @@ far from being feature-complete.
 Note that, even though the template relies on the `PSN00BSDK_LIBS` environment
 variable to locate the SDK by default, you can also specify the path directly
 on the CMake command line by adding
-`-DCMAKE_TOOLCHAIN_FILE=INSTALL_PATH/lib/libpsn00b/cmake/sdk.cmake` (replace
-`INSTALL_PATH`) to the first command.
+`-DCMAKE_TOOLCHAIN_FILE=<INSTALL_PATH>/lib/libpsn00b/cmake/sdk.cmake` to the
+CMake command line.
 
 The toolchain script defines a few CMake macros to create PS1 executables, DLLs
 and CD images. See the [reference](doc/cmake_reference.md) for details.
 
 -----------------------------------------
-_Last updated on 2021-10-18 by spicyjpeg_
+_Last updated on 2021-11-19 by spicyjpeg_

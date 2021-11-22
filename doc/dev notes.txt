@@ -53,6 +53,44 @@ IRQs are only triggered on transfer completion.
 
 Additional notes by spicyjpeg:
 
+* The controller/memory card SPI interface is poorly implemented in most
+emulators, making custom controller polling code insanely hard to write and
+debug. The only emulator that comes close to real hardware is no$psx, which
+seems to correctly implement all features of the SPI port (even those not used
+by the BIOS pad driver, such as TX/RX interrupts). DuckStation only emulates
+the bare minimum required by the BIOS and Sony libraries, and pcsx-redux has
+major bugs that break most custom polling implementations. This pretty much
+means TX/RX IRQs and many flags in the JOY_* registers should not be used
+unless you are willing to break compatibility with emulators.
+
+* As if communicating with controllers wasn't difficult enough already,
+DualShock pads also have a built-in watchdog timer that gets enabled when first
+putting them in configuration mode (and is NOT disabled after exiting config
+mode). If no polling commands are sent to the controller for about 1 second,
+vibration motors are switched off and analog mode is disabled; the same happens
+if the analog button is pressed while in analog mode. In order to always keep
+the pad in analog mode you must:
+
+ * Poll both controller ports at least once per frame by sending command 42h.
+   Polling at a higher rate might be desirable in some cases (such as rhythm
+   games) to increase timing accuracy.
+ * If a digital pad response (type = 4) is received from a port that hasn't
+   previously been flagged as digital-only, attempt to put the pad into config
+   mode using command 43h *twice* (as the proper response is delayed).
+   * If the pad doesn't recognize the config command, flag it as digital-only
+     and treat all further digital pad responses from it as valid.
+   * If the pad recognizes the command, it will reply by identifying as an
+     analog pad in config mode (type = 15). Send command 44h immediately
+     (without sending 42h first, otherwise the pad will exit config mode) to
+     enable analog mode and turn on the LED.
+   * Pressing the analog button will result in the controller identifying as
+     digital even though it is not flagged as such, thus re-triggering the
+     configuration process and putting it back into analog mode.
+ * All analog pad responses (type = 7) can be treated as valid, as they will
+   come from controllers that have already been configured.
+ * If no valid response is received, assume no controller is connected and
+   reset the port's digital-only flag.
+
 * The SDK provides no support yet for replacing the BIOS exception handler with
 a custom one, however it can be done (if you are ok with losing all BIOS
 controller, memory card and file functionality). In order not to break anything
@@ -127,6 +165,38 @@ to be packaged, which seems to interfere with absolute paths in the project
 cache or something like that (?). The only workaround I know of is to use
 CPACK_PRE_BUILD_SCRIPTS to trigger a custom script that deletes anything other
 than the actual files to be packaged (see cpack/fakeroot_fix.cmake).
+
+* Project installation might fail on macOS (and possibly some Linux distros) if
+CMake attempts to set permissions on system directories such as /usr/local.
+This is usually caused by install() commands that copy files to the root
+installation directory rather than to a subfolder, like this:
+
+ install(
+   DIRECTORY   install_tree/
+   DESTINATION .
+   USE_SOURCE_PERMISSIONS
+ )
+
+If the USE_SOURCE_PERMISSIONS flag is specified CMake will attempt to set
+permissions on the DESTINATION folder, which in this case would be the root
+prefix (/usr/local by default on macOS), to match the source directory. This
+will however fail as macOS restricts top-level system directories from having
+their permissions changed. The simplest workaround is to avoid using
+"DESTINATION ." and install each subdirectory explicitly instead, like this:
+
+ foreach(
+   _dir IN ITEMS
+     ${CMAKE_INSTALL_BINDIR}
+     ${CMAKE_INSTALL_LIBDIR}
+     ${CMAKE_INSTALL_INCLUDEDIR}
+     ${CMAKE_INSTALL_DATADIR}
+ )
+   install(
+     DIRECTORY   install_tree/${_dir}/
+     DESTINATION ${_dir}
+     USE_SOURCE_PERMISSIONS
+   )
+ endforeach()
 
 * Depending on how you find external dependencies (find_package(), vcpkg,
 pkg-config...), CMake may end up outputting an executable that relies on a DLL

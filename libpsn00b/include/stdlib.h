@@ -19,34 +19,16 @@ extern long atol(char *s);
 extern char atob(char *s); // Is this right?
 */
 
-// Random number functions (not yet implemented)
-
-/*
-int rand();
-void srand(unsigned int seed);
-*/
-
 // Quick sort (not yet implemented)
 
 //void qsort(void *base , int nel , int width , int (*cmp)(const void *,const void *));
-
-// Memory allocation functions (not yet implemented, avoid using BIOS as they are reportedly buggy)
-
-/*
-#warning "malloc() family of functions NEEDS MORE TESTING"
-
-void *malloc(int size);
-void free(void *buf);
-void *calloc(int number, int size);
-void *realloc(void *buf , int n);
-*/
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 extern int __argc;
-extern char __argv[];
+extern const char **__argv;
 
 int rand();
 void srand(unsigned long seed);
@@ -63,6 +45,14 @@ long atol(const char *s);
 // Note: these use floats internally!
 double strtod(const char *nptr, char **endptr);
 float strtof(const char *nptr, char **endptr);
+
+// Memory allocation functions
+unsigned int *GetBSSend();
+void InitHeap(unsigned int *addr, int size);
+int SetHeapSize(int size);
+void *malloc(int size);
+void *calloc(int number, int size);
+void free(void *ptr);
 
 #ifdef __cplusplus
 }

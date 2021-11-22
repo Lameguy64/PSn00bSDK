@@ -4,7 +4,7 @@
 # This script is included automatically when using the toolchain file and
 # defines helper functions.
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.20)
 include(GNUInstallDirs)
 
 # IMPORTANT TODO: set a version number
@@ -86,16 +86,14 @@ function(psn00bsdk_add_executable name type)
 	endif()
 
 	add_executable       (${name} ${ARGN})
-	target_link_libraries(${name} psn00bsdk_${_type}_exe)
+	target_link_libraries(${name} psn00bsdk_${_type}_exe ${PSN00BSDK_LIBRARIES})
 	set_target_properties(${name} PROPERTIES PREFIX "" SUFFIX ".elf")
 	target_link_options  (${name} PRIVATE -T${PSN00BSDK_LDSCRIPTS}/exe.ld)
 
 	target_include_directories(${name} PRIVATE ${PSN00BSDK_INCLUDE})
 
 	# Add post-build steps to generate the .exe and symbol map once the
-	# executable is built. CMake 3.21 added support for target-dependent
-	# generator expressions (catchy name lol) in add_custom_command(), so I'm
-	# making heavy use of those here.
+	# executable is built.
 	add_custom_command(
 		TARGET     ${name} POST_BUILD
 		COMMAND    ${ELF2X} -q ${name}.elf ${name}${PSN00BSDK_EXECUTABLE_SUFFIX}

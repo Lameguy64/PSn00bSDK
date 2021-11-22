@@ -72,7 +72,7 @@ set(_cflags   -mno-abicalls -mgpopt -mno-extern-sdata)
 set(_cxxflags)
 set(_ldflags  -G8 -static)
 
-_add_interface_target(psn00bsdk_static_exe psn00bsdk_common ${PSN00BSDK_LIBRARIES})
+_add_interface_target(psn00bsdk_static_exe psn00bsdk_common)
 
 # Options for executables with support for dynamic linking:
 # - Position-independent code disabled
@@ -83,7 +83,7 @@ set(_cflags   -mno-abicalls -mno-gpopt)
 set(_cxxflags)
 set(_ldflags  -G0 -static)
 
-_add_interface_target(psn00bsdk_dynamic_exe psn00bsdk_common ${PSN00BSDK_LIBRARIES})
+_add_interface_target(psn00bsdk_dynamic_exe psn00bsdk_common)
 
 # Options for static libraries:
 # - GP-relative addressing disabled

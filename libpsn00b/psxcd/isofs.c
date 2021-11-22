@@ -1,6 +1,6 @@
 #include <sys/types.h>
 #include <stdio.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <string.h>
 #include <psxgpu.h>
 #include <psxsio.h>

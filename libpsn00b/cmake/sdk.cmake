@@ -1,7 +1,7 @@
 # PSn00bSDK toolchain setup file for CMake
 # (C) 2021 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.20)
 
 set(
 	PSN00BSDK_TC $ENV{PSN00BSDK_TC}

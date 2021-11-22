@@ -58,6 +58,15 @@
 	pad_quantity = (pad_quantity - 1) - last; \
 	if(pad_quantity < 0) pad_quantity = 0;
 
+#define calculate_real_padding_bin() \
+	last = 0; \
+	for (x = 0; x < 32; x++) \
+		if((arg >> x) & 1) \
+			last = x; \
+	\
+	pad_quantity = (pad_quantity - 1) - last; \
+	if(pad_quantity < 0) pad_quantity = 0;
+
 #define write_padding() \
 	if(!(flags & SPRINTF_NEGFIELD_FLAG)) \
 		for(x = 0; x < pad_quantity; x++) \
@@ -703,6 +712,9 @@ int vsnprintf(char *string, unsigned int size, const char *fmt, va_list ap)
 					//else
 					//	arg = va_arg(ap, unsigned long long);
 				
+					calculate_real_padding_bin();
+					write_padding();
+
 					for(x=31;x>=0;x--)
 					{
 						y = (arg >> x);
@@ -714,6 +726,8 @@ int vsnprintf(char *string, unsigned int size, const char *fmt, va_list ap)
 						if(empty_digit == 0 || x == 0)
 							put_in_string(string, ssz, y + '0', string_pos++);	
 					}
+				
+					write_neg_padding();
 				
 					directive_coming = 0;
 				break;
