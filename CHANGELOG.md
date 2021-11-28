@@ -17,7 +17,7 @@ contributing to PSn00bSDK, add a new block at the top following this template:
 You may run `.github/scripts/generate_release_notes.py CHANGELOG.md` afterwards
 to ensure the changelog can be parsed correctly.
 
---------
+-------------------------------------------------------------------------------
 
 ## 2021-11-28: 0.18
 
@@ -25,13 +25,13 @@ spicyjpeg:
 
 - libc: Removed `STACK_MAX_SIZE` and added `_mem_init()` back. RAM and stack
   size can now be set by calling `_mem_init()` manually before allocating any
-  memory.
+  memory (however this seems to be currently broken).
 
 - libc: `sprintf()` now supports fixed padding when using the `%@` (binary
   integer) format specifier.
 
-- psxcd: File paths with forward slashes instead of backslashes are now
-  accepted.
+- psxcd: File paths with forward slashes instead of backslashes, as well as
+  paths containing both slash types, are now accepted.
 
 - psxapi: Added wrapper around BIOS function `GetSystemInfo()`.
 
@@ -44,8 +44,10 @@ spicyjpeg:
 - Deprecated `malloc.h` and removed all references to it (`stdlib.h` should be
   used instead). Moved `int*_t` and `uint*_t` types to `stdint.h`.
 
-- Fixed file permission errors when attempting to install the SDK on macOS and
-  made some small updates to `INSTALL.md`, which is now `doc/installation.md`.
+- Fixed file permission errors when attempting to install the SDK on macOS.
+
+- Cleaned up, updated and moved all documentation to the `doc` folder.
+  Rewritten this changelog and added a script to generate release notes.
 
 ## 2021-10-31
 

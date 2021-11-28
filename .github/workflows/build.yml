@@ -181,21 +181,37 @@ jobs:
     needs:   [ build-sdk-windows, build-sdk-linux ]
 
     steps:
+    - name: Initialize toolchain cache
+      if:   ${{ github.ref_type == 'tag' }}
+      uses: actions/cache@v2
+      with:
+        key:  gcc-${{ env.GCC_TARGET }}-${{ env.GCC_VERSION }}
+        path: gcc
+
+    - name: Package GCC toolchains
+      if:   ${{ github.ref_type == 'tag' }}
+      run: |
+        cd gcc/windows
+        zip -9 -q -r ../../gcc-${{ env.GCC_TARGET }}-${{ env.GCC_VERSION }}-windows.zip .
+        cd ../linux
+        zip -9 -q -r ../../gcc-${{ env.GCC_TARGET }}-${{ env.GCC_VERSION }}-linux.zip .
+
     - name: Fetch repo contents
+      if:   ${{ github.ref_type == 'tag' }}
       uses: actions/checkout@v2
       with:
         path: sdk
+
+    - name: Generate release notes
+      if:   ${{ github.ref_type == 'tag' }}
+      run: |
+        python3 sdk/.github/scripts/generate_release_notes.py -v ${{ github.ref_name }} -o release.md sdk/CHANGELOG.md
 
     - name: Fetch build artifacts
       if:   ${{ github.ref_type == 'tag' }}
       uses: actions/download-artifact@v2
       with:
         path: .
-
-    - name: Generate release notes
-      if:   ${{ github.ref_type == 'tag' }}
-      run: |
-        sdk/.github/scripts/generate_release_notes.py -v ${{ github.ref_name }} -o release.md sdk/CHANGELOG.md
 
     - name: Publish release
       if:   ${{ github.ref_type == 'tag' }}
@@ -204,5 +220,6 @@ jobs:
         fail_on_unmatched_files: true
         body_path:               release.md
         files: |
+          *.zip
           psn00bsdk-windows/*
           psn00bsdk-linux/*
