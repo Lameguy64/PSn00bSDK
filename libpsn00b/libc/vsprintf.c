@@ -6,6 +6,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
+
+// Uncomment to enable support for %f.
+//#define ALLOW_FLOAT
 
 #define SPRINTF_ALT_FLAG			(1<<0)
 #define SPRINTF_ZERO_FLAG			(1<<1)
@@ -208,6 +212,8 @@ int libc_ulltoa(unsigned long i, char *dst, int n)
 	return n2;
 }
 
+#ifdef ALLOW_FLOAT
+
 void libc_float_to_string(float fl, char *dst, int n)
 {
 	unsigned int *p = (unsigned int*)&fl;
@@ -364,6 +370,8 @@ void libc_double_to_string(double fl, char *dst, int n)
 }
 
 char libc_sprintf_floatbuf[64];
+
+#endif
 
 int vsnprintf(char *string, unsigned int size, const char *fmt, va_list ap)
 {
@@ -732,6 +740,7 @@ int vsnprintf(char *string, unsigned int size, const char *fmt, va_list ap)
 					directive_coming = 0;
 				break;
 
+#ifdef ALLOW_FLOAT
 				case 'f':
 					libc_double_to_string(va_arg(ap, double), libc_sprintf_floatbuf, 64);
 					
@@ -740,6 +749,8 @@ int vsnprintf(char *string, unsigned int size, const char *fmt, va_list ap)
 
 					directive_coming = 0;
 				break;
+#endif
+
 				case 'n': // Number of characters written
 					*(va_arg(ap,unsigned int*)) = string_pos;
 					

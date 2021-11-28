@@ -2,9 +2,8 @@
 # (C) 2021 spicyjpeg - MPL licensed
 
 # This script creates several "virtual" targets (psn00bsdk_*) that set include
-# directories and compiler flags when a target is linked against them.
-#
-# The following targets are currently defined:
+# directories and compiler flags when a target is linked against them. The
+# following targets are currently defined:
 # - psn00bsdk_common
 # - psn00bsdk_object_lib (same as psn00bsdk_common)
 # - psn00bsdk_static_exe
@@ -15,6 +14,8 @@
 #
 # NOTE: building a static library and linking it as part of a DLL is currently
 # *not* supported.
+
+if(NOT TARGET psn00bsdk_common) # Include guard
 
 add_library(psn00bsdk_common INTERFACE)
 
@@ -146,3 +147,5 @@ target_link_options(
 )
 
 target_link_libraries(psn00bsdk_module_lib INTERFACE psn00bsdk_shared_lib)
+
+endif()

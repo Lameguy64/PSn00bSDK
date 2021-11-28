@@ -8,6 +8,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+// Uncomment to enable strtod(), strtold() and strtof(). Note that these
+// functions use extremely slow software floats.
+//#define ALLOW_FLOAT
+
 int tolower(int chr)
 {
     return (chr >='A' && chr<='Z') ? (chr + 32) : (chr);    
@@ -252,6 +256,8 @@ long strtol(const char *nptr, char **endptr, int base)
 	return (long)strtoll(nptr, endptr, base);
 }
 
+#ifdef ALLOW_FLOAT
+
 double strtod(const char *nptr, char **endptr)
 {
 	char strbuf[64];
@@ -302,6 +308,8 @@ double strtod(const char *nptr, char **endptr)
 	return (i + d)*s;
 }
 
+#endif
+
 /* implementation by Lameguy64, behaves like OpenWatcom's strtok() */
 /* BIOS strtok seemed either bugged, or designed for wide chars */
 
@@ -344,6 +352,8 @@ char *strtok( char *s1, char *s2 )
 	
 } /* strtok */
 
+#ifdef ALLOW_FLOAT
+
 long double strtold(const char *nptr, char **endptr)
 {
 	return (long double)strtod(nptr, endptr);
@@ -353,3 +363,5 @@ float strtof(const char *nptr, char **endptr)
 {
 	return (float)strtod(nptr, endptr);
 }
+
+#endif
