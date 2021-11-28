@@ -58,12 +58,29 @@ add_custom_command(
 ## Installation
 
 install(
-	TARGETS     ${PSN00BSDK_LIBRARIES} ${PSN00BSDK_VIRTUAL_TARGETS}
+	TARGETS     ${PSN00BSDK_LIBRARIES}
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/libpsn00b
 	EXPORT      libpsn00b
 )
 install(
-	DIRECTORY   cmake include ldscripts
+	DIRECTORY   cmake ldscripts
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/libpsn00b
+)
+install(
+	DIRECTORY   include/
+	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libpsn00b
+)
+
+# Generate build.json. This file is used to determine the SDK version after
+# installation and may contain additional metadata about the build.
+string(TIMESTAMP PSN00BSDK_BUILD_DATE UTC)
+configure_file(
+	build.json.template build.json
+	ESCAPE_QUOTES
+	NEWLINE_STYLE LF
+)
+install(
+	FILES       ${PROJECT_BINARY_DIR}/build.json
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/libpsn00b
 )
 

@@ -1,0 +1,5 @@
+{
+	"version":    "${PSN00BSDK_VERSION}",
+	"build_date": "${PSN00BSDK_BUILD_DATE}",
+	"build_info": "${PSN00BSDK_BUILD_INFO}"
+}

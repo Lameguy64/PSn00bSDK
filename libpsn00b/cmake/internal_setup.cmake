@@ -7,8 +7,14 @@
 cmake_minimum_required(VERSION 3.20)
 include(GNUInstallDirs)
 
-# IMPORTANT TODO: set a version number
-set(PSN00BSDK_VERSION 0.1.0)
+# Fetch the SDK version number from build.json.
+if(NOT DEFINED PSN00BSDK_VERSION)
+	file(READ ${CMAKE_CURRENT_LIST_DIR}/../build.json _json)
+
+	string(JSON PSN00BSDK_VERSION    GET ${_json} version)
+	string(JSON PSN00BSDK_BUILD_DATE GET ${_json} build_date)
+	string(JSON PSN00BSDK_BUILD_INFO GET ${_json} build_info)
+endif()
 
 ## Settings (can be overridden by projects)
 
@@ -22,9 +28,7 @@ set(PSN00BSDK_SYMBOL_MAP_SUFFIX     ".map")
 set(PSN00BSDK_LIBRARIES psxgpu psxgte psxspu psxcd psxsio psxetc psxapi lzp c)
 
 include(${CMAKE_CURRENT_LIST_DIR}/libpsn00b.cmake OPTIONAL)
-if(NOT TARGET psn00bsdk_common)
-	include(${CMAKE_CURRENT_LIST_DIR}/virtual_targets.cmake)
-endif()
+include(${CMAKE_CURRENT_LIST_DIR}/flags.cmake)
 
 # Use the toolchain path to find libgcc (used to build libpsn00b). Of course
 # different installers, packages and distros have different opinions when it
@@ -59,14 +63,18 @@ set(
 
 find_program(ELF2X    elf2x    HINTS ${PSN00BSDK_TOOLS})
 find_program(ELF2CPE  elf2cpe  HINTS ${PSN00BSDK_TOOLS})
-find_program(SMXLINK  elf2x    HINTS ${PSN00BSDK_TOOLS})
+find_program(SMXLINK  smxlink  HINTS ${PSN00BSDK_TOOLS})
 find_program(LZPACK   lzpack   HINTS ${PSN00BSDK_TOOLS})
 find_program(MKPSXISO mkpsxiso HINTS ${PSN00BSDK_TOOLS})
 
 ## Helper functions for executables
 
-set(PSN00BSDK_INCLUDE   ${CMAKE_CURRENT_LIST_DIR}/../include)
 set(PSN00BSDK_LDSCRIPTS ${CMAKE_CURRENT_LIST_DIR}/../ldscripts)
+if(IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/../include)
+	set(PSN00BSDK_INCLUDE ${CMAKE_CURRENT_LIST_DIR}/../include)
+else()
+	set(PSN00BSDK_INCLUDE ${CMAKE_CURRENT_LIST_DIR}/../../../include/libpsn00b)
+endif()
 
 # psn00bsdk_add_executable(
 #   <target name> <STATIC|DYNAMIC>

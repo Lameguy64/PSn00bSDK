@@ -14,10 +14,10 @@ set(
 	BUNDLE_TOOLCHAIN OFF
 	CACHE BOOL       "Include the GCC toolchain in installer packages"
 )
-set(
-	BUNDLE_CMAKE OFF
-	CACHE BOOL   "Include CMake in installer packages (Windows only)"
-)
+#set(
+	#BUNDLE_CMAKE OFF
+	#CACHE BOOL   "Include CMake in installer packages (Windows only)"
+#)
 
 ## Bundled components
 
@@ -134,6 +134,7 @@ set(
 	CPACK_NSIS_MENU_LINKS
 	"${PROJECT_HOMEPAGE_URL}"                "About PSn00bSDK"
 	"https://github.com/Lameguy64/PSn00bSDK" "GitHub repo"
+	"Uninstall.exe"                          "Uninstall PSn00bSDK"
 )
 
 # Paths in CPACK_NSIS_* variables are not converted to native paths by CMake
@@ -165,6 +166,11 @@ cpack_add_component(
 	docs
 	DISPLAY_NAME "SDK documentation"
 	DESCRIPTION  "Select to install additional documentation files and a project template (recommended)."
+)
+cpack_add_component(
+	examples
+	DISPLAY_NAME "SDK examples"
+	DESCRIPTION  "Select to copy the examples' source code to the documentation folder (recommended)."
 )
 
 if(BUNDLE_TOOLCHAIN)
