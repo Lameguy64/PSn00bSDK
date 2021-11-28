@@ -4,11 +4,11 @@
 cmake_minimum_required(VERSION 3.20)
 
 set(
-	PSN00BSDK_TC $ENV{PSN00BSDK_TC}
-	CACHE PATH   "Path to the GCC toolchain's installation directory"
+	PSN00BSDK_TC ""
+	CACHE PATH   "Path to the GCC toolchain's installation directory (if not in PATH)"
 )
 set(
-	PSN00BSDK_TARGET mipsel-unknown-elf
+	PSN00BSDK_TARGET mipsel-none-elf
 	CACHE STRING     "GCC toolchain target triplet"
 )
 
@@ -56,7 +56,7 @@ cmake_path(GET _bin PARENT_PATH _toolchain)
 if(NOT IS_DIRECTORY PSN00BSDK_TC)
 	set(
 		PSN00BSDK_TC ${_toolchain}
-		CACHE PATH   "Path to the GCC toolchain's installation directory"
+		CACHE PATH   "Path to the GCC toolchain's installation directory (if not in PATH)"
 		FORCE
 	)
 endif()

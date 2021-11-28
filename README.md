@@ -80,7 +80,7 @@ As of August 16, 2021
 ## Obtaining PSn00bSDK
 
 PSn00bSDK has switched to a CMake-based build and installation system. See
-[INSTALL.md](INSTALL.md) for details.
+[installation.md](doc/installation.md) for details.
 
 Because PSn00bSDK is updated semi-regularly due to this project being in
 a work-in-progress state, it is better to obtain this SDK from source and

@@ -10,14 +10,43 @@ can be done on the command line (`-DCMAKE_TOOLCHAIN_FILE=...`), in
 `CMakeLists.txt` (before calling `project()`) or using a
 [preset](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html).
 
-It's recommended to put this snippet in `CMakeLists.txt` to automatically set
-the toolchain file according to the `PSN00BSDK_LIBS` environment variable:
+It's suggested to have a default preset that sets `CMAKE_TOOLCHAIN_FILE` to
+`$env{PSN00BSDK_LIBS}/cmake/sdk.cmake`, so the `PSN00BSDK_LIBS` environment
+variable (used by former PSn00bSDK versions) is respected. Such a preset can be
+created by placing a `CMakePresets.json` file in the project's root with the
+following contents:
 
-```cmake
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE AND DEFINED ENV{PSN00BSDK_LIBS})
-  set(CMAKE_TOOLCHAIN_FILE $ENV{PSN00BSDK_LIBS}/cmake/sdk.cmake)
-endif()
+```json
+{
+  "version": 2,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 20,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name":        "default",
+      "displayName": "Default configuration",
+      "description": "Use this preset to build the project using PSn00bSDK.",
+      "generator":   "Ninja",
+      "binaryDir":   "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE":     "Debug",
+        "CMAKE_TOOLCHAIN_FILE": "$env{PSN00BSDK_LIBS}/cmake/sdk.cmake",
+        "PSN00BSDK_TC":         "",
+        "PSN00BSDK_TARGET":     "mipsel-none-elf"
+      }
+    }
+  ]
+}
 ```
+
+To avoid having to pass variables to CMake each time the project is built, a
+second presets file named `CMakeUserPresets.json` can be created and populated
+with hardcoded values in the `cacheVariables` section. This file can be kept
+private (e.g. by adding it to `.gitignore`); CMake will automatically load
+presets from it instead of `CMakePresets.json` if it exists.
 
 See the [template](../template/CMakeLists.txt) for an example CMake script
 showing how to build a simple project.
@@ -130,28 +159,24 @@ build script, from the CMake command line when configuring the project
 - `PSN00BSDK_TARGET` (`STRING`)
 
   The GCC toolchain's target triplet. PSn00bSDK assumes the toolchain targets
-  `mipsel-unknown-elf` by default, however this can be changed to e.g. use a
-  MIPS toolchain that was compiled for a slightly-different-but-equivalent
-  target.
+  `mipsel-none-elf` by default, however this can be changed to e.g. use a MIPS
+  toolchain that was compiled for a slightly-different-but-equivalent target.
 
   The following GCC target triplets have been confirmed to work with PSn00bSDK:
 
-  - `mipsel-unknown-elf`
   - `mipsel-none-elf`
+  - `mipsel-unknown-elf`
+  - ~~`mipsel-linux-gnu`~~ (has issues with linking)
 
 - `PSN00BSDK_TC` (`PATH`)
 
-  Path to the GCC toolchain's installation prefix/directory. By default this is
-  initialized to the value of the `PSN00BSDK_TC` environment variable (if set).
-  Note that modifying the environment variable after the project has been
-  configured will *NOT* update this cache entry unless the project's cache is
-  cleared manually.
+  Path to the GCC toolchain's installation prefix/directory. If not set, CMake
+  will attempt to find the toolchain in the `PATH` environment variable and
+  store its path in the project's variable cache (so the search does not have
+  to be repeated). It is recommended to add the toolchain's `bin` subfolder to
+  `PATH` rather than setting this variable.
 
-  If not set, CMake will attempt to find the toolchain in the `PATH`
-  environment variable and store its path in this variable (so the search does
-  not have to be repeated).
-
-  **IMPORTANT**: if the toolchain's target is not `mipsel-unknown-elf`,
+  **IMPORTANT**: if the toolchain's target is not `mipsel-none-elf`,
   `PSN00BSDK_TARGET` must be set regardless of whether or not `PSN00BSDK_TC` is
   also set.
 
@@ -204,4 +229,4 @@ the build script.
   LZP archives as part of the build pipeline.
 
 -----------------------------------------
-_Last updated on 2021-09-27 by spicyjpeg_
+_Last updated on 2021-11-24 by spicyjpeg_

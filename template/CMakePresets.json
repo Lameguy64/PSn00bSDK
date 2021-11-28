@@ -1,0 +1,23 @@
+{
+	"version": 2,
+	"cmakeMinimumRequired": {
+		"major": 3,
+		"minor": 20,
+		"patch": 0
+	},
+	"configurePresets": [
+		{
+			"name":        "default",
+			"displayName": "Default configuration",
+			"description": "Use this preset to build the project using PSn00bSDK.",
+			"generator":   "Ninja",
+			"binaryDir":   "${sourceDir}/build",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE":     "Debug",
+				"CMAKE_TOOLCHAIN_FILE": "$env{PSN00BSDK_LIBS}/cmake/sdk.cmake",
+				"PSN00BSDK_TC":         "",
+				"PSN00BSDK_TARGET":     "mipsel-none-elf"
+			}
+		}
+	]
+}

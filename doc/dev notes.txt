@@ -109,13 +109,14 @@ your exception handler must do the following:
    controller- or interrupt-related function is being called. This is necessary
    (although ugly) as libpsn00b often calls such functions internally.
 
-* For some reason mipsel-unknown-elf-nm (symbol map generator) insists on
-outputting 64-bit addresses (with the top 32 bits set, e.g. FFFFFFFF80010000)
-even when feeding it a regular 32-bit MIPS executable, while the standard x86
-nm tool that ships with most GCC packages prints the proper 32-bit address.
-Unclear whether this is a bug, intended behavior or the result of some ancient
-ELF ABI flag crap. DL_ParseSymbolMap() will ignore the top 32 bits, so this
-should only bother you if you're implementing your own symbol map parser.
+* For some reason mipsel-unknown-elf-nm and mipsel-none-elf-nm (symbol map
+generators) insist on outputting 64-bit addresses (with the top 32 bits set,
+e.g. FFFFFFFF80010000) even when feeding it a regular 32-bit MIPS executable,
+while the standard x86 nm tool that ships with most GCC packages prints the
+proper 32-bit address. Unclear whether this is a bug, intended behavior or the
+result of some ancient ELF ABI flag crap. DL_ParseSymbolMap() will ignore the
+top 32 bits, so this should only bother you if you're implementing your own
+symbol map parser.
 
 * I haven't worked on psxspu but, for those willing to write some code, this is
 the formula to calculate SPU pitch values for playing musical notes ("^" is the

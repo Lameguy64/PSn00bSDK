@@ -3,14 +3,6 @@
 
 cmake_minimum_required(VERSION 3.20)
 
-# CMAKE_TOOLCHAIN_FILE must be set to point to cmake/sdk.cmake in the PSn00bSDK
-# installation directory *before* calling project(). You don't have to hardcode
-# the path in your CMakeLists.txt as you can set it from the command line when
-# configuring (-DCMAKE_TOOLCHAIN_FILE=...) or using CMake presets.
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE AND DEFINED ENV{PSN00BSDK_LIBS})
-	set(CMAKE_TOOLCHAIN_FILE $ENV{PSN00BSDK_LIBS}/cmake/sdk.cmake)
-endif()
-
 project(
 	PSn00bSDK-template
 	LANGUAGES    C CXX ASM
@@ -20,6 +12,7 @@ project(
 )
 
 psn00bsdk_add_executable(template STATIC main.c)
+
 psn00bsdk_add_cd_image(
 	iso      # Target name
 	template # Output file name (= template.bin + template.cue)

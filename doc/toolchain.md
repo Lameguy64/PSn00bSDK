@@ -77,12 +77,12 @@ for a compatibility table.
 
    ```bash
    ../binutils-<VERSION>/configure \
-     --prefix=/usr/local/mipsel-unknown-elf --target=mipsel-unknown-elf \
+     --prefix=/usr/local/mipsel-none-elf --target=mipsel-none-elf \
      --disable-docs --disable-nls --with-float=soft
    ```
 
    Replace `<VERSION>` as usual. If you don't want to install the toolchain into
-   `/usr/local/mipsel-unknown-elf` you can change the `--prefix` option.
+   `/usr/local/mipsel-none-elf` you can change the `--prefix` option.
 
 3. Compile and install binutils (this will take a few minutes to finish):
 
@@ -116,7 +116,7 @@ options.
 
    ```bash
    ../gcc-<VERSION>/configure \
-     --prefix=/usr/local/mipsel-unknown-elf --target=mipsel-unknown-elf \
+     --prefix=/usr/local/mipsel-none-elf --target=mipsel-none-elf \
      --disable-docs --disable-nls --disable-libada --disable-libssp \
      --disable-libquadmath --disable-libstdc++-v3 --with-float=soft \
      --enable-languages=c,c++ --with-gnu-as --with-gnu-ld
@@ -144,7 +144,7 @@ options.
    earlier, but keep the `/bin` at the end):
 
    ```bash
-   export PATH=$PATH:/usr/local/mipsel-unknown-elf/bin
+   export PATH=$PATH:/usr/local/mipsel-none-elf/bin
    ```
 
    Restart the shell by closing and reopening the terminal window or SSH
@@ -171,7 +171,7 @@ that runs on Windows.
    ```bash
    ../binutils-<VERSION>/configure \
      --build=x86_64-linux-gnu --host=x86_64-w64-mingw32 \
-     --prefix=/tmp/mipsel-unknown-elf --target=mipsel-unknown-elf \
+     --prefix=/tmp/mipsel-none-elf --target=mipsel-none-elf \
      --disable-docs --disable-nls --with-float=soft
    ```
 
@@ -187,7 +187,7 @@ that runs on Windows.
    ```bash
    ../gcc-<VERSION>/configure \
      --build=x86_64-linux-gnu --host=x86_64-w64-mingw32 \
-     --prefix=/tmp/mipsel-unknown-elf --target=mipsel-unknown-elf \
+     --prefix=/tmp/mipsel-none-elf --target=mipsel-none-elf \
      --disable-docs --disable-nls --disable-libada --disable-libssp \
      --disable-libquadmath --disable-libstdc++-v3 --with-float=soft \
      --enable-languages=c,c++ --with-gnu-as --with-gnu-ld
@@ -200,13 +200,13 @@ that runs on Windows.
    make install-strip
    ```
 
-5. Copy the entire `/tmp/mipsel-unknown-elf` directory over to your Windows
+5. Copy the entire `/tmp/mipsel-none-elf` directory over to your Windows
    machine using VM shared folders, a network share, `scp` or whichever method
    you prefer. It's recommended to put the toolchain in
-   `C:\Program Files\mipsel-unknown-elf` or `C:\mipsel-unknown-elf`.
+   `C:\Program Files\mipsel-none-elf` or `C:\mipsel-none-elf`.
 
 6. If you want to keep the toolchain in another location and/or use it from the
-   command line, add the `bin` subdirectory inside `mipsel-unknown-elf` to the
+   command line, add the `bin` subdirectory inside `mipsel-none-elf` to the
    `PATH` environment variable (as you did on Linux) using System Properties.
 
 ## Note regarding C++ support
@@ -221,4 +221,4 @@ implemented due to bloat concerns that it may introduce. Besides, the official
 SDK lacks full C++ support as well.
 
 -----------------------------------------
-_Last updated on 2021-10-31 by spicyjpeg_
+_Last updated on 2021-11-23 by spicyjpeg_

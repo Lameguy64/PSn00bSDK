@@ -26,17 +26,21 @@ include(GNUInstallDirs)
 # These are passed through to libpsn00b and the examples (they are defined in
 # the toolchain file).
 set(
-	PSN00BSDK_TC $ENV{PSN00BSDK_TC}
-	CACHE PATH   "Path to the GCC toolchain's installation directory"
+	PSN00BSDK_TC ""
+	CACHE PATH   "Path to the GCC toolchain's installation directory (if not in PATH)"
 )
 set(
-	PSN00BSDK_TARGET mipsel-unknown-elf
+	PSN00BSDK_TARGET mipsel-none-elf
 	CACHE STRING     "GCC toolchain target triplet"
 )
 
 set(
 	SKIP_EXAMPLES OFF
 	CACHE BOOL    "Skip building SDK examples (not required for installation)"
+)
+set(
+	BUILD_INFO   ""
+	CACHE STRING "Information about this build to be included in build.json"
 )
 
 # Forward some important variables to mkpsxiso and to the subprojects (they are
@@ -49,6 +53,8 @@ set(
 	COMMON_ARGS
 	-DPSN00BSDK_TC:PATH=${PSN00BSDK_TC}
 	-DPSN00BSDK_TARGET:STRING=${PSN00BSDK_TARGET}
+	-DPSN00BSDK_VERSION:STRING=${PROJECT_VERSION}
+	-DPSN00BSDK_BUILD_INFO:STRING=${BUILD_INFO}
 	-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
 )
 set(
@@ -117,6 +123,11 @@ install(
 	DIRECTORY   doc template
 	DESTINATION ${CMAKE_INSTALL_DATADIR}/psn00bsdk
 	COMPONENT   docs
+)
+install(
+	DIRECTORY   examples
+	DESTINATION ${CMAKE_INSTALL_DATADIR}/psn00bsdk
+	COMPONENT   examples
 )
 
 ## CPack configuration

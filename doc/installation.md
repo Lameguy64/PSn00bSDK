@@ -17,8 +17,8 @@ and installed properly.
      [here](https://cmake.org/download) if your package manager only provides
      older versions)
 
-   On Windows install [MSys2](https://www.msys2.org), then open the "MSys2
-   MSYS" shell and run this command:
+   On Windows you can obtain these dependencies by installing
+   [MSys2](https://www.msys2.org), opening the "MSys2 MSYS" shell and running:
 
    ```bash
    pacman -Syu git mingw-w64-x86_64-make mingw-w64-x86_64-ninja mingw-w64-x86_64-cmake mingw-w64-x86_64-gcc
@@ -36,28 +36,27 @@ and installed properly.
    - `C:\msys64\mingw64\bin`
    - `C:\msys64\usr\bin`
 
-2. Build and install a GCC toolchain for `mipsel-unknown-elf`, as detailed in
-   [TOOLCHAIN.md](TOOLCHAIN.md). On Windows, you may download a precompiled
-   version from [Lameguy64's website](http://lameguy64.net?page=psn00bsdk) and
-   extract it into one of the directories listed below instead.
+2. Download a precompiled copy of the GCC toolchain for `mipsel-none-elf` from
+   the releases page and extract it into one of the directories listed in
+   step 3. If you want to build the toolchain yourself, see
+   [toolchain.md](toolchain.md).
 
    **NOTE**: PSn00bSDK is also compatible with toolchains that target
-   `mipsel-none-elf`. If you already have such a toolchain (e.g. because you
-   have another PS1 SDK installed) you can skip this step. Make sure you pass
-   `-DPSN00BSDK_TARGET=mipsel-none-elf` to CMake when configuring the SDK
-   though (see step 5).
+   `mipsel-unknown-elf`. If you already have such a toolchain, you can use it
+   by passing `-DPSN00BSDK_TARGET=mipsel-unknown-elf` to CMake when configuring
+   the SDK (see step 5).
 
 3. If you chose a non-standard install location for the toolchain, add the
    `bin` subfolder (inside the top-level toolchain directory) to the `PATH`
    environment variable. This step is unnecessary if you installed/extracted
    the toolchain into any of these directories:
 
-   - `C:\Program Files\mipsel-unknown-elf`
-   - `C:\Program Files (x86)\mipsel-unknown-elf`
-   - `C:\mipsel-unknown-elf`
-   - `/usr/local/mipsel-unknown-elf`
-   - `/usr/mipsel-unknown-elf`
-   - `/opt/mipsel-unknown-elf`
+   - `C:\Program Files\mipsel-none-elf`
+   - `C:\Program Files (x86)\mipsel-none-elf`
+   - `C:\mipsel-none-elf`
+   - `/usr/local/mipsel-none-elf`
+   - `/usr/mipsel-none-elf`
+   - `/opt/mipsel-none-elf`
 
 4. Clone the PSn00bSDK repo, then run the following command from the PSn00bSDK
    repository to download additional dependencies:
