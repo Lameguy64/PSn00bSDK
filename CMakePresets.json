@@ -24,6 +24,19 @@
 				"SKIP_EXAMPLES":    "ON",
 				"BUNDLE_TOOLCHAIN": "ON"
 			}
+		},
+		{
+			"name":        "ci",
+			"displayName": "CI build",
+			"description": "This preset is used by GitHub Actions to build PSn00bSDK.",
+			"generator":   "Ninja",
+			"binaryDir":   "${sourceDir}/../build",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Release",
+				"BUNDLE_TOOLCHAIN": "ON",
+				"BUILD_INFO":       "Built by GitHub Actions ($env{GITHUB_REF_NAME} $env{GITHUB_SHA})",
+				"PSN00BSDK_TARGET": "$env{GCC_TARGET}"
+			}
 		}
 	]
 }
