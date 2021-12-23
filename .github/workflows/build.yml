@@ -124,13 +124,20 @@ jobs:
         cmake --build build
         cmake --build build -t package
 
+      # The GitHub Actions UI doesn't allow downloading individual files from
+      # an artifact, so it's best to upload each package type as a separate
+      # artifact.
     - name: Upload build artifacts
       uses: actions/upload-artifact@v2
       with:
         name: psn00bsdk-windows
-        path: |
-          build/packages/*
-          !build/packages/_CPack_Packages
+        path: build/packages/*.zip
+
+    - name: Upload build artifacts (NSIS)
+      uses: actions/upload-artifact@v2
+      with:
+        name: psn00bsdk-windows-nsis
+        path: build/packages/*.exe
 
   build-sdk-linux:
     name:    Build PSn00bSDK on Linux
@@ -169,9 +176,19 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: psn00bsdk-linux
-        path: |
-          build/packages/*
-          !build/packages/_CPack_Packages
+        path: build/packages/*.zip
+
+    - name: Upload build artifacts (DEB)
+      uses: actions/upload-artifact@v2
+      with:
+        name: psn00bsdk-linux-deb
+        path: build/packages/*.deb
+
+    - name: Upload build artifacts (RPM)
+      uses: actions/upload-artifact@v2
+      with:
+        name: psn00bsdk-linux-rpm
+        path: build/packages/*.rpm
 
   # This job takes care of creating a new release and upload the build
   # artifacts if the last commit is associated to a tag.
@@ -222,4 +239,7 @@ jobs:
         files: |
           *.zip
           psn00bsdk-windows/*
+          psn00bsdk-windows-nsis/*
           psn00bsdk-linux/*
+          psn00bsdk-linux-deb/*
+          psn00bsdk-linux-rpm/*

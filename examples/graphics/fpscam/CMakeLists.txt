@@ -3,10 +3,6 @@
 
 cmake_minimum_required(VERSION 3.20)
 
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE AND DEFINED ENV{PSN00BSDK_LIBS})
-	set(CMAKE_TOOLCHAIN_FILE $ENV{PSN00BSDK_LIBS}/cmake/sdk.cmake)
-endif()
-
 project(
 	fpscam
 	LANGUAGES    C

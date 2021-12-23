@@ -96,9 +96,9 @@ and installed properly.
    - `<INSTALL_PATH>/lib/libpsn00b`
    - `<INSTALL_PATH>/share/psn00bsdk`
 
-7. Set the `PSN00BSDK_LIBS` environment variable to point to the `lib/libpsn00b`
-   subfolder inside the install directory. You might also want to add the `bin`
-   folder to `PATH` if it's not listed already.
+7. You may optionally set the `PSN00BSDK_LIBS` environment variable to point to
+   the `lib/libpsn00b` subfolder inside the install directory. You might also
+   want to add the `bin` folder to `PATH` if it's not listed already.
 
 Although not strictly required, you'll probably want to install a PS1 emulator
 with debugging capabilities such as [no$psx](https://problemkaputt.de/psx.htm)
@@ -132,24 +132,23 @@ far from being feature-complete.
 1. Copy the contents of `<INSTALL_PATH>/share/psn00bsdk/template` (or the
    `template` folder within the repo) to your new project's root directory.
 
-2. Configure and build the template by running:
+2. If you haven't set the `PSN00BSDK_LIBS` environment variable previously or
+   if you want to use a different PSn00bSDK installation for the project, edit
+   `CMakePresets.json` to set the path you installed the SDK to. See the
+   [setup guide](cmake_reference.md#setup) for details.
+
+3. Configure and build the template by running:
 
    ```bash
-   cmake -S . -B ./build
+   cmake --preset default .
    cmake --build ./build
    ```
 
    If you did everything correctly there should be a `template.bin` CD image in
    the `build` folder. Test it in an emulator to ensure it works.
 
-Note that, even though the template relies on the `PSN00BSDK_LIBS` environment
-variable to locate the SDK by default, you can also specify the path directly
-on the CMake command line by adding
-`-DCMAKE_TOOLCHAIN_FILE=<INSTALL_PATH>/lib/libpsn00b/cmake/sdk.cmake` to the
-CMake command line.
-
 The toolchain script defines a few CMake macros to create PS1 executables, DLLs
-and CD images. See the [reference](doc/cmake_reference.md) for details.
+and CD images. See the [reference](cmake_reference.md) for details.
 
 -----------------------------------------
-_Last updated on 2021-11-19 by spicyjpeg_
+_Last updated on 2021-12-23 by spicyjpeg_
