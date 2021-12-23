@@ -795,7 +795,7 @@ static void _scan_callback(int status, unsigned char *result)
 {
 	if( status == CdlDataReady )
 	{
-		CdGetSector((void*)_ses_scanbuff, 2048);
+		CdGetSector((void*)_ses_scanbuff, 512);
 		
 		if( _ses_scanbuff[0] == 0x1 )
 		{

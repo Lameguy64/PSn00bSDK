@@ -5,7 +5,7 @@
 contributing to PSn00bSDK, add a new block at the top following this template:
 
 ```
-## <year>-<month>-<day>: <new version>
+## <year>-<month>-<day>: [optional new version]
 
 <contributor>:
 
@@ -18,6 +18,17 @@ You may run `.github/scripts/generate_release_notes.py CHANGELOG.md` afterwards
 to ensure the changelog can be parsed correctly.
 
 -------------------------------------------------------------------------------
+
+## 2021-12-23
+
+spicyjpeg:
+
+- psxcd: `CdGetSector()` now expects the sector size to be in 32-bit word units
+  (rather than bytes) for consistency with the official CD-ROM library. The
+  library's ISO9660 parser and helper functions have been updated accordingly.
+  **This is a breaking change**.
+
+- examples: Added `spustream` audio streaming example.
 
 ## 2021-11-28: 0.18
 
@@ -453,7 +464,7 @@ Lameguy64:
 
 - psxgpu: Fixed typos in `setUVWH()` macro.
 
-- Added `_boot()` BIOS function (A(A0h) aka Warmboot, useful for CD based
+- Added `_boot()` BIOS function (`A(A0h)` aka Warmboot, useful for CD based
   serial loaders).
 
 ## 2019-08-17: 0.13b
@@ -505,9 +516,9 @@ Lameguy64:
   executable to return to a parent executable, return logic automatically
   calls `EnterCriticalSection()`.
 
-- libc: Updated build method which takes libgcc from the compiler and adds
+- libc: Updated build method which takes `libgcc` from the compiler and adds
   its own object files into it, eliminating linker problems caused by having
-  to order libc and libgcc libraries in a specific manner.
+  to order `libc` and `libgcc` libraries in a specific manner.
   
 - psxgpu: Added `RestartCallback()`.
 
@@ -526,7 +537,7 @@ Lameguy64:
   performance, as the R3000 does not support 64-bit arithmetic natively
   so its emulated like floats. `int64` still used for processing floats and
   doubles and old `vsprintf.c` file is still included for those who really
-  want int64 support for whatever reason.
+  want `int64` support for whatever reason.
   
 - libc: Removed `stdarg.h` which is part of GCC and not license compatible
   with MPL. The toolchain compiled with libgcc provides `stdarg.h` and other
@@ -540,7 +551,7 @@ Lameguy64:
 
 - psxgpu: Fixed bug in DMACallback where the internal DMA handler would fail
   to install due to `GetInterruptCallback()` retrieving the callback value
-  immediately in the branch delay slot of a jr instruction, which resuls to
+  immediately in the branch delay slot of a `jr` instruction, which resuls to
   an inconsistent return value. This also broke `DrawSyncCallback()`.
   
 - psxsio: Done fixes on `_sio_control()` from the aformentioned issues with
@@ -619,7 +630,7 @@ Lameguy64:
   ready instead of simply waiting for GPU transfer ready which is the likely
   cause of subtle GPU related timing issues, it also sets GPU DMA transfer
   mode to off afterwards. It can also read number of words remaining in DMA
-  transfer if a0 is non-zero but it likely only returns the correct value on
+  transfer if `a0` is non-zero but it likely only returns the correct value on
   VRAM transfers. Exact way how `DrawSync()` returns the count in the official
   SDK is currently unknown.
 
@@ -645,10 +656,10 @@ Lameguy64:
 - Added `rgb24` example.
 
 - Got custom exit handler set using `SetCustomExitFromException()` (BIOS
-  function B(19h)) working. Currently used to acknowledge VSync IRQ but
+  function `B(19h)`) working. Currently used to acknowledge VSync IRQ but
   actual VSync handling is still done with events and needs to be
   transferred to the custom exit handler. At least it lets BIOS
-  controller functions to work now. See doc/dev `notes.txt` for details
+  controller functions to work now. See `doc/dev notes.txt` for details
   on how this handler behaves.
 
 - Made stack usage in `ResetGraph()` less wasteful. You only need to

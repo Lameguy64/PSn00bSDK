@@ -199,7 +199,7 @@ void xa_callback(int intr, unsigned char *result)
 	if (intr == CdlDataReady)
 	{
 		/* Fetch data sector */
-		CdGetSector((u_long*)&xa_sector_buff, 2048);
+		CdGetSector((u_long*)&xa_sector_buff, 512);
 		
 		/* Quirk: This CdGetSector() implementation must fetch 2048 bytes */
 		/* or more otherwise the following sectors will be read in an	  */

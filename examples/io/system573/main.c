@@ -306,7 +306,7 @@ int main(int argc, const char* argv[]) {
 		FntPrint(-1, " P1 BUTTONS  =%07@\n", inputs.p1_btn);
 		FntPrint(-1, " P2 JOYSTICK =%04@\n", inputs.p2_joy);
 		FntPrint(-1, " P2 BUTTONS  =%07@\n", inputs.p2_btn);
-		FntPrint(-1, " COIN/SERVICE=%04@\n", inputs.coin);
+		FntPrint(-1, " COIN/SERVICE=%04@\n", inputs.coin & 0xf);
 		FntPrint(-1, " DIP SWITCHES=%04@\n", inputs.dip_sw);
 
 		FntPrint(-1, "\nCABINET LIGHTS:\n");
