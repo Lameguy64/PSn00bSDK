@@ -1,5 +1,8 @@
 {
-	"version":    "${PSN00BSDK_VERSION}",
-	"build_date": "${PSN00BSDK_BUILD_DATE}",
-	"build_info": "${PSN00BSDK_BUILD_INFO}"
+	"version":       "${PSN00BSDK_VERSION}",
+	"build_date":    "${PSN00BSDK_BUILD_DATE}",
+	"git_tag":       "${PSN00BSDK_GIT_TAG}",
+	"git_commit":    "${PSN00BSDK_GIT_COMMIT}",
+	"cmake_version": "${CMAKE_VERSION}",
+	"host_system":   "${CMAKE_HOST_SYSTEM_NAME}"
 }

@@ -7,13 +7,14 @@
 cmake_minimum_required(VERSION 3.20)
 include(GNUInstallDirs)
 
-# Fetch the SDK version number from build.json.
+# Fetch SDK version information from build.json.
 if(NOT DEFINED PSN00BSDK_VERSION)
 	file(READ ${CMAKE_CURRENT_LIST_DIR}/../build.json _json)
 
 	string(JSON PSN00BSDK_VERSION    GET ${_json} version)
 	string(JSON PSN00BSDK_BUILD_DATE GET ${_json} build_date)
-	string(JSON PSN00BSDK_BUILD_INFO GET ${_json} build_info)
+	string(JSON PSN00BSDK_GIT_TAG    GET ${_json} git_tag)
+	string(JSON PSN00BSDK_GIT_COMMIT GET ${_json} git_commit)
 endif()
 
 ## Settings (can be overridden by projects)

@@ -73,7 +73,6 @@ install(
 
 # Generate build.json. This file is used to determine the SDK version after
 # installation and may contain additional metadata about the build.
-string(TIMESTAMP PSN00BSDK_BUILD_DATE UTC)
 configure_file(
 	build.json.template build.json
 	ESCAPE_QUOTES

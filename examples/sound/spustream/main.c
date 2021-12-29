@@ -349,7 +349,7 @@ void start_stream(void) {
 	for (uint32_t i = 0; i < NUM_CHANNELS; i++) {
 		SPU_CHANNELS[i].addr       = SPU_RAM_ADDR(BUFFER_START_ADDR + BUFFER_SIZE * i);
 		SPU_CHANNELS[i].freq       = SAMPLE_RATE;
-		SPU_CHANNELS[i].adsr_param = 0xdfee80ff; // or 0x9fc080ff, 0xdff18087
+		SPU_CHANNELS[i].adsr_param = 0x1fee80ff; // or 0x9fc080ff, 0xdff18087
 	}
 
 	// Unmute the channels and route them for stereo output. You'll want to

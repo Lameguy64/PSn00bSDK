@@ -32,10 +32,11 @@
 			"generator":   "Ninja",
 			"binaryDir":   "${sourceDir}/../build",
 			"cacheVariables": {
-				"CMAKE_BUILD_TYPE": "Release",
-				"BUNDLE_TOOLCHAIN": "ON",
-				"BUILD_INFO":       "Built by GitHub Actions ($env{GITHUB_REF_NAME} $env{GITHUB_SHA})",
-				"PSN00BSDK_TARGET": "$env{GCC_TARGET}"
+				"CMAKE_BUILD_TYPE":     "Release",
+				"BUNDLE_TOOLCHAIN":     "ON",
+				"PSN00BSDK_TARGET":     "$env{GCC_TARGET}",
+				"PSN00BSDK_GIT_TAG":    "$env{GITHUB_REF_NAME}",
+				"PSN00BSDK_GIT_COMMIT": "$env{GITHUB_SHA}"
 			}
 		}
 	]

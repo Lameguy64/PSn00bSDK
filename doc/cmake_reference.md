@@ -207,9 +207,13 @@ the build script.
 
 ## Read-only variables
 
-- `PSN00BSDK_VERSION`
+- `PSN00BSDK_VERSION`, `PSN00BSDK_BUILD_DATE`, `PSN00BSDK_GIT_TAG`,
+  `PSN00BSDK_GIT_COMMIT`
 
-  The SDK's version number (`major.minor.patch`).
+  These variables are loaded from `lib/libpsn00b/build.json` and contain
+  information about the SDK's version. Note that `PSN00BSDK_GIT_TAG` and
+  `PSN00BSDK_GIT_COMMIT` are not populated by default when building PSn00bSDK
+  manually from source, so they might be empty strings.
 
 - `PSN00BSDK_TOOLS`, `PSN00BSDK_INCLUDE`, `PSN00BSDK_LDSCRIPTS`
 
@@ -229,4 +233,4 @@ the build script.
   LZP archives as part of the build pipeline.
 
 -----------------------------------------
-_Last updated on 2021-11-24 by spicyjpeg_
+_Last updated on 2021-12-29 by spicyjpeg_

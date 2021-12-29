@@ -62,7 +62,7 @@ and installed properly.
    repository to download additional dependencies:
 
    ```bash
-   git submodule update --init --recursive --remote
+   git submodule update --init --recursive
    ```
 
 5. Compile the libraries, tools and examples using CMake:
@@ -74,9 +74,8 @@ and installed properly.
 
    If you want to install the SDK to a custom location rather than the default
    one (`C:\Program Files\PSn00bSDK` or `/usr/local` depending on your OS), add
-   `--install-prefix <INSTALL_PATH>` to the first command. Add
-   `-DPSN00BSDK_TARGET=mipsel-none-elf` if your toolchain targets
-   `mipsel-none-elf` rather than `mipsel-unknown-elf`.
+   `--install-prefix <INSTALL_PATH>` to the first command. Remember to add
+   `-DPSN00BSDK_TARGET=mipsel-unknown-elf` if necessary.
 
    **NOTE**: Ninja is used by default to build the SDK. If you can't get it to
    work or don't have it installed, pass `-G "Unix Makefiles"` (or
@@ -151,4 +150,4 @@ The toolchain script defines a few CMake macros to create PS1 executables, DLLs
 and CD images. See the [reference](cmake_reference.md) for details.
 
 -----------------------------------------
-_Last updated on 2021-12-23 by spicyjpeg_
+_Last updated on 2021-12-29 by spicyjpeg_

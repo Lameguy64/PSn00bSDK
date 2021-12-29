@@ -12,7 +12,7 @@ include(ExternalProject)
 project(
 	PSn00bSDK
 	LANGUAGES    NONE
-	VERSION      0.1.0
+	VERSION      0.18
 	DESCRIPTION  "Open source PlayStation 1 SDK"
 	HOMEPAGE_URL "http://lameguy64.net/?page=psn00bsdk"
 )
@@ -39,9 +39,15 @@ set(
 	CACHE BOOL    "Skip building SDK examples (not required for installation)"
 )
 set(
-	BUILD_INFO   ""
-	CACHE STRING "Information about this build to be included in build.json"
+	PSN00BSDK_GIT_TAG ""
+	CACHE STRING      "Git tag or branch name (used by CI)"
 )
+set(
+	PSN00BSDK_GIT_COMMIT ""
+	CACHE STRING         "Git commit hash (used by CI)"
+)
+
+string(TIMESTAMP PSN00BSDK_BUILD_DATE UTC)
 
 # Forward some important variables to mkpsxiso and to the subprojects (they are
 # not inherited automatically as they are not environment variables). This also
@@ -50,20 +56,24 @@ set(
 # invoked (ExternalProject_Add() runs the subprojects' install step at build
 # time).
 set(
-	COMMON_ARGS
+	_common_args
 	-DPSN00BSDK_TC:PATH=${PSN00BSDK_TC}
 	-DPSN00BSDK_TARGET:STRING=${PSN00BSDK_TARGET}
 	-DPSN00BSDK_VERSION:STRING=${PROJECT_VERSION}
-	-DPSN00BSDK_BUILD_INFO:STRING=${BUILD_INFO}
+	-DPSN00BSDK_BUILD_DATE:STRING=${PSN00BSDK_BUILD_DATE}
+	-DPSN00BSDK_GIT_TAG:STRING=${PSN00BSDK_GIT_TAG}
+	-DPSN00BSDK_GIT_COMMIT:STRING=${PSN00BSDK_GIT_COMMIT}
 	-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
 )
 set(
-	SUBPROJECT_ARGS
+	_sdk_args
+	${_common_args}
 	-DCMAKE_TOOLCHAIN_FILE:FILEPATH=${CMAKE_TOOLCHAIN_FILE}
 	-DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_BINARY_DIR}/install_tree
 )
 set(
-	EXAMPLES_ARGS
+	_examples_args
+	${_common_args}
 	-DCMAKE_TOOLCHAIN_FILE:FILEPATH=${PROJECT_BINARY_DIR}/install_tree/${CMAKE_INSTALL_LIBDIR}/libpsn00b/cmake/sdk.cmake
 	-DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_BINARY_DIR}/examples
 )
@@ -77,26 +87,26 @@ endif()
 ExternalProject_Add(
 	tools
 	SOURCE_DIR       ${PROJECT_SOURCE_DIR}/tools
-	CMAKE_CACHE_ARGS ${COMMON_ARGS} ${SUBPROJECT_ARGS}
+	CMAKE_CACHE_ARGS ${_sdk_args}
 	INSTALL_DIR      install_tree
 )
 ExternalProject_Add(
 	mkpsxiso
 	SOURCE_DIR       ${PROJECT_SOURCE_DIR}/tools/mkpsxiso
-	CMAKE_CACHE_ARGS ${COMMON_ARGS} ${SUBPROJECT_ARGS}
+	CMAKE_CACHE_ARGS ${_sdk_args}
 	INSTALL_DIR      install_tree
 )
 ExternalProject_Add(
 	libpsn00b
 	SOURCE_DIR       ${PROJECT_SOURCE_DIR}/libpsn00b
-	CMAKE_CACHE_ARGS ${COMMON_ARGS} ${SUBPROJECT_ARGS}
+	CMAKE_CACHE_ARGS ${_sdk_args}
 	INSTALL_DIR      install_tree
 	#DEPENDS          tools
 )
 ExternalProject_Add(
 	examples
 	SOURCE_DIR       ${PROJECT_SOURCE_DIR}/examples
-	CMAKE_CACHE_ARGS ${COMMON_ARGS} ${EXAMPLES_ARGS}
+	CMAKE_CACHE_ARGS ${_examples_args}
 	INSTALL_DIR      examples
 	DEPENDS          libpsn00b tools mkpsxiso
 	EXCLUDE_FROM_ALL ${SKIP_EXAMPLES}
@@ -108,6 +118,7 @@ foreach(
 	_subdir IN ITEMS
 		${CMAKE_INSTALL_BINDIR}
 		${CMAKE_INSTALL_LIBDIR}
+		${CMAKE_INSTALL_INCLUDEDIR}
 		${CMAKE_INSTALL_DATADIR}
 )
 	install(

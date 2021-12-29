@@ -116,7 +116,7 @@ jobs:
     - name: Update repo submodules
       run: |
         cd sdk
-        git submodule update --init --recursive --remote
+        git submodule update --init --recursive
 
     - name: Build and package PSn00bSDK
       run: |
@@ -164,7 +164,7 @@ jobs:
     - name: Update repo submodules
       run: |
         cd sdk
-        git submodule update --init --recursive --remote
+        git submodule update --init --recursive
 
     - name: Build and package PSn00bSDK
       run: |

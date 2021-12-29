@@ -21,7 +21,7 @@ set(
 
 ## Bundled components
 
-# "Install" the toolchain and CMake (by pulling files from its their install
+# "Install" the toolchain and CMake (by pulling files from their install
 # locations). This is only useful when building installers, as CPack will pick
 # up these installation rules and bundle the toolchain in the installers.
 # NOTE: unfortunately there is no easy way to reuse the toolchain finding logic
@@ -105,7 +105,6 @@ set(CPACK_RESOURCE_FILE_README      ${PROJECT_SOURCE_DIR}/README.md)
 set(CPACK_RESOURCE_FILE_LICENSE     ${PROJECT_SOURCE_DIR}/LICENSE.md)
 set(CPACK_PACKAGE_ICON              ${CMAKE_CURRENT_LIST_DIR}/icon.ico)
 set(CPACK_PACKAGE_DESCRIPTION_FILE  ${CMAKE_CURRENT_LIST_DIR}/description.txt)
-set(CPACK_RESOURCE_FILE_WELCOME     ${CMAKE_CURRENT_LIST_DIR}/welcome.txt)
 set(CPACK_PRE_BUILD_SCRIPTS         ${CMAKE_CURRENT_LIST_DIR}/fakeroot_fix.cmake)
 set(CPACK_PACKAGE_INSTALL_DIRECTORY PSn00bSDK)
 
