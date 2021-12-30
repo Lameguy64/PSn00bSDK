@@ -38,8 +38,9 @@
 //#define DEBUG
 
 // Comment before building to disable functions that rely on BIOS file APIs,
-// i.e. DL_LoadSymbolMap() and dlopen().
-#define USE_FILE_API
+// i.e. DL_LoadSymbolMapFromFile() and DL_LoadDLLFromFile().
+// FIXME: those seem to be broken currently, and shouldn't be used anyway
+//#define USE_FILE_API
 
 /* Private types */
 
@@ -132,7 +133,7 @@ static uint32_t _elf_hash(const char *str) {
 }
 
 #ifdef USE_FILE_API
-static uint8_t *_load_file(const char *filename, size_t *size_output) {
+static uint8_t *_dl_load_file(const char *filename, size_t *size_output) {
 	int32_t fd = open(filename, 1);
 	if (fd < 0) {
 		_LOG("psxetc: Can't open %s, error = %d\n", filename, fd);
@@ -286,10 +287,10 @@ int32_t DL_ParseSymbolMap(const char *ptr, size_t size) {
 	return entries;
 }
 
-int32_t DL_LoadSymbolMap(const char *filename) {
 #ifdef USE_FILE_API
+int32_t DL_LoadSymbolMapFromFile(const char *filename) {
 	size_t size;
-	char   *ptr = _load_file(filename, &size);
+	char   *ptr = _dl_load_file(filename, &size);
 	if (!ptr)
 		return -1;
 
@@ -297,10 +298,8 @@ int32_t DL_LoadSymbolMap(const char *filename) {
 	free(ptr);
 
 	return entries;
-#else
-	_ERROR(RTLD_E_NO_FILE_API, -1);
-#endif
 }
+#endif
 
 void DL_UnloadSymbolMap(void) {
 	if (!_symbol_map.entries)
@@ -354,7 +353,7 @@ void DL_SetResolveCallback(void *(*callback)(DLL *, const char *)) {
 
 /* Library loading and linking API */
 
-DLL *dlinit(void *ptr, size_t size, DL_ResolveMode mode) {
+DLL *DL_CreateDLL(void *ptr, size_t size, DL_ResolveMode mode) {
 	if (!ptr)
 		_ERROR(RTLD_E_DLL_NULL, 0);
 
@@ -365,7 +364,7 @@ DLL *dlinit(void *ptr, size_t size, DL_ResolveMode mode) {
 	}
 
 	dll->ptr        = ptr;
-	dll->malloc_ptr = 0;
+	dll->malloc_ptr = (mode & RTLD_FREE_ON_DESTROY) ? ptr : 0;
 	dll->size       = size;
 	_LOG("psxetc: Initializing DLL at %08x\n", ptr);
 
@@ -548,7 +547,7 @@ DLL *dlinit(void *ptr, size_t size, DL_ResolveMode mode) {
 
 		// If RTLD_NOW was passed, resolve GOT entries ahead of time by
 		// cross-referencing them with the symbol table.
-		if (mode != RTLD_NOW)
+		if (!(mode & RTLD_NOW))
 			continue;
 
 		for (uint32_t j = got_offset; j < dll->got_length; j++) {
@@ -584,7 +583,7 @@ DLL *dlinit(void *ptr, size_t size, DL_ResolveMode mode) {
 	// _start() for regular executables, but we have to do it outside of the
 	// DLL as there's no _start() or even a defined entry point within the
 	// DLL itself.
-	const uint32_t *ctor_list = dlsym(dll, "__CTOR_LIST__");
+	const uint32_t *ctor_list = DL_GetDLLSymbol(dll, "__CTOR_LIST__");
 	if (ctor_list) {
 		for (uint32_t i = ((uint32_t) ctor_list[0]); i >= 1; i--) {
 			void (*ctor)(void) = (void (*)(void)) ctor_list[i];
@@ -595,32 +594,28 @@ DLL *dlinit(void *ptr, size_t size, DL_ResolveMode mode) {
 	return dll;
 }
 
-DLL *dlopen(const char *filename, DL_ResolveMode mode) {
 #ifdef USE_FILE_API
+DLL *DL_LoadDLLFromFile(const char *filename, DL_ResolveMode mode) {
 	size_t size;
-	char   *ptr = _load_file(filename, &size);
+	char   *ptr = _dl_load_file(filename, &size);
 	if (!ptr)
 		return 0;
 
-	DLL *dll = dlinit(ptr, size, mode);
-	if (dll)
-		dll->malloc_ptr = dll->ptr;
-	else
+	DLL *dll = DL_CreateDLL(ptr, size, mode | RTLD_FREE_ON_DESTROY);
+	if (!dll)
 		free(ptr);
 
 	return dll;
-#else
-	_ERROR(RTLD_E_NO_FILE_API, 0);
-#endif
 }
+#endif
 
-void dlclose(DLL *dll) {
+void DL_DestroyDLL(DLL *dll) {
 	if (dll == RTLD_DEFAULT)
 		return;
 
 	if (dll->ptr) {
 		// Call the DLL's global destructors.
-		const uint32_t *dtor_list = dlsym(dll, "__DTOR_LIST__");
+		const uint32_t *dtor_list = DL_GetDLLSymbol(dll, "__DTOR_LIST__");
 		if (dtor_list) {
 			for (uint32_t i = 0; i < ((uint32_t) dtor_list[0]); i++) {
 				void (*dtor)(void) = (void (*)(void)) dtor_list[i + 1];
@@ -629,15 +624,15 @@ void dlclose(DLL *dll) {
 		}
 	}
 
-	// If the DLL is associated to a buffer allocated by dlopen(), free that
-	// buffer.
+	// If the DLL is associated to a buffer allocated by DL_LoadDLLFromFile(),
+	// free that buffer.
 	if (dll->malloc_ptr)
 		free(dll->malloc_ptr);
 
 	free(dll);
 }
 
-void *dlsym(DLL *dll, const char *name) {
+void *DL_GetDLLSymbol(const DLL *dll, const char *name) {
 	if (dll == RTLD_DEFAULT)
 		return DL_GetSymbolByName(name);
 		//return _dl_resolve_callback(RTLD_DEFAULT, name);
@@ -654,7 +649,7 @@ void *dlsym(DLL *dll, const char *name) {
 	// provided.
 	for (uint32_t i = bucket[hash_mod]; i != 0xffffffff;) {
 		if (i >= nchain) {
-			_LOG("psxetc: dlsym() index out of bounds (i = %d, n = %d)\n", i, nchain);
+			_LOG("psxetc: DL_GetDLLSymbol() index out of bounds (i = %d, n = %d)\n", i, nchain);
 			_ERROR(RTLD_E_HASH_LOOKUP, 0);
 		}
 
@@ -673,7 +668,7 @@ void *dlsym(DLL *dll, const char *name) {
 	_ERROR(RTLD_E_DLL_SYMBOL, 0);
 }
 
-DL_Error dlerror(void) {
+DL_Error DL_GetLastError(void) {
 	DL_Error last = _error_code;
 	_error_code   = RTLD_E_NONE;
 

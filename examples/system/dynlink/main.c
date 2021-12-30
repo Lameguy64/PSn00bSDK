@@ -11,14 +11,14 @@
  * however this may be expanded in the future.
  *
  * Being able to introspect local symbols at runtime, in turn, allows us to use
- * the dl*() set of APIs to load, link and execute code from an external file
+ * another set of APIs to load, link and execute code from an external file
  * (compiled with the dll.ld linker script). A dynamically-loaded library can
  * reference and access any non-static function or variable within the main
  * executable (and the libraries the main executable has been compiled with);
  * the dynamic linker will automatically patch the DLL's code and resolve these
  * references so that they point to the addresses listed in the map file. DLLs
  * also have their own symbol tables, and any symbol in a DLL is accessible to
- * the main executable through dlsym().
+ * the main executable through DL_GetDLLSymbol().
  *
  * This example shows how DLLs can be loaded and unloaded at any time. Pressing
  * START will unload the current DLL and load an alternate one on-the-fly. A
@@ -47,6 +47,7 @@
 #include <psxgte.h>
 #include <psxgpu.h>
 #include <psxpad.h>
+#include <psxcd.h>
 
 #include "library/dll_common.h"
 
@@ -67,14 +68,77 @@ const void *const DO_NOT_STRIP[] __attribute__((section(".dummy"))) = {
 };
 
 static const char *const DLL_FILENAMES[] = {
-	"cdrom:CUBE.DLL;1",
-	"cdrom:BALLS.DLL;1"
+	"\\CUBE.DLL;1",
+	"\\BALLS.DLL;1"
 };
 
 #define DLL_COUNT 2
 
-void init_context(CONTEXT *ctx);
-void display(CONTEXT *ctx);
+/* Display/GPU context utilities */
+
+#define SCREEN_XRES 320
+#define SCREEN_YRES 240
+
+#define BGCOLOR_R 48
+#define BGCOLOR_G 24
+#define BGCOLOR_B  0
+
+void init_context(CONTEXT *ctx) {
+	DB *db;
+
+	ResetGraph(0);
+	ctx->xres      = SCREEN_XRES;
+	ctx->yres      = SCREEN_YRES;
+	ctx->db_active = 0;
+
+	db = &(ctx->db[0]);
+	SetDefDispEnv(&(db->disp),           0, 0, SCREEN_XRES, SCREEN_YRES);
+	SetDefDrawEnv(&(db->draw), SCREEN_XRES, 0, SCREEN_XRES, SCREEN_YRES);
+	setRGB0(&(db->draw), BGCOLOR_R, BGCOLOR_G, BGCOLOR_B);
+	db->draw.isbg = 1;
+	db->draw.dtd  = 1;
+
+	db = &(ctx->db[1]);
+	SetDefDispEnv(&(db->disp), SCREEN_XRES, 0, SCREEN_XRES, SCREEN_YRES);
+	SetDefDrawEnv(&(db->draw),           0, 0, SCREEN_XRES, SCREEN_YRES);
+	setRGB0(&(db->draw), BGCOLOR_R, BGCOLOR_G, BGCOLOR_B);
+	db->draw.isbg = 1;
+	db->draw.dtd  = 1;
+
+	// Set up the ordering tables and primitive buffers.
+	db = &(ctx->db[0]);
+	ctx->db_nextpri = db->p;
+	ClearOTagR((u_long *) db->ot, OT_LEN);
+
+	PutDrawEnv(&(db->draw));
+	//PutDispEnv(&(db->disp));
+
+	db = &(ctx->db[1]);
+	ClearOTagR((u_long *) db->ot, OT_LEN);
+
+	// Create a text stream at the top of the screen.
+	FntLoad(960, 0);
+	FntOpen(4, 12, 312, 32, 2, 256);
+}
+
+void display(CONTEXT *ctx) {
+	DB *db;
+
+	DrawSync(0);
+	VSync(0);
+	ctx->db_active ^= 1;
+
+	db = &(ctx->db[ctx->db_active]);
+	ctx->db_nextpri = db->p;
+	ClearOTagR((u_long *) db->ot, OT_LEN);
+
+	PutDrawEnv(&(db->draw));
+	PutDispEnv(&(db->disp));
+	SetDispMask(1);
+
+	db = &(ctx->db[!ctx->db_active]);
+	DrawOTag((u_long *) &(db->ot[OT_LEN - 1]));
+}
 
 /* Symbol overriding example */
 
@@ -118,8 +182,8 @@ void *custom_resolver(DLL *dll, const char *name) {
 
 // Define a struct to store pointers to a DLL's functions into. This is not
 // strictly required, however looking up symbols is a relatively slow operation
-// and the pointers returned by dlsym() should be saved and reused as much as
-// possible.
+// and the pointers returned by DL_GetDLLSymbol() should be saved and reused as
+// much as possible.
 typedef struct {
 	void (*init)(CONTEXT *);
 	void (*render)(CONTEXT *, uint16_t buttons);
@@ -134,47 +198,79 @@ static CONTEXT ctx;
 #define SHOW_STATUS(...) { FntPrint(-1, __VA_ARGS__); FntFlush(-1); display(&ctx); }
 #define SHOW_ERROR(...)  { SHOW_STATUS(__VA_ARGS__); while (1) __asm__("nop"); }
 
-void load_dll(const char *filename) {
-	if (dll)
-		dlclose(dll);
-
+// This is a simple function to read a CD-ROM file into memory (the dynamic
+// linker no longer provides APIs that take file paths directly). You might
+// want to replace this with code that e.g. loads the DLL from a compressed
+// archive or even from the serial port.
+size_t load_file(const char *filename, void **ptr) {
 	SHOW_STATUS("LOADING %s\n", filename);
 
-	dll = dlopen(filename, RTLD_LAZY);
-	if (!dll)
-		SHOW_ERROR("FAILED TO LOAD %s\nERROR=%d\n", filename, (int32_t) dlerror());
+	CdlFILE file;
+	if (!CdSearchFile(&file, filename))
+		SHOW_ERROR("FAILED TO FIND %s\n", filename);
 
-	dll_api.init   = dlsym(dll, "init");
-	dll_api.render = dlsym(dll, "render");
+	// Round up the file size so it matches the number of sectors occupied by
+	// the file (as CdRead() can only return entire sectors).
+	size_t len   = (file.size + 2047) & 0xfffff800;
+	void   *_ptr = malloc(len);
+	if (!_ptr)
+		SHOW_ERROR("FAILED TO ALLOCATE %d BYTES\n", len);
+
+	CdControl(CdlSetloc, &(file.pos), 0);
+	CdRead(len / 2048, _ptr, CdlModeSpeed);
+	if (CdReadSync(0, 0) < 0)
+		SHOW_ERROR("FAILED TO READ %s\n", filename);
+
+	*ptr = _ptr;
+	return file.size;
+}
+
+void load_dll(const char *filename) {
+	// As we're passing RTLD_FREE_ON_DESTROY to DL_CreateDLL(), calling
+	// DL_DestroyDLL() will also deallocate the buffer the DLL was loaded into.
+	if (dll)
+		DL_DestroyDLL(dll);
+
+	void   *ptr;
+	size_t len = load_file(filename, &ptr);
+
+	dll = DL_CreateDLL(ptr, len, RTLD_LAZY | RTLD_FREE_ON_DESTROY);
+	if (!dll)
+		SHOW_ERROR("FAILED TO PARSE %s\nERROR=%d\n", filename, (int32_t) DL_GetLastError());
+
+	dll_api.init   = DL_GetDLLSymbol(dll, "init");
+	dll_api.render = DL_GetDLLSymbol(dll, "render");
 
 	printf("DLL init() @ %08x, render() @ %08x\n", dll_api.init, dll_api.render);
 
 	// Unfortunately, due to how position-independent code works, function
-	// pointers returned by dlsym() can't be called directly. We have to use
-	// the DL_CALL() macro instead, which sets up register $t9 to ensure the
-	// function can locate and reference the DLL's relocation table.
+	// pointers returned by DL_GetDLLSymbol() can't be called directly. We have
+	// to use the DL_CALL() macro instead, which sets up register $t9 to ensure
+	// the function can locate and reference the DLL's relocation table.
 	DL_CALL(dll_api.init, &ctx);
 
 }
 
 int main(int argc, const char* argv[]) {
-	// As DL_LoadSymbolMap() and dlopen() rely on BIOS file APIs, the BIOS CD
-	// driver must be initialized by calling _InitCd() prior to loading the
-	// symbol map (but after setting up the GPU, for some reason).
 	init_context(&ctx);
 
 	SHOW_STATUS("INITIALIZING CD\n");
-	_InitCd();
+	CdInit();
 
-	SHOW_STATUS("LOADING SYMBOL MAP\n");
+	// Load the symbol map file, let the dynamic linker parse it and then
+	// unload it.
+	void   *ptr;
+	size_t len = load_file("\\MAIN.MAP;1", &ptr);
 
-	if (!DL_LoadSymbolMap("cdrom:MAIN.MAP;1"))
-		SHOW_ERROR("FAILED TO LOAD SYMBOL MAP\nERROR=%d\n", (int32_t) dlerror());
+	if (!DL_ParseSymbolMap(ptr, len))
+		SHOW_ERROR("FAILED TO PARSE SYMBOL MAP\nERROR=%d\n", (int32_t) DL_GetLastError());
+
+	free(ptr);
 
 	// Try to obtain a reference to a local function.
 	void (*_display)() = DL_GetSymbolByName("display");
 	if (!_display)
-		SHOW_ERROR("FAILED TO LOOK UP LOCAL FUNCTION\nERROR=%d\n", (int32_t) dlerror());
+		SHOW_ERROR("FAILED TO LOOK UP LOCAL FUNCTION\nERROR=%d\n", (int32_t) DL_GetLastError());
 
 	printf("Symbol map test, display() @ %08x\n", _display);
 
@@ -220,7 +316,7 @@ int main(int argc, const char* argv[]) {
 		last_buttons = pad->btn;
 	}
 
-	//dlclose(dll);
+	//DL_DestroyDLL(dll);
 	//DL_UnloadSymbolMap();
 	return 0;
 }
