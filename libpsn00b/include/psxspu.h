@@ -115,7 +115,7 @@ extern "C" {
 
 void SpuInit();
 
-void SpuSetVoiceRaw( int voice, SpuVoiceRaw* param );
+void SpuSetVoiceRaw( int voice, const SpuVoiceRaw* param );
 void SpuReverbOn( int voice );
 void SpuSetReverb();
 
@@ -128,7 +128,7 @@ void SpuSetKey(int on_off, u_int voice_bit);
 // SPU transfer functions
 int SpuSetTransferMode(int mode);
 int SpuSetTransferStartAddr(int addr);
-int SpuWrite(unsigned char* addr, int size);
+int SpuWrite(const unsigned char* addr, int size);
 void SpuWait();
 
 #ifdef __cplusplus

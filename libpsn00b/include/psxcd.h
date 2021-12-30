@@ -132,9 +132,9 @@ CdlLOC*	CdIntToPos(int i, CdlLOC *p);
 int		CdPosToInt(CdlLOC *p);
 int		CdGetToc(CdlLOC *toc);
 
-int		CdControl(u_char com, u_char *param, u_char *result);
-int		CdControlB(u_char com, u_char *param, u_char *result);
-int		CdControlF(u_char com, u_char *param);
+int		CdControl(u_char com, const void *param, u_char *result);
+int		CdControlB(u_char com, const void *param, u_char *result);
+int		CdControlF(u_char com, const void *param);
 int		CdSync(int mode, u_char *result);
 u_long	CdSyncCallback(CdlCB func);
 

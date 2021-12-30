@@ -78,6 +78,12 @@ set(
 	-DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_BINARY_DIR}/examples
 )
 
+# Ensure PSn00bSDK isn't being built using the toolchain file from PSn00bSDK
+# itself (or from another version of it).
+if(CMAKE_TOOLCHAIN_FILE MATCHES ".*libpsn00b[/\\]cmake[/\\]sdk\.cmake$")
+	message(FATAL_ERROR "CMAKE_TOOLCHAIN_FILE is set to the toolchain file of an existing PSn00bSDK installation. It must be unset or overridden by passing '-DCMAKE_TOOLCHAIN_FILE=\"\"' to CMake.")
+endif()
+
 ## Subprojects
 
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/tools/mkpsxiso/CMakeLists.txt)

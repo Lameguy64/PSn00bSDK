@@ -21,7 +21,7 @@ volatile int _cd_last_sector_count;
 int _cd_media_changed;
 
 void _cd_init(void);
-void _cd_control(unsigned char com, unsigned char *param, int plen);
+void _cd_control(unsigned char com, const void *param, int plen);
 void _cd_wait_ack(void);
 void _cd_wait(void);
 
@@ -50,7 +50,7 @@ int CdInit(void)
 	return 1;
 }
 
-int CdControl(unsigned char com, unsigned char *param, unsigned char *result)
+int CdControl(unsigned char com, const void *param, unsigned char *result)
 {	
 	// Don't issue command if ack is not received yet
 	if( _cd_ack_wait )
@@ -72,7 +72,7 @@ int CdControl(unsigned char com, unsigned char *param, unsigned char *result)
 	return 1;
 }
 
-int CdControlB(unsigned char com, unsigned char *param, unsigned char *result)
+int CdControlB(unsigned char com, const void *param, unsigned char *result)
 {
 	if( !CdControl(com, param, result) )
 	{
@@ -83,7 +83,7 @@ int CdControlB(unsigned char com, unsigned char *param, unsigned char *result)
 	return 1;
 }
 
-int CdControlF(unsigned char com, unsigned char *param)
+int CdControlF(unsigned char com, const void *param)
 {
 	int param_len=0;
 	
