@@ -4,33 +4,45 @@
  * Full-resolution, Anamorphic Widescreen 3D Example
  * 2020 - 2021 Meido-Tek Productions / PSn00bSDK Project
  *
- * This example is a modification of the fpscam example demonstrating
- * a method for taking advantage of widescreen HDTVs by means of a
- * custom 704x480 video mode (as opposed to 640x480) and applying
- * anamorphic widescreen aspect correction to a 3D perspective.
+ * This example is a modification of the fpscam example incorporating
+ * techniques for taking advantage of wide-screen televisions by means
+ * of a custom 704x480 video mode (as opposed to 640x480) and applying
+ * anamorphic aspect correction to a 3D perspective matrix.
  *
- * The extended horizontal resolution guarantees that the picture will
- * fill the entire screen of a widescreen television as the more
- * conventional 640x480 mode would often show a black border on the sides
- * of the picture. However, this extended video mode may cause odd effects
- * on some analog television displays, so its recommended to implement this
- * extended video mode as an option in your software title. Pixels are still
- * not aspect correct however, so widescreen has to be achieved through
- * anamorphic means, and is not exactly practical for most 2D graphics.
+ * The extended horizontal resolution guarantees that the video display
+ * will fill a wide-screen television in 16:9 mode fully, whereas the more
+ * conventional 640x480 mode displays black borders on the sides of the
+ * picture on most wide-screen television sets- notably LCD and Plasma type
+ * television sets.
  *
- * If you wish to use a lower resolution 240/256 line mode but want to make
- * it presentable on a widescreen television, use 384x240 or 384x256 as
- * such a resolution would not only fill the entire screen of a widescreen
- * but it also has close to aspect correct pixels, which is well suited for
- * 2D games. The anamorphic aspect correction demonstrated in this example
- * should also work for 320x240/256 modes for 3D games, but prefer to use
- * 320x240 resolution.
+ * However, this extended video mode may cause display problems on some
+ * analog television sets- such as conventional ratio Sony Trinitron
+ * televisions if the video display is moved too close to the left of the
+ * screen. Therefore it is recommended to support this extended video mode
+ * as an option to ensure compatibility with affected televisions.
  *
- * When using 240/256 line modes, you may want to include an option in your
- * software title to enable interlace even though your software title does not
- * run in high resolution mode. This helps with compatibility on HDTVs
- * immensely and in some cases, improves the image quality on such
- * televisions.
+ * Use of the extended video mode does not provide aspect correct pixels
+ * for widescreen displays (the extended mode merely displays more columns
+ * of pixels to fill the side borders of widescreen displays), thus 2D
+ * bitmap graphics will appear stretched as it would when using a more
+ * conventional 640x480 display resolution on a wide-screen ratio
+ * television.
+ *
+ * If lower resolution 240/256 line mode is desired whilst being presentable
+ * on a wide-screen television display, use 384x240 or 384x256 as those
+ * display resolutions can not only cover the side borders of a wide-screen
+ * television display but it also provides close to aspect correct pixels
+ * on such television sets and is well suited for 2D games. The anamorphic
+ * aspect correction demonstrated in this example can also work on the more
+ * conventional 320x240/256 modes for 3D games when such resolutions are more
+ * desired.
+ *
+ * When 240/256 line video modes are used, it is highly recommended to
+ * consider implementing an option to enable interlace even if the software
+ * title does not run in high resolution mode. This is to provide
+ * compatibility with digital EDTV or HDTV televisions as some of these
+ * televisions have issues accepting non-interlaced video signals. On some
+ * televisions enabling interlace can improve the picture quality.
  *
  * Controls:
  *  Up			- Look up
@@ -43,13 +55,15 @@
  *	Circle		- Strafe right
  *	R1			- Slide up
  *	R2			- Slide down
- *	L1			- Look at cube
+ *	L1			- Look at cube (tracking)
  *	Select		- Exit program (only works with CD loaders)
  *
  *
  * Example by Lameguy64
  *
  * Changelog:
+ *
+ *  November 23, 2021	- Improved example description.
  *
  *	May 10, 2021		- Variable types updated for psxgpu.h changes.
  *

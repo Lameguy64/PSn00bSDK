@@ -127,7 +127,7 @@ void send_pad_cmd(
 	uint8_t      arg2,
 	SPI_Callback callback
 ) {
-	SPI_request *req = SPI_CreateRequest();
+	SPI_Request *req = SPI_CreateRequest();
 
 	req->len              = 9;
 	req->port             = port;

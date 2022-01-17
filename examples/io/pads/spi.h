@@ -9,23 +9,24 @@
 #include <stdint.h>
 #include <psxpad.h>
 
+// Maximum request/response length (34 bytes for pads, 140 for memory cards)
 //#define SPI_BUFF_LEN 34
 #define SPI_BUFF_LEN 140
 
 /* Request structures */
 
-typedef void (*SPICALLBACK)(uint32_t port, const volatile uint8_t *buff, size_t rx_len);
+typedef void (*SPI_Callback)(uint32_t port, const volatile uint8_t *buff, size_t rx_len);
 
-typedef struct _SPIREQUEST {
+typedef struct _SPI_Request {
 	union {
-		uint8_t        data[SPI_BUFF_LEN];
-		PADREQUEST     pad_req;
-		MCDREQUEST     mcd_req;
+		uint8_t			data[SPI_BUFF_LEN];
+		PadRequest		pad_req;
+		MemCardRequest	mcd_req;
 	};
-	uint32_t           len, port;
-	SPICALLBACK        callback;
-	struct _SPIREQUEST *next;
-} SPIREQUEST;
+	uint32_t			len, port;
+	SPI_Callback		callback;
+	struct _SPI_Request	*next;
+} SPI_Request;
 
 /* Public API */
 
@@ -34,7 +35,7 @@ typedef struct _SPIREQUEST {
  * object must be populated afterwards by setting the length, callback and
  * filling in the TX data buffer.
  */
-SPIREQUEST *spi_new_request(void);
+SPI_Request *SPI_CreateRequest(void);
 
 /**
  * @brief Changes the controller polling rate. The lowest supported rate is 65
@@ -43,7 +44,7 @@ SPIREQUEST *spi_new_request(void);
  *
  * @param value
  */
-void spi_set_poll_rate(uint32_t value);
+void SPI_SetPollRate(uint32_t value);
 
 /**
  * @brief Installs the SPI and timer 2 interrupt handlers and starts the poll
@@ -56,6 +57,6 @@ void spi_set_poll_rate(uint32_t value);
  *
  * @param callback
  */
-void spi_init(SPICALLBACK callback);
+void SPI_Init(SPI_Callback callback);
 
 #endif

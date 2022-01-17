@@ -185,9 +185,9 @@ typedef struct {
 	uint8_t p1_joy, p1_btn;
 	uint8_t p2_joy, p2_btn;
 	uint8_t coin, dip_sw;
-} JAMMA_INPUTS;
+} JAMMAInputs;
 
-void get_jamma_inputs(JAMMA_INPUTS *output) {
+void get_jamma_inputs(JAMMAInputs *output) {
 	uint16_t in1l = K573_IN1_L;
 	uint16_t in1h = K573_IN1_H;
 	uint16_t in2  = K573_IN2;
@@ -225,14 +225,14 @@ void get_jamma_inputs(JAMMA_INPUTS *output) {
 void set_lights_analog(uint32_t lights) {
 	uint32_t bits;
 
-	bits  = (lights & 0x01010101) << 7; // Lamp 0 -> bit 7
-	bits |= (lights & 0x02020202) << 5; // Lamp 1 -> bit 6
-	bits |= (lights & 0x04040404) >> 1; // Lamp 2 -> bit 1
-	bits |= (lights & 0x08080808) >> 3; // Lamp 3 -> bit 0
-	bits |= (lights & 0x10101010) << 1; // Lamp 4 -> bit 5
-	bits |= (lights & 0x20202020) >> 1; // Lamp 5 -> bit 4
-	bits |= (lights & 0x40404040) >> 3; // Lamp 6 -> bit 3
-	bits |= (lights & 0x80808080) >> 5; // Lamp 7 -> bit 2
+	bits  = (lights & 0x01010101) << 7; // Lamp n*8+0 -> bit n*8+7
+	bits |= (lights & 0x02020202) << 5; // Lamp n*8+1 -> bit n*8+6
+	bits |= (lights & 0x04040404) >> 1; // Lamp n*8+2 -> bit n*8+1
+	bits |= (lights & 0x08080808) >> 3; // Lamp n*8+3 -> bit n*8+0
+	bits |= (lights & 0x10101010) << 1; // Lamp n*8+4 -> bit n*8+5
+	bits |= (lights & 0x20202020) >> 1; // Lamp n*8+5 -> bit n*8+4
+	bits |= (lights & 0x40404040) >> 3; // Lamp n*8+6 -> bit n*8+3
+	bits |= (lights & 0x80808080) >> 5; // Lamp n*8+7 -> bit n*8+2
 
 	K573_IO_BOARD[ANALOG_IO_LIGHTS0] = (bits)       & 0xff;
 	K573_IO_BOARD[ANALOG_IO_LIGHTS1] = (bits >>  8) & 0xff;
@@ -247,10 +247,10 @@ void set_lights_analog(uint32_t lights) {
 void set_lights_digital(uint32_t lights) {
 	uint32_t bits;
 
-	bits  = (lights & 0x11111111);      // Lamp 0 -> bit 0
-	bits |= (lights & 0x22222222) << 1; // Lamp 1 -> bit 2
-	bits |= (lights & 0x44444444) << 1; // Lamp 2 -> bit 3
-	bits |= (lights & 0x88888888) >> 2; // Lamp 3 -> bit 1
+	bits  = (lights & 0x11111111);      // Lamp n*4+0 -> bit n*4+0
+	bits |= (lights & 0x22222222) << 1; // Lamp n*4+1 -> bit n*4+2
+	bits |= (lights & 0x44444444) << 1; // Lamp n*4+2 -> bit n*4+3
+	bits |= (lights & 0x88888888) >> 2; // Lamp n*4+3 -> bit n*4+1
 
 	K573_IO_BOARD[DIGITAL_IO_LIGHTS0] = ((bits)       & 0xf) << 12;
 	K573_IO_BOARD[DIGITAL_IO_LIGHTS1] = ((bits >>  4) & 0xf) << 12;
@@ -298,7 +298,7 @@ int main(int argc, const char* argv[]) {
 	while (1) {
 		FntPrint(-1, "COUNTER=%d\n", counter++);
 
-		JAMMA_INPUTS inputs;
+		JAMMAInputs inputs;
 		get_jamma_inputs(&inputs);
 
 		FntPrint(-1, "\nJAMMA INPUTS:\n");

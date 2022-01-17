@@ -117,7 +117,7 @@ typedef struct {
 	uint32_t	adsr_param;
 	uint16_t	_reserved;
 	uint16_t	loop_addr;
-} SPUCHANNEL;
+} SPUChannel;
 
 #define SPU_CTRL		*((volatile uint16_t *) 0x1f801daa)
 #define SPU_IRQ_ADDR	*((volatile uint16_t *) 0x1f801da4)
@@ -125,7 +125,7 @@ typedef struct {
 #define SPU_KEY_OFF		*((volatile uint32_t *) 0x1f801d8c)
 
 // SPU RAM is addressed in 8-byte units, using 16-bit pointers.
-#define SPU_CHANNELS	((volatile SPUCHANNEL *) 0x1f801c00)
+#define SPU_CHANNELS	((volatile SPUChannel *) 0x1f801c00)
 #define SPU_RAM_ADDR(x)	((uint16_t) (((uint32_t) (x)) >> 3))
 
 /* Display/GPU context utilities */
@@ -219,9 +219,9 @@ typedef struct {
 	uint32_t spu_addr;
 	uint32_t spu_pos;
 	uint32_t db_active;
-} STREAMCONTEXT;
+} StreamContext;
 
-static volatile STREAMCONTEXT str_ctx;
+static volatile StreamContext str_ctx;
 
 // This buffer is used by cd_event_handler() as a temporary area for sectors
 // read from the CD and uploaded to SPU RAM. Due to DMA limitations it can't be

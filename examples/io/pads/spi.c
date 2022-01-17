@@ -54,21 +54,21 @@
 
 /* Internal structures and globals */
 
-typedef struct _SPICONTEXT {
-	uint8_t     tx_buff[SPI_BUFF_LEN];
-	uint8_t     rx_buff[SPI_BUFF_LEN];
-	uint32_t    tx_len, rx_len, port;
-	SPICALLBACK callback;
-} SPICONTEXT;
+typedef struct _SPI_CONTEXT {
+	uint8_t			tx_buff[SPI_BUFF_LEN];
+	uint8_t			rx_buff[SPI_BUFF_LEN];
+	uint32_t		tx_len, rx_len, port;
+	SPI_Callback	callback;
+} SPI_Context;
 
-static volatile SPICONTEXT          ctx;
-static volatile SPIREQUEST volatile *current_req;
-static SPICALLBACK                  default_cb;
+static volatile SPI_Context				ctx;
+static volatile SPI_Request volatile	*current_req;
+static SPI_Callback						default_cb;
 
 /* Request queue management */
 
-static void prepare_poll_req(void) {
-	PADREQUEST *req = (PADREQUEST *) ctx.tx_buff;
+static void _spi_create_poll_req(void) {
+	PadRequest *req = (PadRequest *) ctx.tx_buff;
 
 	req->addr     = 0x01;
 	req->cmd      = PAD_CMD_READ;
@@ -82,7 +82,7 @@ static void prepare_poll_req(void) {
 	ctx.callback = default_cb;
 }
 
-static void prepare_next_req(void) {
+static void _spi_next_req(void) {
 	// Copy the contents of the first request in the queue into the TX buffer.
 	memcpy((void *) ctx.tx_buff, (void *) current_req->data, current_req->len);
 
@@ -93,7 +93,7 @@ static void prepare_next_req(void) {
 
 	// Pop the first request from the queue by deallocating it and adjusting
 	// the pointer to the first queue item.
-	SPIREQUEST *next = current_req->next;
+	SPI_Request *next = current_req->next;
 
 	free((void *) current_req);
 	current_req = next;
@@ -101,7 +101,7 @@ static void prepare_next_req(void) {
 
 /* Interrupt handlers */
 
-static void poll_timer_tick(void) {
+static void _spi_poll_irq_handler(void) {
 	// Fetch the last response byte, which wasn't followed by a pulse on /ACK,
 	// from the RX FIFO.
 	if (JOY_STAT & 0x0002)
@@ -112,9 +112,9 @@ static void poll_timer_tick(void) {
 
 	// If the request queue is empty, create a pad polling request.
 	if (current_req)
-		prepare_next_req();
+		_spi_next_req();
 	else
-		prepare_poll_req();
+		_spi_create_poll_req();
 
 	// Prepare the SPI port by clearing any pending IRQ, pulling /CS high and
 	// enabling the /ACK IRQ. In order to communicate with controllers, /CS has
@@ -132,7 +132,7 @@ static void poll_timer_tick(void) {
 	JOY_TXRX = ctx.tx_buff[0];
 }
 
-static void spi_ack_handler(void) {
+static void _spi_ack_irq_handler(void) {
 	// Wait until /ACK is pulled up by the controller before sending the next
 	// byte. According to nocash docs, this has to be done before resetting the
 	// IRQ.
@@ -166,8 +166,8 @@ static void spi_ack_handler(void) {
 
 /* Public API */
 
-SPIREQUEST *spi_new_request(void) {
-	SPIREQUEST *req = malloc(sizeof(SPIREQUEST));
+SPI_Request *SPI_CreateRequest(void) {
+	SPI_Request *req = malloc(sizeof(SPI_Request));
 
 	req->len      = 0;
 	req->port     = 0;
@@ -179,7 +179,7 @@ SPIREQUEST *spi_new_request(void) {
 	if (!current_req) {
 		current_req = req;
 	} else {
-		volatile SPIREQUEST *volatile last = current_req;
+		volatile SPI_Request *volatile last = current_req;
 		while (last->next)
 			last = last->next;
 
@@ -189,7 +189,7 @@ SPIREQUEST *spi_new_request(void) {
 	return req;
 }
 
-void spi_set_poll_rate(uint32_t value) {
+void SPI_SetPollRate(uint32_t value) {
 	TIM_CTRL(2) = 0x0258; // CLK/8 input, IRQ on reload, disable one-shot IRQ
 
 	if (value < 65)
@@ -198,21 +198,21 @@ void spi_set_poll_rate(uint32_t value) {
 		TIM_RELOAD(2) = (F_CPU / 8) / value;
 }
 
-void spi_init(SPICALLBACK callback) {
+void SPI_Init(SPI_Callback callback) {
 	// Disable the BIOS timer handler (which for some stupid reason is enabled
 	// by default, even though it does nothing) and set up custom interrupt
 	// handlers.
 	EnterCriticalSection();
 	ChangeClearRCnt(2, 0);
-	InterruptCallback(6, &poll_timer_tick);
-	InterruptCallback(7, &spi_ack_handler);
+	InterruptCallback(6, &_spi_poll_irq_handler);
+	InterruptCallback(7, &_spi_ack_irq_handler);
 	ExitCriticalSection();
 
 	JOY_CTRL = 0x0040; // Reset all registers
 	JOY_MODE = 0x000d; // 1x multiplier, 8 data bits, no parity
 	JOY_BAUD = 0x0088; // 250000 bps
 
-	spi_set_poll_rate(250);
+	SPI_SetPollRate(250);
 	current_req = 0;
 	default_cb  = callback;
 }

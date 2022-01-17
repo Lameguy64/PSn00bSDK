@@ -19,6 +19,26 @@ to ensure the changelog can be parsed correctly.
 
 -------------------------------------------------------------------------------
 
+## 2022-01-17
+
+Lameguy64:
+
+- docs: Removed old and incomplete `libn00bref.odt` document (a percussor of
+  the LibPSn00b Library Reference document) as it got included into a commit by
+  accident at some point.
+
+- examples: Improved description of `hdtv` example. Examples directory is now
+  copied into `share/psn00bsdk` directory for both installation and package
+  building. Build instructions for examples also included.
+
+- docs: Removed documentation for `SetDrawTPageVal()` as the function was
+  removed ages ago. Added documentation to `DR_AREA`, `DR_TWIN` and `DR_OFFSET`
+  primitives and their associated macros.
+
+- examples: Added `tilesasm` example.
+
+- Updated readme file.
+
 ## 2021-12-23
 
 spicyjpeg:
