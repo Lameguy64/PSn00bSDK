@@ -609,7 +609,7 @@ void AddPrim(u_long* ot, void* pri);
 
 // Function definitions (C)
 
-int GetTimInfo(u_long *tim, TIM_IMAGE *timimg);	/* ORIGINAL */
+int GetTimInfo(const u_long *tim, TIM_IMAGE *timimg);	/* ORIGINAL */
 
 DISPENV *SetDefDispEnv(DISPENV *disp, int x, int y, int w, int h);
 DRAWENV *SetDefDrawEnv(DRAWENV *draw, int x, int y, int w, int h);

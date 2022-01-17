@@ -48,7 +48,9 @@ _dl_resolve_wrapper:
 	jr    $t0
 	nop
 
-.global _dl_credits
-.type _dl_credits, @object
+.section	.data
+
+.global	_dl_credits
+.type	_dl_credits, @object
 _dl_credits:
 	.asciiz "psxetc runtime dynamic linker by spicyjpeg\n"
