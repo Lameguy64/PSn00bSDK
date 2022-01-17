@@ -114,7 +114,7 @@ foreach(
 endforeach()
 
 install(
-	DIRECTORY   doc template
+	DIRECTORY   doc template examples
 	DESTINATION ${CMAKE_INSTALL_DATADIR}/psn00bsdk
 	COMPONENT   docs
 )

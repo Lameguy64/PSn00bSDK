@@ -1,28 +1,32 @@
 # PSn00bSDK
 
 PSn00bSDK is a 100% free and open source SDK project for the original Sony
-PlayStation for developing homebrew applications and games for the console
-100% freely. This SDK can be used for freeware, commercial, and open source
-homebrew projects.
+PlayStation for developing homebrew applications and games for the console.
+This SDK may be used for freeware, commercial, and open source homebrew
+projects as far as what the SDK currently supports. Out of all the open
+source PS1 SDK projects that have come and gone from active development
+over the years, PSn00bSDK is arguably the most capable of them all.
 
-The SDK is composed mainly of libraries (libpsn00b) and some utilities that
-provide a basic framework for developing software for the PlayStation
-hardware, the compiler is separate (GCC) and should be acquired from GNU.
-The library API is intentionally written to resemble the library API of the
-official libraries as closely as possible. This design decision is not only
-for familiarity reasons to experienced programmers, but also so that existing
-sample code and tutorials would still apply to this SDK, as well as making
-the process of porting over existing homebrew originally made with official
-SDKs easier with minimal modification, provided it doesn't use libgs.
+Much of the SDK is merely just a set of libraries (libpsn00b) and some
+utilities for converting executables and data files to formats more usable
+on the target platform. The compiler used is just the standard GNU GCC
+toolchain compiled to target mipsel and has to be acquired separately.
+The library API was deliberately written to resemble the library API of the
+official libraries as closely as possible not only for familiarity reasons
+to experienced programmers but also so that existing sample code and tutorials
+that have been written over the years would still apply to this SDK, as well
+as making the process of porting over existing homebrew originally made with
+official SDKs easier with minimal modificationn provided they do not depend
+on libgs.
 
 PSn00bSDK is currently a work in progress and cannot really be considered
 production ready, but what is currently implemented should be enough to
-produce some interesting homebrew with the SDK, especially with its extensive
+produce some interesting homebrew with the SDK especially with its extensive
 support for the GPU and GTE hardware. There's no reason not to fully support
 hardware features of a target platform when said hardware features have been
 fully documented for years (nocash's PSX specs document in this case).
 
-Most of libpsn00b is written mostly in MIPS assembly, moreso functions that
+Most of libpsn00b is written mostly in MIPS assembly more so functions that
 interface with the hardware. Many of the standard C functions are implemented
 in custom MIPS assembly instead of equivalents found in the BIOS ROM, for both
 stability (the BIOS libc implementation of the PlayStation is actually buggy)
@@ -88,6 +92,7 @@ building it yourself in the long run. Pre-compiled packages for Debian and
 Msys2 are being planned however (it is already possible to build installers,
 DEB and RPM packages through CPack so it's only a matter of time).
 
+
 ## Examples
 
 There are a few examples and complete source code of n00bdemo included in
@@ -96,7 +101,7 @@ and contributed example programs are welcome.
 
 There's also Lameguy's PlayStation Programming Tutorial Series at
 http://lameguy64.net/tutorials/pstutorials/ for learning how to program
-for the PlayStation. The tutorials should still apply to PSn00bSDK.
+for the PlayStation. Much of the tutorials should apply for PSn00bSDK.
 
 
 ## To-do List
@@ -119,27 +124,11 @@ for the PlayStation. The tutorials should still apply to PSn00bSDK.
 
 * Pad and memory card libraries that don't use the BIOS routines.
 
-## Usage terms (or lack thereof)
-
-PSn00bSDK falls under the terms and conditions of the Mozilla Public
-License. A quick summary of this license is that PSn00bSDK can be used
-freely in both free and open source projects and commercial closed source
-projects as projects using PSn00bSDK does not necessarily have to follow
-the MPL as well.
-
-If modifications to the SDK were made as part of the development of such
-projects that enhance its functionality, such changes must be contributed
-back in return.
-
-Homebrew made with PSn00bSDK may not be released under 'annoyingmous'. Although
-there's nothing that would enforce it, this term may as well be ignored despite
-it annoying this SDK's author.
-
 
 ## Credits
 
-Main developer:
-* Lameguy64
+Main developer/author/whatever:
+* Lameguy64 (John "Lameguy" Wilbert Villamor)
 
 Honorable mentions:
 * ijacquez - helpful suggestions for getting C++ working.
