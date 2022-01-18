@@ -118,16 +118,16 @@ static volatile uint8_t  pad_buff[2][34];
 static volatile size_t   pad_buff_len[2];
 static volatile uint32_t pad_digital_only[2] = { 0, 0 };
 
-// Just a wrapper around spi_new_request(). This does not send the command
+// Just a wrapper around SPI_CreateRequest(). This does not send the command
 // immediately but adds it to the driver's request queue.
 void send_pad_cmd(
-	uint32_t    port,
-	PAD_COMMAND cmd,
-	uint8_t     arg1,
-	uint8_t     arg2,
-	SPICALLBACK callback
+	uint32_t     port,
+	PadCommand   cmd,
+	uint8_t      arg1,
+	uint8_t      arg2,
+	SPI_Callback callback
 ) {
-	SPIREQUEST *req = spi_new_request();
+	SPI_Request *req = SPI_CreateRequest();
 
 	req->len              = 9;
 	req->port             = port;
@@ -150,12 +150,12 @@ void send_pad_cmd(
 // actually a DualShock in digital mode by checking if it started identifying
 // as CONFIG_MODE after receiving a configuration command.
 void dualshock_init_cb(uint32_t port, const volatile uint8_t *buff, size_t rx_len) {
-	PADTYPE *pad = (PADTYPE *) buff;
+	PadResponse *pad = (PadResponse *) buff;
 
 	if (
 		(rx_len < 2) ||
-		(pad->raw.prefix != 0x5a) ||
-		(pad->raw.type != PAD_ID_CONFIG_MODE)
+		(pad->prefix != 0x5a) ||
+		(pad->type != PAD_ID_CONFIG_MODE)
 	) {
 		printf("no, pad is digital-only (len = %d)\n", rx_len);
 
@@ -187,7 +187,7 @@ void poll_cb(uint32_t port, const volatile uint8_t *buff, size_t rx_len) {
 	if (rx_len)
 		memcpy((void *) pad_buff[port], (void *) buff, rx_len);
 
-	PADTYPE *pad = (PADTYPE *) buff;
+	PadResponse *pad = (PadResponse *) buff;
 
 	// If this pad identifies as a digital pad and hasn't been flagged as a
 	// digital-only pad already, attempt to put it into analog mode by entering
@@ -196,8 +196,8 @@ void poll_cb(uint32_t port, const volatile uint8_t *buff, size_t rx_len) {
 	// returning digital pad responses.
 	if (
 		rx_len &&
-		(pad->raw.prefix == 0x5a) &&
-		(pad->raw.type == PAD_ID_DIGITAL)
+		(pad->prefix == 0x5a) &&
+		(pad->type == PAD_ID_DIGITAL)
 	) {
 		if (!pad_digital_only[port]) {
 			printf("Detecting if pad %d supports config mode... ", port + 1);
@@ -221,7 +221,7 @@ static CONTEXT ctx;
 
 int main(int argc, const char* argv[]) {
 	init_context(&ctx);
-	spi_init(&poll_cb);
+	SPI_Init(&poll_cb);
 
 	uint32_t counter = 0;
 
@@ -238,15 +238,14 @@ int main(int argc, const char* argv[]) {
 				continue;
 			}
 
-			PADTYPE    *pad = (PADTYPE *) pad_buff[port];
-			PAD_TYPEID type = pad->raw.type;
+			PadResponse *pad = (PadResponse *) pad_buff[port];
 
 			// According to nocash docs, there is a hardware bug in DualShock
 			// controllers that causes the prefix byte (normally 0x5a) to turn
 			// into 0x00 if the analog button is pressed after configuration
 			// commands have been used. Thus making sure the prefix is 0x5a
 			// isn't enough to reliably detect pads.
-			/*if ((pad->raw.prefix != 0x5a) && (type != PAD_ID_ANALOG)) {
+			/*if ((pad->prefix != 0x5a) && (pad->type != PAD_ID_ANALOG)) {
 				FntPrint(-1, "\n\nPORT %d: INVALID RESPONSE\n", port + 1);
 				if ((counter % 64) < 32)
 					FntPrint(-1, " CHECK CONNECTION...");
@@ -258,8 +257,8 @@ int main(int argc, const char* argv[]) {
 				-1,
 				"\n\nPORT %d: %s (TYPE=%d)\n",
 				port + 1,
-				PAD_TYPEIDS[type],
-				type
+				PAD_TYPEIDS[pad->type],
+				pad->type
 			);
 
 			// Print a hexdump of the payload returned by the pad.

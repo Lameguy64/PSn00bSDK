@@ -10,6 +10,9 @@
 // Uncommend to enable debug output
 //#define DEBUG
 
+#define DEFAULT_PATH_SEP	'\\'
+#define IS_PATH_SEP(ch)		(((ch) == '/') || ((ch) == '\\'))
+
 typedef struct _CdlDIR_INT
 {
 	u_long	_pos;
@@ -374,7 +377,7 @@ static char* resolve_pathtable_path(int entry, char *rbuff)
 		rbuff -= tbl_entry.nameLength;
 		memcpy(rbuff, namebuff, tbl_entry.nameLength);
 		rbuff--;
-		*rbuff = '\\';
+		*rbuff = DEFAULT_PATH_SEP;
 	
 		// Parse to the parent
 		entry = tbl_entry.dirLevel;
@@ -431,12 +434,15 @@ static int find_dir_entry(const char *name, ISO_DIR_ENTRY *dirent)
 
 static char* get_pathname(char *path, const char *filename)
 {
-	char *c;
-	c = strrchr(filename, '\\');
+	char *c = 0;
+	for (char *i = filename; *i; i++) {
+		if (IS_PATH_SEP(*i))
+			c = i;
+	}
 	
 	if(( c == filename ) || ( !c ))
 	{
-		path[0] = '\\';
+		path[0] = DEFAULT_PATH_SEP;
 		path[1] = 0;
 		return NULL;
 	}
@@ -447,11 +453,17 @@ static char* get_pathname(char *path, const char *filename)
 
 static char* get_filename(char *name, const char *filename)
 {
-	char *c;
-	c = strrchr(filename, '\\');
+	char *c = 0;
+	for (char *i = filename; *i; i++) {
+		if (IS_PATH_SEP(*i))
+			c = i;
+	}
 	
-	if(( c == filename ) || ( !c ))
-	{
+	if (!c) {
+		strcpy(name, filename);
+		return name;
+	}
+	if (c == filename) {
 		strcpy(name, filename+1);
 		return name;
 	}
@@ -783,7 +795,7 @@ static void _scan_callback(int status, unsigned char *result)
 {
 	if( status == CdlDataReady )
 	{
-		CdGetSector((void*)_ses_scanbuff, 2048);
+		CdGetSector((void*)_ses_scanbuff, 512);
 		
 		if( _ses_scanbuff[0] == 0x1 )
 		{

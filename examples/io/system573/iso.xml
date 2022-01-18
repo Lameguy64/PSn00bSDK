@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<iso_project
+	image_name="${CD_IMAGE_NAME}.bin"
+	cue_sheet="${CD_IMAGE_NAME}.cue"
+>
+	<track type="data">
+		<identifiers
+			system			="PLAYSTATION"
+			volume			="SYSTEM573"
+			volume_set		="SYSTEM573"
+			publisher		="MEIDOTEK"
+			data_preparer	="PSN00BSDK ${PSN00BSDK_VERSION}"
+			application		="PLAYSTATION"
+			copyright		="README.TXT;1"
+		/>
+
+		<directory_tree>
+			<!--
+				The System 573 BIOS does not parse SYSTEM.CNF, it always looks
+				for an executable named PSX.EXE. Note that this behavior can be
+				abused to make multi-system CDs with different executables for
+				PS1 and 573 (i.e. have both PSX.EXE and SYSTEM.CNF pointing to
+				a different executable).
+			-->
+			<!--<file name="SYSTEM.CNF"	type="data" source="${PROJECT_SOURCE_DIR}/system.cnf" />-->
+			<file name="PSX.EXE"	type="data" source="system573.exe" />
+			<file name="PSX.MAP"	type="data" source="system573.map" />
+
+			<dummy sectors="1024"/>
+		</directory_tree>
+	</track>
+
+	<!--<track type="audio" source="track2.wav" />-->
+</iso_project>

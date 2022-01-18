@@ -4,11 +4,11 @@
 cmake_minimum_required(VERSION 3.20)
 
 set(
-	PSN00BSDK_TC $ENV{PSN00BSDK_TC}
-	CACHE PATH   "Path to the GCC toolchain's installation directory"
+	PSN00BSDK_TC ""
+	CACHE PATH   "Path to the GCC toolchain's installation directory (if not in PATH)"
 )
 set(
-	PSN00BSDK_TARGET mipsel-unknown-elf
+	PSN00BSDK_TARGET mipsel-none-elf
 	CACHE STRING     "GCC toolchain target triplet"
 )
 
@@ -26,7 +26,7 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 # toolchain settings to the generated test projects. This dodges missing C++
 # standard library errors.
 set(CMAKE_TRY_COMPILE_TARGET_TYPE        STATIC_LIBRARY)
-set(CMAKE_TRY_COMPILE_PLATFORM_VARIABLES PSN00BSDK_TC PSN00BSDK_TARGET)
+set(CMAKE_TRY_COMPILE_PLATFORM_VARIABLES PSN00BSDK_TC PSN00BSDK_TARGET PSN00BSDK_VERSION)
 
 ## Toolchain path setup
 
@@ -56,7 +56,7 @@ cmake_path(GET _bin PARENT_PATH _toolchain)
 if(NOT IS_DIRECTORY PSN00BSDK_TC)
 	set(
 		PSN00BSDK_TC ${_toolchain}
-		CACHE PATH   "Path to the GCC toolchain's installation directory"
+		CACHE PATH   "Path to the GCC toolchain's installation directory (if not in PATH)"
 		FORCE
 	)
 endif()

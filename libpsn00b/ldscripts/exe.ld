@@ -8,7 +8,7 @@
  * compatible with dynamic linking, as DLLs require GP to be unused.
  */
 
-OUTPUT_FORMAT(elf32-littlemips)
+/*OUTPUT_FORMAT(elf32-littlemips)*/
 ENTRY(_start)
 /*STARTUP(start.o)*/
 

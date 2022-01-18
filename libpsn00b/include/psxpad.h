@@ -14,43 +14,48 @@
 #ifndef _PSXPAD_H
 #define _PSXPAD_H
 
-// Pad button definitions for digital pad, joystick, dual analog, 
-// Dualshock and Jogcon
-#define PAD_SELECT		1
-#define PAD_L3			2
-#define PAD_R3			4
-#define PAD_START		8
-#define PAD_UP			16
-#define PAD_RIGHT		32
-#define PAD_DOWN		64
-#define PAD_LEFT		128
-#define PAD_L2			256
-#define PAD_R2			512
-#define PAD_L1			1024
-#define PAD_R1			2048
-#define PAD_TRIANGLE	4096
-#define PAD_CIRCLE		8192
-#define PAD_CROSS		16384
-#define PAD_SQUARE		32768
+#include <stdint.h>
 
-// Mouse button definitions
-#define MOUSE_RIGHT		1024
-#define MOUSE_LEFT		2048
+/* Controller type and button definitions */
 
-// neGcon button definitions
-#define NCON_START		8
-#define NCON_UP			16
-#define NCON_RIGHT		32
-#define NCON_DOWN		64
-#define NCON_LEFT		128
-#define NCON_R			256
-#define NCON_B			512
-#define NCON_A			1024
+typedef enum {
+	// Standard pads, analog joystick, Jogcon
+	PAD_SELECT		= 1 << 0,
+	PAD_L3			= 1 << 1,
+	PAD_R3			= 1 << 2,
+	PAD_START		= 1 << 3,
+	PAD_UP			= 1 << 4,
+	PAD_RIGHT		= 1 << 5,
+	PAD_DOWN		= 1 << 6,
+	PAD_LEFT		= 1 << 7,
+	PAD_L2			= 1 << 8,
+	PAD_R2			= 1 << 9,
+	PAD_L1			= 1 << 10,
+	PAD_R1			= 1 << 11,
+	PAD_TRIANGLE	= 1 << 12,
+	PAD_CIRCLE		= 1 << 13,
+	PAD_CROSS		= 1 << 14,
+	PAD_SQUARE		= 1 << 15,
 
-// Guncon button definitions
-#define GCON_A			8
-#define GCON_TRIGGER	8192
-#define GCON_B			16384
+	// Mouse
+	MOUSE_LEFT		= 1 << 10,
+	MOUSE_RIGHT		= 1 << 11,
+
+	// neGcon
+	NCON_START		= 1 << 3,
+	NCON_UP			= 1 << 4,
+	NCON_RIGHT		= 1 << 5,
+	NCON_DOWN		= 1 << 6,
+	NCON_LEFT		= 1 << 7,
+	NCON_R			= 1 << 8,
+	NCON_B			= 1 << 9,
+	NCON_A			= 1 << 10,
+
+	// Guncon
+	GCON_A			= 1 << 3,
+	GCON_TRIGGER	= 1 << 13,
+	GCON_B			= 1 << 14
+} PadButton;
 
 typedef enum {
 	PAD_ID_MOUSE		= 0x1, // Sony PS1 mouse
@@ -64,9 +69,10 @@ typedef enum {
 	PAD_ID_JOGCON		= 0xe, // Namco Jogcon
 	PAD_ID_CONFIG_MODE	= 0xf, // Dual Analog/DualShock in config mode (if len == 0x3)
 	PAD_ID_NONE			= 0xf  // No pad connected (if len == 0xf)
-} PAD_TYPEID;
+} PadTypeID;
 
-// Controller command definitions
+/* Pad and memory card commands */
+
 typedef enum {
 	PAD_CMD_INIT_PRESSURE	= '@', // Initialize DS2 button pressure sensors (in config mode)
 	PAD_CMD_READ			= 'B', // Read pad state and set rumble
@@ -74,131 +80,155 @@ typedef enum {
 	PAD_CMD_SET_ANALOG		= 'D', // Set analog mode/LED state (in config mode)
 	PAD_CMD_GET_ANALOG		= 'E', // Get analog mode/LED state (in config mode)
 	PAD_CMD_REQUEST_CONFIG	= 'M', // Configure request/unlock vibration (in config mode)
-	PAD_CMD_RESPONSE_CONFIG	= 'O'  // Configure response/unlock DS2 pressure (in config mode)
-} PAD_COMMAND;
+	PAD_CMD_RESPONSE_CONFIG	= 'O', // Configure response/unlock DS2 pressure (in config mode)
 
-// Memory card command/response definitions
-typedef enum {
-	MCD_CMD_READ		= 'R', // Read sector
-	MCD_CMD_IDENTIFY	= 'S', // Retrieve ID and card size information
-	MCD_CMD_WRITE		= 'W'  // Write sector
-} MCD_COMMAND;
+	MCD_CMD_READ_SECTOR		= 'R', // Read 128-byte sector
+	MCD_CMD_IDENTIFY		= 'S', // Retrieve ID and card size information (Sony cards only)
+	MCD_CMD_WRITE_SECTOR	= 'W'  // Erase and write 128-byte sector
+} PadCommand;
 
 typedef enum {
 	MCD_STAT_OK				= 'G',
 	MCD_STAT_BAD_CHECKSUM	= 'N',
 	MCD_STAT_BAD_SECTOR		= 0xff
-} MCD_STATUS;
+} MemCardStatus;
 
-#define MCD_CMD_READ_LEN		139
-#define MCD_CMD_IDENTIFY_LEN	9
-#define MCD_CMD_WRITE_LEN		137
+typedef enum {
+	MCD_FLAG_WRITE_ERROR	= 1 << 2,	// Last write command failed
+	MCD_FLAG_NOT_WRITTEN	= 1 << 3,	// No writes have been issued yet
+	MCD_FLAG_UNKNOWN		= 1 << 4	// Might be set on third-party cards
+} MemCardStatusFlag;
 
-// Memory card status flags
-#define MCD_FLAG_WRITE_ERROR	4	// Last write command failed
-#define MCD_FLAG_NOT_WRITTEN	8	// No writes have been issued yet
-#define MCD_FLAG_UNKNOWN		16	// Might be set on third-party cards
+#define MEMCARD_CMD_READ_LEN		139
+#define MEMCARD_CMD_IDENTIFY_LEN	9
+#define MEMCARD_CMD_WRITE_LEN		137
 
-// Struct for data returned by controllers
-typedef struct _PADTYPE {
-	union {									// Header:
-		struct __attribute__((packed)) {	//  When parsing data returned by BIOS:
-			unsigned char		stat;		//   Status
-			unsigned char		len:4;		//   Payload length / 2, 0 for multitap
-			unsigned char		type:4;		//   Device type (PAD_TYPEID)
+/* Controller response as returned by BIOS driver */
+
+typedef struct __attribute__((packed)) _PADTYPE {
+	uint8_t				stat;		// Status
+	uint8_t				len:4;		// Payload length / 2, 0 for multitap
+	uint8_t				type:4;		// Device type (PadTypeID)
+
+	uint16_t			btn;		// Button states
+	union {
+		struct {					// Analog controller:
+			uint8_t		rs_x,rs_y;	// - Right stick coordinates
+			uint8_t		ls_x,ls_y;	// - Left stick coordinates
+			uint8_t		press[12];	// - Button pressure (DualShock 2 only)
 		};
-		struct __attribute__((packed)) {	//  When parsing raw controller response:
-			unsigned char		len:4;		//   Payload length / 2, 0 for multitap
-			unsigned char		type:4;		//   Device type (PAD_TYPEID)
-			unsigned char		prefix;		//   Must be 0x5a
-		} raw;
-	};
-	struct {								// Payload:
-		unsigned short			btn;		//  Button states
-		union {
-			struct {						//  Analog controller:
-				unsigned char	rs_x,rs_y;	//   Right stick coordinates
-				unsigned char	ls_x,ls_y;	//   Left stick coordinates
-				unsigned char	press[12];	//   Button pressure (DualShock 2 only)
-			};
-			struct {						//  Mouse:
-				char			x_mov;		//   X movement of mouse
-				char			y_mov;		//   Y movement of mouse
-			};
-			struct {						//  neGcon:
-				unsigned char	twist;		//   Controller twist
-				unsigned char	btn_i;		//   I button value
-				unsigned char	btn_ii;		//   II button value
-				unsigned char	trg_l;		//   L trigger value
-			};
-			struct {						//  Jogcon:
-				unsigned short	jog_rot;	//   Jog rotation
-			};
-			struct {						//  Guncon:
-				unsigned short	gun_x;		//   Gun X position in dotclocks
-				unsigned short	gun_y;		//   Gun Y position in scanlines
-			};
+		struct {					// Mouse:
+			int8_t		x_mov;		// - X movement of mouse
+			int8_t		y_mov;		// - Y movement of mouse
+		};
+		struct {					// neGcon:
+			uint8_t		twist;		// - Controller twist
+			uint8_t		btn_i;		// - I button value
+			uint8_t		btn_ii;		// - II button value
+			uint8_t		trg_l;		// - L trigger value
+		};
+		struct {					// Jogcon:
+			uint16_t	jog_rot;	// - Jog rotation
+		};
+		struct {					// Guncon:
+			uint16_t	gun_x;		// - Gun X position in dotclocks
+			uint16_t	gun_y;		// - Gun Y position in scanlines
 		};
 	};
 } PADTYPE;
 
-typedef struct _MCDRESPONSE {
-	unsigned char	flags;		// Status flags
-	unsigned char	type1;		// Must be 0x5a
-	unsigned char	type2;		// Must be 0x5d
+//typedef struct _PADTYPE MOUSETYPE;
+//typedef struct _PADTYPE NCONTYPE;
+//typedef struct _PADTYPE JCONTYPE;
+//typedef struct _PADTYPE GCONTYPE;
+
+/* Raw responses */
+
+typedef struct __attribute__((packed)) _PadResponse {
+	uint8_t				len:4;		// Payload length / 2, 0 for multitap
+	uint8_t				type:4;		// Device type (PadTypeID)
+	uint8_t				prefix;		// Must be 0x5a
+
+	uint16_t			btn;		// Button states
 	union {
-		struct {						// MCD_CMD_READ response:
-			unsigned char	dummy[2];
-			unsigned char	ack1;		//  Must be 0x5c
-			unsigned char	ack2;		//  Must be 0x5d
-			unsigned char	lba_h;
-			unsigned char	lba_l;
-			unsigned char	data[128];
-			unsigned char	checksum;	//  = lba_h ^ lba_l ^ data
-			unsigned char	stat;		//  Status (MCD_STATUS)
+		struct {					// Analog controller:
+			uint8_t		rs_x,rs_y;	// - Right stick coordinates
+			uint8_t		ls_x,ls_y;	// - Left stick coordinates
+			uint8_t		press[12];	// - Button pressure (DualShock 2 only)
+		};
+		struct {					// Mouse:
+			int8_t		x_mov;		// - X movement of mouse
+			int8_t		y_mov;		// - Y movement of mouse
+		};
+		struct {					// neGcon:
+			uint8_t		twist;		// - Controller twist
+			uint8_t		btn_i;		// - I button value
+			uint8_t		btn_ii;		// - II button value
+			uint8_t		trg_l;		// - L trigger value
+		};
+		struct {					// Jogcon:
+			uint16_t	jog_rot;	// - Jog rotation
+		};
+		struct {					// Guncon:
+			uint16_t	gun_x;		// - Gun X position in dotclocks
+			uint16_t	gun_y;		// - Gun Y position in scanlines
+		};
+	};
+} PadResponse;
+
+typedef struct __attribute__((packed)) _MemCardResponse {
+	uint8_t			flags;		// Status flags (MemCardStatusFlag)
+	uint8_t			type1;		// Must be 0x5a
+	uint8_t			type2;		// Must be 0x5d
+
+	union {
+		struct {				// CMD_READ response:
+			uint8_t	dummy[2];
+			uint8_t	ack1;		//  Must be 0x5c
+			uint8_t	ack2;		//  Must be 0x5d
+			uint8_t	lba_h;
+			uint8_t	lba_l;
+			uint8_t	data[128];
+			uint8_t	checksum;	//  = lba_h ^ lba_l ^ data
+			uint8_t	stat;		//  Status (MemCardStatus)
 		} read;
-		struct {						// MCD_CMD_IDENTIFY response:
-			unsigned char	ack1;		//  Must be 0x5c
-			unsigned char	ack2;		//  Must be 0x5d
-			unsigned char	size_h;		//  Card capacity bits 8-15 (0x04 = 128KB)
-			unsigned char	size_l;		//  Card capacity bits 0-7 (0x00 = 128KB)
-			unsigned char	blksize_h;	//  Sector size bits 8-15 (must be 0x00)
-			unsigned char	blksize_l;	//  Sector size bits 0-7 (must be 0x80)
+		struct {				// CMD_IDENTIFY response:
+			uint8_t	ack1;		//  Must be 0x5c
+			uint8_t	ack2;		//  Must be 0x5d
+			uint8_t	size_h;		//  Card capacity bits 8-15 (0x04 = 128KB)
+			uint8_t	size_l;		//  Card capacity bits 0-7 (0x00 = 128KB)
+			uint8_t	blksize_h;	//  Sector size bits 8-15 (must be 0x00)
+			uint8_t	blksize_l;	//  Sector size bits 0-7 (must be 0x80)
 		} identify;
-		struct {						// MCD_CMD_WRITE response:
-			unsigned char	dummy[131];
-			unsigned char	ack1;		//  Must be 0x5c
-			unsigned char	ack2;		//  Must be 0x5d
-			unsigned char	stat;		//  Status (MCD_STATUS)
+		struct {				// CMD_WRITE response:
+			uint8_t	dummy[131];
+			uint8_t	ack1;		//  Must be 0x5c
+			uint8_t	ack2;		//  Must be 0x5d
+			uint8_t	stat;		//  Status (MemCardStatus)
 		} write;
 	};
-} MCDRESPONSE;
+} MemCardResponse;
 
-//typedef PADTYPE MOUSETYPE;
-//typedef PADTYPE NCONTYPE;
-//typedef PADTYPE JCONTYPE;
-//typedef PADTYPE GCONTYPE;
+/* Raw requests */
 
-// Structs for raw controller request
-typedef struct _PADREQUEST {
-	unsigned char	addr;		// Must be 0x01 (or 02/03/04 for multitap pads)
-	unsigned char	cmd;		// Command (PAD_COMMAND)
-	unsigned char	tap_mode;	// 0x01 to enable multitap response
-	unsigned char	motor_r;	// Right motor control (on/off)
-	unsigned char	motor_l;	// Left motor control (PWM)
-	unsigned char	dummy[4];
-} PADREQUEST;
+typedef struct __attribute__((packed)) _PadRequest {
+	uint8_t addr;		// Must be 0x01 (or 02/03/04 for multitap pads)
+	uint8_t cmd;		// Command (PadCommand)
+	uint8_t tap_mode;	// 0x01 to enable multitap response
+	uint8_t motor_r;	// Right motor control (on/off)
+	uint8_t motor_l;	// Left motor control (PWM)
+	uint8_t dummy[4];
+} PadRequest;
 
-// Structs for raw memory card request
-typedef struct _MCDREQUEST {
-	unsigned char	addr;		// Must be 0x81 (or 02/03/04 for multitap cards)
-	unsigned char	cmd;		// Command (MCD_COMMAND)
-	unsigned char	dummy[2];
-	unsigned char	lba_h;		// Sector address bits 8-15 (dummy for CMD_IDENTIFY)
-	unsigned char	lba_l;		// Sector address bits 0-7 (dummy for CMD_IDENTIFY)
-	unsigned char	data[128];	// Sector payload (dummy for CMD_READ/CMD_IDENTIFY)
-	unsigned char	checksum;	// = lba_h ^ lba_l ^ data (CMD_WRITE only)
-	unsigned char	dummy2[3];
-} MCDREQUEST;
+typedef struct __attribute__((packed)) _MemCardRequest {
+	uint8_t addr;		// Must be 0x81 (or 02/03/04 for multitap cards)
+	uint8_t cmd;		// Command (MemCardCommand)
+	uint8_t dummy[2];
+	uint8_t lba_h;		// Sector address bits 8-15 (dummy for CMD_IDENTIFY)
+	uint8_t lba_l;		// Sector address bits 0-7 (dummy for CMD_IDENTIFY)
+	uint8_t data[128];	// Sector payload (dummy for CMD_READ/CMD_IDENTIFY)
+	uint8_t checksum;	// = lba_h ^ lba_l ^ data (CMD_WRITE only)
+	uint8_t dummy2[3];
+} MemCardRequest;
 
 #endif

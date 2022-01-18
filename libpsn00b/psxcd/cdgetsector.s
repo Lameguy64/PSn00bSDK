@@ -18,7 +18,8 @@ CdGetSector:
 #	nop
 
 	lui		$v0, 0x1
-	srl		$a1, 2
+#	srl		$a1, 2				# (the official implementation expects $a1/size
+								# to be in 32-bit words rather than bytes)
 	or		$v0, $a1
 	sw		$a0, D3_MADR($a2)	# Set DMA base address and transfer length
 	sw		$v0, D3_BCR($a2)

@@ -7,8 +7,8 @@
  * replaced by the global offset table (GOT) and .bss being merged with .data.
  */
 
-OUTPUT_FORMAT(elf32-littlemips)
-/*ENTRY(_start)
+/*OUTPUT_FORMAT(elf32-littlemips)
+ENTRY(_start)
 STARTUP(start.o)*/
 
 MEMORY {

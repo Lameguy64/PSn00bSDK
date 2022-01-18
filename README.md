@@ -1,3 +1,4 @@
+
 # PSn00bSDK
 
 PSn00bSDK is a 100% free and open source SDK project for the original Sony
@@ -7,7 +8,7 @@ projects as far as what the SDK currently supports. Out of all the open
 source PS1 SDK projects that have come and gone from active development
 over the years, PSn00bSDK is arguably the most capable of them all.
 
-Much of the SDK is merely just a set of libraries (libpsn00b) and some
+Much of the SDK is merely just a set of libraries (`libpsn00b`) and some
 utilities for converting executables and data files to formats more usable
 on the target platform. The compiler used is just the standard GNU GCC
 toolchain compiled to target mipsel and has to be acquired separately.
@@ -26,16 +27,15 @@ support for the GPU and GTE hardware. There's no reason not to fully support
 hardware features of a target platform when said hardware features have been
 fully documented for years (nocash's PSX specs document in this case).
 
-Most of libpsn00b is written mostly in MIPS assembly more so functions that
+Most of `libpsn00b` is written mostly in MIPS assembly more so functions that
 interface with the hardware. Many of the standard C functions are implemented
 in custom MIPS assembly instead of equivalents found in the BIOS ROM, for both
-stability (the BIOS libc implementation of the PlayStation is actually buggy)
+stability (the BIOS `libc` implementation of the PlayStation is actually buggy)
 and performance reasons.
-
 
 ## Notable features
 
-As of August 16, 2021
+As of November 28, 2021
 
 * Extensive GPU support with polygon, line and sprite primitives, high-speed
   DMA transfers for VRAM data and ordering tables. All video modes for both
@@ -80,29 +80,26 @@ As of August 16, 2021
 
 * Fully expandable and customizable to your heart's content.
 
-
 ## Obtaining PSn00bSDK
 
 PSn00bSDK has switched to a CMake-based build and installation system. See
-[INSTALL.md](INSTALL.md) for details.
+[installation.md](doc/installation.md) for details.
 
-Because PSn00bSDK is updated semi-regularly due to this project being in
-a work-in-progress state, it is better to obtain this SDK from source and
-building it yourself in the long run. Pre-compiled packages for Debian and
-Msys2 are being planned however (it is already possible to build installers,
-DEB and RPM packages through CPack so it's only a matter of time).
+Prebuilt SDK packages and versions of the GCC toolchain for Windows and Linux
+(DEB/RPM) are available through GitHub Actions. Stable releases haven't yet
+been published however, due to this project being in a work-in-progress state.
+It is still recommended to build the SDK from source for the time being.
 
 
 ## Examples
 
-There are a few examples and complete source code of n00bdemo included in
-the examples directory. More example programs may be added in the future
-and contributed example programs are welcome.
+There are a few examples and complete source code of `n00bdemo` included in the
+`examples` directory. More example programs may be added in the future and
+contributed example programs are welcome.
 
-There's also Lameguy's PlayStation Programming Tutorial Series at
-http://lameguy64.net/tutorials/pstutorials/ for learning how to program
-for the PlayStation. Much of the tutorials should apply for PSn00bSDK.
-
+There's also [Lameguy's PlayStation Programming Tutorial Series](http://lameguy64.net/tutorials/pstutorials)
+for learning how to program for the PlayStation. The tutorials should still
+apply to PSn00bSDK.
 
 ## To-do List
 
@@ -124,19 +121,30 @@ for the PlayStation. Much of the tutorials should apply for PSn00bSDK.
 
 * Pad and memory card libraries that don't use the BIOS routines.
 
-
 ## Credits
 
 Main developer/author/whatever:
-* Lameguy64 (John "Lameguy" Wilbert Villamor)
+
+* **Lameguy64** (John "Lameguy" Wilbert Villamor)
+
+Contributors:
+
+* **spicyjpeg**: dynamic linker, CMake scripts, some docs and examples
+  (`system/dynlink`, `sound/spustream`, `io/pads`, `io/system573`).
 
 Honorable mentions:
-* ijacquez - helpful suggestions for getting C++ working.
-* NicolasNoble - his OpenBIOS project gave insight to how the BIOS works
+
+* **ijacquez**: helpful suggestions for getting C++ working.
+* **Nicolas Noble**: his OpenBIOS project gave insight to how the BIOS works
   internally.
 
 Helpful contributors can be found in the changelog.
 
 References used:
-* nocash's PlayStation specs document (http://problemkaputt.de/psx-spx.htm)
+
+* [nocash's PlayStation specs document](http://problemkaputt.de/psx-spx.htm)
+  and Nicolas Noble's [updated version](https://psx-spx.consoledev.net).
+* MIPS and System V ABI specs (for the dynamic linker).
 * Tails92's PSXSDK project (during PSn00bSDK's infancy).
+
+Additional references can be found in individual source files.

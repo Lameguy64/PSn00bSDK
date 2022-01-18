@@ -1,7 +1,7 @@
 #include <sys/types.h>
 #include <psxgpu.h>
 
-int GetTimInfo(u_long *tim, TIM_IMAGE *timimg) {
+int GetTimInfo(const u_long *tim, TIM_IMAGE *timimg) {
 
 	u_long *rtim;
 

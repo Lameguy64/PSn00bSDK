@@ -14,14 +14,14 @@ set(
 	BUNDLE_TOOLCHAIN OFF
 	CACHE BOOL       "Include the GCC toolchain in installer packages"
 )
-set(
-	BUNDLE_CMAKE OFF
-	CACHE BOOL   "Include CMake in installer packages (Windows only)"
-)
+#set(
+	#BUNDLE_CMAKE OFF
+	#CACHE BOOL   "Include CMake in installer packages (Windows only)"
+#)
 
 ## Bundled components
 
-# "Install" the toolchain and CMake (by pulling files from its their install
+# "Install" the toolchain and CMake (by pulling files from their install
 # locations). This is only useful when building installers, as CPack will pick
 # up these installation rules and bundle the toolchain in the installers.
 # NOTE: unfortunately there is no easy way to reuse the toolchain finding logic
@@ -105,7 +105,6 @@ set(CPACK_RESOURCE_FILE_README      ${PROJECT_SOURCE_DIR}/README.md)
 set(CPACK_RESOURCE_FILE_LICENSE     ${PROJECT_SOURCE_DIR}/LICENSE.md)
 set(CPACK_PACKAGE_ICON              ${CMAKE_CURRENT_LIST_DIR}/icon.ico)
 set(CPACK_PACKAGE_DESCRIPTION_FILE  ${CMAKE_CURRENT_LIST_DIR}/description.txt)
-set(CPACK_RESOURCE_FILE_WELCOME     ${CMAKE_CURRENT_LIST_DIR}/welcome.txt)
 set(CPACK_PRE_BUILD_SCRIPTS         ${CMAKE_CURRENT_LIST_DIR}/fakeroot_fix.cmake)
 set(CPACK_PACKAGE_INSTALL_DIRECTORY PSn00bSDK)
 
@@ -134,6 +133,7 @@ set(
 	CPACK_NSIS_MENU_LINKS
 	"${PROJECT_HOMEPAGE_URL}"                "About PSn00bSDK"
 	"https://github.com/Lameguy64/PSn00bSDK" "GitHub repo"
+	"Uninstall.exe"                          "Uninstall PSn00bSDK"
 )
 
 # Paths in CPACK_NSIS_* variables are not converted to native paths by CMake
@@ -165,6 +165,11 @@ cpack_add_component(
 	docs
 	DISPLAY_NAME "SDK documentation"
 	DESCRIPTION  "Select to install additional documentation files and a project template (recommended)."
+)
+cpack_add_component(
+	examples
+	DISPLAY_NAME "SDK examples"
+	DESCRIPTION  "Select to copy the examples' source code to the documentation folder (recommended)."
 )
 
 if(BUNDLE_TOOLCHAIN)

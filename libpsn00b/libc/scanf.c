@@ -8,6 +8,9 @@
 #include <string.h>
 #include <strings.h>
 
+// Uncomment to enable support for %f.
+//#define ALLOW_FLOAT
+
 char libc_vsscanf_buf[512];
 char libc_vsscanf_allow[256];
 
@@ -354,7 +357,8 @@ int vsscanf(const char *str, const char *format, va_list ap)
 						r++;
 					}
 				break;
-						
+
+#ifdef ALLOW_FLOAT
 				case 'f': // Floating point number
 					libc_vsscanf_get_element(libc_vsscanf_buf, &str[sp], elem_skip_space, fsz);
 					fbuf = strtod(libc_vsscanf_buf, &ep);
@@ -380,6 +384,7 @@ int vsscanf(const char *str, const char *format, va_list ap)
 
 					conv = 0;
 				break;
+#endif
 
 			}
 		}

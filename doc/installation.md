@@ -17,8 +17,8 @@ and installed properly.
      [here](https://cmake.org/download) if your package manager only provides
      older versions)
 
-   On Windows install [MSys2](https://www.msys2.org), then open the "MSys2
-   MSYS" shell and run this command:
+   On Windows you can obtain these dependencies by installing
+   [MSys2](https://www.msys2.org), opening the "MSys2 MSYS" shell and running:
 
    ```bash
    pacman -Syu git mingw-w64-x86_64-make mingw-w64-x86_64-ninja mingw-w64-x86_64-cmake mingw-w64-x86_64-gcc
@@ -36,34 +36,33 @@ and installed properly.
    - `C:\msys64\mingw64\bin`
    - `C:\msys64\usr\bin`
 
-2. Build and install a GCC toolchain for `mipsel-unknown-elf`, as detailed in
-   [TOOLCHAIN.md](TOOLCHAIN.md). On Windows, you may download a precompiled
-   version from [Lameguy64's website](http://lameguy64.net?page=psn00bsdk) and
-   extract it into one of the directories listed below instead.
+2. Download a precompiled copy of the GCC toolchain for `mipsel-none-elf` from
+   the releases page and extract it into one of the directories listed in
+   step 3. If you want to build the toolchain yourself, see
+   [toolchain.md](toolchain.md).
 
    **NOTE**: PSn00bSDK is also compatible with toolchains that target
-   `mipsel-none-elf`. If you already have such a toolchain (e.g. because you
-   have another PS1 SDK installed) you can skip this step. Make sure you pass
-   `-DPSN00BSDK_TARGET=mipsel-none-elf` to CMake when configuring the SDK
-   though (see step 5).
+   `mipsel-unknown-elf`. If you already have such a toolchain, you can use it
+   by passing `-DPSN00BSDK_TARGET=mipsel-unknown-elf` to CMake when configuring
+   the SDK (see step 5).
 
 3. If you chose a non-standard install location for the toolchain, add the
    `bin` subfolder (inside the top-level toolchain directory) to the `PATH`
    environment variable. This step is unnecessary if you installed/extracted
    the toolchain into any of these directories:
 
-   - `C:\Program Files\mipsel-unknown-elf`
-   - `C:\Program Files (x86)\mipsel-unknown-elf`
-   - `C:\mipsel-unknown-elf`
-   - `/usr/local/mipsel-unknown-elf`
-   - `/usr/mipsel-unknown-elf`
-   - `/opt/mipsel-unknown-elf`
+   - `C:\Program Files\mipsel-none-elf`
+   - `C:\Program Files (x86)\mipsel-none-elf`
+   - `C:\mipsel-none-elf`
+   - `/usr/local/mipsel-none-elf`
+   - `/usr/mipsel-none-elf`
+   - `/opt/mipsel-none-elf`
 
 4. Clone the PSn00bSDK repo, then run the following command from the PSn00bSDK
    repository to download additional dependencies:
 
    ```bash
-   git submodule update --init --recursive --remote
+   git submodule update --init --recursive
    ```
 
 5. Compile the libraries, tools and examples using CMake:
@@ -75,9 +74,8 @@ and installed properly.
 
    If you want to install the SDK to a custom location rather than the default
    one (`C:\Program Files\PSn00bSDK` or `/usr/local` depending on your OS), add
-   `--install-prefix <INSTALL_PATH>` to the first command. Add
-   `-DPSN00BSDK_TARGET=mipsel-none-elf` if your toolchain targets
-   `mipsel-none-elf` rather than `mipsel-unknown-elf`.
+   `--install-prefix <INSTALL_PATH>` to the first command. Remember to add
+   `-DPSN00BSDK_TARGET=mipsel-unknown-elf` if necessary.
 
    **NOTE**: Ninja is used by default to build the SDK. If you can't get it to
    work or don't have it installed, pass `-G "Unix Makefiles"` (or
@@ -97,9 +95,9 @@ and installed properly.
    - `<INSTALL_PATH>/lib/libpsn00b`
    - `<INSTALL_PATH>/share/psn00bsdk`
 
-7. Set the `PSN00BSDK_LIBS` environment variable to point to the `lib/libpsn00b`
-   subfolder inside the install directory. You might also want to add the `bin`
-   folder to `PATH` if it's not listed already.
+7. You may optionally set the `PSN00BSDK_LIBS` environment variable to point to
+   the `lib/libpsn00b` subfolder inside the install directory. You might also
+   want to add the `bin` folder to `PATH` if it's not listed already.
 
 Although not strictly required, you'll probably want to install a PS1 emulator
 with debugging capabilities such as [no$psx](https://problemkaputt.de/psx.htm)
@@ -133,24 +131,23 @@ far from being feature-complete.
 1. Copy the contents of `<INSTALL_PATH>/share/psn00bsdk/template` (or the
    `template` folder within the repo) to your new project's root directory.
 
-2. Configure and build the template by running:
+2. If you haven't set the `PSN00BSDK_LIBS` environment variable previously or
+   if you want to use a different PSn00bSDK installation for the project, edit
+   `CMakePresets.json` to set the path you installed the SDK to. See the
+   [setup guide](cmake_reference.md#setup) for details.
+
+3. Configure and build the template by running:
 
    ```bash
-   cmake -S . -B ./build
+   cmake --preset default .
    cmake --build ./build
    ```
 
    If you did everything correctly there should be a `template.bin` CD image in
    the `build` folder. Test it in an emulator to ensure it works.
 
-Note that, even though the template relies on the `PSN00BSDK_LIBS` environment
-variable to locate the SDK by default, you can also specify the path directly
-on the CMake command line by adding
-`-DCMAKE_TOOLCHAIN_FILE=<INSTALL_PATH>/lib/libpsn00b/cmake/sdk.cmake` to the
-CMake command line.
-
 The toolchain script defines a few CMake macros to create PS1 executables, DLLs
-and CD images. See the [reference](doc/cmake_reference.md) for details.
+and CD images. See the [reference](cmake_reference.md) for details.
 
 -----------------------------------------
-_Last updated on 2021-11-19 by spicyjpeg_
+_Last updated on 2021-12-29 by spicyjpeg_
