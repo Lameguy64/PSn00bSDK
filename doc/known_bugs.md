@@ -4,7 +4,23 @@
 This is an incomplete list of things that are currently broken (or not behaving
 as they should, or untested on real hardware) and haven't yet been fixed.
 
+## Toolchain
+
+- It is currently not possible to link static libraries (including the SDK
+  libraries themselves) with DLLs, since the build scripts currently assume that
+  static library object files are always going to be linked into executables.
+  This can be worked around by linking all static libraries as part of the main
+  executable rather than the DLLs: the dynamic linker will automatically search
+  the executable for undefined symbols used by a DLL and patch the code to use
+  them. It might be necessary to list such symbols in a dummy array to prevent
+  the compiler from stripping them away from the executable.
+
 ## Libraries
+
+`psxgpu`:
+
+- In some *very rare* cases, `VSync()` seems to crash the system by performing
+  unaligned accesses for unknown reasons.
 
 `psxspu`:
 
@@ -19,34 +35,9 @@ as they should, or untested on real hardware) and haven't yet been fixed.
   used by loading DLL binaries into RAM manually and calling `DL_CreateDLL()`
   on them (see the `system/dynlink` example).
 
-## Tools
-
-- The `mkpsxiso` submodule is temporarily set to point to a fork of `mkpsxiso`
-  with bugfixed CMake scripts (the main repo is broken to the point it fails to
-  build). There is [another fork](https://github.com/CookiePLMonster/mkpsxiso)
-  which is currently work-in-progress and includes more fixes as well as a tool
-  to dump existing CD images: PSn00bSDK will switch back to the main `mkpsxiso`
-  repo once the changes get upstreamed.
-
 ## Examples
 
-- `cdrom/cdxa` and `sound/spustream` demonstrate how to stream an audio file
-  from CD-ROM. Such a file isn't provided however, as PSn00bSDK does not yet
-  come with the tooling required for transcoding audio from a source file. In
-  order to run these examples you'll have to provide your own audio files,
-  convert them and build the CD image manually.
-
-- `demos/n00bdemo` suffers from flickering on real hardware, especially when
-  masking/stencil buffering is used.
-
-- `graphics/render2tex` gets stuck after initialization on real hardware.
-
-- `io/pads` seems to work on real hardware, but fails to automatically enable
-  analog mode on DualShock controllers. This example needs more testing with
-  official and unofficial controllers.
-
-- `io/system573` hasn't been tested on a real Konami System 573. It runs on
-  MAME, however MAME's System 573 emulation is *very* inaccurate.
+See [README.md in the examples directory](../examples/README.md#examples-summary).
 
 -----------------------------------------
-_Last updated on 2021-12-30 by spicyjpeg_
+_Last updated on 2022-02-03 by spicyjpeg_

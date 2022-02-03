@@ -14,20 +14,20 @@ _- spicyjpeg_
 
 ## MIPS ABI / compiler
 
-- When calling C functions (ie. BIOS functions) from assembly code you'll need
-  to allocate N words on the stack first when calling a function that has N
-  arguments (`addiu $sp, -(4*N)` where N = number of arguments of the function
-  being called) even if the arguments are on registers `a0` to `a3` and the C
-  functions don't always use the space allotted in stack. When calling a
-  function with a variable number of arguments (`printf`) always allocate 16
-  bytes of stack.
+- When calling C functions (including BIOS functions) from assembly code you'll
+  need to allocate one 32-bit word on the stack for each argument the function
+  takes (`addiu $sp, -(4*N)` where `N` = number of arguments of the function
+  being called), *even if the function takes its arguments from registers*
+  *`$a0`-`$a3` rather than from the stack*. When calling a variadic function
+  (i.e. one with a variable number of arguments, such as `printf`) always
+  allocate 16 bytes of stack.
 
 - For some reason `mipsel-unknown-elf-nm` and `mipsel-none-elf-nm` (symbol map
   generators) insist on outputting 64-bit addresses (with the top 32 bits set,
-  e.g. `FFFFFFFF80010000`) even when feeding it a regular 32-bit MIPS
-  executable, while the standard x86 nm tool that ships with most GCC packages
-  prints the proper 32-bit address. Unclear whether this is a bug, intended
-  behavior or the result of some ancient ELF ABI flag crap.
+  e.g. `FFFFFFFF80010000`) even when feeding them a regular 32-bit MIPS
+  executable, while the standard (x86) `nm` tool that ships with most GCC
+  packages prints the proper 32-bit address. Unclear whether this is a bug,
+  intended behavior or the result of some ancient ELF ABI flag crap.
   `DL_ParseSymbolMap()` will ignore the top 32 bits, so this should only bother
   you if you're implementing your own symbol map parser.
 
@@ -162,7 +162,7 @@ _- spicyjpeg_
   multiple times) and uses the same variable values as the main project,
   however CMake will *not* pass custom variables through by default. If your
   toolchain script has options that can be set via custom variables (like
-  `PSN00BSDK_TC` and `PSN00BSDK_PREFIX` in PSn00bSDK), you'll have to set
+  `PSN00BSDK_TC` and `PSN00BSDK_TARGET` in PSn00bSDK), you'll have to set
   `CMAKE_TRY_COMPILE_PLATFORM_VARIABLES` to a list of variable names to be
   exported to generated dummy projects.
 
@@ -220,20 +220,6 @@ _- spicyjpeg_
   endforeach()
   ```
 
-- Depending on how you find external dependencies (`find_package()`, vcpkg,
-  pkg-config...), CMake may end up outputting an executable that relies on a
-  DLL installed system-wide. To correctly install the DLL alongside the
-  executable you have to specify a regex as follows:
-
-  ```cmake
-  install(
-    TARGETS my_executable
-    RUNTIME_DEPENDENCIES
-    PRE_EXCLUDE_REGEXES ".*"
-    PRE_INCLUDE_REGEXES "tinyxml2"
-  )
-  ```
-
   CMake will scan the executable at install time and copy all the required DLLs
   that match the second regex. If no regex is specified CMake will also copy OS
   DLLs like `libc` or `msvcrt`, which usually isn't the desired behavior.
@@ -277,4 +263,4 @@ _- spicyjpeg_
   space.
 
 -----------------------------------------
-_Last updated on 2021-11-28 by spicyjpeg_
+_Last updated on 2022-01-30 by spicyjpeg_
