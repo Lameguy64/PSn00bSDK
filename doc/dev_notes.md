@@ -164,7 +164,24 @@ _- spicyjpeg_
   toolchain script has options that can be set via custom variables (like
   `PSN00BSDK_TC` and `PSN00BSDK_TARGET` in PSn00bSDK), you'll have to set
   `CMAKE_TRY_COMPILE_PLATFORM_VARIABLES` to a list of variable names to be
-  exported to generated dummy projects.
+  exported to generated dummy projects. Additionally you may need to set
+  `CMAKE_TRY_COMPILE_TARGET_TYPE` to `STATIC_LIBRARY` to prevent CMake from
+  invoking the linker.
+
+- When `project()` is called, CMake uses the value of `CMAKE_SYSTEM_NAME` to
+  determine default values for several variables and properties. Most of these
+  defaults are undocumented: e.g. setting the system name to `Generic` (as
+  suggested by the docs for bare metal targets) will result in CMake assuming
+  that the target platform does not support dynamic linking, so you'll have to
+  turn it back on by setting the `TARGET_SUPPORTS_SHARED_LIBS` global property
+  *after* invoking `project()`.
+
+- It is not possible to use custom toolchains (through toolchain files or by
+  setting `CMAKE_*_COMPILER` manually) with any of the Xcode or VS generators,
+  as their respective build systems handle compiler selection internally rather
+  than relying on variables passed by CMake. Ninja or `make` is thus always
+  required to build PSn00bSDK and any projects made with it, even if the
+  host-side tools are built using Xcode or MSVC.
 
 - There is no way to use multiple toolchains (PS1 + host) in a single project,
   even if you use `add_subdirectory()` to execute multiple project files
@@ -263,4 +280,4 @@ _- spicyjpeg_
   space.
 
 -----------------------------------------
-_Last updated on 2022-01-30 by spicyjpeg_
+_Last updated on 2022-02-06 by spicyjpeg_

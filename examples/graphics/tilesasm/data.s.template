@@ -31,4 +31,5 @@
 # declared in the C code
 #
 tim_tileset:
+	.balign 4 # Required to correctly parse and load the image
 	.incbin "${PROJECT_SOURCE_DIR}/tiles_256.tim"

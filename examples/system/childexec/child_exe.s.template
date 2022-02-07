@@ -3,4 +3,5 @@
 .global child_exe			# Insert spoopypasta
 .type child_exe, @object
 child_exe:
+	.balign 4
 	.incbin "${PROJECT_BINARY_DIR}/child.exe"

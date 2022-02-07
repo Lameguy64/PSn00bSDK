@@ -83,9 +83,11 @@ jobs:
 
   # No surprises here either. The GitHub Actions VMs even come with most of the
   # dependencies required to build PSn00bSDK preinstalled.
+  # NOTE: the workaround to allow the toolchain cache to be loaded (see below)
+  # doesn't seem to work on Windows Server 2022 currently.
   build-sdk-windows:
     name:    Build PSn00bSDK on Windows
-    runs-on: windows-latest
+    runs-on: windows-2019
     needs:   build-gcc
 
     steps:
@@ -111,12 +113,8 @@ jobs:
     - name: Fetch repo contents
       uses: actions/checkout@v2
       with:
-        path: sdk
-
-    - name: Update repo submodules
-      run: |
-        cd sdk
-        git submodule update --init --recursive
+        path:       sdk
+        submodules: recursive
 
     - name: Build and package PSn00bSDK
       run: |
@@ -159,12 +157,8 @@ jobs:
     - name: Fetch repo contents
       uses: actions/checkout@v2
       with:
-        path: sdk
-
-    - name: Update repo submodules
-      run: |
-        cd sdk
-        git submodule update --init --recursive
+        path:       sdk
+        submodules: recursive
 
     - name: Build and package PSn00bSDK
       run: |

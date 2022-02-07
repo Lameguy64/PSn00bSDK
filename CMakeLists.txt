@@ -1,5 +1,5 @@
 # PSn00bSDK main build script
-# (C) 2021 spicyjpeg - MPL licensed
+# (C) 2021-2022 spicyjpeg - MPL licensed
 
 # NOTE: CMake doesn't support using multiple toolchains in a single project,
 # so we can't use add_subdirectory() to build both the libraries and tools. A
@@ -39,6 +39,10 @@ set(
 	CACHE BOOL    "Skip building SDK examples (not required for installation)"
 )
 set(
+	LIBPSN00B_GENERATOR ${CMAKE_GENERATOR}
+	CACHE STRING        "CMake generator to use for building libpsn00b and examples"
+)
+set(
 	PSN00BSDK_GIT_TAG ""
 	CACHE STRING      "Git tag or branch name (used by CI)"
 )
@@ -46,6 +50,24 @@ set(
 	PSN00BSDK_GIT_COMMIT ""
 	CACHE STRING         "Git commit hash (used by CI)"
 )
+
+# Attempt to automatically select a suitable CMake generator to build libpsn00b
+# and the examples. Only Ninja and makefile-based generators can be used, as
+# other generators (VS and Xcode) do not allow custom toolchains to be used.
+if(NOT LIBPSN00B_GENERATOR MATCHES ".*(Make|Makefiles|Ninja)( Multi-Config)?$")
+	find_program(_ninja ninja NO_CACHE)
+
+	if(_ninja STREQUAL "_ninja-NOTFOUND")
+		message(FATAL_ERROR "LIBPSN00B_GENERATOR must be set to a CMake generator which supports custom toolchains (Ninja or make). The current default generator (${CMAKE_GENERATOR}) will be used to build tools.")
+	else()
+		set(
+			LIBPSN00B_GENERATOR Ninja
+			CACHE STRING        "CMake generator to use for building libpsn00b and examples"
+			FORCE
+		)
+		message(WARNING "The current default generator (${CMAKE_GENERATOR}) will be used to build tools but does not support custom toolchains. Ninja will be used instead for building libpsn00b and examples.")
+	endif()
+endif()
 
 string(TIMESTAMP PSN00BSDK_BUILD_DATE UTC)
 
@@ -81,7 +103,8 @@ set(
 # Ensure PSn00bSDK isn't being built using the toolchain file from PSn00bSDK
 # itself (or from another version of it).
 if(CMAKE_TOOLCHAIN_FILE MATCHES ".*libpsn00b[/\\]cmake[/\\]sdk\.cmake$")
-	message(FATAL_ERROR "CMAKE_TOOLCHAIN_FILE is set to the toolchain file of an existing PSn00bSDK installation. It must be unset or overridden by passing '-DCMAKE_TOOLCHAIN_FILE=\"\"' to CMake.")
+	unset(CMAKE_TOOLCHAIN_FILE CACHE)
+	message(WARNING "CMAKE_TOOLCHAIN_FILE is currently set to the toolchain file of an existing PSn00bSDK installation. It will be ignored.")
 endif()
 
 ## Subprojects
@@ -93,18 +116,22 @@ endif()
 ExternalProject_Add(
 	tools
 	SOURCE_DIR       ${PROJECT_SOURCE_DIR}/tools
+	BINARY_DIR       tools-build
 	CMAKE_CACHE_ARGS ${_sdk_args}
 	INSTALL_DIR      install_tree
 )
 ExternalProject_Add(
 	mkpsxiso
 	SOURCE_DIR       ${PROJECT_SOURCE_DIR}/tools/mkpsxiso
+	BINARY_DIR       mkpsxiso-build
 	CMAKE_CACHE_ARGS ${_sdk_args}
 	INSTALL_DIR      install_tree
 )
 ExternalProject_Add(
 	libpsn00b
 	SOURCE_DIR       ${PROJECT_SOURCE_DIR}/libpsn00b
+	BINARY_DIR       libpsn00b-build
+	CMAKE_GENERATOR  ${LIBPSN00B_GENERATOR}
 	CMAKE_CACHE_ARGS ${_sdk_args}
 	INSTALL_DIR      install_tree
 	#DEPENDS          tools
@@ -112,6 +139,8 @@ ExternalProject_Add(
 ExternalProject_Add(
 	examples
 	SOURCE_DIR       ${PROJECT_SOURCE_DIR}/examples
+	BINARY_DIR       examples-build
+	CMAKE_GENERATOR  ${LIBPSN00B_GENERATOR}
 	CMAKE_CACHE_ARGS ${_examples_args}
 	INSTALL_DIR      examples
 	DEPENDS          libpsn00b tools mkpsxiso

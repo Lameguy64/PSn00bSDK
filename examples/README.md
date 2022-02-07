@@ -76,7 +76,7 @@ are for rebuilding the examples *after* the SDK has been installed.
    Add `-DPSN00BSDK_TARGET=mipsel-unknown-elf` to the first command if your
    toolchain targets `mipsel-unknown-elf` rather than `mipsel-none-elf`. If you
    can't get Ninja to work or don't have it installed, you can also replace
-   `-G "Ninja"` with `-G "Unix Makefiles"` (`-G "MSYS Makefiles"` on Windows)
+   `-G "Ninja"` with `-G "Unix Makefiles"` (`-G "MinGW Makefiles"` on Windows)
    to build using `make` instead.
 
    This should create a `build` directory whose structure mirrors the one of
@@ -84,4 +84,4 @@ are for rebuilding the examples *after* the SDK has been installed.
    CD images for each example.
 
 -----------------------------------------
-_Last updated on 2022-01-21 by spicyjpeg_
+_Last updated on 2022-02-06 by spicyjpeg_

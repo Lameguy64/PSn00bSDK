@@ -1,6 +1,14 @@
 
 # Getting started with PSn00bSDK
 
+**IMPORTANT**: due to a bug in `libflac` (used by `mkpsxiso`), building using
+MinGW on Windows is currently broken. You'll have to install Visual Studio and
+pass `-G "Visual Studio <version>"` to CMake when configuring PSn00bSDK to use
+MSVC instead. Due to MSBuild limitations *you'll still need to install Ninja*
+in order to build the SDK, as MSBuild is not compatible with custom toolchains.
+This guide will be updated with detailed MSVC build instructions in the near
+future.
+
 ## Building and installing
 
 The instructions below are for Windows and Linux. Building on macOS hasn't been
@@ -79,8 +87,8 @@ and installed properly.
 
    **NOTE**: Ninja is used by default to build the SDK. If you can't get it to
    work or don't have it installed, pass `-G "Unix Makefiles"` (or
-   `-G "MSYS Makefiles"` on Windows) to the first command to build using `make`
-   instead.
+   `-G "MinGW Makefiles"` on Windows) to the first command to build using
+   `make` instead.
 
 6. Install the SDK to the path you chose (add `sudo` or run it from a command
    prompt with admin privileges if necessary):
@@ -150,4 +158,4 @@ The toolchain script defines a few CMake macros to create PS1 executables, DLLs
 and CD images. See the [reference](cmake_reference.md) for details.
 
 -----------------------------------------
-_Last updated on 2021-12-29 by spicyjpeg_
+_Last updated on 2022-02-06 by spicyjpeg_

@@ -3,4 +3,5 @@
 .global tim_image
 .type tim_image, @object
 tim_image:
+	.balign 4 # Required to correctly parse and load the image
 	.incbin "${PROJECT_SOURCE_DIR}/texture64.tim"
