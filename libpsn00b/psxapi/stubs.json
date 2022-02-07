@@ -1,0 +1,398 @@
+[
+	{
+		"type": "a",
+		"id":   0,
+		"name": "open",
+		"file": "stdio.s"
+	},
+	{
+		"type": "a",
+		"id":   1,
+		"name": "seek",
+		"file": "stdio.s"
+	},
+	{
+		"type": "a",
+		"id":   2,
+		"name": "read",
+		"file": "stdio.s"
+	},
+	{
+		"type": "a",
+		"id":   3,
+		"name": "write",
+		"file": "stdio.s"
+	},
+	{
+		"type": "a",
+		"id":   4,
+		"name": "close",
+		"file": "stdio.s"
+	},
+	{
+		"type": "a",
+		"id":   5,
+		"name": "ioctl",
+		"file": "stdio.s"
+	},
+	{
+		"type": "a",
+		"id":   8,
+		"name": "getc",
+		"file": "stdio.s"
+	},
+	{
+		"type": "a",
+		"id":   9,
+		"name": "putc",
+		"file": "stdio.s"
+	},
+	{
+		"type": "a",
+		"id":   57,
+		"name": "b_InitHeap",
+		"file": "sys.s"
+	},
+	{
+		"type": "a",
+		"id":   59,
+		"name": "getchar",
+		"file": "stdio.s"
+	},
+	{
+		"type": "a",
+		"id":   60,
+		"name": "putchar",
+		"file": "stdio.s"
+	},
+	{
+		"type": "a",
+		"id":   61,
+		"name": "gets",
+		"file": "stdio.s"
+	},
+	{
+		"type": "a",
+		"id":   62,
+		"name": "puts",
+		"file": "stdio.s"
+	},
+	{
+		"type": "a",
+		"id":   63,
+		"name": "printf",
+		"file": "stdio.s"
+	},
+	{
+		"type": "a",
+		"id":   67,
+		"name": "Exec",
+		"file": "sys.s"
+	},
+	{
+		"type": "a",
+		"id":   68,
+		"name": "FlushCache",
+		"file": "sys.s"
+	},
+	{
+		"type": "a",
+		"id":   85,
+		"name": "_bu_init",
+		"file": "drivers.s"
+	},
+	{
+		"type": "a",
+		"id":   113,
+		"name": "_96_init",
+		"file": "drivers.s"
+	},
+	{
+		"type": "a",
+		"id":   114,
+		"name": "_96_remove",
+		"file": "drivers.s"
+	},
+	{
+		"type": "a",
+		"id":   153,
+		"name": "AddDummyTty",
+		"file": "drivers.s"
+	},
+	{
+		"type": "a",
+		"id":   160,
+		"name": "_boot",
+		"file": "sys.s"
+	},
+	{
+		"type": "a",
+		"id":   171,
+		"name": "_card_info",
+		"file": "drivers.s"
+	},
+	{
+		"type": "a",
+		"id":   172,
+		"name": "_card_load",
+		"file": "drivers.s"
+	},
+	{
+		"type": "a",
+		"id":   175,
+		"name": "_card_clear",
+		"file": "drivers.s"
+	},
+	{
+		"type": "a",
+		"id":   180,
+		"name": "GetSystemInfo",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   0,
+		"name": "_kernel_malloc",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   1,
+		"name": "_kernel_free",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   2,
+		"name": "SetRCnt",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   3,
+		"name": "GetRCnt",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   4,
+		"name": "StartRCnt",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   5,
+		"name": "StopRCnt",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   6,
+		"name": "ResetRCnt",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   8,
+		"name": "OpenEvent",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   12,
+		"name": "EnableEvent",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   13,
+		"name": "DisableEvent",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   18,
+		"name": "InitPAD",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   19,
+		"name": "StartPAD",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   20,
+		"name": "StopPAD",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   23,
+		"name": "ReturnFromException",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   24,
+		"name": "SetDefaultExitFromException",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   25,
+		"name": "SetCustomExitFromException",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   64,
+		"name": "chdir",
+		"file": "fs.s"
+	},
+	{
+		"type": "b",
+		"id":   66,
+		"name": "firstfile",
+		"file": "fs.s"
+	},
+	{
+		"type": "b",
+		"id":   67,
+		"name": "nextfile",
+		"file": "fs.s"
+	},
+	{
+		"type": "b",
+		"id":   68,
+		"name": "rename",
+		"file": "fs.s"
+	},
+	{
+		"type": "b",
+		"id":   69,
+		"name": "erase",
+		"file": "fs.s"
+	},
+	{
+		"type": "b",
+		"id":   71,
+		"name": "AddDev",
+		"file": "drivers.s"
+	},
+	{
+		"type": "b",
+		"id":   72,
+		"name": "DelDev",
+		"file": "drivers.s"
+	},
+	{
+		"type": "b",
+		"id":   73,
+		"name": "ListDev",
+		"file": "drivers.s"
+	},
+	{
+		"type": "b",
+		"id":   74,
+		"name": "InitCard",
+		"file": "drivers.s"
+	},
+	{
+		"type": "b",
+		"id":   75,
+		"name": "StartCard",
+		"file": "drivers.s"
+	},
+	{
+		"type": "b",
+		"id":   76,
+		"name": "StopCard",
+		"file": "drivers.s"
+	},
+	{
+		"type": "b",
+		"id":   78,
+		"name": "_card_write",
+		"file": "drivers.s"
+	},
+	{
+		"type": "b",
+		"id":   79,
+		"name": "_card_read",
+		"file": "drivers.s"
+	},
+	{
+		"type": "b",
+		"id":   80,
+		"name": "_new_card",
+		"file": "drivers.s"
+	},
+	{
+		"type": "b",
+		"id":   86,
+		"name": "GetC0Table",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   87,
+		"name": "GetB0Table",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   88,
+		"name": "_card_chan",
+		"file": "drivers.s"
+	},
+	{
+		"type": "b",
+		"id":   91,
+		"name": "ChangeClearPAD",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   92,
+		"name": "_card_status",
+		"file": "drivers.s"
+	},
+	{
+		"type": "b",
+		"id":   93,
+		"name": "_card_wait",
+		"file": "drivers.s"
+	},
+	{
+		"type": "c",
+		"id":   2,
+		"name": "SysEnqIntRP",
+		"file": "sys.s"
+	},
+	{
+		"type": "c",
+		"id":   3,
+		"name": "SysDeqIntRP",
+		"file": "sys.s"
+	},
+	{
+		"type": "c",
+		"id":   10,
+		"name": "ChangeClearRCnt",
+		"file": "sys.s"
+	},
+	{
+		"type": "syscall",
+		"id":   1,
+		"name": "EnterCriticalSection",
+		"file": "sys.s"
+	},
+	{
+		"type": "syscall",
+		"id":   2,
+		"name": "ExitCriticalSection",
+		"file": "sys.s"
+	}
+]

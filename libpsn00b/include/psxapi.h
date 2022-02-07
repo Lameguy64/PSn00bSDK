@@ -213,6 +213,11 @@ void FlushCache(void);
 
 // Misc functions
 int GetSystemInfo(int index);
+void *GetB0Table(void);
+void *GetC0Table(void);
+
+void *_kernel_malloc(int size);
+void _kernel_free(void *ptr);
 
 void _boot(void);
 
