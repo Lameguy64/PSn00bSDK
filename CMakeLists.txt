@@ -35,6 +35,10 @@ set(
 )
 
 set(
+	MKPSXISO_NO_LIBFLAC OFF
+	CACHE BOOL          "Disable libflac integration when building mkpsxiso"
+)
+set(
 	SKIP_EXAMPLES OFF
 	CACHE BOOL    "Skip building SDK examples (not required for installation)"
 )
@@ -85,18 +89,19 @@ set(
 	-DPSN00BSDK_BUILD_DATE:STRING=${PSN00BSDK_BUILD_DATE}
 	-DPSN00BSDK_GIT_TAG:STRING=${PSN00BSDK_GIT_TAG}
 	-DPSN00BSDK_GIT_COMMIT:STRING=${PSN00BSDK_GIT_COMMIT}
+	-DMKPSXISO_NO_LIBFLAC:BOOL=${MKPSXISO_NO_LIBFLAC}
 	-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
 )
 set(
 	_sdk_args
 	${_common_args}
 	-DCMAKE_TOOLCHAIN_FILE:FILEPATH=${CMAKE_TOOLCHAIN_FILE}
-	-DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_BINARY_DIR}/install_tree
+	-DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_BINARY_DIR}/tree
 )
 set(
 	_examples_args
 	${_common_args}
-	-DCMAKE_TOOLCHAIN_FILE:FILEPATH=${PROJECT_BINARY_DIR}/install_tree/${CMAKE_INSTALL_LIBDIR}/libpsn00b/cmake/sdk.cmake
+	-DCMAKE_TOOLCHAIN_FILE:FILEPATH=${PROJECT_BINARY_DIR}/tree/${CMAKE_INSTALL_LIBDIR}/libpsn00b/cmake/sdk.cmake
 	-DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_BINARY_DIR}/examples
 )
 
@@ -118,14 +123,14 @@ ExternalProject_Add(
 	SOURCE_DIR       ${PROJECT_SOURCE_DIR}/tools
 	BINARY_DIR       tools-build
 	CMAKE_CACHE_ARGS ${_sdk_args}
-	INSTALL_DIR      install_tree
+	INSTALL_DIR      tree
 )
 ExternalProject_Add(
 	mkpsxiso
 	SOURCE_DIR       ${PROJECT_SOURCE_DIR}/tools/mkpsxiso
 	BINARY_DIR       mkpsxiso-build
 	CMAKE_CACHE_ARGS ${_sdk_args}
-	INSTALL_DIR      install_tree
+	INSTALL_DIR      tree
 )
 ExternalProject_Add(
 	libpsn00b
@@ -133,7 +138,7 @@ ExternalProject_Add(
 	BINARY_DIR       libpsn00b-build
 	CMAKE_GENERATOR  ${LIBPSN00B_GENERATOR}
 	CMAKE_CACHE_ARGS ${_sdk_args}
-	INSTALL_DIR      install_tree
+	INSTALL_DIR      tree
 	#DEPENDS          tools
 )
 ExternalProject_Add(
@@ -158,7 +163,7 @@ foreach(
 )
 	install(
 		# THE TRAILING SLASH IS IMPORTANT
-		DIRECTORY   ${PROJECT_BINARY_DIR}/install_tree/${_subdir}/
+		DIRECTORY   ${PROJECT_BINARY_DIR}/tree/${_subdir}/
 		DESTINATION ${_subdir}
 		COMPONENT   sdk
 		USE_SOURCE_PERMISSIONS
