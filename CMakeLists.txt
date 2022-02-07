@@ -12,7 +12,7 @@ include(ExternalProject)
 project(
 	PSn00bSDK
 	LANGUAGES    NONE
-	VERSION      0.18
+	VERSION      0.19
 	DESCRIPTION  "Open source PlayStation 1 SDK"
 	HOMEPAGE_URL "http://lameguy64.net/?page=psn00bsdk"
 )
@@ -170,6 +170,11 @@ foreach(
 	)
 endforeach()
 
+install(
+	FILES       README.md LICENSE.md
+	DESTINATION ${CMAKE_INSTALL_DATADIR}/psn00bsdk/doc
+	COMPONENT   docs
+)
 install(
 	DIRECTORY   doc template
 	DESTINATION ${CMAKE_INSTALL_DATADIR}/psn00bsdk

@@ -2,12 +2,10 @@
 # Getting started with PSn00bSDK
 
 **IMPORTANT**: due to a bug in `libflac` (used by `mkpsxiso`), building using
-MinGW on Windows is currently broken. You'll have to install Visual Studio and
-pass `-G "Visual Studio <version>"` to CMake when configuring PSn00bSDK to use
-MSVC instead. Due to MSBuild limitations *you'll still need to install Ninja*
-in order to build the SDK, as MSBuild is not compatible with custom toolchains.
-This guide will be updated with detailed MSVC build instructions in the near
-future.
+MinGW on Windows currently requires `-DMKPSXISO_NO_LIBFLAC=ON` to be passed to
+CMake when configuring PSn00bSDK. This will result in the `dumpsxiso` utility
+being built without support for ripping CD audio tracks to FLAC, however the
+`mkpsxiso` command will still retain FLAC support.
 
 ## Building and installing
 
