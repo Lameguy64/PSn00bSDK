@@ -17,9 +17,9 @@ _cd_init:
 	lui		$a3, IOBASE				# Acknowledge all CD IRQs
 	
 	li		$v0, 0x20943			# Set CD-ROM Delay/Size and common delay
-	sw		$v0, SBUS_5($a3)
+	sw		$v0, CD_DELAY_SIZE($a3)
 	li		$v0, 0x1325
-	sw		$v0, COM_DELAY($a3)
+	sw		$v0, COM_DELAY_CFG($a3)
 	
 	li		$v0, 1
 	sb		$v0, CD_REG0($a3)
@@ -71,10 +71,10 @@ _cd_init:
 	la		$v0, _cd_read_cb
 	sw		$0 , 0($v0)
 	
-	lw		$v0, DPCR($a3)
+	lw		$v0, DMA_DPCR($a3)
 	li		$v1, 0xB000
 	or		$v0, $v1
-	sw		$v0, DPCR($a3)
+	sw		$v0, DMA_DPCR($a3)
 	
 	jal		ExitCriticalSection
 	nop

@@ -64,7 +64,7 @@ _drawsync_handler:
 	addiu	$sp, -4
 	sw		$ra, 0($sp)
 
-	lw		$v0, D2_CHCR($a0)
+	lw		$v0, DMA2_CHCR($a0)
 	nop
 	srl		$v0, 24
 	andi	$v0, 0x1

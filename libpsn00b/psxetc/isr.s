@@ -20,7 +20,7 @@ _global_isr:
 										# changed elsewhere sometimes
 	
 	lui		$a0, IOBASE					# Get IRQ status
-	lw		$v0, IMASK($a0)
+	lw		$v0, IRQ_MASK($a0)
 	nop
 	
 	srl		$v0, $s1					# Check IRQ mask bit if set
@@ -29,7 +29,7 @@ _global_isr:
 	beqz	$v0, .Lno_irq				# Don't execute callback if IRQ not enabled
 	nop
 	
-	lw		$v0, ISTAT($a0)
+	lw		$v0, IRQ_STAT($a0)
 	nop
 	srl		$v0, $s1					# Check IRQ status bit if set
 	andi	$v0, 0x1
@@ -39,12 +39,12 @@ _global_isr:
 	lw		$v1, 0($s0)					# Load IRQ callback function
 	nop
 	
-	lw		$v0, ISTAT($a0)				# Acknowledge the IRQ (by writing a 0 bit)
+	lw		$v0, IRQ_STAT($a0)			# Acknowledge the IRQ (by writing a 0 bit)
 	li		$a1, 1
 	sll		$a1, $s1
 	addiu	$a2, $0 , -1
 	xor		$a1, $a2
-	sw		$a1, ISTAT($a0)
+	sw		$a1, IRQ_STAT($a0)
 	
 	beqz	$v1, .Lno_irq				# Don't execute if callback is not set
 	nop

@@ -44,8 +44,8 @@ RestartCallback:
 	addiu	$a1, 1
 	
 	lui		$a0, IOBASE
-	sw		$0 , ISTAT($a0)
-	sw		$v0, IMASK($a0)
+	sw		$0 , IRQ_STAT($a0)
+	sw		$v0, IRQ_MASK($a0)
 	
 	lw		$ra, 0($sp)
 	addiu	$sp, 4

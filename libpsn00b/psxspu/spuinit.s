@@ -17,30 +17,25 @@ SpuInit:
 	
 	# Stop and mute everything
 	
-	sh		$0 , SPUCNT($v1)			# Clear control settings
+	sh		$0 , SPU_CTRL($v1)			# Clear control settings
 	jal		SpuCtrlSync
 	move	$a0, $0
 	
-	sh		$0 , SPU_MASTER_VOL($v1)	# Clear master volume
-	sh		$0 , SPU_MASTER_VOL+2($v1)
+	sh		$0 , SPU_MASTER_VOL_L($v1)	# Clear master volume
+	sh		$0 , SPU_MASTER_VOL_R($v1)
 
-	sh		$0 , SPU_REVERB_VOL($v1)	# Clear reverb volume
-	sh		$0 , SPU_REVERB_VOL+2($v1)
+	sh		$0 , SPU_REVERB_VOL_L($v1)	# Clear reverb volume
+	sh		$0 , SPU_REVERB_VOL_R($v1)
 	
-	sh		$0 , SPU_CD_VOL($v1)		# Clear CD volume
-	sh		$0 , SPU_CD_VOL+2($v1)
+	sh		$0 , SPU_CD_VOL_L($v1)		# Clear CD volume
+	sh		$0 , SPU_CD_VOL_R($v1)
 	
-	sh		$0 , SPU_EXT_VOL($v1)		# Clear external audio volume
-	sh		$0 , SPU_EXT_VOL+2($v1)
+	sh		$0 , SPU_EXT_VOL_L($v1)		# Clear external audio volume
+	sh		$0 , SPU_EXT_VOL_R($v1)
 	
-	sh		$0 , SPU_FM_MODE($v1)		# Turn off FM modes
-	sh		$0 , SPU_FM_MODE+2($v1)
-	
-	sh		$0 , SPU_NOISE_MODE($v1)	# Turn off noise modes
-	sh		$0 , SPU_NOISE_MODE+2($v1)
-	
-	sh		$0 , SPU_REVERB_ON($v1)	# Turn off reverb modes
-	sh		$0 , SPU_REVERB_ON+2($v1)
+	sw		$0 , SPU_FM_MODE($v1)		# Turn off FM modes
+	sw		$0 , SPU_NOISE_MODE($v1)	# Turn off noise modes
+	sw		$0 , SPU_REVERB_ON($v1)		# Turn off reverb modes
 	
 	li		$v0, 0xfffe
 	sh		$v0, SPU_REVERB_ADDR($v1)
@@ -65,32 +60,28 @@ SpuInit:
 	bgez	$a2, .Lclear_voices
 	nop
 	
-	li		$v0, 0xffff					# Set all keys to off
-	sh		$v0, SPU_KEY_OFF($v1)
-	sh		$v0, SPU_KEY_OFF+2($v1)
+	addiu	$v0, $0, -1					# Set all keys to off
+	sw		$v0, SPU_KEY_OFF($v1)
 	
 	li		$v0, 0x4					# Set SPU data transfer control
-	sh		$v0, SPUDTCNT($v1)			# (usually always 0x4)
+	sh		$v0, SPU_DMA_CTRL($v1)			# (usually always 0x4)
 	
-	lw		$v0, DPCR($v1)				# Enable DMA channel 4 (SPU DMA)
+	lw		$v0, DMA_DPCR($v1)			# Enable DMA channel 4 (SPU DMA)
 	lui		$at, 0xb
 	or		$v0, $at
-	sw		$v0, DPCR($v1)
+	sw		$v0, DMA_DPCR($v1)
 	
 	li		$v0, 0xC001					# Enable SPU
-	sh		$v0, SPUCNT($v1)
+	sh		$v0, SPU_CTRL($v1)
 	jal		SpuCtrlSync
 	move	$a0, $v0
 	
 	li		$v0, 0x3fff					# Activate master volume
-	sh		$v0, SPU_MASTER_VOL($v1)
-	sh		$v0, SPU_MASTER_VOL+2($v1)
+	sh		$v0, SPU_MASTER_VOL_L($v1)
+	sh		$v0, SPU_MASTER_VOL_R($v1)
 	
-	sh		$v0, SPU_CD_VOL($v1)		# Activate CD volume
-	sh		$v0, SPU_CD_VOL+2($v1)
-	
-	sh		$v0, SPU_CD_VOL($v1)		# Activate CD volume
-	sh		$v0, SPU_CD_VOL+2($v1)
+	sh		$v0, SPU_CD_VOL_L($v1)		# Activate CD volume
+	sh		$v0, SPU_CD_VOL_R($v1)
 	
 	lw		$ra, 0($sp)
 	addiu	$sp, 4
@@ -108,7 +99,7 @@ SpuCtrlSync:
 	lui		$v1, IOBASE
 	andi	$a0, 0x3f
 .Lctrl_wait:
-	lhu		$v0, SPUSTAT($v1)		# Get SPUSTAT value
+	lhu		$v0, SPU_STAT($v1)		# Get SPUSTAT value
 	nop
 	andi	$v0, 0x3f
 	bne		$v0, $a0, .Lctrl_wait	# Wait until SPUCNT and SPUSTAT are equal
@@ -123,7 +114,7 @@ SpuCtrlSync:
 .type SpuWait, @function
 SpuWait:
 	lui		$v0, IOBASE
-	lhu		$v0, SPUSTAT($v0)
+	lhu		$v0, SPU_STAT($v0)
 	nop
 	andi	$v0, 0x400
 	bnez	$v0, SpuWait

@@ -46,10 +46,10 @@ SpuWrite:
 	
 	lui		$a3, IOBASE	
 	
-	lhu		$v0, SPUCNT($a3)			# Set transfer mode to Stop
+	lhu		$v0, SPU_CTRL($a3)			# Set transfer mode to Stop
 	nop
 	andi	$v0, 0xffcf
-	sh		$v0, SPUCNT($a3)
+	sh		$v0, SPU_CTRL($a3)
 	jal		SpuCtrlSync
 	move	$a0, $v0
 	
@@ -58,10 +58,10 @@ SpuWrite:
 	nop
 	sh		$v1, SPU_ADDR($a3)
 	
-	lhu		$v0, SPUCNT($a3)			# Set transfer mode to DMA write
+	lhu		$v0, SPU_CTRL($a3)			# Set transfer mode to DMA write
 	nop
 	ori		$v0, 0x20
-	sh		$v0, SPUCNT($a3)
+	sh		$v0, SPU_CTRL($a3)
 	#jal		SpuCtrlSync				# Locks up on most emulators (bit 5 in
 	#move	$a0, $v0					# SPUSTAT likely not updating, seems to
 										# be okay to not wait for it on real HW)
@@ -69,13 +69,13 @@ SpuWrite:
 	lw		$a0, 4($sp)
 	
 .Ldma_wait:								# Wait for SPU to be ready for DMA
-	lhu		$v0, SPUSTAT($a3)
+	lhu		$v0, SPU_STAT($a3)
 	nop
 	andi	$v0, 0x400					# Bit 8 in SPUSTAT never changes to 1 on
 	bnez	$v0, .Ldma_wait				# emulators so use bit 10 instead
 	nop
 	
-	sw		$a0, D4_MADR($a3)			# Set DMA source address
+	sw		$a0, DMA4_MADR($a3)			# Set DMA source address
 	
 	li		$v0, 0x10					# 16 words per block (64 bytes)
 	addiu	$a1, 63						# Add by 63 to ensure all bytes get sent
@@ -83,11 +83,11 @@ SpuWrite:
 	andi	$a1, 0xffff
 	sll		$a1, 16
 	or		$v0, $a1
-	sw		$v0, D4_BCR($a3)
+	sw		$v0, DMA4_BCR($a3)
 	
 	lui		$v0, 0x0100					# Commence transfer
 	ori		$v0, 0x0201
-	sw		$v0, D4_CHCR($a3)
+	sw		$v0, DMA4_CHCR($a3)
 	
 	lw		$ra, 0($sp)
 	addiu	$sp, 8

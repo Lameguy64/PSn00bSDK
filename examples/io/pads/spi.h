@@ -9,8 +9,9 @@
 #include <stdint.h>
 #include <psxpad.h>
 
-// Maximum request/response length (34 bytes for pads, 140 for memory cards)
-//#define SPI_BUFF_LEN 34
+// Maximum request/response length (34 bytes for pads, 140 for memory cards).
+// Must be a multiple of 4 to avoid memory alignment issues.
+//#define SPI_BUFF_LEN 36
 #define SPI_BUFF_LEN 140
 
 /* Request structures */
@@ -29,6 +30,10 @@ typedef struct _SPI_Request {
 } SPI_Request;
 
 /* Public API */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @brief Allocates a new request object and adds it to the request queue. The
@@ -49,7 +54,7 @@ void SPI_SetPollRate(uint32_t value);
 /**
  * @brief Installs the SPI and timer 2 interrupt handlers and starts the poll
  * timer. By default the polling rate is set to 250 Hz (125 Hz per port),
- * however it can be changed at any time by calling spi_set_poll_rate().
+ * however it can be changed at any time by calling SPI_SetPollRate().
  *
  * The provided callback (if any) is called to report the result of poll
  * requests, which are issued automatically when no other request is in the
@@ -58,5 +63,9 @@ void SPI_SetPollRate(uint32_t value);
  * @param callback
  */
 void SPI_Init(SPI_Callback callback);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

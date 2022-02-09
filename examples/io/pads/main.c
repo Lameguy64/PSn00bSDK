@@ -15,12 +15,12 @@
  * but the code in spi.c can be used to read/write sectors on a memory card and
  * combined with a higher-level filesystem driver for full support.
  *
- * IMPORTANT: this example hasn't yet been tested on real hardware and/or with
- * unofficial controllers, which might behave differently at higher poll rates.
- * Also keep in mind that many emulators emulate controllers and memory cards
- * inaccurately. It is thus recommended to test controller I/O code extensively
- * and handle as many edge cases as possible (e.g. partial but valid responses,
- * zerofilled responses, slow replies) for maximum compatibility.
+ * IMPORTANT: some controller models seem to be unable to respond to config
+ * mode commands reliably, even though simple high-speed polling usually works
+ * without issues. Also keep in mind that many emulators emulate controllers
+ * and memory cards inaccurately. It is thus recommended to test controller I/O
+ * code extensively and handle as many edge cases as possible (e.g. partial but
+ * valid responses, zerofilled responses, slow replies) for best compatibility.
  */
 
 #include <stdint.h>
@@ -116,7 +116,7 @@ void display(CONTEXT *ctx) {
 
 static volatile uint8_t  pad_buff[2][34];
 static volatile size_t   pad_buff_len[2];
-static volatile uint32_t pad_digital_only[2] = { 0, 0 };
+static volatile uint32_t pad_config_attempt[2] = { 0, 0 };
 
 // Just a wrapper around SPI_CreateRequest(). This does not send the command
 // immediately but adds it to the driver's request queue.
@@ -148,7 +148,8 @@ void send_pad_cmd(
 
 // This callback determines whether a pad that identified as digital is
 // actually a DualShock in digital mode by checking if it started identifying
-// as CONFIG_MODE after receiving a configuration command.
+// as CONFIG_MODE after receiving a configuration command. Calls to printf()
+// had to be commented out due to them being too slow.
 void dualshock_init_cb(uint32_t port, const volatile uint8_t *buff, size_t rx_len) {
 	PadResponse *pad = (PadResponse *) buff;
 
@@ -157,13 +158,13 @@ void dualshock_init_cb(uint32_t port, const volatile uint8_t *buff, size_t rx_le
 		(pad->prefix != 0x5a) ||
 		(pad->type != PAD_ID_CONFIG_MODE)
 	) {
-		printf("no, pad is digital-only (len = %d)\n", rx_len);
+		//printf("no, pad is digital-only (len = %d)\n", rx_len);
 
-		pad_digital_only[port] = 1;
+		pad_config_attempt[port]++;
 		return;
 	}
 
-	printf("yes, forcing analog mode (len = %d)\n", rx_len);
+	//printf("yes, forcing analog mode (len = %d)\n", rx_len);
 
 	// Issue further commands to force analog mode on, unlock rumble (not used
 	// in this example) and enable longer responses containing button pressure
@@ -171,6 +172,7 @@ void dualshock_init_cb(uint32_t port, const volatile uint8_t *buff, size_t rx_le
 	// TODO: find out if passing 0x03 instead of 0x02 in PAD_CMD_SET_ANALOG
 	// locks the analog button, as emulated by DuckStation...
 	// https://gist.github.com/scanlime/5042071
+	send_pad_cmd(port, PAD_CMD_CONFIG_MODE,     0x01, 0x00, 0);
 	send_pad_cmd(port, PAD_CMD_SET_ANALOG,      0x01, 0x02, 0);
 	send_pad_cmd(port, PAD_CMD_INIT_PRESSURE,   0x00, 0x00, 0); // Ignored by DualShock 1
 	send_pad_cmd(port, PAD_CMD_REQUEST_CONFIG,  0x00, 0x01, 0);
@@ -189,29 +191,37 @@ void poll_cb(uint32_t port, const volatile uint8_t *buff, size_t rx_len) {
 
 	PadResponse *pad = (PadResponse *) buff;
 
-	// If this pad identifies as a digital pad and hasn't been flagged as a
-	// digital-only pad already, attempt to put it into analog mode by entering
-	// configuration mode. It this fails, it will be flagged as digital-only.
-	// The digital-only flag is reset when the controller is unplugged or stops
+	// If this pad identifies as a digital pad, attempt to put it into analog
+	// mode up to 3 times by entering configuration mode. Once the attempt
+	// counter exceeds the threshold, it will be treated as digital-only. The
+	// attempt counter is reset when the controller is unplugged or stops
 	// returning digital pad responses.
+	// NOTE: according to nocash docs, there is a hardware bug in DualShock
+	// controllers that causes the prefix byte (normally 0x5a) to turn into
+	// 0x00 if the analog button is pressed after config commands have been
+	// used.
 	if (
 		rx_len &&
-		(pad->prefix == 0x5a) &&
+		((pad->prefix == 0x5a) || !(pad->prefix)) &&
 		(pad->type == PAD_ID_DIGITAL)
 	) {
-		if (!pad_digital_only[port]) {
-			printf("Detecting if pad %d supports config mode... ", port + 1);
+		if (pad_config_attempt[port] < 3) {
+			/*printf(
+				"Detecting if pad %d supports config mode: attempt %d... ",
+				port + 1,
+				pad_config_attempt[port] + 1
+			);*/
 
 			// The pad only identifies as CONFIG_MODE after at least another
 			// command is sent.
 			send_pad_cmd(port, PAD_CMD_CONFIG_MODE, 0x01, 0x00, 0);
-			send_pad_cmd(port, PAD_CMD_CONFIG_MODE, 0x01, 0x00, &dualshock_init_cb);
+			send_pad_cmd(port, PAD_CMD_READ,        0x00, 0x00, &dualshock_init_cb);
 		}
 
 	} else {
-		//printf("Clearing digital-only flag for pad %d\n", port + 1);
+		//printf("Clearing attempt counter for pad %d\n", port + 1);
 
-		pad_digital_only[port] = 0;
+		pad_config_attempt[port] = 0;
 	}
 }
 
@@ -240,11 +250,6 @@ int main(int argc, const char* argv[]) {
 
 			PadResponse *pad = (PadResponse *) pad_buff[port];
 
-			// According to nocash docs, there is a hardware bug in DualShock
-			// controllers that causes the prefix byte (normally 0x5a) to turn
-			// into 0x00 if the analog button is pressed after configuration
-			// commands have been used. Thus making sure the prefix is 0x5a
-			// isn't enough to reliably detect pads.
 			/*if ((pad->prefix != 0x5a) && (pad->type != PAD_ID_ANALOG)) {
 				FntPrint(-1, "\n\nPORT %d: INVALID RESPONSE\n", port + 1);
 				if ((counter % 64) < 32)

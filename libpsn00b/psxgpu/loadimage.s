@@ -56,12 +56,12 @@ LoadImage:
 	sll		$v1, 0x10
 	ori		$v1, 0x8
 
-	sw		$a1, D2_MADR($s0)	# Set DMA base address and transfer length
-	sw		$v1, D2_BCR($s0)
+	sw		$a1, DMA2_MADR($s0)	# Set DMA base address and transfer length
+	sw		$v1, DMA2_BCR($s0)
 
 	lui		$v0, 0x100			# Start DMA transfer
 	ori		$v0, 0x201
-	sw		$v0, D2_CHCR($s0)
+	sw		$v0, DMA2_CHCR($s0)
 
 	lw		$ra, 0($sp)
 	lw		$s0, 4($sp)

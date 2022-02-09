@@ -42,10 +42,10 @@ ResetGraph:
 
 	lui		$v0, 0x3b33					# Enables DMA channel 6 (for ClearOTag)
 	ori		$v0, 0x3b33					# Enables DMA channel 2
-	sw		$v0, DPCR($a3)
-	sw		$0 , DICR($a3)				# Clear DICR (not needed)
+	sw		$v0, DMA_DPCR($a3)
+	sw		$0 , DMA_DICR($a3)			# Clear DICR (not needed)
 
-	sw		$0 , IMASK($a3)				# Clear IRQ settings
+	sw		$0 , IRQ_MASK($a3)			# Clear IRQ settings
 	
 	la		$v0, _hooks_installed		# Set installed flag
 	li		$v1, 0x1
@@ -102,7 +102,7 @@ ResetGraph:
 										# by previous calls)
 
 	li		$v0, 0x1d00					# Configure timer 1 as Hblank counter
-	sw		$v0, T1_MODE($a3)			# Set timer 1 value
+	sw		$v0, TIM1_CTRL($a3)			# Set timer 1 value
 	
 	beq		$a0, 1, .Lgpu_init_1
 	nop
@@ -116,7 +116,7 @@ ResetGraph:
 
 .Lgpu_init_1:
 
-	sw		$0 , D2_CHCR($a3)			# Stop any DMA
+	sw		$0 , DMA2_CHCR($a3)			# Stop any DMA
 
 .Lgpu_init_3:
 
@@ -143,9 +143,9 @@ VSync:
 	lw		$s0, GP1($a3)
 	
 .Lhwait_loop:							# Get Hblank time
-	lw		$v0, T1_CNT($a3)
+	lw		$v0, TIM1_VALUE($a3)
 	nop
-	lw		$v1, T1_CNT($a3)
+	lw		$v1, TIM1_VALUE($a3)
 	nop
 	bne		$v0, $v1, .Lhwait_loop
 	nop
@@ -208,9 +208,9 @@ VSync:
 	la		$a2, _vsync_lasthblank
 	
 .Lhwait2_loop:
-	lw		$v0, T1_CNT($a3)
+	lw		$v0, TIM1_VALUE($a3)
 	nop
-	lw		$v1, T1_CNT($a3)
+	lw		$v1, TIM1_VALUE($a3)
 	sw		$v0, 0($a2)
 	bne		$v0, $v1, .Lhwait2_loop
 	nop

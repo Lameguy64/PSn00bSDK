@@ -11,8 +11,8 @@
  * SPU ADPCM data (one for each channel, so a stereo stream would have 2
  * buffers per chunk). All buffers in a chunk are played simultaneously using
  * multiple SPU channels; each buffer has the loop flag set at the end, so each
- * channel will jump to its loop address (SPU_CHANNELS[n].loop_addr) once the
- * chunk is played.
+ * channel will jump to its loop address (SPU_CH_LOOP_ADDR(n)) once the chunk
+ * is played.
  *
  * Since the loop point doesn't necessarily have to be within the chunk itself,
  * we can abuse it to "queue" another set of buffers to be played immediately
@@ -94,6 +94,7 @@
 #include <psxpad.h>
 #include <psxspu.h>
 #include <psxcd.h>
+#include <hwregs_c.h>
 
 // To maximize STREAM.BIN packing efficiency and get rid of padding between
 // chunks, buffer size should be a multiple of sector size (2048 bytes). Buffer
@@ -105,27 +106,6 @@
 #define NUM_CHANNELS	2
 #define CHANNEL_MASK	0x03
 
-/* Register definitions */
-
-// For some reason SpuVoiceRaw doesn't actually match the layout of SPU
-// registers, so here we go.
-typedef struct {
-	uint16_t	vol_left;
-	uint16_t	vol_right;
-	uint16_t	freq;
-	uint16_t	addr;
-	uint32_t	adsr_param;
-	uint16_t	_reserved;
-	uint16_t	loop_addr;
-} SPUChannel;
-
-#define SPU_CTRL		*((volatile uint16_t *) 0x1f801daa)
-#define SPU_IRQ_ADDR	*((volatile uint16_t *) 0x1f801da4)
-#define SPU_KEY_ON		*((volatile uint32_t *) 0x1f801d88)
-#define SPU_KEY_OFF		*((volatile uint32_t *) 0x1f801d8c)
-
-// SPU RAM is addressed in 8-byte units, using 16-bit pointers.
-#define SPU_CHANNELS	((volatile SPUChannel *) 0x1f801c00)
 #define SPU_RAM_ADDR(x)	((uint16_t) (((uint32_t) (x)) >> 3))
 
 /* Display/GPU context utilities */
@@ -252,7 +232,7 @@ void spu_irq_handler(void) {
 	SPU_IRQ_ADDR     = SPU_RAM_ADDR(str_ctx.spu_addr);
 
 	for (uint32_t i = 0; i < NUM_CHANNELS; i++)
-		SPU_CHANNELS[i].loop_addr = SPU_RAM_ADDR(str_ctx.spu_addr + BUFFER_SIZE * i);
+		SPU_CH_LOOP_ADDR(i) = SPU_RAM_ADDR(str_ctx.spu_addr + BUFFER_SIZE * i);
 
 	// Start loading the next chunk. cd_event_handler() will be called
 	// repeatedly for each sector until the entire chunk is read.
@@ -317,7 +297,7 @@ void init_spu_channels(void) {
 	SPU_KEY_OFF = 0x00ffffff;
 
 	for (uint32_t i = 0; i < 24; i++)
-		SPU_CHANNELS[i].addr = SPU_RAM_ADDR(DUMMY_BLOCK_ADDR);
+		SPU_CH_ADDR(i) = SPU_RAM_ADDR(DUMMY_BLOCK_ADDR);
 
 	SPU_KEY_ON = 0x00ffffff;
 }
@@ -347,18 +327,18 @@ void start_stream(void) {
 	SPU_KEY_OFF = CHANNEL_MASK;
 
 	for (uint32_t i = 0; i < NUM_CHANNELS; i++) {
-		SPU_CHANNELS[i].addr       = SPU_RAM_ADDR(BUFFER_START_ADDR + BUFFER_SIZE * i);
-		SPU_CHANNELS[i].freq       = SAMPLE_RATE;
-		SPU_CHANNELS[i].adsr_param = 0x1fee80ff; // or 0x9fc080ff, 0xdff18087
+		SPU_CH_ADDR(i) = SPU_RAM_ADDR(BUFFER_START_ADDR + BUFFER_SIZE * i);
+		SPU_CH_FREQ(i) = SAMPLE_RATE;
+		SPU_CH_ADSR(i) = 0x1fee80ff; // or 0x9fc080ff, 0xdff18087
 	}
 
 	// Unmute the channels and route them for stereo output. You'll want to
 	// edit this if you are using more than 2 channels, and/or if you want to
 	// provide an option to output mono audio instead of stereo.
-	SPU_CHANNELS[0].vol_left  = 0x3fff;
-	SPU_CHANNELS[0].vol_right = 0x0000;
-	SPU_CHANNELS[1].vol_left  = 0x0000;
-	SPU_CHANNELS[1].vol_right = 0x3fff;
+	SPU_CH_VOL_L(0) = 0x3fff;
+	SPU_CH_VOL_R(0) = 0x0000;
+	SPU_CH_VOL_L(1) = 0x0000;
+	SPU_CH_VOL_R(1) = 0x3fff;
 
 	SPU_KEY_ON = CHANNEL_MASK;
 	spu_irq_handler();
@@ -446,7 +426,7 @@ int main(int argc, const char* argv[]) {
 		// Only set the sample rate registers if necessary.
 		if (pad->btn != 0xffff) {
 			for (uint32_t i = 0; i < NUM_CHANNELS; i++)
-				SPU_CHANNELS[i].freq = sample_rate;
+				SPU_CH_FREQ(i) = sample_rate;
 		}
 
 		last_buttons = pad->btn;
