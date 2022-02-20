@@ -40,8 +40,10 @@
 #include <psxapi.h>
 #include <psxspu.h>
 
-#include "0proyt.h"
-#include "threedeeffeggzz.h"
+extern const unsigned char	proyt[];
+extern const int			proyt_size;
+extern const unsigned char	tdfx[];
+extern const int			tdfx_size;
 
 // Define display/draw environments for double buffering
 DISPENV disp[2];

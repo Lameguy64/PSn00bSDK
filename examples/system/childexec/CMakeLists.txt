@@ -11,17 +11,16 @@ project(
 	HOMEPAGE_URL "http://lameguy64.net/?page=psn00bsdk"
 )
 
-configure_file(child_exe.s.template child_exe.s)
-
 file(GLOB _sources *.c)
 file(GLOB _child_sources child/*.c)
-psn00bsdk_add_executable(
-	parent STATIC
-	${_sources}
-	${PROJECT_BINARY_DIR}/child_exe.s
-)
+psn00bsdk_add_executable(parent STATIC ${_sources})
 psn00bsdk_add_executable(child STATIC ${_child_sources})
 #psn00bsdk_add_cd_image(childexec_iso childexec iso.xml DEPENDS parent)
+
+psn00bsdk_target_incbin(
+	parent PRIVATE child_exe
+	${PROJECT_BINARY_DIR}/child.exe
+)
 
 # Relocate the child executable to a non-default address to prevent it from
 # overlapping with the main one at 0x80010000.
@@ -30,8 +29,7 @@ psn00bsdk_add_executable(child STATIC ${_child_sources})
 # dynamically-allocated buffer), consider using a DLL instead.
 target_link_options(child PRIVATE -Ttext=0x80030000)
 
-# Make sure the child executable is built before the parent (so it can be
-# embedded via child_exe.s).
+# Make sure the child executable is built before the parent.
 add_dependencies(parent child)
 
 install(FILES ${PROJECT_BINARY_DIR}/parent.exe TYPE BIN)

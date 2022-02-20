@@ -11,14 +11,10 @@ project(
 	HOMEPAGE_URL "http://lameguy64.net/?page=psn00bsdk"
 )
 
-configure_file(data.s.template data.s)
-
 file(GLOB _sources *.s *.c)
-psn00bsdk_add_executable(
-	tilesasm STATIC
-	${_sources}
-	${PROJECT_BINARY_DIR}/data.s
-)
+psn00bsdk_add_executable(tilesasm STATIC ${_sources})
 #psn00bsdk_add_cd_image(tilesasm_iso tilesasm iso.xml DEPENDS tilesasm)
+
+psn00bsdk_target_incbin(tilesasm PRIVATE tim_tileset tiles_256.tim)
 
 install(FILES ${PROJECT_BINARY_DIR}/tilesasm.exe TYPE BIN)

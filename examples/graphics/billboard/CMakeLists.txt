@@ -11,14 +11,10 @@ project(
 	HOMEPAGE_URL "http://lameguy64.net/?page=psn00bsdk"
 )
 
-configure_file(tim.s.template tim.s)
-
 file(GLOB _sources *.c)
-psn00bsdk_add_executable(
-	billboard STATIC
-	${_sources}
-	${PROJECT_BINARY_DIR}/tim.s
-)
+psn00bsdk_add_executable(billboard STATIC ${_sources})
 #psn00bsdk_add_cd_image(billboard_iso billboard iso.xml DEPENDS billboard)
+
+psn00bsdk_target_incbin(billboard PRIVATE tim_image texture64.tim)
 
 install(FILES ${PROJECT_BINARY_DIR}/billboard.exe TYPE BIN)

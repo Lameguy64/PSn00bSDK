@@ -1,9 +1,0 @@
-# Assembler file for including the texture file in a more elegant manner
-
-.section .data
-
-.global tim_blendpattern
-.type tim_blendpattern, @object
-tim_blendpattern:
-	.balign 4 # Required to correctly parse and load the image
-	.incbin "${PROJECT_SOURCE_DIR}/blendpattern-16c.tim"

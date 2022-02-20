@@ -11,14 +11,10 @@ project(
 	HOMEPAGE_URL "http://lameguy64.net/?page=psn00bsdk"
 )
 
-configure_file(tim.s.template tim.s)
-
 file(GLOB _sources *.c)
-psn00bsdk_add_executable(
-	rgb24 STATIC
-	${_sources}
-	${PROJECT_BINARY_DIR}/tim.s
-)
+psn00bsdk_add_executable(rgb24 STATIC ${_sources})
 #psn00bsdk_add_cd_image(rgb24_iso rgb24 iso.xml DEPENDS rgb24)
+
+psn00bsdk_target_incbin(rgb24 PRIVATE tim_image bunpattern.tim)
 
 install(FILES ${PROJECT_BINARY_DIR}/rgb24.exe TYPE BIN)

@@ -26,7 +26,19 @@ set(PSN00BSDK_SYMBOL_MAP_SUFFIX     ".map")
 ## SDK libraries
 
 # DON'T CHANGE THE ORDER or you'll break the libraries' internal dependencies.
-set(PSN00BSDK_LIBRARIES psxgpu psxgte psxspu psxcd psxsio psxetc psxapi lzp c)
+set(
+	PSN00BSDK_LIBRARIES
+		psxgpu
+		psxgte
+		psxspu
+		psxcd
+		#psxpress
+		psxsio
+		psxetc
+		psxapi
+		lzp
+		c
+)
 
 include(${CMAKE_CURRENT_LIST_DIR}/libpsn00b.cmake OPTIONAL)
 include(${CMAKE_CURRENT_LIST_DIR}/flags.cmake)
@@ -166,12 +178,15 @@ function(psn00bsdk_add_cd_image name image_name config_file)
 		message(FATAL_ERROR "Failed to locate mkpsxiso. If mkpsxiso wasn't installed alongside the SDK, check your PATH environment variable.")
 	endif()
 
-	set(CD_IMAGE_NAME ${image_name})
-	configure_file(${config_file} _gen_${config_file})
+	cmake_path(HASH config_file _hash)
+
+	set(CD_IMAGE_NAME  ${image_name})
+	set(CD_CONFIG_FILE cd_image_${_hash}.xml)
+	configure_file(${config_file} ${CD_CONFIG_FILE})
 
 	add_custom_target(
 		${name} ALL
-		COMMAND    ${MKPSXISO} -y -q _gen_${config_file}
+		COMMAND    ${MKPSXISO} -y -q ${CD_CONFIG_FILE}
 		BYPRODUCTS ${image_name}.bin ${image_name}.cue
 		COMMENT    "Building CD image ${image_name}"
 		${ARGN}
@@ -180,4 +195,48 @@ endfunction()
 
 ## Helper functions for assets
 
-# TODO: add them
+# psn00bsdk_target_incbin(
+#   <existing target name> <PRIVATE|PUBLIC|INTERFACE>
+#   <symbol name>
+#   <path to binary file>
+# )
+function(psn00bsdk_target_incbin name type symbol_name path)
+	string(MAKE_C_IDENTIFIER ${symbol_name} _id)
+	cmake_path(ABSOLUTE_PATH path OUTPUT_VARIABLE _path)
+
+	# Generate an assembly source file that includes the binary file and add it
+	# to the target's sources. The file is also added as a depedency to ensure
+	# CMake builds it before the target (if it's not a static file).
+	set(_asm_file ${PROJECT_BINARY_DIR}/incbin_${name}_${_id}.s)
+	file(
+		CONFIGURE
+		OUTPUT  ${_asm_file}
+		CONTENT [[
+.section .data.${_id}
+.balign 4
+
+.global ${_id}
+.type ${_id}, @object
+${_id}:	
+	.incbin "${_path}"
+
+.local ${_id}_end
+${_id}_end:
+
+.balign 4
+
+.global ${_id}_size
+.type ${_id}_size, @object
+${_id}_size:
+	.int (${_id}_end - ${_id})
+
+.size ${_id}, (${_id}_end - ${_id})
+.size ${_id}_size, 4
+]]
+		ESCAPE_QUOTES
+		NEWLINE_STYLE LF
+	)
+
+	target_sources(${name} ${type} ${_asm_file})
+	set_source_files_properties(${_asm_file} PROPERTIES OBJECT_DEPENDS ${_path})
+endfunction()
