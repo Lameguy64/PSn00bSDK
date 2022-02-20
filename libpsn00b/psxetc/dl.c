@@ -587,7 +587,8 @@ DLL *DL_CreateDLL(void *ptr, size_t size, DL_ResolveMode mode) {
 	if (ctor_list) {
 		for (uint32_t i = ((uint32_t) ctor_list[0]); i >= 1; i--) {
 			void (*ctor)(void) = (void (*)(void)) ctor_list[i];
-			DL_CALL(ctor);
+			DL_PRE_CALL(ctor);
+			ctor();
 		}
 	}
 
@@ -619,7 +620,8 @@ void DL_DestroyDLL(DLL *dll) {
 		if (dtor_list) {
 			for (uint32_t i = 0; i < ((uint32_t) dtor_list[0]); i++) {
 				void (*dtor)(void) = (void (*)(void)) dtor_list[i + 1];
-				DL_CALL(dtor);
+				DL_PRE_CALL(dtor);
+				dtor();
 			}
 		}
 	}

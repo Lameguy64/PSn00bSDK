@@ -57,7 +57,7 @@
 // call them. Placing this array in the .dummy section (as defined in the
 // PSn00bSDK linker script) ensures it won't be stripped away until all
 // functions are in place.
-const void *const DO_NOT_STRIP[] __attribute__((section(".dummy"))) = {
+void *DO_NOT_STRIP[] __attribute__((section(".dummy"))) = {
 	&rand,
 	&InitGeom,
 	&RotMatrix,
@@ -244,14 +244,18 @@ void load_dll(const char *filename) {
 	printf("DLL init() @ %08x, render() @ %08x\n", dll_api.init, dll_api.render);
 
 	// Unfortunately, due to how position-independent code works, function
-	// pointers returned by DL_GetDLLSymbol() can't be called directly. We have
-	// to use the DL_CALL() macro instead, which sets up register $t9 to ensure
-	// the function can locate and reference the DLL's relocation table.
-	DL_CALL(dll_api.init, &ctx);
-
+	// pointers returned by DL_GetDLLSymbol() can't be called without first
+	// initializing register $t9. We have to use the DL_PRE_CALL() macro, which
+	// sets up $t9 to ensure the function can locate and reference the DLL's
+	// relocation table.
+	DL_PRE_CALL(dll_api.init);
+	dll_api.init(&ctx);
 }
 
 int main(int argc, const char* argv[]) {
+	// Reference the dummy array to prevent it from being stripped.
+	void **dummy = DO_NOT_STRIP;
+
 	init_context(&ctx);
 
 	SHOW_STATUS("INITIALIZING CD\n");
@@ -289,7 +293,8 @@ int main(int argc, const char* argv[]) {
 
 	while (1) {
 		// Use the currently loaded DLL to render a frame.
-		DL_CALL(dll_api.render, &ctx, last_buttons);
+		DL_PRE_CALL(dll_api.render);
+		dll_api.render(&ctx, last_buttons);
 
 		FntPrint(-1, "MAIN: DLL ADDR=%08x SIZE=%d\n", dll->ptr, dll->size);
 		FntPrint(-1, "MAIN: %d FUNCTIONS RESOLVED\n", resolve_counter);

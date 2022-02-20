@@ -1,28 +1,28 @@
-#include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 
-extern "C"
+extern "C" void __cxa_pure_virtual(void) {
+	printf("__cxa_pure_virtual()\n");
 
-void __cxa_pure_virtual(void) {
-    /* Pure C++ virtual call; abort! */
-    assert(false);
+	for (;;)
+		__asm__ volatile("");
 }
 
 void* operator new(size_t size) {
-    return malloc(size);
+	return malloc(size);
 }
 
 void* operator new[](size_t size) {
-    return malloc(size);
+	return malloc(size);
 }
 
 void operator delete(void* ptr) {
-    free(ptr);
+	free(ptr);
 }
 
 void operator delete[](void* ptr) {
-    free(ptr);
+	free(ptr);
 }
 
 /*-
@@ -35,5 +35,5 @@ void operator delete[](void* ptr) {
  *
  * A memory allocator can use the given size to be more efficient */
 void operator delete(void* ptr, unsigned int) {
-    free(ptr);
+	free(ptr);
 }
