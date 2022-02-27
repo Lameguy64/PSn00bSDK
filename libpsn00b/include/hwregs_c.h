@@ -19,8 +19,8 @@
 
 /* GPU */
 
-#define GP0					_MMIO32(0x1f801810)
-#define GP1					_MMIO32(0x1f801814)
+#define GPU_GP0				_MMIO32(0x1f801810)
+#define GPU_GP1				_MMIO32(0x1f801814)
 
 /* CD drive */
 
@@ -109,9 +109,9 @@
 
 /* Timers */
 
-#define TIM_VALUE(N)		_MMIO32(0x1f801100 + 16 * (N))
-#define TIM_CTRL(N)			_MMIO32(0x1f801104 + 16 * (N))
-#define TIM_RELOAD(N)		_MMIO32(0x1f801108 + 16 * (N))
+#define TIMER_VALUE(N)		_MMIO32(0x1f801100 + 16 * (N))
+#define TIMER_CTRL(N)		_MMIO32(0x1f801104 + 16 * (N))
+#define TIMER_RELOAD(N)		_MMIO32(0x1f801108 + 16 * (N))
 
 /* Memory control */
 

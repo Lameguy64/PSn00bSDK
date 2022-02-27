@@ -8,8 +8,8 @@
 
 ## GPU
 
-.set GP0,				0x1810		# Also GPUREAD
-.set GP1,				0x1814		# Also GPUSTAT
+.set GPU_GP0,			0x1810		# Also GPUREAD
+.set GPU_GP1,			0x1814		# Also GPUSTAT
 
 ## CD drive
 
@@ -123,17 +123,17 @@
 
 ## Timers
 
-.set TIM0_VALUE,		0x1100
-.set TIM0_CTRL,			0x1104
-.set TIM0_RELOAD,		0x1108
+.set TIMER0_VALUE,		0x1100
+.set TIMER0_CTRL,		0x1104
+.set TIMER0_RELOAD,		0x1108
 
-.set TIM1_VALUE,		0x1110
-.set TIM1_CTRL,			0x1114
-.set TIM1_RELOAD,		0x1118
+.set TIMER1_VALUE,		0x1110
+.set TIMER1_CTRL,		0x1114
+.set TIMER1_RELOAD,		0x1118
 
-.set TIM2_VALUE,		0x1120
-.set TIM2_CTRL,			0x1124
-.set TIM2_RELOAD,		0x1128
+.set TIMER2_VALUE,		0x1120
+.set TIMER2_CTRL,		0x1124
+.set TIMER2_RELOAD,		0x1128
 
 ## Memory control
 

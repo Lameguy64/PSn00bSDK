@@ -102,7 +102,7 @@ PutDispEnv:
 	or		$a2, $v0
 	lui		$v0, 0x0600
 	or		$v0, $a2
-	sw		$v0, GP1($a3)
+	sw		$v0, GPU_GP1($a3)
 
 	# Vertical resolution
 
@@ -127,7 +127,7 @@ PutDispEnv:
 	or		$v1, $a2
 	lui		$v0, 0x0700
 	or		$v1, $v0
-	sw		$v1, GP1($a3)
+	sw		$v1, GPU_GP1($a3)
 
 	# Video mode
 
@@ -159,7 +159,7 @@ PutDispEnv:
 
 	lui		$v0, 0x800					# Apply mode
 	or		$a1, $v0
-	sw		$a1, GP1($a3)
+	sw		$a1, GPU_GP1($a3)
 
 	lhu		$v0, DISP_dx($a0)			# Set VRAM XY offset
 	lhu		$v1, DISP_dy($a0)
@@ -171,4 +171,4 @@ PutDispEnv:
 	or		$v0, $v1
 
 	jr		$ra
-	sw		$v0, GP1($a3)
+	sw		$v0, GPU_GP1($a3)

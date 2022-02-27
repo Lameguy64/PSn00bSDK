@@ -84,7 +84,7 @@ _drawsync_handler:
 	lw		$v1, 0($v1)
 	
 	lui		$v0, 0x0400			# Set DMA direction to off
-	sw		$v0, GP1($a0)
+	sw		$v0, GPU_GP1($a0)
 	
 	jalr	$v1
 	nop

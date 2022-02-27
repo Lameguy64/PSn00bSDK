@@ -18,7 +18,7 @@ DrawPrim:
 	
 	lui		$a3, IOBASE
 	lui		$v0, 0x0400			# Set transfer direction to off
-	sw		$v0, GP1($a3)
+	sw		$v0, GPU_GP1($a3)
 	
 	move	$a0, $s0
 	lbu		$a1, 3($a0)			# Get length of primitive packet
@@ -28,7 +28,7 @@ DrawPrim:
 .Ltransfer_loop:
 	lw		$v0, 0($a0)
 	addiu	$a0, 4
-	sw		$v0, GP0($a3)
+	sw		$v0, GPU_GP0($a3)
 	bgtz	$a1, .Ltransfer_loop
 	addiu	$a1, -1
 

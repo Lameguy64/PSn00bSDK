@@ -41,7 +41,7 @@ SetVideoMode:
 	lui		$v0, 0x800				# Apply new mode
 	or		$a1, $v0
 	lui		$v0, IOBASE
-	sw		$a1, GP1($v0)
+	sw		$a1, GPU_GP1($v0)
 
 	lw		$ra, 0($sp)
 	addiu	$sp, 4

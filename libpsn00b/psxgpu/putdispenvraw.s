@@ -19,7 +19,7 @@ PutDispEnvRaw:
 	sw		$ra, 0($sp)
 	sw		$s0, 4($sp)
 
-	lui		$s0, 0x1f80
+	lui		$s0, IOBASE
 
 	lh		$at, DISP_vxpos($a0)	# Set horizontal display range
 	li		$v0, 608
@@ -30,7 +30,7 @@ PutDispEnvRaw:
 	or		$v0, $v1
 	lui		$v1, 0x600
 	or		$v1, $v0
-	sw		$v1, GP1($s0)
+	sw		$v1, GPU_GP1($s0)
 
 	lh		$at, DISP_vypos($a0)	# Set vertical display range (for NTSC)
 	li		$v1, 120				# (values differet for PAL modes)
@@ -47,12 +47,12 @@ PutDispEnvRaw:
 	or		$v0, $at
 	lui		$at, 0x700
 	or		$v0, $at
-	sw		$v0, GP1($s0)
+	sw		$v0, GPU_GP1($s0)
 
 	lw		$v0, DISP_mode($a0)		# Set video mode
 	lui		$at, 0x800
 	or		$v0, $at
-	sw		$v0, GP1($s0)
+	sw		$v0, GPU_GP1($s0)
 
 	lhu		$v0, DISP_fbx($a0)		# Set VRAM XY offset
 	lhu		$v1, DISP_fby($a0)
@@ -62,7 +62,7 @@ PutDispEnvRaw:
 	or		$v0, $v1
 	lui		$v1, 0x500
 	or		$v0, $v1
-	sw		$v0, GP1($s0)
+	sw		$v0, GPU_GP1($s0)
 
 	lw		$ra, 0($sp)
 	lw		$s0, 4($sp)

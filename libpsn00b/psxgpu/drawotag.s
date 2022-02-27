@@ -11,11 +11,11 @@ DrawOTag:
 	addiu	$sp, -4
 	sw		$ra, 0($sp)
 
-	lui		$a3, 0x1f80			# I/O segment base
+	lui		$a3, IOBASE			# I/O segment base
 
 	lui		$v0, 0x0400			# Set DMA direction to CPUtoGPU
 	ori		$v0, 0x2
-	sw		$v0, GP1($a3)
+	sw		$v0, GPU_GP1($a3)
 	
 .Lgpu_wait:						# Wait for GPU to be ready for commands & DMA
 	jal		ReadGPUstat

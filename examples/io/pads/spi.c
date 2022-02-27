@@ -179,12 +179,12 @@ SPI_Request *SPI_CreateRequest(void) {
 }
 
 void SPI_SetPollRate(uint32_t value) {
-	TIM_CTRL(2) = 0x0258; // CLK/8 input, IRQ on reload, disable one-shot IRQ
+	TIMER_CTRL(2) = 0x0258; // CLK/8 input, IRQ on reload, disable one-shot IRQ
 
 	if (value < 65)
-		TIM_RELOAD(2) = 0xffff;
+		TIMER_RELOAD(2) = 0xffff;
 	else
-		TIM_RELOAD(2) = (F_CPU / 8) / value;
+		TIMER_RELOAD(2) = (F_CPU / 8) / value;
 }
 
 void SPI_Init(SPI_Callback callback) {
