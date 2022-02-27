@@ -19,6 +19,42 @@ to ensure the changelog can be parsed correctly.
 
 -------------------------------------------------------------------------------
 
+## 2022-02-27: 0.19
+
+spicyjpeg:
+
+- libpsn00b: Added `hwregs_c.h` header and renamed some registers in
+  `hwregs_a.h`. Added `assert()` as a proper macro.
+
+- psxpress: Added new MDEC library.
+
+- psxspu: Fixed critical bug in `SpuSetReverb()`.
+
+- psxetc: Fixed minor typos and bugs in `dlfcn.h`. Replaced `DL_CALL()` macro
+  with `DL_PRE_CALL()`.
+
+- psxapi: Rewritten all BIOS API stubs using a Python script and a JSON list,
+  both of which are included in the library's source directory.
+
+- examples: Updated `io/system573` with bugfixed I/O board code and separated
+  the APIs into a separate source file. Fixed timing bugs in `io/pads`.
+
+- mkpsxiso: Switched back to the master repository. The `dumpsxiso` command is
+  now included in PSn00bSDK installations.
+
+- Added `psn00bsdk_target_incbin()` and `psn00bsdk_target_incbin_a()` CMake
+  functions for quickly embedding binary files into executables and libraries.
+  The examples have been modified to use this function where applicable.
+
+- Added `LIBPSN00B_GENERATOR` CMake option to allow the host-side tools to be
+  compiled with MSVC or Xcode while still using Ninja or `make` to build the
+  libraries and examples. This is required as neither MSBuild nor Xcode support
+  custom toolchains.
+
+- Updated `LICENSE.md` with additional license information as well as a full
+  copy of the GPLv2 and GPLv3 (under which `mkpsxiso` and GCC are licensed
+  respectively).
+
 ## 2022-01-17
 
 Lameguy64:

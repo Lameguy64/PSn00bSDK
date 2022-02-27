@@ -108,7 +108,7 @@ jobs:
 
     - name: Install prerequisites
       run: |
-        pacman -S --noconfirm mingw-w64-x86_64-ninja mingw-w64-x86_64-gcc
+        pacman -S --noconfirm mingw-w64-x86_64-ninja
 
     - name: Fetch repo contents
       uses: actions/checkout@v2
@@ -118,7 +118,7 @@ jobs:
 
     - name: Build and package PSn00bSDK
       run: |
-        cmake --preset ci -S sdk -DPSN00BSDK_TC=${{ github.workspace }}\gcc\windows
+        cmake --preset ci -S sdk -G "Visual Studio 16 2019" -DPSN00BSDK_TC=${{ github.workspace }}\gcc\windows
         cmake --build build
         cmake --build build -t package
 
@@ -162,7 +162,7 @@ jobs:
 
     - name: Build and package PSn00bSDK
       run: |
-        cmake --preset ci -S sdk -DPSN00BSDK_TC=${{ github.workspace }}/gcc/linux
+        cmake --preset ci -S sdk -G "Ninja" -DPSN00BSDK_TC=${{ github.workspace }}/gcc/linux
         cmake --build build
         cmake --build build -t package
 

@@ -36,7 +36,7 @@
 			"cacheVariables": {
 				"CMAKE_BUILD_TYPE":     "Release",
 				"BUNDLE_TOOLCHAIN":     "ON",
-				"MKPSXISO_NO_LIBFLAC":  "ON",
+				"LIBPSN00B_GENERATOR":  "Ninja",
 				"PSN00BSDK_TARGET":     "$env{GCC_TARGET}",
 				"PSN00BSDK_GIT_TAG":    "$env{GITHUB_REF_NAME}",
 				"PSN00BSDK_GIT_COMMIT": "$env{GITHUB_SHA}"

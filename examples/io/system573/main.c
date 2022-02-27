@@ -1,15 +1,14 @@
 /*
  * PSn00bSDK Konami System 573 example
- * (C) 2021 spicyjpeg - MPL licensed
+ * (C) 2022 spicyjpeg - MPL licensed
  *
  * This is a minimal example demonstrating how to target the Konami System 573
  * using PSn00bSDK. The System 573 is a PS1-based arcade motherboard that
  * powered various Konami arcade games throughout the late 1990s, most notably
  * Dance Dance Revolution and other Bemani rhythm games. It came in several
  * configurations, with slightly different I/O connectors depending on the game
- * and two optional add-on modules (known as the "analog I/O" and "digital I/O"
- * boards respectively) providing light control outputs and, in the case of the
- * digital I/O board, MP3 audio playback.
+ * and optional add-on boards providing extra features such as light control
+ * outputs or MP3 audio playback.
  *
  * Unlike other arcade systems based on PS1 hardware, the 573 is mostly
  * identical to a regular PS1, with almost all custom extensions mapped into
@@ -62,60 +61,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <psxetc.h>
 #include <psxapi.h>
 #include <psxgpu.h>
-#include <psxpad.h>
 
-/* Register definitions */
+#include "k573io.h"
 
-#define EXP1_ADDR		*((volatile uint32_t *) 0x1f801000)
-#define EXP1_CTRL		*((volatile uint32_t *) 0x1f801008)
-
-#define K573_IN0		*((volatile uint16_t *) 0x1f400000)
-#define K573_IN1_L		*((volatile uint16_t *) 0x1f400004)
-#define K573_IN1_H		*((volatile uint16_t *) 0x1f400006)
-#define K573_IN2		*((volatile uint16_t *) 0x1f400008)
-#define K573_IN3_L		*((volatile uint16_t *) 0x1f40000c)
-#define K573_IN3_H		*((volatile uint16_t *) 0x1f40000e)
-#define K573_BANK		*((volatile uint16_t *) 0x1f500000)
-#define K573_WATCHDOG	*((volatile uint16_t *) 0x1f5c0000)
-
-#define K573_IDE_CS0	((volatile uint16_t *) 0x1f480000)
-#define K573_IDE_CS1	((volatile uint16_t *) 0x1f4c0000)
-#define K573_RTC		((volatile uint16_t *) 0x1f620000)
-#define K573_IO_BOARD	((volatile uint16_t *) 0x1f640000)
-
-typedef enum {
-	ANALOG_IO_LIGHTS0	= 0x20,
-	ANALOG_IO_LIGHTS1	= 0x22,
-	ANALOG_IO_LIGHTS2	= 0x24,
-	ANALOG_IO_LIGHTS3	= 0x26,
-
-	// The digital I/O board has a lot more registers than these, but there
-	// seems to be no DIGITAL_IO_LIGHTS6 register. WTF
-	DIGITAL_IO_LIGHTS1	= 0x70,
-	DIGITAL_IO_LIGHTS0	= 0x71,
-	DIGITAL_IO_LIGHTS3	= 0x72,
-	DIGITAL_IO_LIGHTS7	= 0x73,
-	DIGITAL_IO_LIGHTS4	= 0x7d,
-	DIGITAL_IO_LIGHTS5	= 0x7e,
-	DIGITAL_IO_LIGHTS2	= 0x7f
-} IO_BOARD_REG;
-
-// The 573's real-time clock chip is an M48T58, which behaves like a standard
-// 8 KB battery-backed SRAM with a bunch of special registers. Official games
-// store highscores and settings in RTC RAM.
-typedef enum {
-	RTC_CTRL			= 0x1ff8,
-	RTC_SECONDS			= 0x1ff9,
-	RTC_MINUTES			= 0x1ffa,
-	RTC_HOURS			= 0x1ffb,
-	RTC_DAY_OF_WEEK		= 0x1ffc,
-	RTC_DAY_OF_MONTH	= 0x1ffd,
-	RTC_MONTH			= 0x1ffe,
-	RTC_YEAR			= 0x1fff
-} RTC_REG;
+const char *const IO_BOARD_TYPES[] = {
+	"ANALOG",
+	"DIGITAL"
+};
 
 #define btoi(x) ((((x) >> 4) & 0xf) * 10 + ((x) & 0xf))
 
@@ -179,89 +133,6 @@ void display(CONTEXT *ctx) {
 	SetDispMask(1);
 }
 
-/* Input polling utilities */
-
-typedef struct {
-	uint8_t p1_joy, p1_btn;
-	uint8_t p2_joy, p2_btn;
-	uint8_t coin, dip_sw;
-} JAMMAInputs;
-
-void get_jamma_inputs(JAMMAInputs *output) {
-	uint16_t in1l = K573_IN1_L;
-	uint16_t in1h = K573_IN1_H;
-	uint16_t in2  = K573_IN2;
-	uint16_t in3l = K573_IN3_L;
-	uint16_t in3h = K573_IN3_H;
-	uint8_t  p1_btn, p2_btn, coin;
-
-	// Rearrange the bits read from the input register into something that's
-	// easier to parse and display. Refer to MAME for information on what each
-	// bit in the IN* registers does.
-	p1_btn  = ((in2  >> 15) & 0x0001);      // Bit 0   = start button
-	p1_btn |= ((in2  >>  8) & 0x0007) << 1; // Bit 1-3 = buttons 1-3
-	p1_btn |= ((in3l >>  8) & 0x0003) << 4; // Bit 4-5 = buttons 4-5
-	p1_btn |= ((in3l >> 11) & 0x0001) << 6; // Bit 6   = button 6
-	p2_btn  = ((in2  >>  7) & 0x0001);      // Bit 0   = start button
-	p2_btn |= ((in2  >>  4) & 0x0007) << 1; // Bit 1-3 = buttons 1-3
-	p2_btn |= ((in3h >>  8) & 0x0003) << 4; // Bit 4-5 = buttons 4-5
-	p2_btn |= ((in3h >> 11) & 0x0001) << 6; // Bit 6   = button 6
-	coin    = ((in1h >>  8) & 0x0003);      // Bit 0-1 = coin switches
-	coin   |= ((in1h >> 12) & 0x0001) << 2; // Bit 2   = service button
-	coin   |= ((in3l >> 10) & 0x0001) << 3; // Bit 3   = test button
-	coin   |= ((in1h >> 10) & 0x0003) << 4; // Bit 4-5 = PCMCIA cards
-
-	output->p1_joy = (in2 >> 8) & 0x000f;
-	output->p1_btn = p1_btn;
-	output->p2_joy = in2 & 0x000f;
-	output->p2_btn = p2_btn;
-	output->coin   = coin;
-	output->dip_sw = in1l & 0x000f;
-}
-
-/* I/O board (light control) utilities */
-
-// This function controls light outputs on analog I/O boards.
-void set_lights_analog(uint32_t lights) {
-	uint32_t bits;
-
-	bits  = (lights & 0x01010101) << 7; // Lamp n*8+0 -> bit n*8+7
-	bits |= (lights & 0x02020202) << 5; // Lamp n*8+1 -> bit n*8+6
-	bits |= (lights & 0x04040404) >> 1; // Lamp n*8+2 -> bit n*8+1
-	bits |= (lights & 0x08080808) >> 3; // Lamp n*8+3 -> bit n*8+0
-	bits |= (lights & 0x10101010) << 1; // Lamp n*8+4 -> bit n*8+5
-	bits |= (lights & 0x20202020) >> 1; // Lamp n*8+5 -> bit n*8+4
-	bits |= (lights & 0x40404040) >> 3; // Lamp n*8+6 -> bit n*8+3
-	bits |= (lights & 0x80808080) >> 5; // Lamp n*8+7 -> bit n*8+2
-
-	K573_IO_BOARD[ANALOG_IO_LIGHTS0] = (bits)       & 0xff;
-	K573_IO_BOARD[ANALOG_IO_LIGHTS1] = (bits >>  8) & 0xff;
-	K573_IO_BOARD[ANALOG_IO_LIGHTS2] = (bits >> 16) & 0xff;
-	K573_IO_BOARD[ANALOG_IO_LIGHTS3] = (bits >> 24) & 0xff;
-}
-
-// This function controls light outputs on digital I/O boards (i.e. the ones
-// that include MP3 playback hardware in addition to the light control).
-// TODO: test this on real hardware -- it might not work if lights are handled
-// by the board's FPGA, which requires a binary blob...
-void set_lights_digital(uint32_t lights) {
-	uint32_t bits;
-
-	bits  = (lights & 0x11111111);      // Lamp n*4+0 -> bit n*4+0
-	bits |= (lights & 0x22222222) << 1; // Lamp n*4+1 -> bit n*4+2
-	bits |= (lights & 0x44444444) << 1; // Lamp n*4+2 -> bit n*4+3
-	bits |= (lights & 0x88888888) >> 2; // Lamp n*4+3 -> bit n*4+1
-
-	K573_IO_BOARD[DIGITAL_IO_LIGHTS0] = ((bits)       & 0xf) << 12;
-	K573_IO_BOARD[DIGITAL_IO_LIGHTS1] = ((bits >>  4) & 0xf) << 12;
-	K573_IO_BOARD[DIGITAL_IO_LIGHTS2] = ((bits >>  8) & 0xf) << 12;
-	K573_IO_BOARD[DIGITAL_IO_LIGHTS3] = ((bits >> 12) & 0xf) << 12;
-	K573_IO_BOARD[DIGITAL_IO_LIGHTS4] = ((bits >> 16) & 0xf) << 12;
-	K573_IO_BOARD[DIGITAL_IO_LIGHTS5] = ((bits >> 20) & 0xf) << 12;
-	//K573_IO_BOARD[DIGITAL_IO_LIGHTS6] = ((bits >> 24) & 0xf) << 12;
-	K573_IO_BOARD[DIGITAL_IO_LIGHTS7] = ((bits >> 28) & 0xf) << 12;
-}
-
 /* Main */
 
 static CONTEXT ctx;
@@ -270,101 +141,96 @@ static CONTEXT ctx;
 #define SHOW_ERROR(...)  { SHOW_STATUS(__VA_ARGS__); while (1) __asm__("nop"); }
 
 int main(int argc, const char* argv[]) {
-	// Reinitialize the heap and relocate the stack to allow the 573's full 4
-	// MB of RAM to be used. This isn't strictly required; executables designed
-	// for 2 MB of RAM will also run fine on the 573 (obviously).
-	// FIXME: this seems to be broken currently
-	//__asm__ volatile("li $sp, 0x803fffe0");
-	//_mem_init(0x400000, 0x20000);
-
-	EXP1_ADDR     = 0x1f000000;
-	EXP1_CTRL     = 0x24173f47; // 573 BIOS uses this value
-	K573_WATCHDOG = 0;
-
 	init_context(&ctx);
+	K573_Init();
 
-	// Determine whether we are running on a 573 by fetching the version string
-	// from the BIOS.
 	const char *const version = (const char *const) GetSystemInfo(0x02);
 	//if (strncmp(version, "Konami OS", 9))
 		//SHOW_ERROR("ERROR: NOT RUNNING ON A SYSTEM 573!\n\n[%s]\n", version);
 
 	uint32_t counter       = 0;
-	uint8_t  last_joystick = 0xff;
-	uint8_t  last_buttons  = 0xff;
+	uint32_t inputs        = K573_GetJAMMAInputs();
+	uint32_t last_inputs   = 0xff;
 	uint32_t current_light = 0;
-	uint32_t is_digital    = 0;
+
+	// DIP switch 1 is used to determine if an analog or digital I/O board is
+	// installed.
+	K573_IOBoardType io_type = (inputs & JAMMA_DIP1)
+		? IO_TYPE_ANALOG
+		: IO_TYPE_DIGITAL;
+
+	K573_SetBoardType(io_type);
+	K573_SetLights(1);
 
 	while (1) {
+		inputs = K573_GetJAMMAInputs();
+
 		FntPrint(-1, "COUNTER=%d\n", counter++);
 
-		JAMMAInputs inputs;
-		get_jamma_inputs(&inputs);
-
 		FntPrint(-1, "\nJAMMA INPUTS:\n");
-		FntPrint(-1, " P1 JOYSTICK =%04@\n", inputs.p1_joy);
-		FntPrint(-1, " P1 BUTTONS  =%07@\n", inputs.p1_btn);
-		FntPrint(-1, " P2 JOYSTICK =%04@\n", inputs.p2_joy);
-		FntPrint(-1, " P2 BUTTONS  =%07@\n", inputs.p2_btn);
-		FntPrint(-1, " COIN/SERVICE=%04@\n", inputs.coin & 0xf);
-		FntPrint(-1, " DIP SWITCHES=%04@\n", inputs.dip_sw);
+		FntPrint(-1, " IN2  =%016@\n",  inputs & 0xffff);
+		FntPrint(-1, " IN3_L=%04@\n",  (inputs >> 16) & 0x0f);
+		FntPrint(-1, " IN3_H=%04@\n",  (inputs >> 20) & 0x0f);
+		FntPrint(-1, " IN1_H=%05@\n",  (inputs >> 24) & 0x1f);
 
 		FntPrint(-1, "\nCABINET LIGHTS:\n");
-		FntPrint(-1, " BOARD=%s I/O\n", is_digital ? "DIGITAL" : "ANALOG");
-		FntPrint(-1, " LIGHT=%d\n\n",   current_light);
-		FntPrint(-1, " [START]      CHANGE BOARD TYPE\n");
-		FntPrint(-1, " [LEFT/RIGHT] SELECT LIGHT TO TEST\n");
+		FntPrint(-1, " BOARD=%s\n", IO_BOARD_TYPES[io_type]);
+		FntPrint(-1, " LIGHT=%d\n", current_light);
+		FntPrint(-1, "\n [DIP SW1] CHANGE BOARD TYPE\n");
+		FntPrint(-1, "\n [TEST SW] CHANGE ACTIVE LIGHT\n");
 
 		// Request the current date/time from the RTC and display it.
-		K573_RTC[RTC_CTRL] |= 0x40;
+		K573_RTC[RTC_REG_CTRL] |= 0x40;
 		FntPrint(-1, "\nRTC:\n");
 		FntPrint(
 			-1,
 			" %02d-%02d-%02d %02d:%02d:%02d\n",
-			btoi(K573_RTC[RTC_YEAR]),
-			btoi(K573_RTC[RTC_MONTH]),
-			btoi(K573_RTC[RTC_DAY_OF_MONTH] & 0x3f),
-			btoi(K573_RTC[RTC_HOURS]),
-			btoi(K573_RTC[RTC_MINUTES]),
-			btoi(K573_RTC[RTC_SECONDS] & 0x7f)
+			btoi(K573_RTC[RTC_REG_YEAR]),
+			btoi(K573_RTC[RTC_REG_MONTH]),
+			btoi(K573_RTC[RTC_REG_DAY_OF_MONTH] & 0x3f),
+			btoi(K573_RTC[RTC_REG_HOURS]),
+			btoi(K573_RTC[RTC_REG_MINUTES]),
+			btoi(K573_RTC[RTC_REG_SECONDS] & 0x7f)
 		);
 
 		FntPrint(-1, "\nSYSTEM:\n");
 		FntPrint(-1, " KERNEL=%s\n",   version);
-		FntPrint(-1, " PCMCIA=%02@\n", inputs.coin >> 4);
+		FntPrint(-1, " DIP SW=%03@\n", inputs >> 29);
+		FntPrint(-1, " PCMCIA=%02@\n", (inputs >> 26) & 0x3);
 
 		FntFlush(-1);
 		display(&ctx);
 
 		// Reset the watchdog. This must be done at least once per frame to
 		// prevent the 573 from rebooting.
-		K573_WATCHDOG = 0;
+		K573_RESET_WATCHDOG();
 
-		if (is_digital)
-			set_lights_digital(1 << current_light);
-		else
-			set_lights_analog(1 << current_light);
+		// Change the currently active light if the test button on the 573's
+		// front panel is pressed. DDR non-light outputs are skipped.
+		if ((last_inputs & JAMMA_TEST) && !(inputs & JAMMA_TEST)) {
+			current_light++;
+			if (
+				(current_light ==  4) || // DDR_LIGHT_P1_MUX_DATA
+				(current_light ==  7) || // DDR_LIGHT_P1_MUX_CLK
+				(current_light == 12) || // DDR_LIGHT_P2_MUX_DATA
+				(current_light == 15)    // DDR_LIGHT_P2_MUX_CLK
+			) current_light++;
 
-		// Handle inputs.
-		if ((last_joystick & 0x01) && !(inputs.p1_joy & 0x01)) // Left
-			current_light--;
-		if ((last_joystick & 0x02) && !(inputs.p1_joy & 0x02)) // Right
-			current_light++;
-		if ((last_buttons & 0x02) && !(inputs.p1_btn & 0x02)) // Button 1
-			current_light--;
-		if ((last_buttons & 0x04) && !(inputs.p1_btn & 0x04)) // Button 2
-			current_light++;
-		if ((last_buttons & 0x01) && !(inputs.p1_btn & 0x01)) { // Start
-			is_digital = !is_digital;
-			if (is_digital)
-				set_lights_analog(0);
-			else
-				set_lights_digital(0);
+			current_light %= 32;
+			K573_SetLights(1 << current_light);
 		}
 
-		current_light %= 32;
-		last_joystick  = inputs.p1_joy;
-		last_buttons   = inputs.p1_btn;
+		// if DIP switch 1 is toggled, change the I/O board type.
+		if ((last_inputs & JAMMA_DIP1) != (inputs & JAMMA_DIP1)) {
+			io_type = (inputs & JAMMA_DIP1)
+				? IO_TYPE_ANALOG
+				: IO_TYPE_DIGITAL;
+
+			K573_SetBoardType(io_type);
+			K573_SetLights(1 << current_light);
+		}
+
+		last_inputs = inputs;
 	}
 
 	return 0;
