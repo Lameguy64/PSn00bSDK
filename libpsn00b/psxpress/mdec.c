@@ -1,0 +1,172 @@
+/*
+ * PSn00bSDK MDEC library (low-level MDEC/DMA API)
+ * (C) 2022 spicyjpeg - MPL licensed
+ */
+
+#include <stdint.h>
+#include <stdio.h>
+#include <psxapi.h>
+#include <psxpress.h>
+#include <hwregs_c.h>
+
+#define MDEC_SYNC_TIMEOUT 0x1000000
+
+/* Default IDCT matrix */
+
+#define S0 0x5a82	// 0x4000 * cos(0/16 * pi) * sqrt(2)
+#define S1 0x7d8a	// 0x4000 * cos(1/16 * pi) * 2
+#define S2 0x7641	// 0x4000 * cos(2/16 * pi) * 2
+#define S3 0x6a6d	// 0x4000 * cos(3/16 * pi) * 2
+#define S4 0x5a82	// 0x4000 * cos(4/16 * pi) * 2
+#define S5 0x471c	// 0x4000 * cos(5/16 * pi) * 2
+#define S6 0x30fb	// 0x4000 * cos(6/16 * pi) * 2
+#define S7 0x18f8	// 0x4000 * cos(7/16 * pi) * 2
+
+static const int16_t _default_idct_matrix[] = {
+	S0,  S0,  S0,  S0,  S0,  S0,  S0,  S0,
+	S1,  S3,  S5,  S7, -S7, -S5, -S3, -S1,
+	S2,  S6, -S6, -S2, -S2, -S6,  S6,  S2,
+	S3, -S7, -S1, -S5,  S5,  S1,  S7, -S3,
+	S4, -S4, -S4,  S4,  S4, -S4, -S4,  S4,
+	S5, -S1,  S7,  S3, -S3, -S7,  S1, -S5,
+	S6, -S2,  S2, -S6, -S6,  S2, -S2,  S6,
+	S7, -S5,  S3, -S1,  S1, -S3,  S5, -S7
+};
+
+/* Default quantization tables */
+
+// The default luma and chroma quantization table is based on the MPEG-1
+// quantization table, with the only difference being the first value (2
+// instead of 8). Note that quantization tables are stored in zigzag order
+// rather than row- or column-major.
+// https://problemkaputt.de/psx-spx.htm#mdecdecompression
+static const uint8_t _default_quant_table[] = {
+	  2,  16,  16,  19,  16,  19,  22,  22,
+	 22,  22,  22,  22,  26,  24,  26,  27,
+	 27,  27,  26,  26,  26,  26,  27,  27,
+	 27,  29,  29,  29,  34,  34,  34,  29,
+	 29,  29,  27,  27,  29,  29,  32,  32,
+	 34,  34,  37,  38,  37,  35,  35,  34,
+	 35,  38,  38,  40,  40,  40,  48,  48,
+	 46,  46,  56,  56,  58,  69,  69,  83
+};
+/*static const uint8_t _jpeg_y_quant_table[] = {
+	 16,  11,  12,  14,  12,  10,  16,  14,
+	 13,  14,  18,  17,  16,  19,  24,  40,
+	 26,  24,  22,  22,  24,  49,  35,  37,
+	 29,  40,  58,  51,  61,  60,  57,  51,
+	 56,  55,  64,  72,  92,  78,  64,  68,
+	 87,  69,  55,  56,  80, 109,  81,  87,
+	 95,  98, 103, 104, 103,  62,  77, 113,
+	121, 112, 100, 120,  92, 101, 103,  99
+};
+static const uint8_t _jpeg_c_quant_table[] = {
+	 17,  18,  18,  24,  21,  24,  47,  26,
+	 26,  47,  99,  66,  56,  66,  99,  99,
+	 99,  99,  99,  99,  99,  99,  99,  99,
+	 99,  99,  99,  99,  99,  99,  99,  99,
+	 99,  99,  99,  99,  99,  99,  99,  99,
+	 99,  99,  99,  99,  99,  99,  99,  99,
+	 99,  99,  99,  99,  99,  99,  99,  99,
+	 99,  99,  99,  99,  99,  99,  99,  99
+};*/
+
+/* Public API */
+
+void DecDCTReset(int32_t mode) {
+	EnterCriticalSection();
+
+	DMA_DPCR   |= 0x000000bb; // Enable DMA0 and DMA1
+	DMA_CHCR(0) = 0x00000201; // Stop DMA0
+	DMA_CHCR(1) = 0x00000200; // Stop DMA1
+	MDEC1       = 0x80000000; // Reset MDEC
+	MDEC1       = 0x60000000; // Enable DMA in/out requests
+
+	ExitCriticalSection();
+	if (!mode)
+		DecDCTPutEnv(0, 0);
+}
+
+void DecDCTPutEnv(const DECDCTENV *env, int32_t mono) {
+	const int16_t *dct  = env ? env->dct  : _default_idct_matrix;
+	const uint8_t *iq_y = env ? env->iq_y : _default_quant_table;
+	const uint8_t *iq_c = env ? env->iq_c : _default_quant_table;
+
+	DecDCTinSync(0);
+
+	MDEC0 = 0x60000000; // Set IDCT matrix
+	DecDCTinRaw((const uint32_t *) dct, 32);
+	DecDCTinSync(0);
+
+	MDEC0 = 0x40000000 | (mono ? 0 : 1); // Set table(s)
+	DecDCTinRaw((const uint32_t *) iq_y, 16);
+	DecDCTinSync(0);
+
+	if (!mono) {
+		DecDCTinRaw((const uint32_t *) iq_c, 16);
+		DecDCTinSync(0);
+	}
+}
+
+void DecDCTin(const uint32_t *data, int32_t mode) {
+	uint32_t header = *data;
+	if (mode == DECDCT_MODE_RAW)
+		MDEC0 = header;
+	else if (mode & DECDCT_MODE_24BPP)
+		MDEC0 = header | 0x30000000;
+	else
+		MDEC0 = header | 0x38000000 | ((mode & 2) << 24); // Bit 25 = mask
+
+	DecDCTinRaw((const uint32_t *) &(data[1]), header & 0xffff);
+}
+
+// This is a PSn00bSDK-only function that behaves like DecDCTout(), taking the
+// data length as an argument rather than parsing it from the first 4 bytes of
+// the stream.
+void DecDCTinRaw(const uint32_t *data, size_t length) {
+	DMA_MADR(0) = (uint32_t) data;
+	if (length < 32)
+		DMA_BCR(0) = 0x00010000 | length;
+	else
+		DMA_BCR(0) = 0x00000020 | ((length / 32) << 16);
+
+	DMA_CHCR(0) = 0x01000201;
+}
+
+int32_t DecDCTinSync(int32_t mode) {
+	if (mode)
+		return (MDEC1 >> 29) & 1;
+
+	for (uint32_t i = MDEC_SYNC_TIMEOUT; i; i--) {
+		if (!(MDEC1 & (1 << 29)))
+			return 0;
+	}
+
+	printf("psxpress: DecDCTinSync() timeout\n");
+	return -1;
+}
+
+void DecDCTout(uint32_t *data, size_t length) {
+	DecDCToutSync(0);
+
+	DMA_MADR(1) = (uint32_t) data;
+	if (length < 32)
+		DMA_BCR(1) = 0x00010000 | length;
+	else
+		DMA_BCR(1) = 0x00000020 | ((length / 32) << 16);
+
+	DMA_CHCR(1) = 0x01000200;
+}
+
+int32_t DecDCToutSync(int32_t mode) {
+	if (mode)
+		return (DMA_CHCR(1) >> 24) & 1;
+
+	for (uint32_t i = MDEC_SYNC_TIMEOUT; i; i--) {
+		if (!(DMA_CHCR(1) & (1 << 24)))
+			return 0;
+	}
+
+	printf("psxpress: DecDCToutSync() timeout\n");
+	return -1;
+}

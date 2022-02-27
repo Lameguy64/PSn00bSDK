@@ -4,17 +4,17 @@
 ## Setup
 
 The only requirement to use the SDK in CMake is to set the
-`CMAKE_TOOLCHAIN_FILE` variable to `INSTALL_PATH/lib/libpsn00b/cmake/sdk.cmake`
-(where `INSTALL_PATH` is the install prefix PSn00bSDK is installed to). This
-can be done on the command line (`-DCMAKE_TOOLCHAIN_FILE=...`), in
-`CMakeLists.txt` (before calling `project()`) or using a
-[preset](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html).
+`CMAKE_TOOLCHAIN_FILE` variable to the absolute path to
+`lib/libpsn00b/cmake/sdk.cmake` within the PSn00bSDK installation directory.
+This can be done on the command line (`-DCMAKE_TOOLCHAIN_FILE=...`), in
+`CMakeLists.txt` (`set(CMAKE_TOOLCHAIN_FILE ...)` before `project()`) or using
+[presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html).
 
 It's suggested to have a default preset that sets `CMAKE_TOOLCHAIN_FILE` to
-`$env{PSN00BSDK_LIBS}/cmake/sdk.cmake`, so the `PSN00BSDK_LIBS` environment
-variable (used by former PSn00bSDK versions) is respected. Such a preset can be
-created by placing a `CMakePresets.json` file in the project's root with the
-following contents:
+`$env{PSN00BSDK_LIBS}/cmake/sdk.cmake`, taking advantage of the
+`PSN00BSDK_LIBS` environment variable (used by former PSn00bSDK versions) to
+automatically find the SDK. Such a preset can be created by placing a
+`CMakePresets.json` file in the project's root with the following contents:
 
 ```json
 {
@@ -135,9 +135,12 @@ of these names.
 
   A new symbol/object will be created with the given name, escaped by replacing
   non-alphanumeric characters with underscores. The contents of the file will
-  be aligned to 4 bytes and placed in the `.data` section. Once added the file
-  and its size can be accessed by C/C++ code by declaring the symbol as an
-  extern array and `<symbol name>_size` as an integer, like this:
+  be aligned to 4 bytes and placed in the `.data` section. An unsigned 32-bit
+  integer named `<symbol name>_size` will also be defined and set to the length
+  of the file in bytes (without taking alignment/padding into account).
+
+  Once added the file and its size can be accessed by C/C++ code by declaring
+  the respective symbols as an extern array and as an integer, like this:
 
   ```c
   extern const uint8_t my_file[];
@@ -153,6 +156,13 @@ of these names.
   **IMPORTANT**: in order for this command to work, assembly language support
   must be enabled by specifying `LANGUAGES C ASM` (or `LANGUAGES C CXX ASM` if
   C++ is also used) when invoking `project()`.
+
+- `psn00bsdk_target_incbin_a(<target> <PRIVATE|PUBLIC|INTERFACE> <symbol name> <size symbol name> <binary file> <alignment>)`
+
+  Advanced variant of `psn00bsdk_target_incbin()` that allows specifying a
+  custom name for the size symbol and changing the default alignment setting.
+  Note that the size integer is always aligned to a multiple of 4 bytes as the
+  MIPS architecture doesn't support unaligned reads.
 
 ## Definitions
 
@@ -259,4 +269,4 @@ the build script.
   LZP archives as part of the build pipeline.
 
 -----------------------------------------
-_Last updated on 2021-12-29 by spicyjpeg_
+_Last updated on 2022-02-26 by spicyjpeg_

@@ -32,7 +32,7 @@ set(
 		psxgte
 		psxspu
 		psxcd
-		#psxpress
+		psxpress
 		psxsio
 		psxetc
 		psxapi
@@ -186,7 +186,7 @@ function(psn00bsdk_add_cd_image name image_name config_file)
 
 	add_custom_target(
 		${name} ALL
-		COMMAND    ${MKPSXISO} -y -q ${CD_CONFIG_FILE}
+		COMMAND    ${MKPSXISO} -y ${CD_CONFIG_FILE}
 		BYPRODUCTS ${image_name}.bin ${image_name}.cue
 		COMMENT    "Building CD image ${image_name}"
 		${ARGN}
@@ -195,13 +195,17 @@ endfunction()
 
 ## Helper functions for assets
 
-# psn00bsdk_target_incbin(
+# psn00bsdk_target_incbin_a(
 #   <existing target name> <PRIVATE|PUBLIC|INTERFACE>
-#   <symbol name>
+#   <data symbol name>
+#   <size symbol name>
 #   <path to binary file>
+#   <linker section name>
+#   <alignment>
 # )
-function(psn00bsdk_target_incbin name type symbol_name path)
+function(psn00bsdk_target_incbin_a name type symbol_name size_name path section align)
 	string(MAKE_C_IDENTIFIER ${symbol_name} _id)
+	string(MAKE_C_IDENTIFIER ${size_name}   _size)
 	cmake_path(ABSOLUTE_PATH path OUTPUT_VARIABLE _path)
 
 	# Generate an assembly source file that includes the binary file and add it
@@ -212,26 +216,27 @@ function(psn00bsdk_target_incbin name type symbol_name path)
 		CONFIGURE
 		OUTPUT  ${_asm_file}
 		CONTENT [[
-.section .data.${_id}
-.balign 4
+.section ${section}
+.balign ${align}
 
 .global ${_id}
 .type ${_id}, @object
-${_id}:	
+${_id}:
 	.incbin "${_path}"
 
 .local ${_id}_end
 ${_id}_end:
 
+.balign ${align}
 .balign 4
 
-.global ${_id}_size
-.type ${_id}_size, @object
-${_id}_size:
+.global ${_size}
+.type ${_size}, @object
+${_size}:
 	.int (${_id}_end - ${_id})
 
 .size ${_id}, (${_id}_end - ${_id})
-.size ${_id}_size, 4
+.size ${_size}, 4
 ]]
 		ESCAPE_QUOTES
 		NEWLINE_STYLE LF
@@ -239,4 +244,23 @@ ${_id}_size:
 
 	target_sources(${name} ${type} ${_asm_file})
 	set_source_files_properties(${_asm_file} PROPERTIES OBJECT_DEPENDS ${_path})
+endfunction()
+
+# psn00bsdk_target_incbin(
+#   <existing target name> <PRIVATE|PUBLIC|INTERFACE>
+#   <symbol name>
+#   <path to binary file>
+# )
+function(psn00bsdk_target_incbin name type symbol_name path)
+	string(MAKE_C_IDENTIFIER ${symbol_name} _id)
+
+	psn00bsdk_target_incbin_a(
+		${name}
+		${type}
+		${_id}
+		${_id}_size
+		${path}
+		.data.${_id}
+		4
+	)
 endfunction()
