@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 #include <psxgpu.h>
+#include <hwregs_c.h>
 
 #include "k573io.h"
 
@@ -116,8 +117,8 @@ void K573_SetBoardType(K573_IOBoardType type) {
 //K573_DDRStageCommand(0x000001, 22);
 
 void K573_Init(void) {
-	EXP1_ADDR = 0x1f000000;
-	EXP1_CTRL = 0x24173f47; // 573 BIOS uses this value
+	EXP1_ADDR       = 0x1f000000;
+	EXP1_DELAY_SIZE = 0x24173f47; // 573 BIOS uses this value
 
 	K573_RESET_WATCHDOG();
 }

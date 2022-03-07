@@ -49,6 +49,18 @@
 	},
 	{
 		"type": "a",
+		"id":   19,
+		"name": "b_setjmp",
+		"file": "sys.s"
+	},
+	{
+		"type": "a",
+		"id":   20,
+		"name": "b_longjmp",
+		"file": "sys.s"
+	},
+	{
+		"type": "a",
 		"id":   57,
 		"name": "b_InitHeap",
 		"file": "sys.s"

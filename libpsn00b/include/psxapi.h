@@ -121,6 +121,12 @@ struct EXEC {
 	unsigned int sp,fp,rp,ret,base;
 };
 
+struct JMP_BUF {
+	unsigned int	ra, sp, fp;
+	unsigned int	s0, s1, s2, s3, s4, s5, s6, s7;
+	unsigned int	gp;
+};
+
 // Not recommended to use these functions to install IRQ handlers
 
 typedef struct {
@@ -210,6 +216,12 @@ void ChangeClearRCnt(int t, int m);
 // Executable functions
 int Exec(struct EXEC *exec, int argc, char **argv);
 void FlushCache(void);
+
+// BIOS setjmp functions
+void b_setjmp(struct JMP_BUF *buf);
+void b_longjmp(struct JMP_BUF *buf, int param);
+void SetDefaultExitFromException(void);
+void SetCustomExitFromException(struct JMP_BUF *buf);
 
 // Misc functions
 int GetSystemInfo(int index);

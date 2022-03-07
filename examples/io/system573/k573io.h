@@ -10,9 +10,6 @@
 
 /* Register definitions */
 
-#define EXP1_ADDR			*((volatile uint32_t *) 0x1f801000)
-#define EXP1_CTRL			*((volatile uint32_t *) 0x1f801008)
-
 #define K573_BANK_SWITCH	*((volatile uint16_t *) 0x1f500000)
 #define K573_IDE_RESET		*((volatile uint16_t *) 0x1f560000)
 #define K573_WATCHDOG		*((volatile uint16_t *) 0x1f5c0000)

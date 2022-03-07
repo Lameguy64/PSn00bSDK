@@ -6,7 +6,23 @@
 
 .set noreorder
 
-## A0 table functions (5)
+## A0 table functions (7)
+
+.section .text.b_setjmp
+.global b_setjmp
+.type b_setjmp, @function
+b_setjmp:
+	li $t2, 0xa0
+	jr $t2
+	li $t1, 0x13
+
+.section .text.b_longjmp
+.global b_longjmp
+.type b_longjmp, @function
+b_longjmp:
+	li $t2, 0xa0
+	jr $t2
+	li $t1, 0x14
 
 .section .text.b_InitHeap
 .global b_InitHeap

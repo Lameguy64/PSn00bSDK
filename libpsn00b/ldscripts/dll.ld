@@ -86,6 +86,7 @@ SECTIONS {
 		 * as we don't have to worry about managing .bss separately from the
 		 * main DLL blob.
 		 */
+		. = ALIGN((. != 0) ? 4 : 1);
 		__bss_start = .;
 
 		*(.bss .bss.* .gnu.linkonce.b.*)
