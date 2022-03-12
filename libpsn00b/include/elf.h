@@ -12,7 +12,7 @@
 #ifndef __ELF_H
 #define __ELF_H 
 
-#include <sys/types.h>
+#include <stdint.h>
 
 typedef enum {
 	DT_NULL		= 0,		/* Marks end of dynamic section */

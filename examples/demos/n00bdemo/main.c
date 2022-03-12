@@ -11,14 +11,19 @@
  *
  * Changelog:
  *
+ *	Mar 12, 2022 - Added Konami System 573 support.
+ *
  *	May 10, 2021 - Variable types updated for psxgpu.h changes.
  *
  *	Apr 4, 2019	 - Some code clean-up and added more comments.
  *
- *  Mar 20, 2019 - Initial completed version.
+ *	Mar 20, 2019 - Initial completed version.
  *
  */
- 
+
+// Comment to disable 573 support
+#define SYSTEM_573_SUPPORT
+
 #include <sys/types.h>
 #include <sys/fcntl.h>
 #include <stdio.h>
@@ -27,7 +32,9 @@
 #include <psxgte.h>
 #include <psxgpu.h>
 #include <psxspu.h>
+#include <psxapi.h>
 #include <inline_c.h>
+#include <hwregs_c.h>
 #include <string.h>
 #include <lzp/lzp.h>
 #include <lzp/lzqlp.h>
@@ -64,6 +71,34 @@ SPRT psn00b_sprite;
 void sort_overlay(int showlotl);
 void lightdemo();
 
+#ifdef SYSTEM_573_SUPPORT
+#define K573_WATCHDOG	*((volatile uint16_t *) 0x1f5c0000)
+#define K573_EXP1_CFG	0x24173f47
+
+/*
+	The only thing required to support the 573 is to periodically reset the
+	watchdog. Hooking the vblank IRQ (through VSyncCallback) is the "right" way
+	to do it, however using a hardware timer running at a higher rate (100 Hz)
+	seems to improve stability.
+*/
+void reset573Watchdog() {
+	K573_WATCHDOG = 0;
+}
+
+void system573Setup() {
+	EnterCriticalSection();
+
+	EXP1_ADDR		= 0x1f000000;
+	EXP1_DELAY_SIZE	= K573_EXP1_CFG;
+	TIMER_CTRL(2)	= 0x0258;				// CLK/8 input, IRQ on reload
+	TIMER_RELOAD(2)	= (F_CPU / 8) / 100;	// 100 Hz
+
+	// Configure timer 2 IRQ
+	ChangeClearRCnt(2, 0);
+	InterruptCallback(6, &reset573Watchdog);
+	ExitCriticalSection();
+}
+#endif
 
 void UploadTIM(TIM_IMAGE *tim) {
 
@@ -197,9 +232,10 @@ void unpackModels() {
 }
 
 void init() {
-	
-	int i;
-	
+#ifdef SYSTEM_573_SUPPORT
+	system573Setup();
+#endif
+
 	// Init display
 	initDisplay();
 	

@@ -308,6 +308,10 @@ void init_stream(CdlFILE *file) {
 	CdReadyCallback(&cd_event_handler);
 	ExitCriticalSection();
 
+	// Configure the CD drive to read 2048-byte sectors at 2x speed.
+	uint8_t mode = CdlModeSpeed;
+	CdControl(CdlSetmode, (const uint8_t *) &mode, 0);
+
 	// Set the initial LBA of the stream file, which is going to be incremented
 	// as the stream is played.
 	str_ctx.lba    = CdPosToInt(&(file->pos));
