@@ -7,6 +7,7 @@
 #define __SPI_H
 
 #include <stdint.h>
+#include <stddef.h>
 #include <psxpad.h>
 
 // Maximum request/response length (34 bytes for pads, 140 for memory cards).

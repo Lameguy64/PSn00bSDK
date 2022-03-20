@@ -232,12 +232,11 @@ void unpackModels() {
 }
 
 void init() {
+	// Init display
+	initDisplay();
 #ifdef SYSTEM_573_SUPPORT
 	system573Setup();
 #endif
-
-	// Init display
-	initDisplay();
 	
 	FntLoad( 960, 0 );
 	
