@@ -7,6 +7,7 @@
 #define __PSXPRESS_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 /* Structure definitions */
 

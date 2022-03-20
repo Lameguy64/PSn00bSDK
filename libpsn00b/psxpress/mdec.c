@@ -11,7 +11,7 @@
 
 #define MDEC_SYNC_TIMEOUT 0x1000000
 
-/* Default IDCT matrix */
+/* Default IDCT matrix and quantization tables */
 
 #define S0 0x5a82	// 0x4000 * cos(0/16 * pi) * sqrt(2)
 #define S1 0x7d8a	// 0x4000 * cos(1/16 * pi) * 2
@@ -22,54 +22,63 @@
 #define S6 0x30fb	// 0x4000 * cos(6/16 * pi) * 2
 #define S7 0x18f8	// 0x4000 * cos(7/16 * pi) * 2
 
-static const int16_t _default_idct_matrix[] = {
-	S0,  S0,  S0,  S0,  S0,  S0,  S0,  S0,
-	S1,  S3,  S5,  S7, -S7, -S5, -S3, -S1,
-	S2,  S6, -S6, -S2, -S2, -S6,  S6,  S2,
-	S3, -S7, -S1, -S5,  S5,  S1,  S7, -S3,
-	S4, -S4, -S4,  S4,  S4, -S4, -S4,  S4,
-	S5, -S1,  S7,  S3, -S3, -S7,  S1, -S5,
-	S6, -S2,  S2, -S6, -S6,  S2, -S2,  S6,
-	S7, -S5,  S3, -S1,  S1, -S3,  S5, -S7
+static const DECDCTENV _default_mdec_env = {
+	// The default luma and chroma quantization table is based on the MPEG-1
+	// quantization table, with the only difference being the first value (2
+	// instead of 8). Note that quantization tables are stored in zigzag order
+	// rather than row- or column-major.
+	// https://problemkaputt.de/psx-spx.htm#mdecdecompression
+	.iq_y = {
+		 2, 16, 16, 19, 16, 19, 22, 22,
+		22, 22, 22, 22, 26, 24, 26, 27,
+		27, 27, 26, 26, 26, 26, 27, 27,
+		27, 29, 29, 29, 34, 34, 34, 29,
+		29, 29, 27, 27, 29, 29, 32, 32,
+		34, 34, 37, 38, 37, 35, 35, 34,
+		35, 38, 38, 40, 40, 40, 48, 48,
+		46, 46, 56, 56, 58, 69, 69, 83
+	},
+	.iq_c = {
+		 2, 16, 16, 19, 16, 19, 22, 22,
+		22, 22, 22, 22, 26, 24, 26, 27,
+		27, 27, 26, 26, 26, 26, 27, 27,
+		27, 29, 29, 29, 34, 34, 34, 29,
+		29, 29, 27, 27, 29, 29, 32, 32,
+		34, 34, 37, 38, 37, 35, 35, 34,
+		35, 38, 38, 40, 40, 40, 48, 48,
+		46, 46, 56, 56, 58, 69, 69, 83
+	},
+	/*.iq_y = {
+		 16,  11,  12,  14,  12,  10,  16,  14,
+		 13,  14,  18,  17,  16,  19,  24,  40,
+		 26,  24,  22,  22,  24,  49,  35,  37,
+		 29,  40,  58,  51,  61,  60,  57,  51,
+		 56,  55,  64,  72,  92,  78,  64,  68,
+		 87,  69,  55,  56,  80, 109,  81,  87,
+		 95,  98, 103, 104, 103,  62,  77, 113,
+		121, 112, 100, 120,  92, 101, 103,  99
+	},
+	.iq_c = {
+		 17,  18,  18,  24,  21,  24,  47,  26,
+		 26,  47,  99,  66,  56,  66,  99,  99,
+		 99,  99,  99,  99,  99,  99,  99,  99,
+		 99,  99,  99,  99,  99,  99,  99,  99,
+		 99,  99,  99,  99,  99,  99,  99,  99,
+		 99,  99,  99,  99,  99,  99,  99,  99,
+		 99,  99,  99,  99,  99,  99,  99,  99,
+		 99,  99,  99,  99,  99,  99,  99,  99
+	},*/
+	.dct = {
+		S0,  S0,  S0,  S0,  S0,  S0,  S0,  S0,
+		S1,  S3,  S5,  S7, -S7, -S5, -S3, -S1,
+		S2,  S6, -S6, -S2, -S2, -S6,  S6,  S2,
+		S3, -S7, -S1, -S5,  S5,  S1,  S7, -S3,
+		S4, -S4, -S4,  S4,  S4, -S4, -S4,  S4,
+		S5, -S1,  S7,  S3, -S3, -S7,  S1, -S5,
+		S6, -S2,  S2, -S6, -S6,  S2, -S2,  S6,
+		S7, -S5,  S3, -S1,  S1, -S3,  S5, -S7
+	}
 };
-
-/* Default quantization tables */
-
-// The default luma and chroma quantization table is based on the MPEG-1
-// quantization table, with the only difference being the first value (2
-// instead of 8). Note that quantization tables are stored in zigzag order
-// rather than row- or column-major.
-// https://problemkaputt.de/psx-spx.htm#mdecdecompression
-static const uint8_t _default_quant_table[] = {
-	  2,  16,  16,  19,  16,  19,  22,  22,
-	 22,  22,  22,  22,  26,  24,  26,  27,
-	 27,  27,  26,  26,  26,  26,  27,  27,
-	 27,  29,  29,  29,  34,  34,  34,  29,
-	 29,  29,  27,  27,  29,  29,  32,  32,
-	 34,  34,  37,  38,  37,  35,  35,  34,
-	 35,  38,  38,  40,  40,  40,  48,  48,
-	 46,  46,  56,  56,  58,  69,  69,  83
-};
-/*static const uint8_t _jpeg_y_quant_table[] = {
-	 16,  11,  12,  14,  12,  10,  16,  14,
-	 13,  14,  18,  17,  16,  19,  24,  40,
-	 26,  24,  22,  22,  24,  49,  35,  37,
-	 29,  40,  58,  51,  61,  60,  57,  51,
-	 56,  55,  64,  72,  92,  78,  64,  68,
-	 87,  69,  55,  56,  80, 109,  81,  87,
-	 95,  98, 103, 104, 103,  62,  77, 113,
-	121, 112, 100, 120,  92, 101, 103,  99
-};
-static const uint8_t _jpeg_c_quant_table[] = {
-	 17,  18,  18,  24,  21,  24,  47,  26,
-	 26,  47,  99,  66,  56,  66,  99,  99,
-	 99,  99,  99,  99,  99,  99,  99,  99,
-	 99,  99,  99,  99,  99,  99,  99,  99,
-	 99,  99,  99,  99,  99,  99,  99,  99,
-	 99,  99,  99,  99,  99,  99,  99,  99,
-	 99,  99,  99,  99,  99,  99,  99,  99,
-	 99,  99,  99,  99,  99,  99,  99,  99
-};*/
 
 /* Public API */
 
@@ -88,24 +97,16 @@ void DecDCTReset(int32_t mode) {
 }
 
 void DecDCTPutEnv(const DECDCTENV *env, int32_t mono) {
-	const int16_t *dct  = env ? env->dct  : _default_idct_matrix;
-	const uint8_t *iq_y = env ? env->iq_y : _default_quant_table;
-	const uint8_t *iq_c = env ? env->iq_c : _default_quant_table;
-
+	const DECDCTENV *_env = env ? env : &_default_mdec_env;
 	DecDCTinSync(0);
 
 	MDEC0 = 0x60000000; // Set IDCT matrix
-	DecDCTinRaw((const uint32_t *) dct, 32);
+	DecDCTinRaw((const uint32_t *) _env->dct, 32);
 	DecDCTinSync(0);
 
 	MDEC0 = 0x40000000 | (mono ? 0 : 1); // Set table(s)
-	DecDCTinRaw((const uint32_t *) iq_y, 16);
+	DecDCTinRaw((const uint32_t *) _env->iq_y, mono ? 16 : 32);
 	DecDCTinSync(0);
-
-	if (!mono) {
-		DecDCTinRaw((const uint32_t *) iq_c, 16);
-		DecDCTinSync(0);
-	}
 }
 
 void DecDCTin(const uint32_t *data, int32_t mode) {
