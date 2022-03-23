@@ -11,6 +11,8 @@
  *
  * Changelog:
  *
+ *	Mar 24, 2022 - Added FPS counter.
+ *
  *	Mar 12, 2022 - Added Konami System 573 support.
  *
  *	May 10, 2021 - Variable types updated for psxgpu.h changes.
@@ -21,8 +23,9 @@
  *
  */
 
-// Comment to disable 573 support
-#define SYSTEM_573_SUPPORT
+// Uncomment to enable Konami System 573 support
+// (seems to break the demo when loading it using Caetla on a cheat cartridge)
+//#define SYSTEM_573_SUPPORT
 
 #include <sys/types.h>
 #include <sys/fcntl.h>
@@ -66,39 +69,50 @@ unsigned short font_tpage,font_clut;
 SPRT llotl_sprite;
 SPRT psn00b_sprite;
 
+// Timer and FPS counter
+volatile int timer_counter = 0, frame_counter = 0, frame_rate = 0;
 
 // Some function definition
 void sort_overlay(int showlotl);
 void lightdemo();
 
-#ifdef SYSTEM_573_SUPPORT
-#define K573_WATCHDOG	*((volatile uint16_t *) 0x1f5c0000)
+#define K573_WATCHDOG	*((volatile unsigned short *) 0x1f5c0000)
 #define K573_EXP1_CFG	0x24173f47
 
-/*
-	The only thing required to support the 573 is to periodically reset the
-	watchdog. Hooking the vblank IRQ (through VSyncCallback) is the "right" way
-	to do it, however using a hardware timer running at a higher rate (100 Hz)
-	seems to improve stability.
-*/
-void reset573Watchdog() {
+void timerTick() {
+	if (!(--timer_counter)) {
+		timer_counter	= 100;
+		frame_rate		= frame_counter;
+		frame_counter	= 0;
+	}
+
+#ifdef SYSTEM_573_SUPPORT
+	/*
+		The only thing required to support the 573 is to periodically reset the
+		watchdog. Hooking the vblank IRQ (through VSyncCallback) is the "right"
+		way to do it, however using a hardware timer running at a higher rate
+		(100 Hz) seems to improve stability.
+	*/
 	K573_WATCHDOG = 0;
+#endif
 }
 
-void system573Setup() {
+void timerSetup() {
 	EnterCriticalSection();
 
+#ifdef SYSTEM_573_SUPPORT
 	EXP1_ADDR		= 0x1f000000;
 	EXP1_DELAY_SIZE	= K573_EXP1_CFG;
+#endif
+
 	TIMER_CTRL(2)	= 0x0258;				// CLK/8 input, IRQ on reload
 	TIMER_RELOAD(2)	= (F_CPU / 8) / 100;	// 100 Hz
 
 	// Configure timer 2 IRQ
 	ChangeClearRCnt(2, 0);
-	InterruptCallback(6, &reset573Watchdog);
+	InterruptCallback(6, &timerTick);
 	ExitCriticalSection();
 }
-#endif
 
 void UploadTIM(TIM_IMAGE *tim) {
 
@@ -234,9 +248,7 @@ void unpackModels() {
 void init() {
 	// Init display
 	initDisplay();
-#ifdef SYSTEM_573_SUPPORT
-	system573Setup();
-#endif
+	timerSetup();
 	
 	FntLoad( 960, 0 );
 	
@@ -652,11 +664,11 @@ void transition() {
 		if( comp >= 16 )
 			break;
 
-		// FIXME: for some reason this loop glitches out and hangs indefinitely
-		// in no$psx, *unless* there's a function somewhere that gets called
-		// with a pointer/string as first argument... wtf. It works fine in
-		// other emulators. If you are reading this, please help and enlighten
-		// me. -- spicyjpeg
+		/*
+			I haven't yet managed to figure out why this loop hangs on no$psx
+			if I comment out this completely useless call to puts(). Some
+			alignment or timing crap perhaps? -- spicyjpeg
+		*/
 		puts(".");
 	}
 	
@@ -681,6 +693,7 @@ int main(int argc, const char *argv[]) {
 	unpackModels();
 	
 	// Demo sequence loop
+	timer_counter = 100;
 	while( 1 ) {
 		
 		lightdemo();
