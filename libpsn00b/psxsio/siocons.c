@@ -117,6 +117,11 @@ static void _sio_tty_cb(void)
 	_sio_control(2, 1, 0);
 }
 
+static int _sio_dummy(void)
+{
+	return -1;
+}
+
 static DCB _sio_dcb = {
 	"tty",
 	0x3,
@@ -127,17 +132,17 @@ static DCB _sio_dcb = {
 	(void*)_sio_inout,	// inout
 	_sio_close,			// close
 	_sio_ioctl,			// ioctl
-	NULL,				// read
-	NULL,				// write
-	NULL,				// erase
-	NULL,				// undelete
-	NULL,				// firstfile
-	NULL,				// nextfile
-	NULL,				// format
-	NULL,				// chdir
-	NULL,				// rename
-	NULL,				// remove
-	NULL				// testdevice
+	_sio_dummy,			// read
+	_sio_dummy,			// write
+	_sio_dummy,			// erase
+	_sio_dummy,			// undelete
+	_sio_dummy,			// firstfile
+	_sio_dummy,			// nextfile
+	_sio_dummy,			// format
+	_sio_dummy,			// chdir
+	_sio_dummy,			// rename
+	_sio_dummy,			// remove
+	_sio_dummy			// testdevice
 };
 
 

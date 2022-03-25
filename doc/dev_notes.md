@@ -85,15 +85,15 @@ _- spicyjpeg_
   `GPUSTAT` (`1F801814h`) to alternate on every frame (frame 0: wait until 0,
   frame 1: wait until 1, frame 2: wait until 0) before waiting for VSync
   otherwise the GPU will only draw the first field if you don't have drawing to
-  displayed area enabled. Performing this check in a low resolution/non
-  interlaced mode is harmless.
+  displayed area enabled. Performing this wait operation in non-interlaced modes
+  is harmless.
 
 - There's a hardware bug in the GPU `FillVRAM` command `GP0(02h)` where if you
-  set the height to 512 pixels the primitive is processed with a height of 0 as
-  the hardware does not appear to interpret the last bit of the height value.
-  This is most apparent when putting a DRAWENV with the height of 512 pixels
-  (for PAL for example) and background clearing is enabled, hence why
-  `DRAWENV.isbg` is not effective in the official SDK.
+  set the height to 512 pixels the primitive is drawn with a height of 0 as
+  the hardware does not appear to interpret the last bit of the height field.
+  This is most apparent when applying a DRAWENV with the height of 512 pixels
+  (for PAL standard for example) and isbg is set, hence this method also does
+  not work in the official SDK either.
 
 - The controller/memory card SPI interface is poorly implemented in most
   emulators, making custom controller polling code insanely hard to write and
@@ -280,4 +280,4 @@ _- spicyjpeg_
   space.
 
 -----------------------------------------
-_Last updated on 2022-02-06 by spicyjpeg_
+_Last updated on 2022-03-25 by lameguy64_

@@ -19,14 +19,31 @@ to ensure the changelog can be parsed correctly.
 
 -------------------------------------------------------------------------------
 
-## 2022-02-27: 0.19
+## 2022-03-25: 0.19
+
+lameguy64:
+
+- examples: Replaced sample image of mdec/mdecimage with different artwork.
+  Original image: http://lameguy64.net/?page=drawings&post_id=9
+
+- examples: Updated readme file in examples directory to reference the new
+  mdecimage example program.
+
+- psxsio: Added dummy hooks to unsupported device functions for tty device.
+
+- docs: Minor corrections on dev_notes.md.
+
+- docs: Updated documentation for CdGetSector() and CdReadCallback()
+  functions in libn00bref.odt.
+
+## 2022-02-27:
 
 spicyjpeg:
 
 - libpsn00b: Added `hwregs_c.h` header and renamed some registers in
   `hwregs_a.h`. Added `assert()` as a proper macro.
 
-- psxpress: Added new MDEC library.
+- libpsn00b: Added new MDEC library; psxpress.
 
 - psxspu: Fixed critical bug in `SpuSetReverb()`.
 

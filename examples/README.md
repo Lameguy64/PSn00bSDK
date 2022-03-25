@@ -19,13 +19,14 @@ Additional information may be found in the source code of each example.
 | [`graphics/gte`](./graphics/gte)               | Displays a rotating cube using GTE macros             | EXE  |       |
 | [`graphics/hdtv`](./graphics/hdtv)             | Demonstrates anamorphic widescreen at 704x480         | EXE  |       |
 | [`graphics/render2tex`](./graphics/render2tex) | Procedural texture effects using off-screen drawing   | EXE  |       |
-| [`graphics/rgb24`](./graphics/rgb24)           | Displays a 640x480 24-bit RGB image                   | EXE  |       |
+| [`graphics/rgb24`](./graphics/rgb24)           | Displays an uncompressed 640x480 24-bit RGB image     | EXE  |       |
 | [`graphics/tilesasm`](./graphics/tilesasm)     | Drawing a tile-map with assembly language             | EXE  |       |
 | [`io/pads`](./io/pads)                         | Demonstrates reading controllers via low-level access | EXE  |   3   |
 | [`io/system573`](./io/system573)               | Konami System 573 (PS1-based arcade board) example    | CD   |       |
 | [`lowlevel/cartrom`](./lowlevel/cartrom)       | ROM firmware for cheat devices written using GNU GAS  | ROM  |   4   |
+| [`mdec/mdecimage`](./mdec/mdecimage)           | Displays a (raw) MDEC format image using libpsxpress  | EXE  |       |
 | [`sound/spustream`](./sound/spustream)         | Custom (non XA) CD-ROM audio streaming using the SPU  | CD   |   1   |
-| [`sound/vagsample`](./sound/vagsample)         | Demonstrates playing VAG sound files with the SPU     | EXE  |       |
+| [`sound/vagsample`](./sound/vagsample)         | Demonstrates playing VAG sound files using the SPU    | EXE  |       |
 | [`system/childexec`](./system/childexec)       | Loading a child program and returning to parent       | EXE  |       |
 | [`system/console`](./system/console)           | TTY based text console that interrupts gameplay       | EXE  |       |
 | [`system/dynlink`](./system/dynlink)           | Demonstrates dynamically linked libraries             | CD   |       |
