@@ -12,7 +12,7 @@ Additional information may be found in the source code of each example.
 | [`beginner/hello`](./beginner/hello)           | The obligatory "Hello World" example program          | EXE  |       |
 | [`cdrom/cdbrowse`](./cdrom/cdbrowse)           | File browser using libpsxcd's directory functions     | CD   |       |
 | [`cdrom/cdxa`](./cdrom/cdxa)                   | CD-XA ADPCM audio player                              | CD   |   1   |
-| [`demos/n00bdemo`](./demos/n00bdemo)           | The premiere demonstration program of PSn00bSDK       | EXE  |       |
+| [`demos/n00bdemo`](./demos/n00bdemo)           | The premiere demonstration program of PSn00bSDK       | EXE  |   2   |
 | [`graphics/balls`](./graphics/balls)           | Draws colored balls bouncing around the screen        | EXE  |       |
 | [`graphics/billboard`](./graphics/billboard)   | Demonstrates how to draw 2D sprites in a 3D space     | EXE  |       |
 | [`graphics/fpscam`](./graphics/fpscam)         | First-person perspective camera with look-at          | EXE  |       |
@@ -21,9 +21,9 @@ Additional information may be found in the source code of each example.
 | [`graphics/render2tex`](./graphics/render2tex) | Procedural texture effects using off-screen drawing   | EXE  |       |
 | [`graphics/rgb24`](./graphics/rgb24)           | Displays a 640x480 24-bit RGB image                   | EXE  |       |
 | [`graphics/tilesasm`](./graphics/tilesasm)     | Drawing a tile-map with assembly language             | EXE  |       |
-| [`io/pads`](./io/pads)                         | Demonstrates reading controllers via low-level access | EXE  |       |
+| [`io/pads`](./io/pads)                         | Demonstrates reading controllers via low-level access | EXE  |   3   |
 | [`io/system573`](./io/system573)               | Konami System 573 (PS1-based arcade board) example    | CD   |       |
-| [`lowlevel/cartrom`](./lowlevel/cartrom)       | ROM firmware for cheat devices written using GNU GAS  | ROM  |   2   |
+| [`lowlevel/cartrom`](./lowlevel/cartrom)       | ROM firmware for cheat devices written using GNU GAS  | ROM  |   4   |
 | [`sound/spustream`](./sound/spustream)         | Custom (non XA) CD-ROM audio streaming using the SPU  | CD   |   1   |
 | [`sound/vagsample`](./sound/vagsample)         | Demonstrates playing VAG sound files with the SPU     | EXE  |       |
 | [`system/childexec`](./system/childexec)       | Loading a child program and returning to parent       | EXE  |       |
@@ -38,7 +38,12 @@ Notes:
    order to run these examples you'll have to provide your own files (and, in
    the case of `spustream`, convert them using the included Python script) and
    build the CD image manually.
-2. The `lowlevel/cartrom` example is outdated and does not use SDK libraries.
+2. `demos/n00bdemo` suffers from flickering on real hardware, especially when
+   masking/stencil buffering is used.
+3. `io/pads` seems to work on real hardware, but fails to automatically enable
+   analog mode on DualShock controllers. This example needs more testing with
+   official and unofficial controllers.
+4. The `lowlevel/cartrom` example is outdated and does not use SDK libraries.
    It is kept for reference purposes only.
 
 ## Building the examples
@@ -71,7 +76,7 @@ are for rebuilding the examples *after* the SDK has been installed.
    Add `-DPSN00BSDK_TARGET=mipsel-unknown-elf` to the first command if your
    toolchain targets `mipsel-unknown-elf` rather than `mipsel-none-elf`. If you
    can't get Ninja to work or don't have it installed, you can also replace
-   `-G "Ninja"` with `-G "Unix Makefiles"` (`-G "MSYS Makefiles"` on Windows)
+   `-G "Ninja"` with `-G "Unix Makefiles"` (`-G "MinGW Makefiles"` on Windows)
    to build using `make` instead.
 
    This should create a `build` directory whose structure mirrors the one of
@@ -79,4 +84,4 @@ are for rebuilding the examples *after* the SDK has been installed.
    CD images for each example.
 
 -----------------------------------------
-_Last updated on 2022-01-17 by spicyjpeg_
+_Last updated on 2022-02-06 by spicyjpeg_

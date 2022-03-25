@@ -51,9 +51,11 @@ typedef struct {
 	int size;
 } NODE;
 
+extern NODE _end[];
+
 void DumpHeap() {
 	
-	NODE *n = (NODE*)GetBSSend();
+	NODE *n = _end;
 	
 	printf( "--\n" );
 	

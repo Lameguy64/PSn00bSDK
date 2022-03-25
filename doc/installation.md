@@ -1,6 +1,12 @@
 
 # Getting started with PSn00bSDK
 
+**IMPORTANT**: due to a bug in `libflac` (used by `mkpsxiso`), building using
+MinGW on Windows currently requires `-DMKPSXISO_NO_LIBFLAC=ON` to be passed to
+CMake when configuring PSn00bSDK. This will result in the `dumpsxiso` utility
+being built without support for ripping CD audio tracks to FLAC, however the
+`mkpsxiso` command will still retain FLAC support.
+
 ## Building and installing
 
 The instructions below are for Windows and Linux. Building on macOS hasn't been
@@ -79,8 +85,8 @@ and installed properly.
 
    **NOTE**: Ninja is used by default to build the SDK. If you can't get it to
    work or don't have it installed, pass `-G "Unix Makefiles"` (or
-   `-G "MSYS Makefiles"` on Windows) to the first command to build using `make`
-   instead.
+   `-G "MinGW Makefiles"` on Windows) to the first command to build using
+   `make` instead.
 
 6. Install the SDK to the path you chose (add `sudo` or run it from a command
    prompt with admin privileges if necessary):
@@ -150,4 +156,4 @@ The toolchain script defines a few CMake macros to create PS1 executables, DLLs
 and CD images. See the [reference](cmake_reference.md) for details.
 
 -----------------------------------------
-_Last updated on 2021-12-29 by spicyjpeg_
+_Last updated on 2022-02-06 by spicyjpeg_

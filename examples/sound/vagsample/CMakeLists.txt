@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.20)
 
 project(
 	vagsample
-	LANGUAGES    C
+	LANGUAGES    C ASM
 	VERSION      1.0.0
 	DESCRIPTION  "PSn00bSDK SPU sound playback example"
 	HOMEPAGE_URL "http://lameguy64.net/?page=psn00bsdk"
@@ -14,5 +14,8 @@ project(
 file(GLOB _sources *.c)
 psn00bsdk_add_executable(vagsample STATIC ${_sources})
 #psn00bsdk_add_cd_image(vagsample_iso vagsample iso.xml DEPENDS vagsample)
+
+psn00bsdk_target_incbin(vagsample PRIVATE proyt proyt.vag)
+psn00bsdk_target_incbin(vagsample PRIVATE tdfx  3dfx.vag)
 
 install(FILES ${PROJECT_BINARY_DIR}/vagsample.exe TYPE BIN)

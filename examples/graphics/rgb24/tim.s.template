@@ -1,6 +1,0 @@
-.section .data
-
-.global tim_image
-.type tim_image, @object
-tim_image:
-	.incbin "${PROJECT_SOURCE_DIR}/bunpattern.tim"

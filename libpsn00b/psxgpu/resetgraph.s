@@ -38,14 +38,14 @@ ResetGraph:
 	nop									# interrupts enabled when transferring 
 										# execution to the loaded program
 
-	lui		$a3, 0x1f80					# Base address for I/O
+	lui		$a3, IOBASE					# Base address for I/O
 
 	lui		$v0, 0x3b33					# Enables DMA channel 6 (for ClearOTag)
 	ori		$v0, 0x3b33					# Enables DMA channel 2
-	sw		$v0, DPCR($a3)
-	sw		$0 , DICR($a3)				# Clear DICR (not needed)
+	sw		$v0, DMA_DPCR($a3)
+	sw		$0 , DMA_DICR($a3)			# Clear DICR (not needed)
 
-	sw		$0 , IMASK($a3)				# Clear IRQ settings
+	sw		$0 , IRQ_MASK($a3)			# Clear IRQ settings
 	
 	la		$v0, _hooks_installed		# Set installed flag
 	li		$v1, 0x1
@@ -84,9 +84,9 @@ ResetGraph:
 	
 .Lskip_hook_init:
 	
-	lui		$a3, 0x1f80
+	lui		$a3, IOBASE
 
-	lw		$v0, GP1($a3)				# Get video standard
+	lw		$v0, GPU_GP1($a3)				# Get video standard
 	lui		$v1, 0x0010
 	and		$v0, $v1
 	la		$v1, _gpu_standard
@@ -98,30 +98,30 @@ ResetGraph:
 
 	lw		$a0, 4($sp)					# Get argument value
 
-	lui		$a3, 0x1f80					# Set base I/O again (likely destroyed
+	lui		$a3, IOBASE					# Set base I/O again (likely destroyed
 										# by previous calls)
 
 	li		$v0, 0x1d00					# Configure timer 1 as Hblank counter
-	sw		$v0, T1_MODE($a3)			# Set timer 1 value
+	sw		$v0, TIMER1_CTRL($a3)		# Set timer 1 value
 	
 	beq		$a0, 1, .Lgpu_init_1
 	nop
 	beq		$a0, 3, .Lgpu_init_3
 	nop
 
-	sw		$0 , GP1($a3)				# Reset the GPU
+	sw		$0 , GPU_GP1($a3)				# Reset the GPU
 
 	b		.Linit_done
 	nop
 
 .Lgpu_init_1:
 
-	sw		$0 , D2_CHCR($a3)			# Stop any DMA
+	sw		$0 , DMA2_CHCR($a3)			# Stop any DMA
 
 .Lgpu_init_3:
 
 	li		$v0, 0x1					# Reset the command buffer
-	sw		$v0, GP1($a3)
+	sw		$v0, GPU_GP1($a3)
 
 .Linit_done:
 
@@ -140,12 +140,12 @@ VSync:
 	sw		$s0, 4($sp)
 	
 	lui		$a3, IOBASE					# Get GPU status (for interlace sync)
-	lw		$s0, GP1($a3)
+	lw		$s0, GPU_GP1($a3)
 	
 .Lhwait_loop:							# Get Hblank time
-	lw		$v0, T1_CNT($a3)
+	lw		$v0, TIMER1_VALUE($a3)
 	nop
-	lw		$v1, T1_CNT($a3)
+	lw		$v1, TIMER1_VALUE($a3)
 	nop
 	bne		$v0, $v1, .Lhwait_loop
 	nop
@@ -189,14 +189,14 @@ VSync:
 	
 	lui		$a3, IOBASE					# Interlace wait logic
 	
-	lw		$v0, GP1($a3)
+	lw		$v0, GPU_GP1($a3)
 	nop
 	xor		$v0, $s0, $v0
 	bltz	$v0, .Lhblank_exit
 	lui		$a0, 0x8000
 	
 .Linterlace_wait:
-	lw		$v0, GP1($a3)
+	lw		$v0, GPU_GP1($a3)
 	nop
 	xor		$v0, $s0, $v0
 	and		$v0, $a0
@@ -208,9 +208,9 @@ VSync:
 	la		$a2, _vsync_lasthblank
 	
 .Lhwait2_loop:
-	lw		$v0, T1_CNT($a3)
+	lw		$v0, TIMER1_VALUE($a3)
 	nop
-	lw		$v1, T1_CNT($a3)
+	lw		$v1, TIMER1_VALUE($a3)
 	sw		$v0, 0($a2)
 	bne		$v0, $v1, .Lhwait2_loop
 	nop

@@ -27,48 +27,33 @@
  */
 
 #include <stdint.h>
+#include <stddef.h>
 #include <string.h>
 #include <stdlib.h>
 #include <psxetc.h>
 #include <psxapi.h>
 #include <psxpad.h>
+#include <hwregs_c.h>
 
 #include "spi.h"
 
-/* Register definitions */
-
-#define F_CPU 33868800UL
-
-#define TIM_VALUE(N)	*((volatile uint32_t *) 0x1f801100 + 4 * (N))
-#define TIM_CTRL(N)		*((volatile uint32_t *) 0x1f801104 + 4 * (N))
-#define TIM_RELOAD(N)	*((volatile uint32_t *) 0x1f801108 + 4 * (N))
-
-// IMPORTANT: even though JOY_TXRX is a 32-bit register, it should only be
-// accessed as 8-bit. Reading it as 16 or 32-bit works fine on real hardware,
-// but leads to problems in some emulators.
-#define JOY_TXRX		*((volatile uint8_t *)  0x1f801040)
-#define JOY_STAT		*((volatile uint16_t *) 0x1f801044)
-#define JOY_MODE		*((volatile uint16_t *) 0x1f801048)
-#define JOY_CTRL		*((volatile uint16_t *) 0x1f80104a)
-#define JOY_BAUD		*((volatile uint16_t *) 0x1f80104e)
-
 /* Internal structures and globals */
 
-typedef struct _SPI_CONTEXT {
+typedef struct _SPI_Context {
 	uint8_t			tx_buff[SPI_BUFF_LEN];
 	uint8_t			rx_buff[SPI_BUFF_LEN];
 	uint32_t		tx_len, rx_len, port;
 	SPI_Callback	callback;
 } SPI_Context;
 
-static volatile SPI_Context				ctx;
-static volatile SPI_Request volatile	*current_req;
-static SPI_Callback						default_cb;
+static volatile SPI_Context				_context;
+static volatile SPI_Request volatile	*_current_req;
+static volatile SPI_Callback			_default_cb;
 
 /* Request queue management */
 
 static void _spi_create_poll_req(void) {
-	PadRequest *req = (PadRequest *) ctx.tx_buff;
+	PadRequest *req = (PadRequest *) _context.tx_buff;
 
 	req->addr     = 0x01;
 	req->cmd      = PAD_CMD_READ;
@@ -76,27 +61,31 @@ static void _spi_create_poll_req(void) {
 	req->motor_l  = 0x00;
 	req->motor_r  = 0x00;
 
-	ctx.tx_len   = 4;
-	ctx.rx_len   = 0;
-	ctx.port    ^= 1;
-	ctx.callback = default_cb;
+	_context.tx_len   = 4;
+	_context.rx_len   = 0;
+	_context.port    ^= 1;
+	_context.callback = _default_cb;
 }
 
 static void _spi_next_req(void) {
 	// Copy the contents of the first request in the queue into the TX buffer.
-	memcpy((void *) ctx.tx_buff, (void *) current_req->data, current_req->len);
+	memcpy(
+		(void *) _context.tx_buff,
+		(void *) _current_req->data,
+		_current_req->len
+	);
 
-	ctx.tx_len   = current_req->len;
-	ctx.rx_len   = 0;
-	ctx.port     = current_req->port;
-	ctx.callback = current_req->callback;
+	_context.tx_len   = _current_req->len;
+	_context.rx_len   = 0;
+	_context.port     = _current_req->port;
+	_context.callback = _current_req->callback;
 
 	// Pop the first request from the queue by deallocating it and adjusting
 	// the pointer to the first queue item.
-	SPI_Request *next = current_req->next;
+	SPI_Request *next = _current_req->next;
 
-	free((void *) current_req);
-	current_req = next;
+	free((void *) _current_req);
+	_current_req = next;
 }
 
 /* Interrupt handlers */
@@ -105,13 +94,13 @@ static void _spi_poll_irq_handler(void) {
 	// Fetch the last response byte, which wasn't followed by a pulse on /ACK,
 	// from the RX FIFO.
 	if (JOY_STAT & 0x0002)
-		ctx.rx_buff[ctx.rx_len - 1] = (uint8_t) JOY_TXRX;
+		_context.rx_buff[_context.rx_len - 1] = (uint8_t) JOY_TXRX;
 
-	if (ctx.callback)
-		ctx.callback(ctx.port, ctx.rx_buff, ctx.rx_len);
+	if (_context.callback)
+		_context.callback(_context.port, _context.rx_buff, _context.rx_len);
 
 	// If the request queue is empty, create a pad polling request.
-	if (current_req)
+	if (_current_req)
 		_spi_next_req();
 	else
 		_spi_create_poll_req();
@@ -119,17 +108,18 @@ static void _spi_poll_irq_handler(void) {
 	// Prepare the SPI port by clearing any pending IRQ, pulling /CS high and
 	// enabling the /ACK IRQ. In order to communicate with controllers, /CS has
 	// to be driven low again for about 20 us before sending the first byte.
+	// TODO: these delays can be probably tweaked for better performance
 	JOY_CTRL = 0x0010;
-	for (uint32_t i = 0; i < 50; i++)
-		__asm__("nop");
+	for (uint32_t i = 0; i < 1000; i++)
+		__asm__ volatile("");
 
-	JOY_CTRL = 0x1003 | (ctx.port << 13);
-	for (uint32_t i = 0; i < 500; i++)
-		__asm__("nop");
+	JOY_CTRL = 0x1003 | (_context.port << 13);
+	for (uint32_t i = 0; i < 2000; i++)
+		__asm__ volatile("");
 
 	// Send the first byte indicating which device to address. If the matching
 	// device is connected, it will reply by triggering the /ACK IRQ.
-	JOY_TXRX = ctx.tx_buff[0];
+	JOY_TXRX = _context.tx_buff[0];
 }
 
 static void _spi_ack_irq_handler(void) {
@@ -137,29 +127,29 @@ static void _spi_ack_irq_handler(void) {
 	// byte. According to nocash docs, this has to be done before resetting the
 	// IRQ.
 	while (JOY_STAT & 0x0080)
-		__asm__("nop");
+		__asm__ volatile("");
 
 	// Keep /CS pulled low and acknowledge the IRQ (bit 4) to ensure it can be
 	// triggered again.
-	JOY_CTRL = 0x1013 | (ctx.port << 13);
+	JOY_CTRL = 0x1013 | (_context.port << 13);
 
-	if (!ctx.rx_len) {
+	if (!_context.rx_len) {
 		// We just sent the first address byte. Obviously the response we
 		// received was read from an open bus, so the SPI port's internal FIFO
 		// must be flushed (by performing dummy reads) to ensure we are only
 		// going to read valid data from now on.
 		JOY_TXRX;
 
-	} else if (ctx.rx_len <= SPI_BUFF_LEN) {
+	} else if (_context.rx_len <= SPI_BUFF_LEN) {
 		// If this is not the first byte, put it in the RX buffer.
-		ctx.rx_buff[ctx.rx_len - 1] = (uint8_t) JOY_TXRX;
+		_context.rx_buff[_context.rx_len - 1] = (uint8_t) JOY_TXRX;
 	}
 
 	// Send the next byte, or a null byte if there is no more data to send and
 	// we're just reading a response.
-	ctx.rx_len++;
-	if (ctx.rx_len < ctx.tx_len)
-		JOY_TXRX = (uint32_t) ctx.tx_buff[ctx.rx_len];
+	_context.rx_len++;
+	if (_context.rx_len < _context.tx_len)
+		JOY_TXRX = (uint32_t) _context.tx_buff[_context.rx_len];
 	else
 		JOY_TXRX = 0x00;
 }
@@ -176,10 +166,10 @@ SPI_Request *SPI_CreateRequest(void) {
 
 	// Find the last queued request by traversing the linked list and append a
 	// pointer to the new request.
-	if (!current_req) {
-		current_req = req;
+	if (!_current_req) {
+		_current_req = req;
 	} else {
-		volatile SPI_Request *volatile last = current_req;
+		volatile SPI_Request *volatile last = _current_req;
 		while (last->next)
 			last = last->next;
 
@@ -190,12 +180,12 @@ SPI_Request *SPI_CreateRequest(void) {
 }
 
 void SPI_SetPollRate(uint32_t value) {
-	TIM_CTRL(2) = 0x0258; // CLK/8 input, IRQ on reload, disable one-shot IRQ
+	TIMER_CTRL(2) = 0x0258; // CLK/8 input, IRQ on reload, disable one-shot IRQ
 
 	if (value < 65)
-		TIM_RELOAD(2) = 0xffff;
+		TIMER_RELOAD(2) = 0xffff;
 	else
-		TIM_RELOAD(2) = (F_CPU / 8) / value;
+		TIMER_RELOAD(2) = (F_CPU / 8) / value;
 }
 
 void SPI_Init(SPI_Callback callback) {
@@ -213,6 +203,6 @@ void SPI_Init(SPI_Callback callback) {
 	JOY_BAUD = 0x0088; // 250000 bps
 
 	SPI_SetPollRate(250);
-	current_req = 0;
-	default_cb  = callback;
+	_current_req = 0;
+	_default_cb  = callback;
 }

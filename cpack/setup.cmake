@@ -89,7 +89,7 @@ if(NOT DEFINED CPACK_GENERATOR)
 		# TODO: add a macOS installer and related options
 		set(CPACK_GENERATOR ZIP)
 	elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-		set(CPACK_GENERATOR ZIP DEB RPM)
+		set(CPACK_GENERATOR ZIP DEB)
 	else()
 		set(CPACK_GENERATOR ZIP)
 	endif()

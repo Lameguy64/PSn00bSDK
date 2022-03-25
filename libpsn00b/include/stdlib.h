@@ -38,16 +38,13 @@ long labs(long i);
 long long strtoll(const char *nptr, char **endptr, int base);
 long strtol(const char *nptr, char **endptr, int base);
 long double strtold(const char *nptr, char **endptr);
-// BIOS temporary
-int atoi(const char *s);
-long atol(const char *s);
 
 // Note: these use floats internally!
 double strtod(const char *nptr, char **endptr);
 float strtof(const char *nptr, char **endptr);
 
 // Memory allocation functions
-unsigned int *GetBSSend();
+void _mem_init(int ram_size, int stack_max_size);
 void InitHeap(unsigned int *addr, int size);
 int SetHeapSize(int size);
 void *malloc(int size);

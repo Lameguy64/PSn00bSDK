@@ -46,13 +46,13 @@ DMACallback:
 	
 	lui		$a2, IOBASE
 	
-	lw		$v0, DICR($a2)			# Enable DMA interrupt
+	lw		$v0, DMA_DICR($a2)		# Enable DMA interrupt
 	lui		$v1, 0x1
 	sll		$v1, $a0
 	or		$v0, $v1
 	lui		$v1, 0x80
 	or		$v0, $v1
-	sw		$v0, DICR($a2)
+	sw		$v0, DMA_DICR($a2)
 	
 	b		.Lskip_remove
 	nop
@@ -67,7 +67,7 @@ DMACallback:
 	sw		$v1, 4($sp)
 	
 	lui		$a2, IOBASE				# Disable DMA interrupt
-	lw		$v0, DICR($a2)
+	lw		$v0, DMA_DICR($a2)
 	lui		$v1, 0x1
 	sll		$v1, $a0
 	.set noat
@@ -78,13 +78,13 @@ DMACallback:
 	xor		$v1, $at
 	and		$v0, $v1
 	.set at
-	sw		$v0, DICR($a2)
+	sw		$v0, DMA_DICR($a2)
 	
 	jal		_dma_has_cb				# Check if callbacks are present
 	nop
 	bnez	$v0, .Lskip_remove
 	nop
-	sw		$0 , DICR($a2)
+	sw		$0 , DMA_DICR($a2)
 	
 	jal		GetInterruptCallback	# Check if callback is the DMA handler
 	li		$a0, 3
@@ -143,7 +143,7 @@ _dma_handler:
 .Lhandler_loop:
 
 	lui		$a0, IOBASE
-	lw		$v0, DICR($a0)
+	lw		$v0, DMA_DICR($a0)
 	li		$v1, 24
 	addu	$v1, $s0
 	srl		$v0, $v1
@@ -166,9 +166,9 @@ _dma_handler:
 	addi	$s0, 1
 	
 	lui		$a0, IOBASE
-	lw		$v0, DICR($a0)
+	lw		$v0, DMA_DICR($a0)
 	nop
-	sw		$v0, DICR($a0)
+	sw		$v0, DMA_DICR($a0)
 	
 	lw		$ra, 0($sp)
 	lw		$s0, 4($sp)

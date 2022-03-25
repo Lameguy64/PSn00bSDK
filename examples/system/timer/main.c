@@ -3,6 +3,7 @@
 #include <psxgpu.h>
 #include <psxapi.h>
 #include <psxetc.h>
+#include <hwregs_c.h>
 
 /* OT and Packet Buffer sizes */
 #define OT_LEN			256
@@ -34,7 +35,7 @@ void display();
 
 
 volatile int timer_calls = 0;
-volatile short *timer2_ctrl = (short*)0x1F801124;
+
 void timer_func()
 {
 	timer_calls++;
@@ -74,7 +75,7 @@ int main() {
 	//counter = 5163000/560;
 	
 	SetRCnt(RCntCNT2, counter, RCntMdINTR);
-	*timer2_ctrl = 0x1E58;
+	TIMER_CTRL(2) = 0x1E58;
 	InterruptCallback(6, timer_func);
 	StartRCnt(RCntCNT2);
 	ChangeClearRCnt(2, 0);

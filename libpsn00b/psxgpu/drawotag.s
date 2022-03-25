@@ -11,11 +11,11 @@ DrawOTag:
 	addiu	$sp, -4
 	sw		$ra, 0($sp)
 
-	lui		$a3, 0x1f80			# I/O segment base
+	lui		$a3, IOBASE			# I/O segment base
 
 	lui		$v0, 0x0400			# Set DMA direction to CPUtoGPU
 	ori		$v0, 0x2
-	sw		$v0, GP1($a3)
+	sw		$v0, GPU_GP1($a3)
 	
 .Lgpu_wait:						# Wait for GPU to be ready for commands & DMA
 	jal		ReadGPUstat
@@ -25,12 +25,12 @@ DrawOTag:
 	beqz	$v0, .Lgpu_wait
 	nop
 
-	sw		$a0, D2_MADR($a3)	# Set DMA base address to specified OT
-	sw		$0 , D2_BCR($a3)
+	sw		$a0, DMA2_MADR($a3)	# Set DMA base address to specified OT
+	sw		$0 , DMA2_BCR($a3)
 
 	lui		$v0, 0x0100			# Begin OT transfer!
 	ori		$v0, 0x0401
-	sw		$v0, D2_CHCR($a3)
+	sw		$v0, DMA2_CHCR($a3)
 
 	lw		$ra, 0($sp)
 	addiu	$sp, 4

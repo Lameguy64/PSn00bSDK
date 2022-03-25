@@ -64,7 +64,7 @@ _drawsync_handler:
 	addiu	$sp, -4
 	sw		$ra, 0($sp)
 
-	lw		$v0, D2_CHCR($a0)
+	lw		$v0, DMA2_CHCR($a0)
 	nop
 	srl		$v0, 24
 	andi	$v0, 0x1
@@ -84,7 +84,7 @@ _drawsync_handler:
 	lw		$v1, 0($v1)
 	
 	lui		$v0, 0x0400			# Set DMA direction to off
-	sw		$v0, GP1($a0)
+	sw		$v0, GPU_GP1($a0)
 	
 	jalr	$v1
 	nop

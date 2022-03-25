@@ -1,6 +1,0 @@
-.section .data
-
-.global child_exe			# Insert spoopypasta
-.type child_exe, @object
-child_exe:
-	.incbin "${PROJECT_BINARY_DIR}/child.exe"

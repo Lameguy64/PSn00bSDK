@@ -73,8 +73,17 @@ install(
 
 # Generate build.json. This file is used to determine the SDK version after
 # installation and may contain additional metadata about the build.
-configure_file(
-	build.json.template build.json
+file(
+	CONFIGURE
+	OUTPUT  build.json
+	CONTENT [[{
+	"version":       "${PSN00BSDK_VERSION}",
+	"build_date":    "${PSN00BSDK_BUILD_DATE}",
+	"git_tag":       "${PSN00BSDK_GIT_TAG}",
+	"git_commit":    "${PSN00BSDK_GIT_COMMIT}",
+	"cmake_version": "${CMAKE_VERSION}",
+	"host_system":   "${CMAKE_HOST_SYSTEM_NAME}"
+}]]
 	ESCAPE_QUOTES
 	NEWLINE_STYLE LF
 )

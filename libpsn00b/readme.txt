@@ -18,33 +18,39 @@ recommended version as that is what LibPSn00b is most tested most on.
 
 Brief summary of libraries:
 
-	libc	- Standard C library. Covers only a small subset of the full
-			  standard C library such as basic string and memory manipulation
-			  functions. Should include libgcc to avoid libc/libgcc linker
-			  hell (endless cross referencing).
-			  
-	psxgpu	- GPU library for video, graphics control, and interrupt service
-			  subsystem that other libraries that uses interrupts depend on.
-	
-	psxgte	- GTE library for hardware accelerated vector transformations
-			  that are integral for high performance 3D graphics on the PS1
-			  (it is a Geometry Transformation Engine, NOT Transfer Engine).
-			  
-	psxapi	- Provides function calls for using functions provided by the PS1
-			  BIOS.
-			  
-	psxetc	- Provides some miscellaneous features used by the other libraries
-			  as well as a dynamic linker for loading DLLs at runtime.
+	libc	 - Standard C library. Covers only a small subset of the full
+			   standard C library such as basic string and memory manipulation
+			   functions. Should include libgcc to avoid libc/libgcc linker
+			   hell (endless cross referencing).
 
-	psxspu	- SPU library (work in progress). Currently supports hardware
-			  init, sample data upload via DMA and playing sound samples.
-			  Lacks support for reverb and a sequenced music subsystem.
-			  
-	psxcd	- CD-ROM library for loading files, parsing directories
-			  (PSn00bSDK addition), CD Audio/XA playback with provisions for
-			  data streaming. Also supports multi-session discs (must be
-			  selected manually).
-			   
+	psxgpu	 - GPU library for video, graphics control, and interrupt service
+			   subsystem that other libraries that uses interrupts depend on.
+
+	psxgte	 - GTE library for hardware accelerated vector transformations
+			   that are integral for high performance 3D graphics on the PS1
+			   (it is a Geometry Transformation Engine, NOT Transfer Engine).
+
+	psxapi	 - Provides function calls for using functions provided by the PS1
+			   BIOS.
+
+	psxetc	 - Provides some miscellaneous features used by the other libraries
+			   as well as a dynamic linker for loading DLLs at runtime.
+
+	psxspu	 - SPU library (work in progress). Currently supports hardware
+			   init, sample data upload via DMA and playing sound samples.
+			   Lacks support for reverb and a sequenced music subsystem.
+
+	psxcd	 - CD-ROM library for loading files, parsing directories
+			   (PSn00bSDK addition), CD Audio/XA playback with provisions for
+			   data streaming. Also supports multi-session discs (must be
+			   selected manually).
+
+	psxpress - Experimental MDEC library. Currently provides APIs to feed data
+			   to the MDEC and retrieve decoded images, as well as a
+			   decompressor for the Huffman encoding used in FMVs encoded using
+			   Sony tools. A custom decompressor based on arithmetic coding
+			   might be implemented in the future.
+
 	Each library has its own readme file that contains a todo list, credits
 	and some additional details of the library. Changes of all the libraries
 	must be covered in the changelog.txt file.
@@ -52,7 +58,7 @@ Brief summary of libraries:
 
 Compiling:
 
-	Refer to INSTALL.md in the parent directory for up-to-date installation
+	Refer to installation.md in the doc directory for up-to-date installation
 	instructions.
 
 	--- THE SECTION BELOW IS OUTDATED AND ONLY KEPT FOR REFERENCE ---
@@ -144,11 +150,6 @@ LibPSn00b Library to-do list:
 	psxmcrd  - Better and faster memory card library with provisions for
 			   low-level card access. The psxpad library would provide
 			   communication routines for the card library.
-			   
-	psxpress - MDEC and data decompression library. May use DEFLATE or LZ77
-			   for compressing MDEC data instead of Huffman as used in the
-			   official libraries. It may yield better compression which may
-			   potentially result in higher quality FMVs.
 
 	psxexp   - Support library for various devices connected to the serial or
 			   expansion port, including both official ones (e.g. PCMCIA cards

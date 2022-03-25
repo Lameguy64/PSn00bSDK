@@ -7,6 +7,8 @@ extern const char scroll_text[];
 extern unsigned short lamelotl_tpage,psn00b_tpage;
 extern unsigned short font_tpage,font_clut;
 
+extern volatile int frame_counter, frame_rate;
+
 extern SPRT llotl_sprite;
 extern SPRT psn00b_sprite;
 
@@ -23,6 +25,35 @@ int scrolltext_pos = 640;
 int scrolltext_cpos = 0;
 int overlay_count = 0;
 
+void sort_fps_counter() {
+	int tens = frame_rate / 10, units = frame_rate % 10;
+	int x = 10;
+
+	SPRT_16 *spr16 = (SPRT_16 *) nextpri;
+
+	setSprt16(spr16);
+	setSemiTrans(spr16, 1);
+	setXY0(spr16, x, 56);
+	setUV0(spr16, tens << 4, 16);
+	setRGB0(spr16, 20, 20, 20);
+	spr16->clut = font_clut;
+	addPrim(ot[db], spr16);
+	spr16++;
+	x += font_width[16 | tens];
+
+	setSprt16(spr16);
+	setSemiTrans(spr16, 1);
+	setXY0(spr16, x, 56);
+	setUV0(spr16, units << 4, 16);
+	setRGB0(spr16, 20, 20, 20);
+	spr16->clut = font_clut;
+	addPrim(ot[db], spr16);
+	spr16++;
+
+	nextpri = (char *) spr16;
+	frame_counter++;
+}
+
 void sort_overlay(int showlotl) {
 	
 	SPRT *spr;
@@ -31,6 +62,8 @@ void sort_overlay(int showlotl) {
 	POLY_G4 *quad;
 	LINE_G2 *line;
 	
+	sort_fps_counter();
+
 	int i = scrolltext_cpos;
 	int j, k, tx, par_end = 0;
 	

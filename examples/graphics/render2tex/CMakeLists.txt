@@ -11,14 +11,10 @@ project(
 	HOMEPAGE_URL "http://lameguy64.net/?page=psn00bsdk"
 )
 
-configure_file(texture.s.template texture.s)
-
 file(GLOB _sources *.c)
-psn00bsdk_add_executable(
-	render2tex STATIC
-	${_sources}
-	${PROJECT_BINARY_DIR}/texture.s
-)
+psn00bsdk_add_executable(render2tex STATIC ${_sources})
 #psn00bsdk_add_cd_image(render2tex_iso render2tex iso.xml DEPENDS render2tex)
+
+psn00bsdk_target_incbin(render2tex PRIVATE tim_blendpattern blendpattern-16c.tim)
 
 install(FILES ${PROJECT_BINARY_DIR}/render2tex.exe TYPE BIN)

@@ -21,16 +21,16 @@ CdGetSector:
 #	srl		$a1, 2				# (the official implementation expects $a1/size
 								# to be in 32-bit words rather than bytes)
 	or		$v0, $a1
-	sw		$a0, D3_MADR($a2)	# Set DMA base address and transfer length
-	sw		$v0, D3_BCR($a2)
+	sw		$a0, DMA3_MADR($a2)	# Set DMA base address and transfer length
+	sw		$v0, DMA3_BCR($a2)
 
 	lui		$v0, 0x1100			# Start DMA transfer
-	sw		$v0, D3_CHCR($a2)
+	sw		$v0, DMA3_CHCR($a2)
 	nop
 	nop
 	
 .Ldma_wait:						# Ensure DMA transfer has completed
-	lw		$v0, D3_CHCR($a2)
+	lw		$v0, DMA3_CHCR($a2)
 	nop
 	srl		$v0, 24
 	andi	$v0, 0x1

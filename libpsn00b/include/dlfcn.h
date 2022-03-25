@@ -1,19 +1,18 @@
 /*
  * PSn00bSDK dynamic linker
- * (C) 2021 spicyjpeg - MPL licensed
+ * (C) 2021-2022 spicyjpeg - MPL licensed
  */
 
 #ifndef __DLFCN_H
 #define __DLFCN_H 
 
-#include <sys/types.h>
+#include <stdint.h>
 #include <elf.h>
 
 /* Helper macro for setting $t9 before calling a function */
 
-#define DL_CALL(func, ...) { \
+#define DL_PRE_CALL(func) { \
 	__asm__ volatile("move $t9, %0;" :: "r"(func) : "$t9"); \
-	func(__VA_ARGS__); \
 }
 
 /* Types */

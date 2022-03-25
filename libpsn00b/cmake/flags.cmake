@@ -5,10 +5,10 @@
 # directories and compiler flags when a target is linked against them. The
 # following targets are currently defined:
 # - psn00bsdk_common
-# - psn00bsdk_object_lib (same as psn00bsdk_common)
 # - psn00bsdk_static_exe
 # - psn00bsdk_dynamic_exe
 # - psn00bsdk_static_lib
+# - psn00bsdk_object_lib (same as psn00bsdk_static_lib)
 # - psn00bsdk_shared_lib
 # - psn00bsdk_module_lib (same as psn00bsdk_shared_lib)
 #
@@ -21,12 +21,7 @@ add_library(psn00bsdk_common INTERFACE)
 
 foreach(
 	_target IN ITEMS
-		object_lib
-		static_exe
-		dynamic_exe
-		static_lib
-		shared_lib
-		module_lib
+	static_exe dynamic_exe static_lib object_lib shared_lib module_lib
 )
 	add_library          (psn00bsdk_${_target} INTERFACE)
 	target_link_libraries(psn00bsdk_${_target} INTERFACE psn00bsdk_common)
@@ -127,6 +122,8 @@ target_compile_options(
 		-mno-gpopt
 		-Wa,--strip-local-absolute
 )
+
+target_link_libraries(psn00bsdk_object_lib INTERFACE psn00bsdk_static_lib)
 
 # Options for dynamically-loaded libraries:
 # - Position-independent code enabled

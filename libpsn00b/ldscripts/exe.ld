@@ -82,6 +82,11 @@ SECTIONS {
 
 	/* BSS sections, i.e. uninitialized variables */
 
+	/*
+	 * Align all BSS sections to 4 bytes to ensure _start() doesn't perform
+	 * unaligned memory accesses when clearing them.
+	 */
+	. = ALIGN((. != 0) ? 4 : 1);
 	__bss_start = .;
 
 	.sbss (NOLOAD) : {
@@ -91,13 +96,9 @@ SECTIONS {
 	.bss (NOLOAD) : {
 		*(.bss .bss.* .gnu.linkonce.b.*)
 		*(COMMON)
-
-		/*
-		 * This crap was in the stock GCC linker script.
-		 */
-		. = ALIGN((. != 0) ? 4 : 1);
 	} > APP_RAM
 
+	. = ALIGN((. != 0) ? 4 : 1);
 	_end = .;
 
 	/* Dummy section */

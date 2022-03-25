@@ -75,12 +75,16 @@ typedef enum {
 
 typedef enum {
 	PAD_CMD_INIT_PRESSURE	= '@', // Initialize DS2 button pressure sensors (in config mode)
-	PAD_CMD_READ			= 'B', // Read pad state and set rumble
+	PAD_CMD_READ			= 'B', // Read pad state (exchange poll request/response)
 	PAD_CMD_CONFIG_MODE		= 'C', // Toggle DualShock configuration mode
 	PAD_CMD_SET_ANALOG		= 'D', // Set analog mode/LED state (in config mode)
 	PAD_CMD_GET_ANALOG		= 'E', // Get analog mode/LED state (in config mode)
-	PAD_CMD_REQUEST_CONFIG	= 'M', // Configure request/unlock vibration (in config mode)
-	PAD_CMD_RESPONSE_CONFIG	= 'O', // Configure response/unlock DS2 pressure (in config mode)
+	PAD_CMD_GET_MOTOR_INFO	= 'F', // Get information about a vibration motor (in config mode)
+	PAD_CMD_GET_MOTOR_LIST	= 'G', // Get list of all vibration motors (in config mode)
+	PAD_CMD_GET_MOTOR_STATE	= 'H', // Get current state of vibration motors (in config mode)
+	PAD_CMD_GET_MODE		= 'L', // Get list of supported controller modes? (in config mode)
+	PAD_CMD_REQUEST_CONFIG	= 'M', // Configure poll request format (in config mode)
+	PAD_CMD_RESPONSE_CONFIG	= 'O', // Configure poll response format (in config mode)
 
 	MCD_CMD_READ_SECTOR		= 'R', // Read 128-byte sector
 	MCD_CMD_IDENTIFY		= 'S', // Retrieve ID and card size information (Sony cards only)

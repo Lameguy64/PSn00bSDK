@@ -13,16 +13,14 @@ project(
 
 set(DATA_DIR ${PROJECT_SOURCE_DIR}/data)
 
-configure_file(data.s.template data.s)
-configure_file(data.xml.template data.xml)
+configure_file(data.xml _data.xml)
 
-# Add a build step to pack assets into a single .LZP file. This archive is then
-# embedded into the binary through data.s, which is in turn generated from
-# data.s.template. Note that, since we specify dependencies, CMake can detect
-# when source assets are edited and rebuild the archive automatically.
+# Add a build step to pack assets into a single .LZP file. Note that, since we
+# are specifying dependencies, CMake can detect when source assets are edited
+# and rebuild the archive automatically.
 file(GLOB _assets ${DATA_DIR}/*.tim ${DATA_DIR}/*.smd)
 add_custom_command(
-	COMMAND    ${LZPACK} -y data.xml
+	COMMAND    ${LZPACK} -y _data.xml
 	OUTPUT     data.lzp
 	BYPRODUCTS textures.qlp
 	DEPENDS    ${_assets}
@@ -30,17 +28,13 @@ add_custom_command(
 )
 
 file(GLOB _sources *.s *.c)
-psn00bsdk_add_executable(
-	n00bdemo STATIC
-	${_sources}
-	${PROJECT_BINARY_DIR}/data.s
-)
-target_include_directories(n00bdemo PRIVATE ${PROJECT_SOURCE_DIR})
+psn00bsdk_add_executable(n00bdemo STATIC ${_sources})
 #psn00bsdk_add_cd_image(n00bdemo_iso n00bdemo iso.xml DEPENDS n00bdemo)
 
-# Ensure data.lzp is built before the executable. Due to CMake's limitations we
-# actually have to wrap it in a dummy target.
-add_custom_target(n00bdemo_data DEPENDS data.lzp)
-add_dependencies(n00bdemo n00bdemo_data)
+target_include_directories(n00bdemo PRIVATE ${PROJECT_SOURCE_DIR})
+psn00bsdk_target_incbin(
+	n00bdemo PRIVATE _lz_resources
+	${PROJECT_BINARY_DIR}/data.lzp
+)
 
 install(FILES ${PROJECT_BINARY_DIR}/n00bdemo.exe TYPE BIN)

@@ -82,14 +82,14 @@ As of November 28, 2021
 
 ## Obtaining PSn00bSDK
 
-PSn00bSDK has switched to a CMake-based build and installation system. See
-[installation.md](doc/installation.md) for details.
+Prebuilt PSn00bSDK packages for Windows and Linux are available through GitHub
+Actions and include the libraries, a copy of the GCC MIPS toolchain, command
+line tools, examples and documentation. CMake is **not** included and must be
+installed separately, either from [its website](https://cmake.org/download) or
+via MSys2 or your distro's package manager.
 
-Prebuilt SDK packages and versions of the GCC toolchain for Windows and Linux
-(DEB/RPM) are available through GitHub Actions. Stable releases haven't yet
-been published however, due to this project being in a work-in-progress state.
-It is still recommended to build the SDK from source for the time being.
-
+See [installation.md](doc/installation.md) for a quick start guide and for
+details on how to build the SDK yourself.
 
 ## Examples
 
@@ -131,6 +131,8 @@ Contributors:
 
 * **spicyjpeg**: dynamic linker, CMake scripts, some docs and examples
   (`system/dynlink`, `sound/spustream`, `io/pads`, `io/system573`).
+* **Silent**, **G4Vi**, **Chromaryu**: `mkpsxiso` and `dumpsxiso` (maintained
+  as a [separate repo](https://github.com/Lameguy64/mkpsxiso)).
 
 Honorable mentions:
 
