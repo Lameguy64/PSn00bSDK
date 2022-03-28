@@ -33,40 +33,42 @@ in custom MIPS assembly instead of equivalents found in the BIOS ROM, for both
 stability (the BIOS `libc` implementation of the PlayStation is actually buggy)
 and performance reasons.
 
+
 ## Notable features
 
-As of November 28, 2021
+As of March 28, 2022
 
-* Extensive GPU support with polygon, line and sprite primitives, high-speed
-  DMA transfers for VRAM data and ordering tables. All video modes for both
-  NTSC and PAL standards also supported with fully adjustable display area
-  and automatic video standard detection based on last GPU mode. No BIOS
-  ROM checks used.
+* Extensive GPU support with lines, flat shaded or textured polygon and sprite
+  primitives, high-speed DMA for VRAM transfers and ordering tables. All video
+  modes for both NTSC and PAL standards also supported with fully adjustable
+  display area and automatic video standard detection based on last GPU mode.
 
 * Extensive GTE support with rotate, translate, perspective correction and
-  lighting fully supported via C and assembly GTE macros paired with high
-  speed matrix and vector functions. All calculations performed in fixed
-  point integer math, not a single float defined.
+  lighting calculation fully supported through C and/or assembly GTE macros
+  paired with high speed matrix and vector helper functions. All calculations
+  performed in fixed point integer math, not a single float used.
 
-* Flexible interrupt service routine with easy to use callback mechanism for
-  simplified handling and hooking of hardware and DMA interrupts, no crude
+* Flexible interrupt service subsystem with easy to use callback mechanism for
+  simplified handling and hooking of hardware and DMA interrupts. No crude
   event handler hooks or kernel hacks providing great compatibility with
-  HLE BIOS implementations. Should work without issue for loader/menu type
-  programs as well.
-
-* Complete Serial I/O support with SIOCONS driver for tty stdin/stdout
-  console access. Hardware flow control also supported.
+  HLE BIOS implementations and loader/menu type homebrew programs.
 
 * BIOS controller functions for polling controller input work as intended
-  thanks to proper handling of hardware interrupts. No crude manual polling
-  of controllers in a main loop. BIOS memory card functions may also work,
-  but not yet tested extensively.
+  thanks to proper handling of hardware interrupts. No crude direct I/O polling
+  of controllers in the main loop.
+  
+* Complete Serial I/O support with SIOCONS driver for tty stdin/stdout
+  console access. Hardware flow control supported.
 
-* Full CD-ROM support via libpsxcd with data read, CD audio and XA audio
-  playback support. Features built-in ISO9660 file system parser for locating
-  and querying files and directories. Supports directories containing more
-  than 30 files (classic ISO9660 only, no Rock Ridge or Joliet extensions)
-  and also supports reading new sessions on a multi-session disc.
+* Full CD-ROM support using libpsxcd featuring data read, CD audio and XA audio
+  playback, built-in ISO9660 file system parser with no file count limit
+  (classic ISO9660 only, no Rock Ridge or Joliet extensions) and multi-session.
+  
+* Preliminary MDEC support implemented with libpsxpress (no VLC decoding yet).
+  Sample encoder included.
+
+* Can target Konami System 573 arcade hardware with limited support
+  (see examples/io/system573/main.c for details)
 
 * Experimental support for compiling separate sections of an executable into
   shared library files (DLLs) and linking them dynamically at runtime, plus
@@ -74,22 +76,24 @@ As of November 28, 2021
   generated at build time.
 
 * Uses Sony SDK library syntax for familiarity to experienced programmers
-  and to make porting existing homebrew projects to PSn00bSDK easier.
+  and makes porting existing homebrew projects to PSn00bSDK easier.
 
 * Works on real hardware and most popular emulators.
 
 * Fully expandable and customizable to your heart's content.
 
+
 ## Obtaining PSn00bSDK
 
 Prebuilt PSn00bSDK packages for Windows and Linux are available through GitHub
-Actions and include the libraries, a copy of the GCC MIPS toolchain, command
+Actions which includes the libraries, a copy of the GCC MIPS toolchain, command
 line tools, examples and documentation. CMake is **not** included and must be
 installed separately, either from [its website](https://cmake.org/download) or
 via MSys2 or your distro's package manager.
 
 See [installation.md](doc/installation.md) for a quick start guide and for
 details on how to build the SDK yourself.
+
 
 ## Examples
 
@@ -98,28 +102,28 @@ There are a few examples and complete source code of `n00bdemo` included in the
 contributed example programs are welcome.
 
 There's also [Lameguy's PlayStation Programming Tutorial Series](http://lameguy64.net/tutorials/pstutorials)
-for learning how to program for the PlayStation. The tutorials should still
+for learning how to program for the PlayStation. Much of the tutorials should
 apply to PSn00bSDK.
+
 
 ## To-do List
 
 * psxspu: Plenty of work to be done. Hardware timer driven sound/music
   system may need to be implemented (an equivalent to the Ss* series of
-  functions in libspu basically). Need to figure out the correct frequency
-  table for playing sounds in musical note notation. Functions that make use of
-  the SPU RAM interrupt feature to play or capture streamed audio should also
-  be added.
+  functions in libspu basically). Functions that make use of the SPU RAM
+  interrupt feature to play or capture streamed audio should also be added.
 
 * psxcd: Implement a command queue mechanism for the CD-ROM?
 
 * libc: Improve the memory allocation framework with multiple allocators, GC
   and maybe helpers to manage swapping between main RAM and VRAM/SPU RAM.
 
-* Support for MDEC, and tooling to transcode videos to .STR files (either
-  reimplementing the container and compression format used by the Sony SDK, or
-  a custom format with better compression).
+* Further support for MDEC, and tooling to transcode videos to .STR files
+  (either reimplementing the container and compression format used by the Sony
+  SDK, or a custom format with better compression).
 
 * Pad and memory card libraries that don't use the BIOS routines.
+
 
 ## Credits
 
