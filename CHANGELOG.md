@@ -19,6 +19,12 @@ to ensure the changelog can be parsed correctly.
 
 -------------------------------------------------------------------------------
 
+## 2022-03-30:
+
+lameguy64:
+
+- indev: psxmdec prototype is now functional through psxpress.
+
 ## 2022-03-25: 0.19
 
 lameguy64:
