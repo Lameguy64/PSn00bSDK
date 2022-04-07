@@ -1,3 +1,12 @@
+/* This file is a trimmed version of 
+ * https://cgit.grumpycoder.net/cgit/PSX-Bundle/tree/psxdev/vlc.c
+ * that only includes the VLC decompression routine. It cannot be
+ * included as part of the PSn00bSDK Run-time libraries due to license
+ * incompatibilities but is included here largely for prototyping and
+ * reference purposes as a better optimized implementation is preferred
+ * to support full-motion-video playback.
+ *
+ */
 #include <sys/types.h>
 
 typedef unsigned short	Uint16;
@@ -7,7 +16,7 @@ typedef struct {
 	unsigned int code,nbits;
 } huff_t;
 
-#include "table.h"
+//#include "table.h"
 
 #define	CODE1(a,b,c)	(((a)<<10)|((b)&0x3ff)|((c)<<16))
 /* run, level, bit */
