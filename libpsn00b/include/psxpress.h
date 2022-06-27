@@ -40,7 +40,7 @@ extern "C" {
  *
  * @param mode
  */
-void DecDCTReset(int32_t mode);
+void DecDCTReset(int mode);
 
 /**
  * @brief Uploads the specified decoding environment's quantization tables and
@@ -61,7 +61,7 @@ void DecDCTReset(int32_t mode);
  * @param env Pointer to DECDCTENV or 0 for default tables
  * @param mono 0 for color (normal), 1 for monochrome
  */
-void DecDCTPutEnv(const DECDCTENV *env, int32_t mono);
+void DecDCTPutEnv(const DECDCTENV *env, int mono);
 
 /**
  * @brief Sets up the MDEC to start fetching and decoding a stream from the
@@ -79,7 +79,7 @@ void DecDCTPutEnv(const DECDCTENV *env, int32_t mono);
  * @param data
  * @param mode DECDCT_MODE_* or -1
  */
-void DecDCTin(const uint32_t *data, int32_t mode);
+void DecDCTin(const uint32_t *data, int mode);
 
 /**
  * @brief Configures the MDEC to automatically fetch data (the input stream,
@@ -113,7 +113,7 @@ void DecDCTinRaw(const uint32_t *data, size_t length);
  * @param mode
  * @return 0 or -1 in case of a timeout (mode = 0) / MDEC busy flag (mode = 1)
  */
-int32_t DecDCTinSync(int32_t mode);
+int DecDCTinSync(int mode);
 
 /**
  * @brief Configures the MDEC to automatically transfer decoded image data in
@@ -144,7 +144,7 @@ void DecDCTout(uint32_t *data, size_t length);
  * @param mode
  * @return 0 or -1 in case of a timeout (mode = 0) / DMA busy flag (mode = 1)
  */
-int32_t DecDCToutSync(int32_t mode);
+int DecDCToutSync(int mode);
 
 #ifdef __cplusplus
 }

@@ -9,7 +9,8 @@
 #include <psxpress.h>
 #include <hwregs_c.h>
 
-#define MDEC_SYNC_TIMEOUT 0x1000000
+#define DMA_CHUNK_LENGTH	32
+#define MDEC_SYNC_TIMEOUT	0x1000000
 
 /* Default IDCT matrix and quantization tables */
 
@@ -82,7 +83,7 @@ static const DECDCTENV _default_mdec_env = {
 
 /* Public API */
 
-void DecDCTReset(int32_t mode) {
+void DecDCTReset(int mode) {
 	EnterCriticalSection();
 
 	DMA_DPCR   |= 0x000000bb; // Enable DMA0 and DMA1
@@ -96,7 +97,7 @@ void DecDCTReset(int32_t mode) {
 		DecDCTPutEnv(0, 0);
 }
 
-void DecDCTPutEnv(const DECDCTENV *env, int32_t mono) {
+void DecDCTPutEnv(const DECDCTENV *env, int mono) {
 	const DECDCTENV *_env = env ? env : &_default_mdec_env;
 	DecDCTinSync(0);
 
@@ -109,7 +110,7 @@ void DecDCTPutEnv(const DECDCTENV *env, int32_t mono) {
 	DecDCTinSync(0);
 }
 
-void DecDCTin(const uint32_t *data, int32_t mode) {
+void DecDCTin(const uint32_t *data, int mode) {
 	uint32_t header = *data;
 	if (mode == DECDCT_MODE_RAW)
 		MDEC0 = header;
@@ -125,16 +126,19 @@ void DecDCTin(const uint32_t *data, int32_t mode) {
 // data length as an argument rather than parsing it from the first 4 bytes of
 // the stream.
 void DecDCTinRaw(const uint32_t *data, size_t length) {
+	// NOTE: if length >= DMA_CHUNK_LENGTH then it also has to be a multiple of
+	// DMA_CHUNK_LENGTH, otherwise the DMA channel will get stuck waiting for
+	// more data indefinitely.
 	DMA_MADR(0) = (uint32_t) data;
-	if (length < 32)
+	if (length < DMA_CHUNK_LENGTH)
 		DMA_BCR(0) = 0x00010000 | length;
 	else
-		DMA_BCR(0) = 0x00000020 | ((length / 32) << 16);
+		DMA_BCR(0) = DMA_CHUNK_LENGTH | ((length / DMA_CHUNK_LENGTH) << 16);
 
 	DMA_CHCR(0) = 0x01000201;
 }
 
-int32_t DecDCTinSync(int32_t mode) {
+int DecDCTinSync(int mode) {
 	if (mode)
 		return (MDEC1 >> 29) & 1;
 
@@ -151,15 +155,15 @@ void DecDCTout(uint32_t *data, size_t length) {
 	DecDCToutSync(0);
 
 	DMA_MADR(1) = (uint32_t) data;
-	if (length < 32)
+	if (length < DMA_CHUNK_LENGTH)
 		DMA_BCR(1) = 0x00010000 | length;
 	else
-		DMA_BCR(1) = 0x00000020 | ((length / 32) << 16);
+		DMA_BCR(1) = DMA_CHUNK_LENGTH | ((length / DMA_CHUNK_LENGTH) << 16);
 
 	DMA_CHCR(1) = 0x01000200;
 }
 
-int32_t DecDCToutSync(int32_t mode) {
+int DecDCToutSync(int mode) {
 	if (mode)
 		return (DMA_CHCR(1) >> 24) & 1;
 
