@@ -80,8 +80,8 @@ extern int main(int argc, const char* argv[]);
 // Even though _start() usually takes no arguments, this implementation allows
 // parent executables to pass args directly to child executables without having
 // to overwrite the arg strings in kernel RAM.
-void _start(int32_t override_argc, const char **override_argv) {
-	__asm__ volatile("la $gp, _gp;");
+void _start_inner(int32_t override_argc, const char **override_argv) {
+	//__asm__ volatile("la $gp, _gp;");
 
 	// Clear BSS 4 bytes at a time. BSS is always aligned to 4 bytes by the
 	// linker script.

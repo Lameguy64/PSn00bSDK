@@ -154,31 +154,31 @@ int main(int argc, char** argv) {
 
 	}
 
-	exe_tsize = (exe_haddr-exe_taddr);
-	exe_tsize += prg_heads[head.prg_entry_count-1].p_filesz;
+	exe_tsize  = (exe_haddr - exe_taddr);
+	exe_tsize += prg_heads[head.prg_entry_count - 1].p_filesz;
 
-	if( !quiet ) {
-
-		printf( "pc:%08x t_addr:%08x t_size:%d\n",
-			head.prg_entry_addr, exe_taddr, exe_tsize );
-
-	}
+	if (!quiet)
+		printf(
+			"pc:%08x t_addr:%08x t_size:%d\n",
+			head.prg_entry_addr,
+			exe_taddr,
+			exe_tsize
+		);
 
 	// Check if load address is appropriate in main RAM locations
-	if( ( ( exe_taddr>>24 ) == 0x0 ) || ( ( exe_taddr>>24 ) == 0x80 ) ||
-		( ( exe_taddr>>24 ) == 0xA0 ) ) {
+	if (
+		((exe_taddr >= 0x00000000) && (exe_taddr < 0x00001000)) ||
+		((exe_taddr >= 0x80000000) && (exe_taddr < 0x80001000)) ||
+		((exe_taddr >= 0xa0000000) && (exe_taddr < 0xa0001000))
+	)
+		printf("WARNING: program text address overlaps kernel area!\n");
 
-		if( ( exe_taddr&0x00ffffff ) < 65536 ) {
+	// Throw warning if executable is larger than 2MB
+	if (exe_tsize > 0x1f0000)
+		printf("WARNING: executable is larger than available RAM on a stock console!\n");
 
-			printf( "Warning: Program text address overlaps kernel area!\n" );
-
-		}
-
-	}
-
-
-	// Pad out the size to multiples of 2KB
-	exe_tsize = 2048*((exe_tsize+2047)/2048);
+	// Pad out the size to multiples of 2KB (CD sector size)
+	exe_tsize  = ((exe_tsize + 2047) / 2048) * 2048;
 
 	// Load the binary data
 	binary = (unsigned char*)malloc( exe_tsize );
