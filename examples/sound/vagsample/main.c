@@ -127,7 +127,7 @@ void init(void)
 	// Begin pad polling
 	InitPAD( pad_buff[0], 34, pad_buff[1], 34 );
 	StartPAD();
-	
+	ChangeClearPAD(0);
 } /* init */
 
 // Display function

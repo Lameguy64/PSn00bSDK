@@ -1,6 +1,7 @@
 #ifndef __PSXGPU_H
 #define __PSXGPU_H
 
+#include <stddef.h>
 #include <sys/types.h>
 
 // Low-level display parameters for DISPENV_RAW. A leftover from prototyping
@@ -17,10 +18,11 @@
 #define DISP_MODE_NTSC		0
 #define DISP_MODE_PAL		8
 
-
-#define MODE_NTSC			0
-#define MODE_PAL			1
-
+typedef enum _VIDEO_MODE
+{
+	MODE_NTSC	= 0,
+	MODE_PAL	= 1
+} VIDEO_MODE;
 
 // Vector macros
 
@@ -88,6 +90,12 @@
 
 #define setWH( p, _w, _h ) \
 	(p)->w = _w, (p)->h = _h
+
+#define setXYWH( p, _x0, _y0, _w, _h ) 		\
+	(p)->x0 = _x0, 		(p)->y0 = _y0,		\
+	(p)->x1 = _x0+(_w),	(p)->y1 = _y0,		\
+	(p)->x2 = _x0, 		(p)->y2 = _y0+(_h),	\
+	(p)->x3 = _x0+(_w), (p)->y3 = _y0+(_h)
 
 /*
  *	Set texture coordinates
@@ -569,50 +577,61 @@ typedef struct _TIM_IMAGE
 	u_long	*paddr;
 } TIM_IMAGE;
 
+typedef struct _GsIMAGE
+{
+	u_long	pmode;
+	short	px, py, pw, ph;
+	u_long	*pixel;
+	short	cx, cy, cw, ch;
+	u_long	*clut;
+} GsIMAGE;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// Function definitions (asm)
+// Function definitions
 
 void ResetGraph(int mode);
 
-int GetVideoMode(void);
-void SetVideoMode(int mode);
+VIDEO_MODE GetVideoMode(void);
+void SetVideoMode(VIDEO_MODE mode);
 
 int GetODE(void);
 
-void PutDispEnvRaw(DISPENV_RAW *disp);	/* obsolete */
-void PutDispEnv(DISPENV *disp);
-void PutDrawEnv(DRAWENV *draw);
+void PutDispEnvRaw(const DISPENV_RAW *env);	/* obsolete */
+void PutDispEnv(const DISPENV *env);
+void PutDrawEnv(DRAWENV *env);
+void PutDrawEnvFast(DRAWENV *env);
 
 void SetDispMask(int mask);
 
-int VSync(int m);
-int DrawSync(int m);
-void WaitGPUcmd(void);
-void WaitGPUdma(void);
+int VSync(int mode);
+int DrawSync(int mode);
+//void WaitGPUcmd(void);
+//void WaitGPUdma(void);
 
 // Callback hook functions
 void *VSyncCallback(void (*func)(void));
 void *DrawSyncCallback(void (*func)(void));
 
-void LoadImage(RECT *rect, u_long *data);
-void StoreImage(RECT *rect, u_long *data);
+void LoadImage(const RECT *rect, const u_long *data);
+void StoreImage(const RECT *rect, u_long *data);
 
-void ClearOTagR(u_long* ot, int n);
-void DrawOTag(u_long* ot);
-void DrawPrim(void *pri);
+void ClearOTagR(u_long *ot, size_t length);
+void ClearOTag(u_long *ot, size_t length);
+void DrawOTag(const u_long *ot);
+void DrawOTag2(const u_long *ot);
+void DrawOTagEnv(const u_long *ot, DRAWENV *env);
+void DrawPrim(const u_long *pri);
 
-void AddPrim(u_long* ot, void* pri);
+void AddPrim(u_long *ot, const void *pri);
 
-// Function definitions (C)
+int GsGetTimInfo(const u_long *tim, GsIMAGE *info);
+int GetTimInfo(const u_long *tim, TIM_IMAGE *info);	/* deprecated */
 
-int GetTimInfo(const u_long *tim, TIM_IMAGE *timimg);	/* ORIGINAL */
-
-DISPENV *SetDefDispEnv(DISPENV *disp, int x, int y, int w, int h);
-DRAWENV *SetDefDrawEnv(DRAWENV *draw, int x, int y, int w, int h);
+DISPENV *SetDefDispEnv(DISPENV *env, int x, int y, int w, int h);
+DRAWENV *SetDefDrawEnv(DRAWENV *env, int x, int y, int w, int h);
 
 // Debug font functions
 

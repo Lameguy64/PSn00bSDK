@@ -40,6 +40,8 @@ foreach(_library IN LISTS PSN00BSDK_LIBRARIES)
 	psn00bsdk_add_library(${_library} STATIC ${_sources})
 endforeach()
 
+psn00bsdk_target_incbin(psxgpu PRIVATE _gpu_debug_font psxgpu/dbugfont.tim)
+
 # Extract libgcc's contents and merge them into libc after building.
 # Unfortunately glob expressions won't work on Windows, so we have to manually
 # enumerate the contents of libgcc and save the list to a temporary file (as it
