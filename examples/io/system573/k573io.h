@@ -10,19 +10,19 @@
 
 /* Register definitions */
 
-#define K573_BANK_SWITCH	*((volatile uint16_t *) 0x1f500000)
-#define K573_IDE_RESET		*((volatile uint16_t *) 0x1f560000)
-#define K573_WATCHDOG		*((volatile uint16_t *) 0x1f5c0000)
-#define K573_EXT_OUT		*((volatile uint16_t *) 0x1f600000)
-#define K573_JVS_INPUT		*((volatile uint16_t *) 0x1f680000)
-#define K573_SECURITY_OUT	*((volatile uint16_t *) 0x1f6a0000)
+#define K573_BANK_SWITCH	*((volatile uint16_t *) 0xbf500000)
+#define K573_IDE_RESET		*((volatile uint16_t *) 0xbf560000)
+#define K573_WATCHDOG		*((volatile uint16_t *) 0xbf5c0000)
+#define K573_EXT_OUT		*((volatile uint16_t *) 0xbf600000)
+#define K573_JVS_INPUT		*((volatile uint16_t *) 0xbf680000)
+#define K573_SECURITY_OUT	*((volatile uint16_t *) 0xbf6a0000)
 
-#define K573_FLASH			((volatile uint16_t *) 0x1f000000)
-#define K573_IO_CHIP		((volatile uint16_t *) 0x1f400000)
-#define K573_IDE_CS0		((volatile uint16_t *) 0x1f480000)
-#define K573_IDE_CS1		((volatile uint16_t *) 0x1f4c0000)
-#define K573_RTC			((volatile uint16_t *) 0x1f620000)
-#define K573_IO_BOARD		((volatile uint16_t *) 0x1f640000)
+#define K573_FLASH			((volatile uint16_t *) 0xbf000000)
+#define K573_IO_CHIP		((volatile uint16_t *) 0xbf400000)
+#define K573_IDE_CS0		((volatile uint16_t *) 0xbf480000)
+#define K573_IDE_CS1		((volatile uint16_t *) 0xbf4c0000)
+#define K573_RTC			((volatile uint16_t *) 0xbf620000)
+#define K573_IO_BOARD		((volatile uint16_t *) 0xbf640000)
 
 typedef enum _K573_IOChipRegister {
 	IO_REG_OUT0		= 0x0,

@@ -9,6 +9,8 @@
 #ifndef _STDLIB_H
 #define _STDLIB_H
 
+#include <stddef.h>
+
 #define RAND_MAX	0x7fff
 
 /* Conversion functions (not yet implemented) */
@@ -30,7 +32,7 @@ extern "C" {
 extern int __argc;
 extern const char **__argv;
 
-int rand();
+int rand(void);
 void srand(unsigned long seed);
 
 int abs(int j);
@@ -44,11 +46,11 @@ double strtod(const char *nptr, char **endptr);
 float strtof(const char *nptr, char **endptr);
 
 // Memory allocation functions
-void _mem_init(int ram_size, int stack_max_size);
-void InitHeap(unsigned int *addr, int size);
-int SetHeapSize(int size);
-void *malloc(int size);
-void *calloc(int number, int size);
+void _mem_init(size_t ram_size, size_t stack_max_size);
+void InitHeap(void *addr, size_t size);
+int SetHeapSize(size_t size);
+void *malloc(size_t size);
+void *calloc(size_t number, size_t size);
 void free(void *ptr);
 
 #ifdef __cplusplus

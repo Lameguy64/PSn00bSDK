@@ -115,9 +115,9 @@ void DecDCTin(const uint32_t *data, int mode) {
 	if (mode == DECDCT_MODE_RAW)
 		MDEC0 = header;
 	else if (mode & DECDCT_MODE_24BPP)
-		MDEC0 = header | 0x30000000;
+		MDEC0 = 0x30000000 | (header & 0xffff);
 	else
-		MDEC0 = header | 0x38000000 | ((mode & 2) << 24); // Bit 25 = mask
+		MDEC0 = 0x38000000 | (header & 0xffff) | ((mode & 2) << 24); // Bit 25 = mask
 
 	DecDCTinRaw((const uint32_t *) &(data[1]), header & 0xffff);
 }
@@ -142,7 +142,7 @@ int DecDCTinSync(int mode) {
 	if (mode)
 		return (MDEC1 >> 29) & 1;
 
-	for (uint32_t i = MDEC_SYNC_TIMEOUT; i; i--) {
+	for (int i = MDEC_SYNC_TIMEOUT; i; i--) {
 		if (!(MDEC1 & (1 << 29)))
 			return 0;
 	}
@@ -167,7 +167,7 @@ int DecDCToutSync(int mode) {
 	if (mode)
 		return (DMA_CHCR(1) >> 24) & 1;
 
-	for (uint32_t i = MDEC_SYNC_TIMEOUT; i; i--) {
+	for (int i = MDEC_SYNC_TIMEOUT; i; i--) {
 		if (!(DMA_CHCR(1) & (1 << 24)))
 			return 0;
 	}

@@ -62,10 +62,10 @@ extern uint8_t _end[];
 // useful though to change the stack size and/or reinitialize the heap on
 // systems that have more than 2 MB of RAM (e.g. emulators, devkits, PS1-based
 // arcade boards).
-void _mem_init(int ram_size, int stack_max_size) {
-	void *exe_end = _end + 4;
-	int  exe_size = (int) exe_end - (int) __text_start;
-	int  ram_used = (0x10000 + exe_size + stack_max_size) & 0xfffffffc;
+void _mem_init(size_t ram_size, size_t stack_max_size) {
+	void   *exe_end = _end + 4;
+	size_t exe_size = (size_t) exe_end - (size_t) __text_start;
+	size_t ram_used = (0x10000 + exe_size + stack_max_size) & 0xfffffffc;
 
 	InitHeap(exe_end, ram_size - ram_used);
 }

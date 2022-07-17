@@ -4,7 +4,7 @@
 # 2019 Meido-Tek Productions
 
 
-.set IOBASE,			0x1f80		# IO segment base
+.set IOBASE,			0xbf80		# IO segment base (KSEG1)
 
 ## GPU
 
