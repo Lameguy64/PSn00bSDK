@@ -133,6 +133,12 @@
 	},
 	{
 		"type": "a",
+		"id":   156,
+		"name": "SetConf",
+		"file": "sys.s"
+	},
+	{
+		"type": "a",
 		"id":   160,
 		"name": "_boot",
 		"file": "sys.s"
@@ -205,8 +211,32 @@
 	},
 	{
 		"type": "b",
+		"id":   7,
+		"name": "DeliverEvent",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
 		"id":   8,
 		"name": "OpenEvent",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   9,
+		"name": "CloseEvent",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   10,
+		"name": "WaitEvent",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   11,
+		"name": "TestEvent",
 		"file": "sys.s"
 	},
 	{
@@ -219,6 +249,24 @@
 		"type": "b",
 		"id":   13,
 		"name": "DisableEvent",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   14,
+		"name": "OpenTh",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   15,
+		"name": "CloseTh",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   16,
+		"name": "ChangeTh",
 		"file": "sys.s"
 	},
 	{
@@ -255,6 +303,12 @@
 		"type": "b",
 		"id":   25,
 		"name": "SetCustomExitFromException",
+		"file": "sys.s"
+	},
+	{
+		"type": "b",
+		"id":   32,
+		"name": "UnDeliverEvent",
 		"file": "sys.s"
 	},
 	{
@@ -391,20 +445,20 @@
 	},
 	{
 		"type": "c",
+		"id":   7,
+		"name": "InstallExceptionHandlers",
+		"file": "sys.s"
+	},
+	{
+		"type": "c",
+		"id":   8,
+		"name": "SysInitMemory",
+		"file": "sys.s"
+	},
+	{
+		"type": "c",
 		"id":   10,
 		"name": "ChangeClearRCnt",
-		"file": "sys.s"
-	},
-	{
-		"type": "syscall",
-		"id":   1,
-		"name": "EnterCriticalSection",
-		"file": "sys.s"
-	},
-	{
-		"type": "syscall",
-		"id":   2,
-		"name": "ExitCriticalSection",
 		"file": "sys.s"
 	}
 ]

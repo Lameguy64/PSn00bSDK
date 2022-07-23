@@ -9,10 +9,6 @@ also go into this directory.
 
 ## Lameguy's indev components
 
-* psxmdec: Prototype component for performing BS image decoding using the
-  MDEC. Unfortunately I only got as far as returning garbled pixels from
-  the MDEC, which was pretty bull.
-  
 * libpad: The early beginnings of a pad/card library using routines that
   accesses the pad/card interfaces directly. Ideally PSn00bSDK's pad library
   should include the functionality of pad/tap/gun peripherals into one
