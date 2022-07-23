@@ -1,7 +1,21 @@
+/*
+ * PSn00bSDK C++ support library
+ * (C) 2019-2022 Lameguy64, spicyjpeg - MPL licensed
+ */
 
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+/* GCC builtins */
+
+extern "C" void *__builtin_new(size_t size) {
+	return malloc(size);
+}
+
+extern "C" void __builtin_delete(void *ptr) {
+	free(ptr);
+}
 
 /* Default new/delete operators */
 
@@ -21,17 +35,12 @@ void operator delete[](void *ptr) noexcept {
 	free(ptr);
 }
 
-/*
- * https://en.cppreference.com/w/cpp/memory/new/operator_delete
- *
- * Called if a user-defined replacement is provided, except that it's
- * unspecified whether other overloads or this overload is called when deleting
- * objects of incomplete type and arrays of non-class and trivially
- * destructible class types.
- *
- * A memory allocator can use the given size to be more efficient.
- */
+// https://en.cppreference.com/w/cpp/memory/new/operator_delete
 void operator delete(void *ptr, size_t size) noexcept {
+	free(ptr);
+}
+
+void operator delete[](void *ptr, size_t size) noexcept {
 	free(ptr);
 }
 
