@@ -1,4 +1,4 @@
-#include <sys/types.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -6,29 +6,28 @@
 #include <psxgpu.h>
 
 typedef struct _fnt_stream {
-	char *txtbuff;
-	char *txtnext;
-	char *pribuff;
-	short x,y;
-	short w,h;
-	int bg;
-	int maxchars;
+	char	*txtbuff;
+	char	*txtnext;
+	char	*pribuff;
+	int16_t	x, y;
+	int16_t	w, h;
+	int		bg, maxchars;
 } _fnt_stream;
 
 static _fnt_stream _stream[8];
 static int _nstreams = 0;
 
-u_short _font_tpage;
-u_short _font_clut;
+uint16_t _font_tpage;
+uint16_t _font_clut;
 
-extern u_char _gpu_debug_font[];
+extern uint8_t _gpu_debug_font[];
 
 void FntLoad(int x, int y) {
 
 	RECT pos;
 	TIM_IMAGE tim;
 	
-	GetTimInfo( (const u_long *) _gpu_debug_font, &tim );
+	GetTimInfo( (const uint32_t *) _gpu_debug_font, &tim );
 	
 	// Load font image
 	pos = *tim.prect;
@@ -215,7 +214,7 @@ char *FntFlush(int id) {
 	
 	// Draw the primitives
 	DrawSync(0);
-	DrawOTag((u_long*)_stream[id].pribuff);
+	DrawOTag((uint32_t*)_stream[id].pribuff);
 	DrawSync(0);
 	
 	_stream[id].txtnext = _stream[id].txtbuff;
@@ -225,7 +224,7 @@ char *FntFlush(int id) {
 	
 }
 
-char *FntSort(u_long *ot, char *pri, int x, int y, const char *text) {
+char *FntSort(uint32_t *ot, char *pri, int x, int y, const char *text) {
 	
 	DR_TPAGE *tpage;
 	SPRT_8 *sprt = (SPRT_8*)pri;

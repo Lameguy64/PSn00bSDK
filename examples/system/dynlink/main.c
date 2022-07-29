@@ -108,13 +108,13 @@ void init_context(CONTEXT *ctx) {
 	// Set up the ordering tables and primitive buffers.
 	db = &(ctx->db[0]);
 	ctx->db_nextpri = db->p;
-	ClearOTagR((u_long *) db->ot, OT_LEN);
+	ClearOTagR(db->ot, OT_LEN);
 
 	PutDrawEnv(&(db->draw));
 	//PutDispEnv(&(db->disp));
 
 	db = &(ctx->db[1]);
-	ClearOTagR((u_long *) db->ot, OT_LEN);
+	ClearOTagR(db->ot, OT_LEN);
 
 	// Create a text stream at the top of the screen.
 	FntLoad(960, 0);
@@ -130,14 +130,14 @@ void display(CONTEXT *ctx) {
 
 	db = &(ctx->db[ctx->db_active]);
 	ctx->db_nextpri = db->p;
-	ClearOTagR((u_long *) db->ot, OT_LEN);
+	ClearOTagR(db->ot, OT_LEN);
 
 	PutDrawEnv(&(db->draw));
 	PutDispEnv(&(db->disp));
 	SetDispMask(1);
 
 	db = &(ctx->db[!ctx->db_active]);
-	DrawOTag((u_long *) &(db->ot[OT_LEN - 1]));
+	DrawOTag(&(db->ot[OT_LEN - 1]));
 }
 
 /* Symbol overriding example */

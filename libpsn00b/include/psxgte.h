@@ -1,44 +1,45 @@
-#ifndef _PSXGTE_H
-#define _PSXGTE_H
+/*
+ * PSn00bSDK GTE library
+ * (C) 2019-2022 Lameguy64 - MPL licensed
+ */
 
+#ifndef __PSXGTE_H
+#define __PSXGTE_H
 
-#define ONE		4096
+#include <stdint.h>
 
+#define ONE (1 << 12)
 
-// For compatibility with official library syntax
-#define csin(a) isin(a)
-#define ccos(a) icos(a)
-#define rsin(a) isin(a)
-#define rcos(a) icos(a)
+/* Structure definitions */
 
-
-typedef struct MATRIX {
-	short	m[3][3];
-	int		t[3];
+typedef struct _MATRIX {
+	int16_t m[3][3];
+	int32_t t[3];
 } MATRIX;
 
-typedef struct VECTOR {
-	int		vx, vy, vz;
+typedef struct _VECTOR {
+	int32_t vx, vy, vz;
 } VECTOR;
 
-typedef struct SVECTOR {
-	short	vx, vy, vz, pad;
+typedef struct _SVECTOR {
+	int16_t vx, vy, vz, pad;
 } SVECTOR;
 
-typedef struct CVECTOR {
-	unsigned char r, g, b, cd;
+typedef struct _CVECTOR {
+	uint8_t r, g, b, cd;
 } CVECTOR;
 
-typedef struct DVECTOR {
-	short vx, vy;
+typedef struct _DVECTOR {
+	int16_t vx, vy;
 } DVECTOR;
 
+/* Public API */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void InitGeom();
+void InitGeom(void);
 
 // Integer SIN/COS functions (4096 = 360 degrees)
 // Does not use tables!
@@ -70,11 +71,16 @@ void VectorNormalS(VECTOR *v0, SVECTOR *v1);
 
 void Square0(VECTOR *v0, VECTOR *v1);
 
-int SquareRoot12( int v );
-int SquareRoot0( int v );
+int SquareRoot12(int v);
+int SquareRoot0(int v);
+
+#define csin(a) isin(a)
+#define ccos(a) icos(a)
+#define rsin(a) isin(a)
+#define rcos(a) icos(a)
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _PSXGTE_H
+#endif

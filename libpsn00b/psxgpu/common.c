@@ -4,7 +4,6 @@
  */
 
 #include <stdint.h>
-#include <sys/types.h>
 #include <stdio.h>
 #include <psxetc.h>
 #include <psxapi.h>
@@ -17,12 +16,12 @@
 
 /* Internal globals */
 
-VIDEO_MODE _gpu_video_mode;
+GPU_VideoMode _gpu_video_mode;
 
 static void (*_vsync_callback)(void);
 static void (*_drawsync_callback)(void);
 
-static const u_long *volatile _draw_queue[QUEUE_LENGTH];
+static const uint32_t *volatile _draw_queue[QUEUE_LENGTH];
 static volatile uint8_t  _queue_head, _queue_tail, _queue_length;
 static volatile uint32_t _vblank_counter, _last_hblank;
 
@@ -194,7 +193,7 @@ void *DrawSyncCallback(void (*func)(void)) {
 
 /* OT and primitive drawing API */
 
-void ClearOTagR(u_long *ot, size_t length) {
+void ClearOTagR(uint32_t *ot, size_t length) {
 	DMA_MADR(6) = (uint32_t) &ot[length - 1];
 	DMA_BCR(6)  = length & 0xffff;
 	DMA_CHCR(6) = 0x11000002;
@@ -203,18 +202,18 @@ void ClearOTagR(u_long *ot, size_t length) {
 		//__asm__ volatile("");
 }
 
-void ClearOTag(u_long *ot, size_t length) {
+void ClearOTag(uint32_t *ot, size_t length) {
 	// DMA6 only supports writing to RAM in reverse order (last to first), so
 	// the OT has to be cleared in software here. This function is thus much
 	// slower than ClearOTagR().
 	// https://problemkaputt.de/psx-spx.htm#dmachannels
 	for (int i = 0; i < (length - 1); i++)
-		ot[i] = (u_long) &ot[i + 1] & 0x00ffffff;
+		ot[i] = (uint32_t) &ot[i + 1] & 0x00ffffff;
 
 	ot[length - 1] = 0x00ffffff;
 }
 
-void DrawOTag(const u_long *ot) {
+void DrawOTag(const uint32_t *ot) {
 	// If GPU DMA is currently busy, append the OT to the queue instead of
 	// drawing it immediately.
 	if (DMA_CHCR(2) & (1 << 24)) {
@@ -232,7 +231,7 @@ void DrawOTag(const u_long *ot) {
 	DrawOTag2(ot);
 }
 
-void DrawOTag2(const u_long *ot) {
+void DrawOTag2(const uint32_t *ot) {
 	GPU_GP1 = 0x04000002;
 
 	while (!(GPU_GP1 & (1 << 26)))
@@ -243,7 +242,7 @@ void DrawOTag2(const u_long *ot) {
 	DMA_CHCR(2) = 0x01000401;
 }
 
-void DrawPrim(const u_long *pri) {	
+void DrawPrim(const uint32_t *pri) {	
 	size_t length = getlen(pri);
 
 	DrawSync(0);
@@ -261,17 +260,17 @@ void DrawPrim(const u_long *pri) {
 	DMA_CHCR(2) = 0x01000201;
 }
 
-void AddPrim(u_long *ot, const void *pri) {
+void AddPrim(uint32_t *ot, const void *pri) {
 	addPrim(ot, pri);
 }
 
 /* Misc. functions */
 
-VIDEO_MODE GetVideoMode(void) {
+GPU_VideoMode GetVideoMode(void) {
 	return _gpu_video_mode;
 }
 
-void SetVideoMode(VIDEO_MODE mode) {
+void SetVideoMode(GPU_VideoMode mode) {
 	uint32_t _mode, stat = GPU_GP1;
 
 	_gpu_video_mode = mode & 1;

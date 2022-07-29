@@ -1,7 +1,7 @@
 #ifndef _QLP_H
 #define _QLP_H
 
-#include <sys/types.h>
+#include <stdint.h>
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -13,14 +13,14 @@
 #define PACK_ERR_READ_FAULT		-4
 
 typedef struct {
-	char	id[3];
-	u_char	numfiles;
+	char		id[3];
+	uint8_t		numfiles;
 } QLP_HEAD;
 
 typedef struct {
-	char	name[16];
-	u_int	size;
-	u_int	offs;
+	char		name[16];
+	uint32_t	size;
+	uint32_t	offs;
 } QLP_FILE;
 
 int qlpFileCount(const QLP_HEAD* qlpfile);

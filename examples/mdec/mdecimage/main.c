@@ -71,7 +71,7 @@ int main(int argc, const char* argv[]) {
 		DecDCTout(slice, BLOCK_SIZE * SCREEN_YRES / 2);
 		DecDCToutSync(0);
 
-		LoadImage(&rect, (u_long *) slice);
+		LoadImage(&rect, slice);
 		DrawSync(0);
 	}
 

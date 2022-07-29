@@ -4,13 +4,12 @@
  */
 
 #include <stdint.h>
-#include <sys/types.h>
 #include <psxgpu.h>
 #include <hwregs_c.h>
 
 #define _min(x, y) (((x) < (y)) ? (x) : (y))
 
-extern VIDEO_MODE _gpu_video_mode;
+extern GPU_VideoMode _gpu_video_mode;
 
 /* Drawing API */
 
@@ -38,7 +37,7 @@ DRAWENV *SetDefDrawEnv(DRAWENV *env, int x, int y, int w, int h) {
 	return env;
 }
 
-void DrawOTagEnv(const u_long *ot, DRAWENV *env) {
+void DrawOTagEnv(const uint32_t *ot, DRAWENV *env) {
 	DR_ENV *prim = &(env->dr_env);
 
 	// All commands are grouped into a single display list packet for
@@ -86,11 +85,11 @@ void DrawOTagEnv(const u_long *ot, DRAWENV *env) {
 	//while (!(GPU_GP1 & (1 << 26)))
 		//__asm__ volatile("");
 
-	DrawOTag(prim);
+	DrawOTag((const uint32_t *) prim);
 }
 
 void PutDrawEnv(DRAWENV *env) {
-	DrawOTagEnv((const u_long *) 0x00ffffff, env);
+	DrawOTagEnv((const uint32_t *) 0x00ffffff, env);
 }
 
 // This function skips rebuilding the cached packet whenever possible and is
@@ -98,11 +97,11 @@ void PutDrawEnv(DRAWENV *env) {
 // the time).
 void PutDrawEnvFast(DRAWENV *env) {
 	if (!(env->dr_env.tag)) {
-		DrawOTagEnv((const u_long *) 0x00ffffff, env);
+		DrawOTagEnv((const uint32_t *) 0x00ffffff, env);
 		return;
 	}
 
-	DrawOTag(&(env->dr_env));
+	DrawOTag((const uint32_t *) &(env->dr_env));
 }
 
 /* Display API */

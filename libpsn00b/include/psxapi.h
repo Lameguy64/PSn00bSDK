@@ -1,5 +1,15 @@
-#ifndef __PSXAPI__
-#define __PSXAPI__
+/*
+ * PSn00bSDK kernel API library
+ * (C) 2019-2022 Lameguy64, spicyjpeg - MPL licensed
+ */
+
+#ifndef __PSXAPI_H
+#define __PSXAPI_H
+
+#include <stdint.h>
+#include <stddef.h>
+
+/* Definitions */
 
 #define DescHW			0xf0000000
 #define DescSW			0xf4000000
@@ -32,29 +42,31 @@
 #define RCntMdFR		0x0000
 #define RCntMdGATE		0x0010
 
-typedef struct {	// Thread control block
-	int						status;
-	int						mode;
-	union {
-		unsigned int		reg[37];
-		struct {
-			unsigned int	zero, at;
-			unsigned int	v0, v1;
-			unsigned int	a0, a1, a2, a3;
-			unsigned int	t0, t1, t2, t3, t4, t5, t6, t7;
-			unsigned int	s0, s1, s2, s3, s4, s5, s6, s7;
-			unsigned int	t8, t9;
-			unsigned int	k0, k1;
-			unsigned int	gp, sp, fp, ra;
+/* Structure definitions */
 
-			unsigned int	cop0r14;
-			unsigned int	hi;
-			unsigned int	lo;
-			unsigned int	cop0r12;
-			unsigned int	cop0r13;
+typedef struct {	// Thread control block
+	int					status;
+	int					mode;
+	union {
+		uint32_t		reg[37];
+		struct {
+			uint32_t	zero, at;
+			uint32_t	v0, v1;
+			uint32_t	a0, a1, a2, a3;
+			uint32_t	t0, t1, t2, t3, t4, t5, t6, t7;
+			uint32_t	s0, s1, s2, s3, s4, s5, s6, s7;
+			uint32_t	t8, t9;
+			uint32_t	k0, k1;
+			uint32_t	gp, sp, fp, ra;
+
+			uint32_t	cop0r14;
+			uint32_t	hi;
+			uint32_t	lo;
+			uint32_t	cop0r12;
+			uint32_t	cop0r13;
 		};
 	};
-	int						_reserved[9];
+	int					_reserved[9];
 } TCB;
 
 typedef struct {	// Process control block
@@ -85,17 +97,17 @@ typedef struct {					// Device control block
 } DCB;
 
 typedef struct {			// File control block
-	int				status;
-	unsigned int	diskid;
-	void			*trns_addr;
-	unsigned int	trns_len;
-	unsigned int	filepos;
-	unsigned int	flags;
-	unsigned int	lasterr;
-	DCB				*dcb;
-	unsigned int	filesize;
-	unsigned int	lba;
-	unsigned int	fcbnum;
+	int			status;
+	uint32_t	diskid;
+	void		*trns_addr;
+	uint32_t	trns_len;
+	uint32_t	filepos;
+	uint32_t	flags;
+	uint32_t	lasterr;
+	DCB			*dcb;
+	uint32_t	filesize;
+	uint32_t	lba;
+	uint32_t	fcbnum;
 } FCB;
 
 struct DIRENTRY {			// Directory entry
@@ -108,33 +120,30 @@ struct DIRENTRY {			// Directory entry
 };
 
 struct EXEC {
-	unsigned int pc0;
-	unsigned int gp0;
-	unsigned int t_addr;
-	unsigned int t_size;
-	unsigned int d_addr;
-	unsigned int d_size;
-	unsigned int b_addr;
-	unsigned int b_size;
-	unsigned int s_addr;
-	unsigned int s_size;
-	unsigned int sp,fp,rp,ret,base;
+	uint32_t pc0, gp0;
+	uint32_t t_addr, t_size;
+	uint32_t d_addr, d_size;
+	uint32_t b_addr, b_size;
+	uint32_t s_addr, s_size;
+	uint32_t sp, fp, rp, ret, base;
 };
 
 struct JMP_BUF {
-	unsigned int	ra, sp, fp;
-	unsigned int	s0, s1, s2, s3, s4, s5, s6, s7;
-	unsigned int	gp;
+	uint32_t ra, sp, fp;
+	uint32_t s0, s1, s2, s3, s4, s5, s6, s7;
+	uint32_t gp;
 };
 
 // Not recommended to use these functions to install IRQ handlers
 
 typedef struct {
-	unsigned int* next;
-	unsigned int* func2;
-	unsigned int* func1;
-	unsigned int pad;
+	uint32_t	*next;
+	uint32_t	*func2;
+	uint32_t	*func1;
+	int			_reserved;
 } INT_RP;
+
+/* API */
 
 #ifdef __cplusplus
 extern "C" {
@@ -143,30 +152,27 @@ extern "C" {
 void SysEnqIntRP(int pri, INT_RP *rp);
 void SysDeqIntRP(int pri, INT_RP *rp);
 
-// Event handler stuff
-
-int OpenEvent(unsigned int cl, int spec, int mode, void (*func)());
-int CloseEvent(int ev_desc);
-int EnableEvent(int ev_desc);
-int DisableEvent(int ev_desc);
-
-// BIOS file functions
+int OpenEvent(uint32_t cl, uint32_t spec, int mode, void (*func)());
+int CloseEvent(int event);
+int WaitEvent(int event);
+int TestEvent(int event);
+int EnableEvent(int event);
+int DisableEvent(int event);
+void DeliverEvent(uint32_t cl, uint32_t spec);
+void UnDeliverEvent(uint32_t cl, uint32_t spec);
 
 int open(const char *name, int mode);
 int close(int fd);
-int seek(int fd, unsigned int offset, int mode);
-int read(int fd, char *buff, unsigned int len);
-int write(int fd, const char *buff, unsigned int len);
+int seek(int fd, uint32_t offset, int mode);
+int read(int fd, uint8_t *buff, size_t len);
+int write(int fd, const uint8_t *buff, size_t len);
 int ioctl(int fd, int cmd, int arg);
 struct DIRENTRY *firstfile(const char *wildcard, struct DIRENTRY *entry);
 struct DIRENTRY *nextfile(struct DIRENTRY *entry);
 int erase(const char *name);
 int chdir(const char *path);
 
-//#define delete( p )	erase( p )	// May conflict with delete operator in C++
-#define cd( p )		chdir( p )		// For compatibility
-
-// BIOS device functions
+//#define cd(p) chdir(p)
 
 int AddDev(DCB *dcb);
 int DelDev(const char *name);
@@ -175,18 +181,17 @@ void AddDummyTty(void);
 
 void EnterCriticalSection(void);
 void ExitCriticalSection(void);
+void SwEnterCriticalSection(void);
+void SwExitCriticalSection(void);
 
-// BIOS CD functions
 void _InitCd(void);
 void _96_init(void);
 void _96_remove(void);
 
-// BIOS pad functions
-void InitPAD(char *buff1, int len1, char *buff2, int len2);
+void InitPAD(uint8_t *buff1, int len1, uint8_t *buff2, int len2);
 void StartPAD(void);
 void StopPAD(void);
 
-// BIOS memory card functions
 void InitCARD(int pad_enable);
 void StartCARD(void);
 void StopCARD(void);
@@ -198,32 +203,31 @@ int _card_status(int chan);
 int _card_wait(int chan);
 int _card_clear(int chan);
 int _card_chan(void);
-int _card_read(int chan, int sector, unsigned char *buf);
-int _card_write(int chan, int sector, unsigned char *buf);
+int _card_read(int chan, int sector, uint8_t *buf);
+int _card_write(int chan, int sector, uint8_t *buf);
 void _new_card(void);
 
-// Timers
-int SetRCnt(int spec, unsigned short target, int mode);
+int SetRCnt(int spec, uint16_t target, int mode);
 int GetRCnt(int spec);
 int StartRCnt(int spec);
 int StopRCnt(int spec);
 int ResetRCnt(int spec);
 
-// BIOS IRQ acknowledge control
 void ChangeClearPAD(int mode);
 void ChangeClearRCnt(int t, int m);
 
-// Executable functions
+uint32_t OpenTh(uint32_t (*func)(), uint32_t sp, uint32_t gp);
+int CloseTh(uint32_t thread);
+int ChangeTh(uint32_t thread);
+
 int Exec(struct EXEC *exec, int argc, char **argv);
 void FlushCache(void);
 
-// BIOS setjmp functions
 void b_setjmp(struct JMP_BUF *buf);
 void b_longjmp(struct JMP_BUF *buf, int param);
 void SetDefaultExitFromException(void);
 void SetCustomExitFromException(struct JMP_BUF *buf);
 
-// Misc functions
 int GetSystemInfo(int index);
 void *GetB0Table(void);
 void *GetC0Table(void);

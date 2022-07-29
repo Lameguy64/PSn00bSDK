@@ -39,6 +39,7 @@
 #include <psxpad.h>
 #include <psxapi.h>
 #include <psxspu.h>
+#include <hwregs_c.h>
 
 extern const unsigned char	proyt[];
 extern const int			proyt_size;
@@ -158,27 +159,17 @@ int main(int argc, const char *argv[])
 	int counter,nextchan;
 	int cross_pressed;
 	int circle_pressed;
-	
 	PADTYPE *pad;
-	SpuVoiceRaw voice;
 
 	// Init stuff	
 	init();
-	
-	// Set common values for the SpuVoiceRaw stuct
-	// Technically one struct can be used to play all sounds as the
-	// parameters are copied to the SPU registers
-	
-	voice.vol.left		= 0x3FFE;		// Left voice volume, 3FFEh = max
-	voice.vol.right		= 0x3FFE;		// Right voice volume, 3FFEh = max
-	voice.adsr_param	= 0xdff18087;	// ADSR parameters
-	
+
 	// Main loop
 	counter = 0;
 	nextchan = 0;
 	cross_pressed = 0;
 	circle_pressed = 0;
-	
+
 	while(1)
 	{
 		pad = (PADTYPE*)&pad_buff[0][0];
@@ -194,22 +185,24 @@ int main(int argc, const char *argv[])
 					if( !cross_pressed )
 					{
 						// Voice frequency 
-						// (400h = 11.25KHz, 1000h = 44.1KHz)
-						voice.freq		= 0x800;
+						// (800h = 22.05KHz)
+						SPU_CH_FREQ(nextchan) = 0x800;
 						// Voice start playback address
 						// (transfer address / 8)
-						voice.addr		= proyt_addr;
+						SPU_CH_ADDR(nextchan) = proyt_addr;
 						// Voice loop address
 						// (transfer address / 8)
-						voice.loop_addr	= proyt_addr;
-										
+						SPU_CH_LOOP_ADDR(nextchan) = proyt_addr;
+						// Voice volume and envelope
+						SPU_CH_VOL_L(nextchan) = 0x3fff;
+						SPU_CH_VOL_R(nextchan) = 0x3fff;
+						SPU_CH_ADSR(nextchan) = 0x1fee80ff;
+
 						// Set voice to key-off to allow restart
-						SpuSetKey(0, 1<<nextchan);
-						// Set voice parameters
-						SpuSetVoiceRaw(nextchan, &voice);
+						SPU_KEY_OFF = 1 << nextchan;
 						// Set voice to key-on
-						SpuSetKey(1, 1<<nextchan);
-						
+						SPU_KEY_ON = 1 << nextchan;
+
 						// Advance to next voice
 						nextchan++;
 						if( nextchan > 23 )
@@ -229,27 +222,29 @@ int main(int argc, const char *argv[])
 					if( !circle_pressed )
 					{
 						// Voice frequency 
-						// (400h = 11.25KHz, 1000h = 44.1KHz)
-						voice.freq		= 0x1000;
+						// (1000h = 44.1KHz)
+						SPU_CH_FREQ(nextchan) = 0x1000;
 						// Voice start playback address
 						// (transfer address / 8)
-						voice.addr		= tdfx_addr;
+						SPU_CH_ADDR(nextchan) = tdfx_addr;
 						// Voice loop address
 						// (transfer address / 8)
-						voice.loop_addr	= tdfx_addr;
-										
+						SPU_CH_LOOP_ADDR(nextchan) = tdfx_addr;
+						// Voice volume and envelope
+						SPU_CH_VOL_L(nextchan) = 0x3fff;
+						SPU_CH_VOL_R(nextchan) = 0x3fff;
+						SPU_CH_ADSR(nextchan) = 0x1fee80ff;
+
 						// Set voice to key-off to allow restart
-						SpuSetKey(0, 1<<nextchan);
-						// Set voice parameters
-						SpuSetVoiceRaw(nextchan, &voice);
+						SPU_KEY_OFF = 1 << nextchan;
 						// Set voice to key-on
-						SpuSetKey(1, 1<<nextchan);
-						
+						SPU_KEY_ON = 1 << nextchan;
+
 						// Advance to next voice
 						nextchan++;
 						if( nextchan > 23 )
 							nextchan = 0;
-						
+
 						circle_pressed = 1;
 					}
 				}

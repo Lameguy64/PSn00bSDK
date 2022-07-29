@@ -28,10 +28,10 @@ typedef struct {
 } PCK_FILE;
 
 typedef struct {
-	char		id[3];
-	u_char		numFiles;
-	PCK_FILE	file[85];	// File entries
-	int			lba;		// LBA of the PCK file (in 2048 byte sector units)
+	char			id[3];
+	unsigned char	numFiles;
+	PCK_FILE		file[85];	// File entries
+	int				lba;		// LBA of the PCK file (in 2048 byte sector units)
 } PCK_TOC;
 
 

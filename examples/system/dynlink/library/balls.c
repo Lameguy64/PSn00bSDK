@@ -38,7 +38,7 @@ static BALL_TYPE balls[MAX_BALLS];
 static TIM_IMAGE ball_tim;
 
 void init(CONTEXT *ctx) {
-	GetTimInfo((u_long *) ball16c, &ball_tim);
+	GetTimInfo((const uint32_t *) ball16c, &ball_tim);
 
 	LoadImage(ball_tim.prect, ball_tim.paddr);
 	if (ball_tim.mode & 8)

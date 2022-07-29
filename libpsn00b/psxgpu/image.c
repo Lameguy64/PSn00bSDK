@@ -4,7 +4,6 @@
  */
 
 #include <stdint.h>
-#include <sys/types.h>
 #include <stdio.h>
 #include <psxgpu.h>
 #include <hwregs_c.h>
@@ -51,11 +50,11 @@ static void _load_store_image(
 
 /* Public VRAM API */
 
-void LoadImage(const RECT *rect, const u_long *data) {
+void LoadImage(const RECT *rect, const uint32_t *data) {
 	_load_store_image(0xa0000000, 2, rect, (uint32_t *) data);
 }
 
-void StoreImage(const RECT *rect, u_long *data) {
+void StoreImage(const RECT *rect, uint32_t *data) {
 	_load_store_image(0xc0000000, 3, rect, (uint32_t *) data);
 }
 
@@ -65,18 +64,18 @@ void StoreImage(const RECT *rect, u_long *data) {
 // difference from GetTimInfo() is that it copies RECTs rather than merely
 // returning pointers to them, which become useless once the .TIM file is
 // unloaded from main RAM.
-int GsGetTimInfo(const u_long *tim, GsIMAGE *info) {
+int GsGetTimInfo(const uint32_t *tim, GsIMAGE *info) {
 	if ((*(tim++) & 0xffff) != 0x0010)
 		return 1;
 
 	info->pmode = *(tim++);
 	if (info->pmode & 8) {
-		const u_long *palette_end = tim;
+		const uint32_t *palette_end = tim;
 		palette_end += *(tim++) / 4;
 
-		*((u_long *) &(info->cx)) = *(tim++);
-		*((u_long *) &(info->cw)) = *(tim++);
-		info->clut = (u_long *) tim;
+		*((uint32_t *) &(info->cx)) = *(tim++);
+		*((uint32_t *) &(info->cw)) = *(tim++);
+		info->clut = (uint32_t *) tim;
 
 		tim = palette_end;
 	} else {
@@ -84,24 +83,24 @@ int GsGetTimInfo(const u_long *tim, GsIMAGE *info) {
 	}
 
 	tim++;
-	*((u_long *) &(info->px)) = *(tim++);
-	*((u_long *) &(info->pw)) = *(tim++);
-	info->pixel = (u_long *) tim;
+	*((uint32_t *) &(info->px)) = *(tim++);
+	*((uint32_t *) &(info->pw)) = *(tim++);
+	info->pixel = (uint32_t *) tim;
 
 	return 0;
 }
 
-int GetTimInfo(const u_long *tim, TIM_IMAGE *info) {
+int GetTimInfo(const uint32_t *tim, TIM_IMAGE *info) {
 	if ((*(tim++) & 0xffff) != 0x0010)
 		return 1;
 
 	info->mode = *(tim++);
 	if (info->mode & 8) {
-		const u_long *palette_end = tim;
+		const uint32_t *palette_end = tim;
 		palette_end += *(tim++) / 4;
 
-		info->crect = (RECT *)   tim;
-		info->caddr = (u_long *) &tim[2];
+		info->crect = (RECT *)     tim;
+		info->caddr = (uint32_t *) &tim[2];
 
 		tim = palette_end;
 	} else {
@@ -109,8 +108,8 @@ int GetTimInfo(const u_long *tim, TIM_IMAGE *info) {
 	}
 
 	tim++;
-	info->prect = (RECT *)   tim;
-	info->paddr = (u_long *) &tim[2];
+	info->prect = (RECT *)     tim;
+	info->paddr = (uint32_t *) &tim[2];
 
 	return 0;
 }
