@@ -126,9 +126,11 @@ void DecDCTin(const uint32_t *data, int mode) {
 // data length as an argument rather than parsing it from the first 4 bytes of
 // the stream.
 void DecDCTinRaw(const uint32_t *data, size_t length) {
-	// NOTE: if length >= DMA_CHUNK_LENGTH then it also has to be a multiple of
-	// DMA_CHUNK_LENGTH, otherwise the DMA channel will get stuck waiting for
-	// more data indefinitely.
+	if ((length >= DMA_CHUNK_LENGTH) && (length % DMA_CHUNK_LENGTH)) {
+		printf("psxmdec: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
+		length += DMA_CHUNK_LENGTH - 1;
+	}
+
 	DMA_MADR(0) = (uint32_t) data;
 	if (length < DMA_CHUNK_LENGTH)
 		DMA_BCR(0) = 0x00010000 | length;

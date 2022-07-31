@@ -117,7 +117,6 @@ static void _vsync_halt(void) {
 	printf("psxgpu: VSync() timeout\n");
 	ChangeClearPAD(0);
 	ChangeClearRCnt(3, 0);
-	return;
 }
 
 int VSync(int mode) {
@@ -152,7 +151,7 @@ int DrawSync(int mode) {
 	if (mode)
 		return (DMA_BCR(2) >> 16);
 
-	// Wait for the queue to become empty, to make sure no .
+	// Wait for the queue to become empty.
 	// TODO: add a timeout
 	while (_queue_length)
 		__asm__ volatile("");

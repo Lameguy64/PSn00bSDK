@@ -1,10 +1,11 @@
-# Hardware register definitions for GNU assembler (as)
-#
-# Part of the PSn00bSDK Project by Lameguy64
-# 2019 Meido-Tek Productions
+# PSn00bSDK hardware registers definitions
+# (C) 2019-2022 Lameguy64, spicyjpeg - MPL licensed
 
+## Constants
 
-.set IOBASE,			0xbf80		# IO segment base (KSEG1)
+.set IOBASE,			0x1f80
+.set F_CPU,				33868800
+.set F_GPU,				53222400
 
 ## GPU
 

@@ -32,7 +32,7 @@
  */
  
 #include <stdio.h>
-#include <sys/types.h>
+#include <stdint.h>
 #include <psxetc.h>
 #include <psxgte.h>
 #include <psxgpu.h>
@@ -104,8 +104,8 @@ void init(void)
 	SpuSetTransferStartAddr(addr_temp);
 	
 	// Upload first sound clip and wait for transfer to finish
-	SpuWrite(((unsigned char*)proyt)+48, proyt_size-48);
-	SpuWait();
+	SpuWrite((const uint32_t *) &proyt[48], proyt_size-48);
+	SpuIsTransferCompleted(SPU_TRANSFER_WAIT);
 	
 	// Obtain the address of the sound and advance address for the next one
 	// Samples are addressed in 8-byte units, so it'll have to be divided by 8
@@ -116,8 +116,8 @@ void init(void)
 	
 	// Upload second sound clip
 	SpuSetTransferStartAddr(addr_temp);
-	SpuWrite(((unsigned char*)tdfx)+48, tdfx_size-48);
-	SpuWait();
+	SpuWrite((const uint32_t *) &tdfx[48], tdfx_size-48);
+	SpuIsTransferCompleted(SPU_TRANSFER_WAIT);
 	
 	// Obtain the address of the second sound clip
 	tdfx_addr = addr_temp/8;

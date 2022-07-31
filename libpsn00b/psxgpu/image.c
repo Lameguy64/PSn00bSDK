@@ -10,7 +10,7 @@
 
 #define DMA_CHUNK_LENGTH 8
 
-/* Common internal load/store function */
+/* VRAM transfer API */
 
 static void _load_store_image(
 	uint32_t	command,
@@ -23,8 +23,10 @@ static void _load_store_image(
 		printf("psxgpu: can't transfer an odd number of pixels\n");
 
 	length /= 2;
-	if ((length >= DMA_CHUNK_LENGTH) && (length % DMA_CHUNK_LENGTH))
-		printf("psxgpu: transfer data length (%d) is not a multiple of %d\n", length, DMA_CHUNK_LENGTH);
+	if ((length >= DMA_CHUNK_LENGTH) && (length % DMA_CHUNK_LENGTH)) {
+		printf("psxgpu: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
+		length += DMA_CHUNK_LENGTH - 1;
+	}
 
 	DrawSync(0);
 	GPU_GP1 = 0x04000000; // Disable DMA request
@@ -45,17 +47,15 @@ static void _load_store_image(
 	else
 		DMA_BCR(2) = DMA_CHUNK_LENGTH | ((length / DMA_CHUNK_LENGTH) << 16);
 
-	DMA_CHCR(2) = 0x01000200 | !(mode & 1);
+	DMA_CHCR(2) = 0x01000200 | ((mode & 1) ^ 1);
 }
-
-/* Public VRAM API */
 
 void LoadImage(const RECT *rect, const uint32_t *data) {
 	_load_store_image(0xa0000000, 2, rect, (uint32_t *) data);
 }
 
 void StoreImage(const RECT *rect, uint32_t *data) {
-	_load_store_image(0xc0000000, 3, rect, (uint32_t *) data);
+	_load_store_image(0xc0000000, 3, rect, data);
 }
 
 /* .TIM image parsers */

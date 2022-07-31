@@ -7,6 +7,8 @@
 #define __PSXSPU_H
 
 #include <stdint.h>
+#include <stddef.h>
+#include <hwregs_c.h>
 
 /* Definitions */
 
@@ -33,9 +35,14 @@ typedef enum _SPU_AttrMask {
 } SPU_AttrMask;
 
 typedef enum _SPU_TransferMode {
-	SPU_TRANSFER_BY_DMA		= 0,
-	SPU_TRANSFER_BY_IO		= 1
+	SPU_TRANSFER_BY_DMA	= 0,
+	SPU_TRANSFER_BY_IO	= 1
 } SPU_TransferMode;
+
+typedef enum _SPU_WaitMode {
+	SPU_TRANSFER_PEEK	= 0,
+	SPU_TRANSFER_WAIT	= 1
+} SPU_WaitMode;
 
 /* Structure definitions */
 
@@ -66,6 +73,36 @@ typedef struct _SpuCommonAttr {
 	SpuExtAttr	cd, ext;
 } SpuCommonAttr;
 
+/* "Useless" macros for official SDK compatibility */
+
+#define SpuSetCommonMasterVolume(left, right) \
+	(SPU_MASTER_VOL_L = (left), SPU_MASTER_VOL_R = (right))
+#define SpuSetCommonCDVolume(left, right) \
+	(SPU_CD_VOL_L = (left), SPU_CD_VOL_R = (right))
+#define SpuSetCommonCDReverb(enable) \
+	((enable) ? (SPU_CTRL |= 0x0004) : (SPU_CTRL &= 0xfffb))
+#define SpuSetCommonExtVolume(left, right) \
+	(SPU_EXT_VOL_L = (left), SPU_EXT_VOL_R = (right))
+#define SpuSetCommonExtReverb(enable) \
+	((enable) ? (SPU_CTRL |= 0x0002) : (SPU_CTRL &= 0xfffd))
+
+#define SpuSetReverbAddr(addr) \
+	(SPU_REVERB_ADDR = ((addr) + 7) / 8)
+#define SpuSetIRQAddr(addr) \
+	(SPU_IRQ_ADDR = ((addr) + 7) / 8)
+
+#define SpuSetVoiceVolume(ch, left, right) \
+	(SPU_CH_VOL_L(ch) = (left), SPU_CH_VOL_R(ch) = (right))
+#define SpuSetVoicePitch(ch, pitch) \
+	(SPU_CH_FREQ(ch) = (pitch))
+#define SpuSetVoiceStartAddr(ch, addr) \
+	(SPU_CH_ADDR(ch) = ((addr) + 7) / 8)
+#define SpuSetVoiceADSR(ch, ar, dr, sr, rr, sl) \
+	(SPU_CH_ADSR(ch) = ((sl)) | ((dr) << 4) | ((ar) << 8) | ((rr) << 16) | ((sr) << 22) | (1 << 30))
+
+#define SpuSetKey(enable, voice_bit) \
+	((enable) ? (SPU_KEY_ON = (voice_bit)) : (SPU_KEY_OFF = (voice_bit)))
+
 /* Public API */
 
 #ifdef __cplusplus
@@ -74,15 +111,11 @@ extern "C" {
 
 void SpuInit(void);
 
-void SpuReverbOn(int voice);
-void SpuSetReverbAddr(int addr);
-void SpuSetReverbVolume(int left, int right);
-void SpuSetKey(int on_off, uint32_t voice_bit);
-
-int SpuSetTransferMode(int mode);
-int SpuSetTransferStartAddr(int addr);
-int SpuWrite(const uint8_t *addr, int size);
-void SpuWait(void);
+void SpuRead(const uint32_t *data, size_t size);
+void SpuWrite(const uint32_t *data, size_t size);
+SPU_TransferMode SpuSetTransferMode(SPU_TransferMode mode);
+uint32_t SpuSetTransferStartAddr(uint32_t addr);
+int SpuIsTransferCompleted(int mode);
 
 #ifdef __cplusplus
 }
