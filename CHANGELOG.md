@@ -19,6 +19,33 @@ to ensure the changelog can be parsed correctly.
 
 -------------------------------------------------------------------------------
 
+## 2022-07-31
+
+spicyjpeg:
+
+- libc: Replaced default memory allocator with Nicolas Noble's PSYQo
+  implementation. Added `sbrk()` and `realloc()`.
+
+- psxspu: Rewritten the library in C, removing a few redundant non-standard
+  functions and improving SPU DMA reliability. Renamed `SpuWait()` to
+  `SpuIsTransferCompleted()` (and tweaked its prototype) for compatibility with
+  the official SDK. `SpuInit()` now loads a dummy block at the beginning of SPU
+  RAM by default.
+
+- psxmdec: Added experimental Huffman decoding API. Two implementations with
+  different performance and memory usage tradeoffs are available.
+
+- psxapi: Added `SwEnterCriticalSection()`, `SwExitCriticalSection()`,
+  `SetConf()` and various thread- and event-related BIOS API wrappers that were
+  previously missing.
+
+- Deprecated `u_short`, `u_int` and `u_long` types and replaced them with
+  standard library fixed-size types (`uint16_t` and `uint32_t` respectively) in
+  all library code.
+
+- Ninja is now bundled with binary releases of the SDK. A `BUNDLE_NINJA` option
+  was added to the main CMake script to toggle bundling when building packages.
+
 ## 2022-06-26
 
 spicyjpeg:
