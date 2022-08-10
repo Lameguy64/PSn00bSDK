@@ -105,7 +105,7 @@ static void _load_store_data(uint32_t *data, size_t length, int mode) {
 	DMA_CHCR(4) = 0x01000200 | ((mode & 1) ^ 1);
 }
 
-void SpuRead(const uint32_t *data, size_t size) {
+void SpuRead(uint32_t *data, size_t size) {
 	_load_store_data(data, size, 3);
 }
 
@@ -129,7 +129,7 @@ void SpuWrite(const uint32_t *data, size_t size) {
 		return;
 	}
 
-	_load_store_data(data, size, 2);
+	_load_store_data((uint32_t *) data, size, 2);
 }
 
 SPU_TransferMode SpuSetTransferMode(SPU_TransferMode mode) {

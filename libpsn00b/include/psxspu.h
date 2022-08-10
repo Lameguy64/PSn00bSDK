@@ -111,7 +111,7 @@ extern "C" {
 
 void SpuInit(void);
 
-void SpuRead(const uint32_t *data, size_t size);
+void SpuRead(uint32_t *data, size_t size);
 void SpuWrite(const uint32_t *data, size_t size);
 SPU_TransferMode SpuSetTransferMode(SPU_TransferMode mode);
 uint32_t SpuSetTransferStartAddr(uint32_t addr);

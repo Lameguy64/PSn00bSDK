@@ -122,12 +122,13 @@ static void _vsync_halt(void) {
 int VSync(int mode) {
 	if (mode < 0)
 		return _vblank_counter;
+	if (mode == 1)
+		return TIMER_VALUE(1) - _last_hblank;
 
 	uint32_t status = GPU_GP1;
 
-	// If mode = 0, wait for one vertical blank event to occur. If mode = 1, do
-	// not wait.
-	for (int i = ((mode < 2) ? (mode ^ 1) : mode); i; i--) {
+	// Wait for at least one vertical blank event to occur.
+	do {
 		_vsync_halt();
 
 		// If interlaced mode is enabled, wait until the GPU starts displaying
@@ -136,7 +137,7 @@ int VSync(int mode) {
 			while (!((GPU_GP1 ^ status) & (1 << 31)))
 				__asm__ volatile("");
 		}
-	}
+	} while ((--mode) > 0);
 
 	// Update the horizontal blank counter and return the time elapsed since
 	// the last time it was updated.

@@ -12,13 +12,15 @@
  *
  * Changelog:
  *
- *	May 10, 2021		- Variable types updated for psxgpu.h changes.
+ *  Aug 10, 2022		- Added texture to cube faces.
+ *
+ *  May 10, 2021		- Variable types updated for psxgpu.h changes.
  *
  *  Jan 26, 2019		- Initial version.
  *
  */
  
-#include <sys/types.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <psxgpu.h>
 #include <psxgte.h>
@@ -39,10 +41,10 @@
 
 /* Double buffer structure */
 typedef struct {
-	DISPENV	disp;			/* Display environment */
-	DRAWENV	draw;			/* Drawing environment */
-	u_long 	ot[OT_LEN];		/* Ordering table */
-	char 	p[PACKET_LEN];	/* Packet buffer */
+	DISPENV		disp;			/* Display environment */
+	DRAWENV		draw;			/* Drawing environment */
+	uint32_t	ot[OT_LEN];		/* Ordering table */
+	char		p[PACKET_LEN];	/* Packet buffer */
 } DB;
 
 /* Double buffer variables */
@@ -98,9 +100,9 @@ INDEX cube_indices[] = {
 /* source color when using gte_nccs(). 4096 is 1.0 in this matrix */
 /* A column of zeroes disables the light source. */
 MATRIX color_mtx = {
-	ONE, 0, 0,	/* Red   */
-	ONE, 0, 0,	/* Green */
-	ONE, 0, 0	/* Blue  */
+	ONE / 2, 0, 0,	/* Red   */
+	ONE / 2, 0, 0,	/* Green */
+	ONE / 2, 0, 0	/* Blue  */
 };
 
 /* Light matrix */
@@ -113,6 +115,13 @@ MATRIX light_mtx = {
 	0	  , 0	  , 0
 };
 
+
+/* Reference texture data */
+extern uint32_t tim_texture[];
+
+/* TPage and CLUT values */
+uint16_t texture_tpage;		/* For the scrolling blending pattern */
+uint16_t texture_clut;
 
 /* Function declarations */
 void init();
@@ -128,7 +137,7 @@ int main() {
 	VECTOR	pos = { 0, 0, 400 };	/* Translation vector for TransMatrix */
 	MATRIX	mtx,lmtx;				/* Rotation matrices for geometry and lighting */
 	
-	POLY_F4	*pol4;					/* Flat shaded quad primitive pointer */
+	POLY_FT4 *pol4;					/* Flat shaded textured quad primitive pointer */
 	
 	
 	/* Init graphics and GTE */
@@ -159,7 +168,7 @@ int main() {
 		
 		
 		/* Draw the cube */
-		pol4 = (POLY_F4*)db_nextpri;	
+		pol4 = (POLY_FT4*)db_nextpri;	
 		
 		for( i=0; i<CUBE_FACES; i++ ) {
 			
@@ -192,7 +201,7 @@ int main() {
 				continue;
 			
 			/* Initialize a quad primitive */
-			setPolyF4( pol4 );
+			setPolyFT4( pol4 );
 			
 			/* Set the projected vertices to the primitive */
 			gte_stsxy0( &pol4->x0 );
@@ -218,6 +227,11 @@ int main() {
 			/* Store result to the primitive */
 			gte_strgb( &pol4->r0 );
 			
+			/* Set face texture */
+			setUVWH( pol4, 0, 1, 128, 128 );
+			pol4->tpage = texture_tpage;
+			pol4->clut = texture_clut;
+			
 			/* Sort primitive to the ordering table */
 			addPrim( db[db_active].ot+(p>>2), pol4 );
 			
@@ -240,6 +254,7 @@ int main() {
 }
 
 void init() {
+	TIM_IMAGE tim;
 
 	/* Reset the GPU, also installs a VSync event handler */
 	ResetGraph( 0 );
@@ -250,7 +265,7 @@ void init() {
 	SetDefDrawEnv( &db[0].draw, SCREEN_XRES, 0, SCREEN_XRES, SCREEN_YRES );
 	
 	/* Enable draw area clear and dither processing */
-	setRGB0( &db[0].draw, 63, 0, 127 );
+	setRGB0( &db[0].draw, 0, 255, 0 );
 	db[0].draw.isbg = 1;
 	db[0].draw.dtd = 1;
 	
@@ -287,7 +302,15 @@ void init() {
 	/* Set light ambient color and light color matrix */
 	gte_SetBackColor( 63, 63, 63 );
 	gte_SetColorMatrix( &color_mtx );
+
+	/* Load .TIM file */
+	GetTimInfo(tim_texture, &tim);
+	if( tim.mode & 0x8 )
+		LoadImage( tim.crect, tim.caddr );	/* Upload CLUT if present */
+	LoadImage( tim.prect, tim.paddr );		/* Upload texture to VRAM */
 	
+	texture_tpage	= getTPage(tim.mode, 1, tim.prect->x, tim.prect->y);
+	texture_clut	= getClut(tim.crect->x, tim.crect->y); 
 }
 
 void display() {
