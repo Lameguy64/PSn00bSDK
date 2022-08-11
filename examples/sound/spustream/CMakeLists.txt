@@ -14,12 +14,11 @@ project(
 # TODO: add rules to actually generate a valid STREAM.BIN file
 file(GLOB _sources *.c)
 psn00bsdk_add_executable(spustream STATIC ${_sources})
-#psn00bsdk_add_cd_image(spustream_iso spustream iso.xml DEPENDS spustream)
+psn00bsdk_add_cd_image(spustream_iso spustream iso.xml DEPENDS spustream)
 
 install(
 	FILES
-		#${PROJECT_BINARY_DIR}/spustream.bin
-		#${PROJECT_BINARY_DIR}/spustream.cue
-		${PROJECT_BINARY_DIR}/spustream.exe
+		${PROJECT_BINARY_DIR}/spustream.bin
+		${PROJECT_BINARY_DIR}/spustream.cue
 	TYPE BIN
 )

@@ -51,10 +51,9 @@
  *  +----------+----------+----------+----------+----------+----------+----
  *    \________________________Chunk________________________/
  *
- * Such file isn't provided as PSn00bSDK doesn't yet have a tool for audio
- * transcoding. A Python script is included to generate STREAM.BIN from one or
- * more SPU ADPCM (.VAG) files, one for each channel (the .VAG format only
- * supports mono).
+ * A Python script is included to generate STREAM.BIN from one or more SPU
+ * ADPCM (.VAG) files, one for each channel (the .VAG format only supports
+ * mono).
  *
  * Of course SPU streaming isn't the only way to play music, as the CD drive
  * can play CD-DA tracks and XA files natively with zero CPU overhead. However
@@ -101,7 +100,7 @@
 // size can be increased to get more idle time between CD reads, however it is
 // usually best to keep it to 1-2 seconds as SPU RAM is only 512 KB.
 #define SAMPLE_RATE		0x1000	// 44100 Hz
-#define BUFFER_SIZE		26624	// (26624 / 16 * 28) / 44100 = 1.05 seconds
+#define BUFFER_SIZE		0x6800	// (0x6800 / 16 * 28) / 44100 = 1.05 seconds
 
 #define NUM_CHANNELS	2
 #define CHANNEL_MASK	0x03
@@ -250,7 +249,7 @@ void cd_event_handler(int event, uint8_t *payload) {
 			str_ctx.spu_pos >= (BUFFER_SIZE * i - 2048) &&
 			str_ctx.spu_pos <  (BUFFER_SIZE * i)
 		)
-			sector[(BUFFER_SIZE * i - str_ctx.spu_pos) - 15] = 0x03;
+			sector_buffer[(BUFFER_SIZE * i - str_ctx.spu_pos) - 15] = 0x03;
 	}*/
 
 	// Copy the sector to SPU RAM, appending it to the buffer that is not
@@ -268,7 +267,6 @@ void cd_event_handler(int event, uint8_t *payload) {
 
 	// If the buffer has been filled completely, stop reading and re-enable the
 	// SPU IRQ.
-	// TODO TODO: preload first sector
 	if (str_ctx.spu_pos >= CHUNK_SIZE) {
 		CdControlF(CdlPause, 0);
 		SPU_CTRL |= 0x0040;
@@ -277,11 +275,17 @@ void cd_event_handler(int event, uint8_t *payload) {
 
 /* Stream helpers */
 
-void init_spu_channels(void) {
+// This isn't actually required for this example, however it is necessary if
+// you want to allocate the stream buffers into a region of SPU RAM that was
+// previously used (to make sure the IRQ isn't going to be triggered by any
+// inactive channels).
+void reset_spu_channels(void) {
 	SPU_KEY_OFF = 0x00ffffff;
 
-	for (int i = 0; i < 24; i++)
+	for (int i = 0; i < 24; i++) {
 		SPU_CH_ADDR(i) = SPU_RAM_ADDR(DUMMY_BLOCK_ADDR);
+		SPU_CH_FREQ(i) = 0x1000;
+	}
 
 	SPU_KEY_ON = 0x00ffffff;
 }
@@ -308,7 +312,7 @@ void init_stream(CdlFILE *file) {
 	spu_irq_handler();
 
 	while (str_ctx.spu_pos < CHUNK_SIZE)
-		__asm__("nop");
+		__asm__ volatile("");
 }
 
 void start_stream(void) {
@@ -317,7 +321,7 @@ void start_stream(void) {
 	for (int i = 0; i < NUM_CHANNELS; i++) {
 		SPU_CH_ADDR(i) = SPU_RAM_ADDR(BUFFER_START_ADDR + BUFFER_SIZE * i);
 		SPU_CH_FREQ(i) = SAMPLE_RATE;
-		SPU_CH_ADSR(i) = 0x1fee80ff; // or 0x9fc080ff, 0xdff18087
+		SPU_CH_ADSR(i) = 0x1fee80ff;
 	}
 
 	// Unmute the channels and route them for stereo output. You'll want to
@@ -345,7 +349,7 @@ int main(int argc, const char* argv[]) {
 	SHOW_STATUS("INITIALIZING\n");
 	SpuInit();
 	CdInit();
-	init_spu_channels();
+	reset_spu_channels();
 
 	SHOW_STATUS("LOCATING STREAM FILE\n");
 

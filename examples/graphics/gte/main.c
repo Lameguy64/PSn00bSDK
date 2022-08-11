@@ -265,7 +265,7 @@ void init() {
 	SetDefDrawEnv( &db[0].draw, SCREEN_XRES, 0, SCREEN_XRES, SCREEN_YRES );
 	
 	/* Enable draw area clear and dither processing */
-	setRGB0( &db[0].draw, 0, 255, 0 );
+	setRGB0( &db[0].draw, 63, 0, 127 );
 	db[0].draw.isbg = 1;
 	db[0].draw.dtd = 1;
 	

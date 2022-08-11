@@ -25,7 +25,7 @@ Additional information may be found in the source code of each example.
 | [`io/system573`](./io/system573)               | Konami System 573 (PS1-based arcade board) example    | CD   |       |
 | [`lowlevel/cartrom`](./lowlevel/cartrom)       | ROM firmware for cheat devices written using GNU GAS  | ROM  |   4   |
 | [`mdec/mdecimage`](./mdec/mdecimage)           | Displays a (raw) MDEC format image using libpsxpress  | EXE  |       |
-| [`sound/spustream`](./sound/spustream)         | Custom (non XA) CD-ROM audio streaming using the SPU  | CD   |   1   |
+| [`sound/spustream`](./sound/spustream)         | Custom (non XA) CD-ROM audio streaming using the SPU  | CD   |       |
 | [`sound/vagsample`](./sound/vagsample)         | Demonstrates playing VAG sound files using the SPU    | EXE  |       |
 | [`system/childexec`](./system/childexec)       | Loading a child program and returning to parent       | EXE  |       |
 | [`system/console`](./system/console)           | TTY based text console that interrupts gameplay       | EXE  |       |
@@ -35,10 +35,9 @@ Additional information may be found in the source code of each example.
 
 Notes:
 
-1. `cdrom/cdxa` and `sound/spustream` do not come with example audio files. In
-   order to run these examples you'll have to provide your own files (and, in
-   the case of `spustream`, convert them using the included Python script) and
-   build the CD image manually.
+1. `cdrom/cdxa` does not come with an example XA audio file. In order to run
+   this example you'll have to provide your own file and build the CD image
+   manually.
 2. `demos/n00bdemo` suffers from flickering on real hardware, especially when
    masking/stencil buffering is used.
 3. `io/pads` seems to work on real hardware, but fails to automatically enable
@@ -85,4 +84,4 @@ are for rebuilding the examples *after* the SDK has been installed.
    CD images for each example.
 
 -----------------------------------------
-_Last updated on 2022-02-06 by spicyjpeg_
+_Last updated on 2022-08-11 by spicyjpeg_

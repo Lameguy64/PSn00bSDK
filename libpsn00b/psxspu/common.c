@@ -46,13 +46,6 @@ void SpuInit(void) {
 	SPU_EXT_VOL_L		= 0;
 	SPU_EXT_VOL_R		= 0;
 
-	for (int i = 0; i < 24; i++) {
-		SPU_CH_VOL_L(i) = 0;
-		SPU_CH_VOL_R(i) = 0;
-		SPU_CH_FREQ(i)  = 0;
-		SPU_CH_ADDR(i)  = 0;
-	}
-
 	DMA_DPCR   |= 0x000b0000; // Enable DMA4
 	DMA_CHCR(4) = 0x00000201; // Stop DMA4
 
@@ -68,8 +61,18 @@ void SpuInit(void) {
 	for (int i = 7; i; i--)
 		SPU_DATA = 0x0000;
 
+	// "Play" the dummy block on all channels. This will reset the start
+	// address and ADSR envelope status of each channel.
+	for (int i = 0; i < 24; i++) {
+		SPU_CH_VOL_L(i) = 0;
+		SPU_CH_VOL_R(i) = 0;
+		SPU_CH_FREQ(i)  = 0x1000;
+		SPU_CH_ADDR(i)  = WRITABLE_AREA_ADDR;
+	}
+
 	// Sony's implementation leaves everything muted, however it makes sense to
 	// turn up at least the master and CD audio volume by default.
+	SPU_KEY_ON			= 0x00ffffff;
 	SPU_MASTER_VOL_L	= 0x3fff;
 	SPU_MASTER_VOL_R	= 0x3fff;
 	SPU_CD_VOL_L		= 0x3fff;
