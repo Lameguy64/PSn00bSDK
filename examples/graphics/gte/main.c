@@ -117,7 +117,7 @@ MATRIX light_mtx = {
 
 
 /* Reference texture data */
-extern uint32_t tim_texture[];
+extern const uint32_t tim_texture[];
 
 /* TPage and CLUT values */
 uint16_t texture_tpage;		/* For the scrolling blending pattern */

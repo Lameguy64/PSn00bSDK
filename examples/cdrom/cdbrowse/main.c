@@ -54,7 +54,7 @@
  *  July 12, 2020: Updated CD-ROM directory query logic on disc change slightly.
  */
  
-#include <sys/types.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,9 +66,6 @@
 #include <psxsio.h>
 #include <psxspu.h>
 #include <psxcd.h>
-
-#include "ball16c.h"
-
 
 #define MAX_BALLS	1536		/* Number of balls to display */
 
@@ -87,7 +84,7 @@ DISPENV disp[2];
 DRAWENV draw[2];
 
 char pribuff[2][65536];			/* Primitive packet buffers */
-u_long ot[2][OT_LEN];		/* Ordering tables */
+uint32_t ot[2][OT_LEN];		/* Ordering tables */
 char *nextpri;					/* Pointer to next packet buffer offset */
 int db = 0;						/* Double buffer index */
 
@@ -102,6 +99,8 @@ typedef struct BALL_TYPE
 
 BALL_TYPE balls[MAX_BALLS];
 
+/* Ball texture reference */
+extern const uint32_t ball16c[];
 
 /* TIM image parameters for loading the ball texture and drawing sprites */
 TIM_IMAGE tim;
@@ -192,7 +191,7 @@ void init()
 	
 	
 	/* Upload the ball texture */
-	GetTimInfo((u_long*)ball16c, &tim); /* Get TIM parameters */
+	GetTimInfo(ball16c, &tim); /* Get TIM parameters */
 	LoadImage(tim.prect, tim.paddr);		/* Upload texture to VRAM */
 	if( tim.mode & 0x8 )
 	{

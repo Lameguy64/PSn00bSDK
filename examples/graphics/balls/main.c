@@ -18,14 +18,12 @@
  *
  */
  
-#include <sys/types.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <psxetc.h>
 #include <psxgte.h>
 #include <psxgpu.h>
-#include "ball16c.h"
-
 
 #define MAX_BALLS 1024
 
@@ -42,10 +40,10 @@
 DISPENV disp;
 DRAWENV draw;
 
-char	pribuff[2][65536];		/* Primitive packet buffers */
-u_long	ot[2][OT_LEN];			/* Ordering tables */
-char	*nextpri;				/* Pointer to next packet buffer offset */
-int		db = 0;					/* Double buffer index */
+char		pribuff[2][65536];		/* Primitive packet buffers */
+uint32_t	ot[2][OT_LEN];			/* Ordering tables */
+char		*nextpri;				/* Pointer to next packet buffer offset */
+int			db = 0;					/* Double buffer index */
 
 
 /* Ball struct and array */
@@ -57,6 +55,8 @@ typedef struct {
 
 BALL_TYPE balls[MAX_BALLS];
 
+/* Ball texture reference */
+extern const uint32_t ball16c[];
 
 /* TIM image parameters for loading the ball texture and drawing sprites */
 TIM_IMAGE tim;
@@ -96,7 +96,7 @@ void init() {
 	
 	/* Upload the ball texture */
 	printf("Upload texture... ");
-	GetTimInfo( (u_long*)ball16c, &tim ); /* Get TIM parameters */
+	GetTimInfo( ball16c, &tim ); /* Get TIM parameters */
 	
 	LoadImage( tim.prect, tim.paddr );		/* Upload texture to VRAM */
 	if( tim.mode & 0x8 ) {

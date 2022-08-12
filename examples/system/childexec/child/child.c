@@ -1,4 +1,4 @@
-#include <sys/types.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <psxapi.h>
 #include <psxgpu.h>
@@ -21,10 +21,10 @@
 
 /* Double buffer structure */
 typedef struct {
-	DISPENV	disp;			/* Display environment */
-	DRAWENV	draw;			/* Drawing environment */
-	u_long 	ot[OT_LEN];		/* Ordering table */
-	char 	p[PACKET_LEN];	/* Packet buffer */
+	DISPENV		disp;			/* Display environment */
+	DRAWENV		draw;			/* Drawing environment */
+	uint32_t	ot[OT_LEN];		/* Ordering table */
+	char		p[PACKET_LEN];	/* Packet buffer */
 } DB;
 
 /* Double buffer variables */
