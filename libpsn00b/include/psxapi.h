@@ -224,9 +224,10 @@ int Exec(struct EXEC *exec, int argc, char **argv);
 void FlushCache(void);
 
 void b_setjmp(struct JMP_BUF *buf);
-void b_longjmp(struct JMP_BUF *buf, int param);
+void b_longjmp(const struct JMP_BUF *buf, int param);
 void SetDefaultExitFromException(void);
-void SetCustomExitFromException(struct JMP_BUF *buf);
+void SetCustomExitFromException(const struct JMP_BUF *buf);
+void ReturnFromException(void);
 
 int GetSystemInfo(int index);
 void *GetB0Table(void);

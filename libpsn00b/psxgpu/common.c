@@ -58,23 +58,14 @@ static void _gpu_dma_handler(void) {
 void ResetGraph(int mode) {
 	// Perform some basic system initialization when ResetGraph() is called for
 	// the first time.
-	static int setup_done = 0;
-	if (!setup_done) {
+	if (!ResetCallback()) {
 		EnterCriticalSection();
-
-		DMA_DPCR = 0x03333333;
-		DMA_DICR = 0;
-		IRQ_MASK = 0;
-
 		InterruptCallback(0, &_vblank_handler);
 		DMACallback(2, &_gpu_dma_handler);
-		RestartCallback();
-		_96_remove();
 
 		_gpu_video_mode = (GPU_GP1 >> 20) & 1;
-		setup_done      = 1;
-
 		ExitCriticalSection();
+
 		printf("psxgpu: setup done, default mode is %s\n", _gpu_video_mode ? "PAL" : "NTSC");
 	}
 
