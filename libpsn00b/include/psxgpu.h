@@ -490,6 +490,7 @@ int GetODE(void);
 int VSync(int mode);
 int DrawSync(int mode);
 
+void *VSyncHaltFunction(void (*func)(void));
 void *VSyncCallback(void (*func)(void));
 void *DrawSyncCallback(void (*func)(void));
 

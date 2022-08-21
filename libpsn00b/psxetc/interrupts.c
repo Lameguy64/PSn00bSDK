@@ -14,8 +14,8 @@
 
 /* Internal globals */
 
-static void (*_irq_handlers[NUM_IRQ_CHANNELS])(void) = { (void *) 0 };
-static void (*_dma_handlers[NUM_DMA_CHANNELS])(void) = { (void *) 0 };
+static void (*_irq_handlers[NUM_IRQ_CHANNELS])(void);
+static void (*_dma_handlers[NUM_DMA_CHANNELS])(void);
 static int  _num_dma_handlers = 0;
 
 static uint32_t _saved_irq_mask, _saved_dma_dpcr, _saved_dma_dicr;
@@ -156,9 +156,19 @@ int ResetCallback(void) {
 	if (_isr_installed)
 		return -1;
 
-	_saved_irq_mask = 0;
+	EnterCriticalSection();
+	_saved_irq_mask = 1 << 3; // Enable DMA IRQ by default
 	_saved_dma_dpcr = 0x03333333;
 	_saved_dma_dicr = 0;
+
+	for (int i = 0; i < NUM_IRQ_CHANNELS; i++)
+		_irq_handlers[i] = (void *) 0;
+	for (int i = 0; i < NUM_DMA_CHANNELS; i++)
+		_dma_handlers[i] = (void *) 0;
+
+	// Set up the DMA IRQ handler. This handler shall *not* be overridden using
+	// InterruptCallback().
+	_irq_handlers[3] = &_global_dma_handler;
 
 	_96_remove();
 	RestartCallback();

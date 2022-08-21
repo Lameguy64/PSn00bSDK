@@ -10,20 +10,24 @@
 #include <psxgpu.h>
 #include <hwregs_c.h>
 
-#define QUEUE_LENGTH		8
+#define QUEUE_LENGTH		16
 #define DMA_CHUNK_LENGTH	8
 #define VSYNC_TIMEOUT		0x100000
+
+static void _default_vsync_halt(void);
 
 /* Internal globals */
 
 GPU_VideoMode _gpu_video_mode;
 
-static void (*_vsync_callback)(void);
-static void (*_drawsync_callback)(void);
+static void (*_vsync_halt_func)(void)   = &_default_vsync_halt;
+static void (*_vsync_callback)(void)    = (void *) 0;
+static void (*_drawsync_callback)(void) = (void *) 0;
 
 static const uint32_t *volatile _draw_queue[QUEUE_LENGTH];
 static volatile uint8_t  _queue_head, _queue_tail, _queue_length;
-static volatile uint32_t _vblank_counter, _last_hblank;
+static volatile uint32_t _vblank_counter;
+static volatile uint16_t _last_hblank;
 
 /* Interrupt handlers */
 
@@ -35,9 +39,8 @@ static void _vblank_handler(void) {
 }
 
 static void _gpu_dma_handler(void) {
-	//while (DMA_CHCR(2) & (1 << 24))
-		//__asm__ volatile("");
-	while (!(GPU_GP1 & (1 << 28)))
+	//while (!(GPU_GP1 & (1 << 26)) || (DMA_CHCR(2) & (1 << 24)))
+	while (!(GPU_GP1 & (1 << 26)))
 		__asm__ volatile("");
 
 	if (_queue_length) {
@@ -97,7 +100,7 @@ void ResetGraph(int mode) {
 /* Syncing API */
 
 // TODO: add support for no$psx's "halt" register
-static void _vsync_halt(void) {
+static void _default_vsync_halt(void) {
 	int counter = _vblank_counter;
 
 	for (int i = VSYNC_TIMEOUT; i; i--) {
@@ -111,16 +114,17 @@ static void _vsync_halt(void) {
 }
 
 int VSync(int mode) {
+	uint16_t delta = (TIMER_VALUE(1) - _last_hblank) & 0xffff;
+	if (mode == 1)
+		return delta;
 	if (mode < 0)
 		return _vblank_counter;
-	if (mode == 1)
-		return TIMER_VALUE(1) - _last_hblank;
 
 	uint32_t status = GPU_GP1;
 
 	// Wait for at least one vertical blank event to occur.
 	do {
-		_vsync_halt();
+		_vsync_halt_func();
 
 		// If interlaced mode is enabled, wait until the GPU starts displaying
 		// the next field.
@@ -130,12 +134,7 @@ int VSync(int mode) {
 		}
 	} while ((--mode) > 0);
 
-	// Update the horizontal blank counter and return the time elapsed since
-	// the last time it was updated.
-	uint16_t counter = TIMER_VALUE(1);
-	uint16_t delta   = counter - _last_hblank;
-
-	_last_hblank = counter;
+	_last_hblank = TIMER_VALUE(1);
 	return delta;
 }
 
@@ -150,9 +149,7 @@ int DrawSync(int mode) {
 
 	// Wait for any DMA transfer to finish if DMA is enabled.
 	if (GPU_GP1 & (3 << 29)) {
-		while (DMA_CHCR(2) & (1 << 24))
-			__asm__ volatile("");
-		while (!(GPU_GP1 & (1 << 28)))
+		while (!(GPU_GP1 & (1 << 28)) || (DMA_CHCR(2) & (1 << 24)))
 			__asm__ volatile("");
 	}
 
@@ -160,6 +157,13 @@ int DrawSync(int mode) {
 		__asm__ volatile("");
 
 	return 0;
+}
+
+void *VSyncHaltFunction(void (*func)(void)) {
+	void *old_callback  = _vsync_halt_func;
+	_vsync_halt_func    = func;
+
+	return old_callback;
 }
 
 void *VSyncCallback(void (*func)(void)) {
@@ -206,26 +210,38 @@ void ClearOTag(uint32_t *ot, size_t length) {
 
 void DrawOTag(const uint32_t *ot) {
 	// If GPU DMA is currently busy, append the OT to the queue instead of
-	// drawing it immediately.
+	// drawing it immediately. Note that interrupts must be disabled *prior* to
+	// checking if DMA is busy; disabling them afterwards would create a race
+	// condition where the DMA transfer could end while interrupts are being
+	// disabled. Interrupts are disabled through the IRQ_MASK register rather
+	// than by calling EnterCriticalSection() for performance reasons.
+	uint32_t mask = IRQ_MASK;
+	IRQ_MASK      = 0;
+
 	if (DMA_CHCR(2) & (1 << 24)) {
-		if (_queue_length >= QUEUE_LENGTH) {
-			printf("psxgpu: DrawOTag() failed, draw queue full\n");
+		if (_queue_length < QUEUE_LENGTH) {
+			_draw_queue[_queue_tail++] = ot;
+
+			_queue_length++;
+			_queue_tail %= QUEUE_LENGTH;
+
+			IRQ_MASK = mask;
 			return;
 		}
 
-		_draw_queue[_queue_tail++] = ot;
-		_queue_length++;
-		_queue_tail %= QUEUE_LENGTH;
+		IRQ_MASK = mask;
+		printf("psxgpu: DrawOTag() failed, draw queue full\n");
 		return;
 	}
 
+	IRQ_MASK = mask;
 	DrawOTag2(ot);
 }
 
 void DrawOTag2(const uint32_t *ot) {
 	GPU_GP1 = 0x04000002;
 
-	while (!(GPU_GP1 & (1 << 26)))
+	while (!(GPU_GP1 & (1 << 26)) || (DMA_CHCR(2) & (1 << 24)))
 		__asm__ volatile("");
 
 	DMA_MADR(2) = (uint32_t) ot;
