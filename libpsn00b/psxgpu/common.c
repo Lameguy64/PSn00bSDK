@@ -215,7 +215,7 @@ void DrawOTag(const uint32_t *ot) {
 	// condition where the DMA transfer could end while interrupts are being
 	// disabled. Interrupts are disabled through the IRQ_MASK register rather
 	// than by calling EnterCriticalSection() for performance reasons.
-	uint32_t mask = IRQ_MASK;
+	uint16_t mask = IRQ_MASK;
 	IRQ_MASK      = 0;
 
 	if (DMA_CHCR(2) & (1 << 24)) {

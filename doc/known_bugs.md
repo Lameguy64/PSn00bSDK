@@ -32,12 +32,9 @@ fixed.
 
 `psxspu`:
 
-- `SpuCtrlSync()` locks up on MAME, making any code that tries to initialize
-  the SPU hang. It works on other emulators as well as on real hardware.
-
-- Calls to `SpuSetTransferMode()` are ignored. SPU transfers are always
-  performed using DMA, which imposes limitations such as the data length having
-  to be a multiple of 16 words (64 bytes, see above).
+- `SpuInit()`, `SpuRead()` and `SpuWrite()` may take several seconds on MAME
+  due to the SPU status register being emulated incorrectly. They work as
+  expected on other emulators as well as on real hardware.
 
 `psxetc`:
 
@@ -51,4 +48,4 @@ fixed.
 See [README.md in the examples directory](../examples/README.md#examples-summary).
 
 -----------------------------------------
-_Last updated on 2022-06-29 by spicyjpeg_
+_Last updated on 2022-08-21 by spicyjpeg_

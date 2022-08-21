@@ -18,7 +18,8 @@ static void (*_irq_handlers[NUM_IRQ_CHANNELS])(void);
 static void (*_dma_handlers[NUM_DMA_CHANNELS])(void);
 static int  _num_dma_handlers = 0;
 
-static uint32_t _saved_irq_mask, _saved_dma_dpcr, _saved_dma_dicr;
+static uint16_t _saved_irq_mask;
+static uint32_t _saved_dma_dpcr, _saved_dma_dicr;
 static int _isr_installed = 0;
 
 /* Custom ISR jmp_buf */
@@ -52,7 +53,7 @@ static const struct JMP_BUF _isr_jmp_buf = {
 /* Internal IRQ and DMA handlers */
 
 static void _global_isr(void) {
-	uint32_t stat = IRQ_STAT, mask = IRQ_MASK;
+	uint16_t stat = IRQ_STAT, mask = IRQ_MASK;
 
 	// Clear all IRQ flags in one shot. This is not the "proper" way to do it
 	// but it's much faster than clearing one flag at a time.

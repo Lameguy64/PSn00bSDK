@@ -14,7 +14,7 @@
 
 /* Constants */
 
-#define IOBASE				0x1f800000
+#define IOBASE				0xbf800000
 #define F_CPU				33868800UL
 #define F_GPU				53222400UL
 
@@ -96,8 +96,8 @@
 
 /* IRQ controller */
 
-#define IRQ_STAT			_MMIO32(IOBASE | 0x1070)
-#define IRQ_MASK			_MMIO32(IOBASE | 0x1074)
+#define IRQ_STAT			_MMIO16(IOBASE | 0x1070)
+#define IRQ_MASK			_MMIO16(IOBASE | 0x1074)
 
 /* DMA */
 
