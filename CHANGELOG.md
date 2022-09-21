@@ -19,6 +19,23 @@ to ensure the changelog can be parsed correctly.
 
 -------------------------------------------------------------------------------
 
+## 2022-08-21: 0.20
+
+spicyjpeg:
+
+- psxgpu: Added `VSyncHaltFunction()`.
+
+- psxetc: Rewritten the library in C, making `RestartCallback()` behave more
+  like its official SDK counterpart. Added `StopCallback()` and
+  `ResetCallback()`.
+
+- psxspu: `SpuInit()` now properly resets the starting address of all channels,
+  preventing them from accidentally triggering the SPU IRQ.
+
+- examples: Added an example audio file to `sound/spustream` and a texture to
+  `graphics/gte`. Replaced `ball16c.h` in all examples that included it with a
+  binary .TIM file embedded through CMake.
+
 ## 2022-07-31
 
 spicyjpeg:

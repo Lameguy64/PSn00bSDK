@@ -85,14 +85,19 @@ As of March 28, 2022
 
 ## Obtaining PSn00bSDK
 
-Prebuilt PSn00bSDK packages for Windows and Linux are available through GitHub
-Actions which includes the libraries, a copy of the GCC MIPS toolchain, command
-line tools, examples and documentation. CMake is **not** included and must be
+Prebuilt PSn00bSDK packages for Windows and Linux are available on the releases
+page and include the libraries, a copy of the GCC MIPS toolchain, command-line
+tools, examples and documentation. CMake is **not** included and must be
 installed separately, either from [its website](https://cmake.org/download) or
 via MSys2 or your distro's package manager.
 
-See [installation.md](doc/installation.md) for a quick start guide and for
-details on how to build the SDK yourself.
+The releases can be installed by simply extracting the archives into any
+directory and adding the `bin` subfolder to the `PATH` environment variable.
+`share/psn00bsdk/template` contains a barebones example project that can be
+used as a starting point.
+
+For more information on how to get started, or if you wish to build the SDK
+yourself from source instead, refer to [installation.md](doc/installation.md).
 
 
 ## Examples

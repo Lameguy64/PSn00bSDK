@@ -1,17 +1,42 @@
 
 # Getting started with PSn00bSDK
 
+## Installing a prebuilt release (recommended)
+
+1. Install prerequisites. Currently CMake is the only external dependency; you
+   can install it from [here](https://cmake.org/download) or using MSys2 or
+   your distro's package manager. Make sure you have at least CMake 3.20.
+
+2. Head over to the releases page, download the latest release's ZIP for your
+   operating system and extract its contents to a directory of your choice,
+   preferably one whose absolute path is short (such as `C:\PSn00bSDK` or
+   `/opt/psn00bsdk`). Proceed to add the `bin` subdirectory you extracted (e.g.
+   `C:\PSn00bSDK\bin` or `/opt/psn00bsdk/bin`) to your `PATH` environment
+   variable, through System Properties on Windows or by modifying your profile
+   script on Linux.
+
+3. You may optionally set the `PSN00BSDK_LIBS` environment variable to point to
+   the `lib/libpsn00b` subdirectory (again, the full path would be something
+   like `C:\PSn00bSDK\lib\libpsn00b` or `/opt/psn00bsdk/lib/libpsn00b`). Doing
+   so is highly recommended as it will save you from having to hardcode a path
+   to the SDK in your projects later on.
+
+4. You should now be able to invoke the compiler (`mipsel-none-elf-gcc`) as
+   well as PSn00bSDK commands such as `elf2x` and `mkpsxiso`. If you get
+   "command not found" errors try rebooting, otherwise you can skip to
+   [Creating a project](#creating-a-project).
+
+## Building from source
+
+The instructions below are for Windows and Linux. Building on macOS hasn't been
+tested extensively yet, however it should work once the GCC toolchain is built
+and installed properly.
+
 **IMPORTANT**: due to a bug in `libflac` (used by `mkpsxiso`), building using
 MinGW on Windows currently requires `-DMKPSXISO_NO_LIBFLAC=ON` to be passed to
 CMake when configuring PSn00bSDK. This will result in the `dumpsxiso` utility
 being built without support for ripping CD audio tracks to FLAC, however the
 `mkpsxiso` command will still retain FLAC support.
-
-## Building and installing
-
-The instructions below are for Windows and Linux. Building on macOS hasn't been
-tested extensively yet, however it should work once the GCC toolchain is built
-and installed properly.
 
 1. Install prerequisites and a host compiler toolchain. On Linux (most distros)
    install the following packages from your distro's package manager:
@@ -80,7 +105,7 @@ and installed properly.
 
    If you want to install the SDK to a custom location rather than the default
    one (`C:\Program Files\PSn00bSDK` or `/usr/local` depending on your OS), add
-   `--install-prefix <INSTALL_PATH>` to the first command. Remember to add
+   `--install-prefix <location>` to the first command. Remember to add
    `-DPSN00BSDK_TARGET=mipsel-unknown-elf` if necessary.
 
    **NOTE**: Ninja is used by default to build the SDK. If you can't get it to
@@ -95,15 +120,18 @@ and installed properly.
    cmake --install ./build
    ```
 
-   This will create and populate the following directories:
+   This will create and populate the following subfolders in the installation
+   directory:
 
-   - `<INSTALL_PATH>/bin`
-   - `<INSTALL_PATH>/lib/libpsn00b`
-   - `<INSTALL_PATH>/share/psn00bsdk`
+   - `bin`
+   - `lib/libpsn00b`
+   - `share/psn00bsdk`
 
 7. You may optionally set the `PSN00BSDK_LIBS` environment variable to point to
-   the `lib/libpsn00b` subfolder inside the install directory. You might also
-   want to add the `bin` folder to `PATH` if it's not listed already.
+   the `lib/libpsn00b` subfolder inside the install directory. Doing so is
+   highly recommended as it will save you from having to hardcode a path to the
+   SDK in your projects later on. You might also want to add the `bin` folder
+   to `PATH` if it's not listed already.
 
 Although not strictly required, you'll probably want to install a PS1 emulator
 with debugging capabilities such as [no$psx](https://problemkaputt.de/psx.htm)
@@ -134,8 +162,9 @@ far from being feature-complete.
 
 ## Creating a project
 
-1. Copy the contents of `<INSTALL_PATH>/share/psn00bsdk/template` (or the
-   `template` folder within the repo) to your new project's root directory.
+1. Copy the contents of `share/psn00bsdk/template` within the PSn00bSDK
+   installation directory (or the `template` folder within the repo) to a new
+   empty folder, which will become your project's root directory.
 
 2. If you haven't set the `PSN00BSDK_LIBS` environment variable previously or
    if you want to use a different PSn00bSDK installation for the project, edit
@@ -156,4 +185,4 @@ The toolchain script defines a few CMake macros to create PS1 executables, DLLs
 and CD images. See the [reference](cmake_reference.md) for details.
 
 -----------------------------------------
-_Last updated on 2022-02-06 by spicyjpeg_
+_Last updated on 2022-09-21 by spicyjpeg_

@@ -10,8 +10,8 @@
 name: Build PSn00bSDK
 on:   [ push, pull_request ]
 env:
-  BINUTILS_VERSION: 2.36
-  GCC_VERSION:      11.1.0
+  BINUTILS_VERSION: 2.39
+  GCC_VERSION:      12.2.0
   GCC_TARGET:       mipsel-none-elf
 
 jobs:
@@ -131,7 +131,7 @@ jobs:
     - name: Upload build artifacts (NSIS)
       uses: actions/upload-artifact@v2
       with:
-        name: psn00bsdk-windows-nsis
+        name: psn00bsdk-windows-installer
         path: build/packages/*.exe
 
   build-sdk-linux:
@@ -168,12 +168,6 @@ jobs:
       with:
         name: psn00bsdk-linux
         path: build/packages/*.zip
-
-    - name: Upload build artifacts (DEB)
-      uses: actions/upload-artifact@v2
-      with:
-        name: psn00bsdk-linux-deb
-        path: build/packages/*.deb
 
   # This job takes care of creating a new release and upload the build
   # artifacts if the last commit is associated to a tag.
@@ -224,6 +218,5 @@ jobs:
         files: |
           *.zip
           psn00bsdk-windows/*
-          psn00bsdk-windows-nsis/*
+          psn00bsdk-windows-installer/*
           psn00bsdk-linux/*
-          psn00bsdk-linux-deb/*
