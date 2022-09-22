@@ -19,6 +19,16 @@ to ensure the changelog can be parsed correctly.
 
 -------------------------------------------------------------------------------
 
+## 2022-09-22
+
+spicyjpeg:
+
+- libpsn00b: Changed the extension of `gtereg.h`, `hwregs_a.h` and `inline_s.h`
+  to `.inc`. Cleaned up old leftover PSXSDK headers.
+
+- Updated documentation and added detailed instructions on how to install
+  prebuilt releases.
+
 ## 2022-08-21: 0.20
 
 spicyjpeg:

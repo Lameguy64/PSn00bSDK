@@ -1,7 +1,7 @@
 .section .text
 .set noreorder
 
-.include "hwregs_a.h"
+.include "hwregs_a.inc"
 
 .global _InitCd
 .type _InitCd, @function

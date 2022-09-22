@@ -1,13 +1,10 @@
 /*
- * string.h
- *
- * Prototypes for string functions of the C library
- *
- * PSXSDK
+ * PSn00bSDK standard library
+ * (C) 2019-2022 PSXSDK authors, Lameguy64, spicyjpeg - MPL licensed
  */
 
-#ifndef _STRING_H
-#define _STRING_H
+#ifndef __STRING_H
+#define __STRING_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,11 +16,6 @@ char *strpbrk(const char *dst , const char *src);
 char *strtok(char *s , char *set);
 char *strstr(const char *big , const char *little);
 
-//int strspn(char *s , char *set);
-//int strcspn(char *s , char *set);
-//int index(char *s , int c);
-//int rindex(char *s , int c);
-
 char *strcat(char *s , const char *append);
 char *strncat(char *s , const char *append, int n);
 char *strcpy(char *dst , const char *src);
@@ -34,9 +26,6 @@ char *strrchr(const char *s , int c);
 
 void *memmove(void *dst , const void *src , int n);
 void *memchr(void *s , int c , int n);
-
-// Functions converted to ASM
-
 void *memcpy(void *dst , const void *src , int n);
 void *memset(void *dst , char c , int n);
 int memcmp(const void *b1 , const void *b2 , int n);
@@ -46,4 +35,3 @@ int memcmp(const void *b1 , const void *b2 , int n);
 #endif
 
 #endif
-

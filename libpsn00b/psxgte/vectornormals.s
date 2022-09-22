@@ -1,8 +1,8 @@
 .set noreorder
 .set noat
 
-.include "gtereg.h"
-.include "inline_s.h"
+.include "gtereg.inc"
+.include "inline_s.inc"
 
 .section .text
 

@@ -1,6 +1,6 @@
 .set noreorder
 
-.include "gtereg.h"
+.include "gtereg.inc"
 
 .section .text
 

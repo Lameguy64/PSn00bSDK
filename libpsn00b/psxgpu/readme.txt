@@ -17,5 +17,4 @@ Library developer(s):
 
 Library header(s):
 
-	hwregs_a.h (GNU assembler port defs)
 	psxgpu.h
