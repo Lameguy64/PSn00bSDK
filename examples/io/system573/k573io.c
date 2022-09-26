@@ -75,7 +75,7 @@ uint32_t K573_GetJAMMAInputs(void) {
 	inputs |= ((K573_IO_CHIP[IO_REG_IN1_HIGH] >> 8) & 0x1f) << 24;
 	inputs |=  (K573_IO_CHIP[IO_REG_IN1_LOW]        & 0x07) << 29;
 
-	return inputs;
+	return ~inputs;
 }
 
 void K573_SetLights(uint32_t lights) {
@@ -119,6 +119,11 @@ void K573_SetBoardType(K573_IOBoardType type) {
 void K573_Init(void) {
 	EXP1_ADDR       = 0x1f000000;
 	EXP1_DELAY_SIZE = 0x24173f47; // 573 BIOS uses this value
+
+	// Bit 6 of this register controls the audio DAC and must be set, otherwise
+	// no sound will be output. Most of the other bits are data clocks/strobes
+	// and should be pulled high when not in use.
+	K573_IO_CHIP[IO_REG_OUT0] = 0x01e7;
 
 	K573_RESET_WATCHDOG();
 }

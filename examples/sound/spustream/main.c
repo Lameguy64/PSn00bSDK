@@ -51,10 +51,9 @@
  *  +----------+----------+----------+----------+----------+----------+----
  *    \________________________Chunk________________________/
  *
- * Such file isn't provided as PSn00bSDK doesn't yet have a tool for audio
- * transcoding. A Python script is included to generate STREAM.BIN from one or
- * more SPU ADPCM (.VAG) files, one for each channel (the .VAG format only
- * supports mono).
+ * A Python script is included to generate STREAM.BIN from one or more SPU
+ * ADPCM (.VAG) files, one for each channel (the .VAG format only supports
+ * mono).
  *
  * Of course SPU streaming isn't the only way to play music, as the CD drive
  * can play CD-DA tracks and XA files natively with zero CPU overhead. However
@@ -101,7 +100,7 @@
 // size can be increased to get more idle time between CD reads, however it is
 // usually best to keep it to 1-2 seconds as SPU RAM is only 512 KB.
 #define SAMPLE_RATE		0x1000	// 44100 Hz
-#define BUFFER_SIZE		26624	// (26624 / 16 * 28) / 44100 = 1.05 seconds
+#define BUFFER_SIZE		0x6800	// (0x6800 / 16 * 28) / 44100 = 1.05 seconds
 
 #define NUM_CHANNELS	2
 #define CHANNEL_MASK	0x03
@@ -123,8 +122,8 @@ typedef struct {
 } DB;
 
 typedef struct {
-	DB       db[2];
-	uint32_t db_active;
+	DB  db[2];
+	int db_active;
 } CONTEXT;
 
 void init_context(CONTEXT *ctx) {
@@ -170,23 +169,13 @@ void display(CONTEXT *ctx) {
 
 /* Stream interrupt handlers */
 
-// This is a silent looping sample used to keep unused SPU channels busy,
-// preventing them from accidentally triggering the SPU RAM interrupt and
-// throwing off the timing (all channels are always reading sample data, even
-// when "stopped"). It is 64 bytes as that is the minimum size for SPU DMA
-// transfers, however only the first 16 bytes are kept. The rest is going to be
-// overwritten by chunks.
-// https://problemkaputt.de/psx-spx.htm#spuinterrupt
-const uint8_t SPU_DUMMY_BLOCK[] = {
-	0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-};
-
 // The first 4 KB of SPU RAM are reserved for capture buffers, so we have to
-// place stream buffers after those. Sony's SPU library additionally places a
-// dummy sample at 0x1000; we are going to do the same with the block above.
+// place stream buffers after those. A dummy sample is additionally placed by
+// default by the SPU library at 0x1000; it is going to be used here to keep
+// unused SPU channels busy, preventing them from accidentally triggering the
+// SPU RAM interrupt and throwing off the timing (all channels are always
+// reading sample data, even when "stopped").
+// https://problemkaputt.de/psx-spx.htm#spuinterrupt
 #define DUMMY_BLOCK_ADDR	0x1000
 #define BUFFER_START_ADDR	0x1010
 #define CHUNK_SIZE			(BUFFER_SIZE * NUM_CHANNELS)
@@ -207,7 +196,7 @@ static volatile StreamContext str_ctx;
 // read from the CD and uploaded to SPU RAM. Due to DMA limitations it can't be
 // allocated on the stack (especially not in the interrupt callbacks' stack,
 // whose size is very limited).
-static uint8_t sector_buffer[2048];
+static uint32_t sector_buffer[512];
 
 void spu_irq_handler(void) {
 	// Acknowledge the interrupt to ensure it can be triggered again. The only
@@ -231,7 +220,7 @@ void spu_irq_handler(void) {
 	str_ctx.spu_addr = BUFFER_START_ADDR + CHUNK_SIZE * str_ctx.db_active;
 	SPU_IRQ_ADDR     = SPU_RAM_ADDR(str_ctx.spu_addr);
 
-	for (uint32_t i = 0; i < NUM_CHANNELS; i++)
+	for (int i = 0; i < NUM_CHANNELS; i++)
 		SPU_CH_LOOP_ADDR(i) = SPU_RAM_ADDR(str_ctx.spu_addr + BUFFER_SIZE * i);
 
 	// Start loading the next chunk. cd_event_handler() will be called
@@ -241,7 +230,7 @@ void spu_irq_handler(void) {
 	CdControlF(CdlReadN, &pos);
 }
 
-void cd_event_handler(int32_t event, uint8_t *payload) {
+void cd_event_handler(int event, uint8_t *payload) {
 	// Ignore all events other than a sector being ready.
 	// TODO: read errors should be handled properly
 	if (event != CdlDataReady)
@@ -255,12 +244,12 @@ void cd_event_handler(int32_t event, uint8_t *payload) {
 	// other buffer, as we're overriding loop addresses) at the end.
 	// NOTE: this isn't actually necessary here as the stream converter script
 	// already sets these flags in the file.
-	/*for (uint32_t i = 0; i < NUM_CHANNELS; i++) {
+	/*for (int i = 0; i < NUM_CHANNELS; i++) {
 		if (
 			str_ctx.spu_pos >= (BUFFER_SIZE * i - 2048) &&
 			str_ctx.spu_pos <  (BUFFER_SIZE * i)
 		)
-			sector[(BUFFER_SIZE * i - str_ctx.spu_pos) - 15] = 0x03;
+			sector_buffer[(BUFFER_SIZE * i - str_ctx.spu_pos) - 15] = 0x03;
 	}*/
 
 	// Copy the sector to SPU RAM, appending it to the buffer that is not
@@ -268,7 +257,7 @@ void cd_event_handler(int32_t event, uint8_t *payload) {
 	// just treat the chunk as a single blob of data and copy it as-is; we only
 	// have to trim the padding at the end (if any) to avoid overwriting other
 	// data in SPU RAM.
-	uint32_t length = CHUNK_SIZE - str_ctx.spu_pos;
+	size_t length = CHUNK_SIZE - str_ctx.spu_pos;
 	if (length > 2048)
 		length = 2048;
 
@@ -278,7 +267,6 @@ void cd_event_handler(int32_t event, uint8_t *payload) {
 
 	// If the buffer has been filled completely, stop reading and re-enable the
 	// SPU IRQ.
-	// TODO TODO: preload first sector
 	if (str_ctx.spu_pos >= CHUNK_SIZE) {
 		CdControlF(CdlPause, 0);
 		SPU_CTRL |= 0x0040;
@@ -287,17 +275,17 @@ void cd_event_handler(int32_t event, uint8_t *payload) {
 
 /* Stream helpers */
 
-void init_spu_channels(void) {
-	// Upload the dummy block to the SPU and play it on all channels, locking
-	// them up and stopping them from messing with the SPU interrupt.
-	// TODO: is this really necessary? (needs testing on real hardware)
-	SpuSetTransferStartAddr(DUMMY_BLOCK_ADDR);
-	SpuWrite(SPU_DUMMY_BLOCK, 64);
-
+// This isn't actually required for this example, however it is necessary if
+// you want to allocate the stream buffers into a region of SPU RAM that was
+// previously used (to make sure the IRQ isn't going to be triggered by any
+// inactive channels).
+void reset_spu_channels(void) {
 	SPU_KEY_OFF = 0x00ffffff;
 
-	for (uint32_t i = 0; i < 24; i++)
+	for (int i = 0; i < 24; i++) {
 		SPU_CH_ADDR(i) = SPU_RAM_ADDR(DUMMY_BLOCK_ADDR);
+		SPU_CH_FREQ(i) = 0x1000;
+	}
 
 	SPU_KEY_ON = 0x00ffffff;
 }
@@ -324,16 +312,16 @@ void init_stream(CdlFILE *file) {
 	spu_irq_handler();
 
 	while (str_ctx.spu_pos < CHUNK_SIZE)
-		__asm__("nop");
+		__asm__ volatile("");
 }
 
 void start_stream(void) {
 	SPU_KEY_OFF = CHANNEL_MASK;
 
-	for (uint32_t i = 0; i < NUM_CHANNELS; i++) {
+	for (int i = 0; i < NUM_CHANNELS; i++) {
 		SPU_CH_ADDR(i) = SPU_RAM_ADDR(BUFFER_START_ADDR + BUFFER_SIZE * i);
 		SPU_CH_FREQ(i) = SAMPLE_RATE;
-		SPU_CH_ADSR(i) = 0x1fee80ff; // or 0x9fc080ff, 0xdff18087
+		SPU_CH_ADSR(i) = 0x1fee80ff;
 	}
 
 	// Unmute the channels and route them for stereo output. You'll want to
@@ -361,7 +349,7 @@ int main(int argc, const char* argv[]) {
 	SHOW_STATUS("INITIALIZING\n");
 	SpuInit();
 	CdInit();
-	init_spu_channels();
+	reset_spu_channels();
 
 	SHOW_STATUS("LOCATING STREAM FILE\n");
 
@@ -429,7 +417,7 @@ int main(int argc, const char* argv[]) {
 
 		// Only set the sample rate registers if necessary.
 		if (pad->btn != 0xffff) {
-			for (uint32_t i = 0; i < NUM_CHANNELS; i++)
+			for (int i = 0; i < NUM_CHANNELS; i++)
 				SPU_CH_FREQ(i) = sample_rate;
 		}
 

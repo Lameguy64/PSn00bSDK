@@ -207,7 +207,7 @@ int main(int argc, const char* argv[]) {
 
 		// Change the currently active light if the test button on the 573's
 		// front panel is pressed. DDR non-light outputs are skipped.
-		if ((last_inputs & JAMMA_TEST) && !(inputs & JAMMA_TEST)) {
+		if (!(last_inputs & JAMMA_TEST) && (inputs & JAMMA_TEST)) {
 			current_light++;
 			if (
 				(current_light ==  4) || // DDR_LIGHT_P1_MUX_DATA

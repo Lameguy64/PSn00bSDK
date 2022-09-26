@@ -6,6 +6,10 @@
  * using $gp to reference them) is fully supported; the block is made up of
  * sections .sdata and .sbss. Note that GP-relative addressing is not
  * compatible with dynamic linking, as DLLs require GP to be unused.
+ *
+ * This linker script assumes main RAM is 8 MB to allow executables meant for
+ * devkits or arcade systems to be built, however the executable conversion
+ * tool (elf2x) will throw a warning if the size exceeds 2 MB.
  */
 
 /*OUTPUT_FORMAT(elf32-littlemips)*/
@@ -15,7 +19,7 @@ ENTRY(_start)
 MEMORY {
 	/* Mapped into KSEG0 */
 	KERNEL_RAM (rwx) : ORIGIN = 0x80000000, LENGTH = 0x010000
-	APP_RAM    (rwx) : ORIGIN = 0x80010000, LENGTH = 0x1f0000
+	APP_RAM    (rwx) : ORIGIN = 0x80010000, LENGTH = 0x7f0000
 }
 
 SECTIONS {

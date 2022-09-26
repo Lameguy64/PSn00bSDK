@@ -1,8 +1,9 @@
 
 # Known PSn00bSDK bugs
 
-This is an incomplete list of things that are currently broken (or not behaving
-as they should, or untested on real hardware) and haven't yet been fixed.
+This is an incomplete list of things that are known to be currently broken (or
+not behaving as they should, or untested on real hardware) and haven't yet been
+fixed.
 
 ## Toolchain
 
@@ -15,18 +16,25 @@ as they should, or untested on real hardware) and haven't yet been fixed.
   them. It might be necessary to list such symbols in a dummy array to prevent
   the compiler from stripping them away from the executable.
 
+- Link-time optimization is broken due to GCC not supporting it when linking
+  weak functions written in assembly.
+
 ## Libraries
 
 `psxgpu`:
 
-- In some *very rare* cases, `VSync()` seems to crash the system by performing
-  unaligned accesses for unknown reasons.
+- `LoadImage()` and `StoreImage()` use DMA to transfer data to/from the GPU.
+  As the DMA channel is configured to transfer 8 words (32 bytes) at a time,
+  the length of the data *must* be a multiple of 32 bytes. Attempting to
+  transfer any data whose length isn't a multiple of 32 bytes will result in
+  `DrawSync()` hanging and never returning, however a warning will be printed
+  on the debug console.
 
 `psxspu`:
 
-- Calls to `SpuSetTransferMode()` are ignored. SPU transfers are always
-  performed using DMA, which imposes limitations such as the data length having
-  to be a multiple of 64 bytes.
+- `SpuInit()`, `SpuRead()` and `SpuWrite()` may take several seconds on MAME
+  due to the SPU status register being emulated incorrectly. They work as
+  expected on other emulators as well as on real hardware.
 
 `psxetc`:
 
@@ -40,4 +48,4 @@ as they should, or untested on real hardware) and haven't yet been fixed.
 See [README.md in the examples directory](../examples/README.md#examples-summary).
 
 -----------------------------------------
-_Last updated on 2022-02-03 by spicyjpeg_
+_Last updated on 2022-08-21 by spicyjpeg_

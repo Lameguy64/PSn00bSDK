@@ -12,7 +12,8 @@
 #include <inline_c.h>
 
 #include "dll_common.h"
-#include "ball16c.h"
+
+extern const uint32_t ball16c[];
 
 /* Balls data */
 
@@ -38,7 +39,7 @@ static BALL_TYPE balls[MAX_BALLS];
 static TIM_IMAGE ball_tim;
 
 void init(CONTEXT *ctx) {
-	GetTimInfo((u_long *) ball16c, &ball_tim);
+	GetTimInfo(ball16c, &ball_tim);
 
 	LoadImage(ball_tim.prect, ball_tim.paddr);
 	if (ball_tim.mode & 8)

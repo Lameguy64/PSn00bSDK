@@ -1,14 +1,15 @@
+#include <stdint.h>
 #include "lzp.h"
 
-void initTable16(unsigned short* table) {
+void initTable16(uint16_t *table) {
 
 	int i, j;
-    unsigned short crc, c;
+    uint16_t crc, c;
 
     for (i=0; i<256; i++) {
 
         crc = 0;
-        c   = (unsigned short) i;
+        c   = (uint16_t) i;
 
         for (j=0; j<8; j++) {
 
@@ -25,10 +26,10 @@ void initTable16(unsigned short* table) {
 
 }
 
-void initTable32(unsigned int* table) {
+void initTable32(uint32_t *table) {
 
 	int i,j;
-	unsigned int crcVal;
+	uint32_t crcVal;
 
 	for(i=0; i<256; i++) {
 
@@ -49,17 +50,17 @@ void initTable32(unsigned int* table) {
 
 }
 
-unsigned short lzCRC16(const void* buff, int bytes, unsigned short crc) {
+uint16_t lzCRC16(const void* buff, int bytes, uint16_t crc) {
 
 	int i;
-	unsigned short tmp, short_c;
-	unsigned short crcTable[256];
+	uint16_t tmp, short_c;
+	uint16_t crcTable[256];
 
 	initTable16(crcTable);
 
 	for(i=0; i<bytes; i++) {
 
-		short_c = 0x00ff & (unsigned short)((const unsigned char*)buff)[i];
+		short_c = 0x00ff & (uint16_t)((const uint8_t *)buff)[i];
 
 		tmp =  crc       ^ short_c;
 		crc = (crc >> 8) ^ crcTable[tmp&0xff];
@@ -70,18 +71,18 @@ unsigned short lzCRC16(const void* buff, int bytes, unsigned short crc) {
 
 }
 
-unsigned int lzCRC32(const void* buff, int bytes, unsigned int crc) {
+uint32_t lzCRC32(const void* buff, int bytes, uint32_t crc) {
 
 	int	i;
-	const unsigned char*	byteBuff = (const unsigned char*)buff;
-	unsigned int			byte;
-	unsigned int			crcTable[256];
+	const uint8_t	*byteBuff = (const uint8_t *)buff;
+	uint32_t		byte;
+	uint32_t		crcTable[256];
 
     initTable32(crcTable);
 
 	for(i=0; i<bytes; i++) {
 
-		byte = 0x000000ffL&(unsigned int)byteBuff[i];
+		byte = 0x000000ffL&(uint32_t)byteBuff[i];
 		crc = (crc>>8)^crcTable[(crc^byte)&0xff];
 
 	}

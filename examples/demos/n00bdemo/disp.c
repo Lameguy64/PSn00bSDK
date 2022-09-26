@@ -19,7 +19,7 @@ MATRIX mtx;
 
 void initDisplay() {
 	
-	ResetGraph( 3 );
+	ResetGraph( 0 );
 	
 	if( GetVideoMode() == MODE_NTSC ) {
 		SetDefDispEnv( &disp, 0, 0, 640, 480 );

@@ -14,6 +14,10 @@ set(
 	BUNDLE_TOOLCHAIN OFF
 	CACHE BOOL       "Include the GCC toolchain in installer packages"
 )
+set(
+	BUNDLE_NINJA OFF
+	CACHE BOOL   "Include Ninja in installer packages"
+)
 #set(
 	#BUNDLE_CMAKE OFF
 	#CACHE BOOL   "Include CMake in installer packages (Windows only)"
@@ -60,6 +64,22 @@ if(BUNDLE_TOOLCHAIN)
 	endif()
 endif()
 
+if(BUNDLE_NINJA)
+	find_program(_ninja ninja NO_CACHE REQUIRED)
+	execute_process(
+		COMMAND         ${_ninja} --version
+		OUTPUT_VARIABLE _ninja_version
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+		COMMAND_ERROR_IS_FATAL ANY
+	)
+
+	install(
+		PROGRAMS  ${_ninja}
+		TYPE      BIN
+		COMPONENT ninja
+	)
+endif()
+
 if(BUNDLE_CMAKE)
 	cmake_path(GET CMAKE_COMMAND PARENT_PATH _bin)
 	cmake_path(GET _bin          PARENT_PATH _cmakedir)
@@ -88,8 +108,8 @@ if(NOT DEFINED CPACK_GENERATOR)
 	elseif(APPLE)
 		# TODO: add a macOS installer and related options
 		set(CPACK_GENERATOR ZIP)
-	elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-		set(CPACK_GENERATOR ZIP DEB)
+	#elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+		#set(CPACK_GENERATOR ZIP DEB RPM)
 	else()
 		set(CPACK_GENERATOR ZIP)
 	endif()
@@ -125,7 +145,7 @@ set(CPACK_NSIS_MUI_UNIICON                     ${CMAKE_CURRENT_LIST_DIR}/uninsta
 set(CPACK_NSIS_MUI_HEADERIMAGE                 ${CMAKE_CURRENT_LIST_DIR}/nsis_header.bmp)
 set(CPACK_NSIS_MUI_WELCOMEFINISHPAGE_BITMAP    ${CMAKE_CURRENT_LIST_DIR}/nsis_banner.bmp)
 set(CPACK_NSIS_MUI_UNWELCOMEFINISHPAGE_BITMAP  ${CMAKE_CURRENT_LIST_DIR}/nsis_banner.bmp)
-set(CPACK_NSIS_BRANDING_TEXT                   "PSn00bSDK - Meido-Tek Productions")
+set(CPACK_NSIS_BRANDING_TEXT                   "PSn00bSDK ${PROJECT_VERSION} - Meido-Tek Productions")
 set(CPACK_NSIS_URL_INFO_ABOUT                  "${PROJECT_HOMEPAGE_URL}")
 set(CPACK_NSIS_MODIFY_PATH                     ON)
 set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
@@ -177,6 +197,13 @@ if(BUNDLE_TOOLCHAIN)
 		toolchain
 		DISPLAY_NAME "GCC MIPS toolchain"
 		DESCRIPTION  "Do not skip unless you already have a toolchain that targets ${PSN00BSDK_TARGET} installed."
+	)
+endif()
+if(BUNDLE_NINJA)
+	cpack_add_component(
+		ninja
+		DISPLAY_NAME "Ninja ${_ninja_version}"
+		DESCRIPTION  "Skip this if you have Ninja installed already. Note that Ninja will be installed in the same directory as PSn00bSDK."
 	)
 endif()
 if(BUNDLE_CMAKE)

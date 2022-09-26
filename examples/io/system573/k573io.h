@@ -10,21 +10,22 @@
 
 /* Register definitions */
 
-#define K573_BANK_SWITCH	*((volatile uint16_t *) 0x1f500000)
-#define K573_IDE_RESET		*((volatile uint16_t *) 0x1f560000)
-#define K573_WATCHDOG		*((volatile uint16_t *) 0x1f5c0000)
-#define K573_EXT_OUT		*((volatile uint16_t *) 0x1f600000)
-#define K573_JVS_INPUT		*((volatile uint16_t *) 0x1f680000)
-#define K573_SECURITY_OUT	*((volatile uint16_t *) 0x1f6a0000)
+#define K573_BANK_SWITCH	*((volatile uint16_t *) 0xbf500000)
+#define K573_IDE_RESET		*((volatile uint16_t *) 0xbf560000)
+#define K573_WATCHDOG		*((volatile uint16_t *) 0xbf5c0000)
+#define K573_EXT_OUT		*((volatile uint16_t *) 0xbf600000)
+#define K573_JVS_INPUT		*((volatile uint16_t *) 0xbf680000)
+#define K573_SECURITY_OUT	*((volatile uint16_t *) 0xbf6a0000)
 
-#define K573_FLASH			((volatile uint16_t *) 0x1f000000)
-#define K573_IO_CHIP		((volatile uint16_t *) 0x1f400000)
-#define K573_IDE_CS0		((volatile uint16_t *) 0x1f480000)
-#define K573_IDE_CS1		((volatile uint16_t *) 0x1f4c0000)
-#define K573_RTC			((volatile uint16_t *) 0x1f620000)
-#define K573_IO_BOARD		((volatile uint16_t *) 0x1f640000)
+#define K573_FLASH			((volatile uint16_t *) 0xbf000000)
+#define K573_IO_CHIP		((volatile uint16_t *) 0xbf400000)
+#define K573_IDE_CS0		((volatile uint16_t *) 0xbf480000)
+#define K573_IDE_CS1		((volatile uint16_t *) 0xbf4c0000)
+#define K573_RTC			((volatile uint16_t *) 0xbf620000)
+#define K573_IO_BOARD		((volatile uint16_t *) 0xbf640000)
 
 typedef enum _K573_IOChipRegister {
+	IO_REG_OUT0		= 0x0,
 	IO_REG_IN0		= 0x0,
 	IO_REG_IN1_LOW	= 0x2,
 	IO_REG_IN1_HIGH	= 0x3,
@@ -34,26 +35,29 @@ typedef enum _K573_IOChipRegister {
 } K573_IOChipRegister;
 
 typedef enum _K573_IOBoardRegister {
-	ANALOG_IO_REG_LIGHTS0	= 0x40,
-	ANALOG_IO_REG_LIGHTS1	= 0x44,
-	ANALOG_IO_REG_LIGHTS2	= 0x48,
-	ANALOG_IO_REG_LIGHTS3	= 0x4c,
+	ANALOG_IO_REG_LIGHTS0		= 0x40,
+	ANALOG_IO_REG_LIGHTS1		= 0x44,
+	ANALOG_IO_REG_LIGHTS2		= 0x48,
+	ANALOG_IO_REG_LIGHTS3		= 0x4c,
 
 	// The digital I/O board has a lot more registers than these, but there
 	// seems to be no DIGITAL_IO_LIGHTS6 register. WTF
-	DIGITAL_IO_REG_LIGHTS1	= 0x70,
-	DIGITAL_IO_REG_LIGHTS0	= 0x71,
-	DIGITAL_IO_REG_LIGHTS3	= 0x72,
-	DIGITAL_IO_REG_LIGHTS7	= 0x73,
-	DIGITAL_IO_REG_LIGHTS4	= 0x7d,
-	DIGITAL_IO_REG_LIGHTS5	= 0x7e,
-	DIGITAL_IO_REG_LIGHTS2	= 0x7f,
+	DIGITAL_IO_REG_LIGHTS1		= 0x70,
+	DIGITAL_IO_REG_LIGHTS0		= 0x71,
+	DIGITAL_IO_REG_LIGHTS3		= 0x72,
+	DIGITAL_IO_REG_LIGHTS7		= 0x73,
+	DIGITAL_IO_REG_DS2401		= 0x77,
+	DIGITAL_IO_REG_FPGA_STATUS	= 0x7b,
+	DIGITAL_IO_REG_FPGA_UPLOAD	= 0x7c,
+	DIGITAL_IO_REG_LIGHTS4		= 0x7d,
+	DIGITAL_IO_REG_LIGHTS5		= 0x7e,
+	DIGITAL_IO_REG_LIGHTS2		= 0x7f,
 
-	FISHBAIT_IO_REG_UNKNOWN	= 0x08,
-	FISHBAIT_IO_REG_MOTOR	= 0x40,
-	FISHBAIT_IO_REG_BRAKE	= 0x44,
-	FISHBAIT_IO_REG_ENCODER	= 0x4c,
-	FISHBAIT_IO_REG_RESET_Y	= 0x50
+	FISHBAIT_IO_REG_UNKNOWN		= 0x08,
+	FISHBAIT_IO_REG_MOTOR		= 0x40,
+	FISHBAIT_IO_REG_BRAKE		= 0x44,
+	FISHBAIT_IO_REG_ENCODER		= 0x4c,
+	FISHBAIT_IO_REG_RESET_Y		= 0x50
 } K573_IOBoardRegister;
 
 // The 573's real-time clock chip is an M48T58, which behaves like a standard

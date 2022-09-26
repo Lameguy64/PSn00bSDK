@@ -42,6 +42,8 @@ target_compile_options(
 		-march=r3000
 		-mtune=r3000
 		-mabi=32
+		-mno-mt
+		-mno-llsc
 		-mdivide-breaks
 		-O2
 		# Standard library options
@@ -49,6 +51,7 @@ target_compile_options(
 		-fno-builtin
 		-nostdlib
 		# Other options
+		-g
 		-fdata-sections
 		-ffunction-sections
 		-fsigned-char

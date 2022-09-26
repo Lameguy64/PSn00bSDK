@@ -21,9 +21,9 @@ Library developer(s):
 	
 Library header(s):
 
-	gtereg.h
+	gtereg.inc
 	inline_c.h
-	inline_s.h
+	inline_s.inc
 	psxgte.h
 	
 	

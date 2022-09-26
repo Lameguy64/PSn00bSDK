@@ -1,7 +1,12 @@
-#ifndef _LIBPSXCD_H
-#define _LIBPSXCD_H
+/*
+ * PSn00bSDK CD-ROM drive library
+ * (C) 2019-2022 Lameguy64, spicyjpeg - MPL licensed
+ */
 
-#include <sys/types.h>
+#ifndef __PSXCD_H
+#define __PSXCD_H
+
+#include <stdint.h>
 
 /*
  * CD-ROM control commands
@@ -74,18 +79,18 @@
 #define CdlIsoInvalidFs		0x03
 #define CdlIsoLidOpen		0x04
 
-#define btoi(b)		((b)/16*10+(b)%16)	/* Convert BCD value to integer */
-#define itob(i)		((i)/10*16+(i)%10)	/* Convert integer to BCD value */
+#define btoi(b) ((b)/16*10+(b)%16)	/* Convert BCD value to integer */
+#define itob(i) ((i)/10*16+(i)%10)	/* Convert integer to BCD value */
 
 /*
  * CD-ROM disc location struct
  */
 typedef struct _CdlLOC
 {
-	u_char	minute;
-	u_char	second;
-	u_char	sector;
-	u_char	track;
+	uint8_t minute;
+	uint8_t second;
+	uint8_t sector;
+	uint8_t track;
 } CdlLOC;
 
 /*
@@ -93,10 +98,10 @@ typedef struct _CdlLOC
  */
 typedef struct _CdlATV
 {
-	u_char	val0;	/* L -> SPU L */
-	u_char	val1;	/* L -> SPU R */
-	u_char	val2;	/* R -> SPU R */
-	u_char	val3;	/* R -> SPU L */
+	uint8_t val0;	/* L -> SPU L */
+	uint8_t val1;	/* L -> SPU R */
+	uint8_t val2;	/* R -> SPU R */
+	uint8_t val3;	/* R -> SPU L */
 } CdlATV;
 
 /*
@@ -104,68 +109,68 @@ typedef struct _CdlATV
  */
 typedef struct _CdlFILE
 {
-	CdlLOC	pos;
-	u_long	size;
-	char	name[16];
+	CdlLOC		pos;
+	uint32_t	size;
+	char		name[16];
 } CdlFILE;
 
 typedef struct _CdlFILTER
 {
-	u_char	file;
-	u_char	chan;
-	u_short	pad;
+	uint8_t		file;
+	uint8_t		chan;
+	uint16_t	pad;
 } CdlFILTER;
 
 /* Directory query context */
 typedef void* CdlDIR;
 
 /* Data callback */
-typedef void (*CdlCB)(int, u_char *);
+typedef void (*CdlCB)(int, uint8_t *);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int		CdInit(void);
+int CdInit(void);
 
-CdlLOC*	CdIntToPos(int i, CdlLOC *p);
-int		CdPosToInt(CdlLOC *p);
-int		CdGetToc(CdlLOC *toc);
+CdlLOC* CdIntToPos(int i, CdlLOC *p);
+int CdPosToInt(CdlLOC *p);
+int CdGetToc(CdlLOC *toc);
 
-int		CdControl(u_char com, const void *param, u_char *result);
-int		CdControlB(u_char com, const void *param, u_char *result);
-int		CdControlF(u_char com, const void *param);
-int		CdSync(int mode, u_char *result);
-u_long	CdSyncCallback(CdlCB func);
+int CdControl(uint8_t com, const void *param, uint8_t *result);
+int CdControlB(uint8_t com, const void *param, uint8_t *result);
+int CdControlF(uint8_t com, const void *param);
+int CdSync(int mode, uint8_t *result);
+uint32_t CdSyncCallback(CdlCB func);
 
-long	CdReadyCallback(CdlCB func);
-int		CdGetSector(void *madr, int size);
+long CdReadyCallback(CdlCB func);
+int CdGetSector(void *madr, int size);
 
 CdlFILE* CdSearchFile(CdlFILE *loc, const char *filename);
 
-int		CdRead(int sectors, u_long *buf, int mode);
-int		CdReadSync(int mode, u_char *result);
-u_long	CdReadCallback(CdlCB func);
+int CdRead(int sectors, uint32_t *buf, int mode);
+int CdReadSync(int mode, uint8_t *result);
+uint32_t CdReadCallback(CdlCB func);
 
-int		CdStatus(void);
-int		CdMode(void);
+int CdStatus(void);
+int CdMode(void);
 
-int		CdMix(CdlATV *vol);
+int CdMix(CdlATV *vol);
 
 /* ORIGINAL CODE */
-CdlDIR*	CdOpenDir(const char* path);
-int		CdReadDir(CdlDIR* dir, CdlFILE* file);
-void	CdCloseDir(CdlDIR* dir);
+CdlDIR* CdOpenDir(const char* path);
+int CdReadDir(CdlDIR* dir, CdlFILE* file);
+void CdCloseDir(CdlDIR* dir);
 
-int		CdGetVolumeLabel(char* label);
+int CdGetVolumeLabel(char* label);
 
-long*	CdAutoPauseCallback(void(*func)());
-int		CdIsoError();
+long* CdAutoPauseCallback(void(*func)());
+int CdIsoError();
 
-int		CdLoadSession(int session);
+int CdLoadSession(int session);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _LIBPSXCD_H */
+#endif

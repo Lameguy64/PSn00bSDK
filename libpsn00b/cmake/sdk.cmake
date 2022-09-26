@@ -38,6 +38,8 @@ find_program(
 	HINTS
 		${PSN00BSDK_TC}/bin
 		${PSN00BSDK_TC}/../bin
+		# Same as ${CMAKE_INSTALL_PREFIX}/bin
+		${CMAKE_CURRENT_LIST_DIR}/../../../bin
 		# Same as ${CMAKE_INSTALL_PREFIX}/${PSN00BSDK_TARGET}/bin
 		${CMAKE_CURRENT_LIST_DIR}/../../../${PSN00BSDK_TARGET}/bin
 	PATHS

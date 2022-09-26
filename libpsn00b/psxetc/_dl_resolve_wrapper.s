@@ -10,11 +10,11 @@
 # - $t8 = index of the function in the .dynsym symbol table
 # - $t9 = _dl_resolve_wrapper itself's address
 
-.set		noreorder
-.section	.text
+.set noreorder
 
-.global	_dl_resolve_wrapper
-.type	_dl_resolve_wrapper, @function
+.section .text._dl_resolve_wrapper
+.global _dl_resolve_wrapper
+.type _dl_resolve_wrapper, @function
 _dl_resolve_wrapper:
 	# Push the registers we're going to use onto the stack.
 	addiu $sp, -16
@@ -47,10 +47,3 @@ _dl_resolve_wrapper:
 
 	jr    $t0
 	nop
-
-.section	.data
-
-.global	_dl_credits
-.type	_dl_credits, @object
-_dl_credits:
-	.asciiz "psxetc runtime dynamic linker by spicyjpeg\n"

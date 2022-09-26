@@ -1,4 +1,4 @@
-#include <sys/types.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,18 +15,18 @@
 
 typedef struct _CdlDIR_INT
 {
-	u_long	_pos;
-	u_long	_len;
-	u_char*	_dir;
+	uint32_t	_pos;
+	uint32_t	_len;
+	uint8_t		*_dir;
 } CdlDIR_INT;
 
 extern int _cd_media_changed;
 
 
 static int		_cd_iso_last_dir_lba;
-static u_char	_cd_iso_descriptor_buff[2048];
-static u_char*	_cd_iso_pathtable_buff=NULL;
-static u_char*	_cd_iso_directory_buff=NULL;
+static uint8_t	_cd_iso_descriptor_buff[2048];
+static uint8_t	*_cd_iso_pathtable_buff=NULL;
+static uint8_t	*_cd_iso_directory_buff=NULL;
 static int		_cd_iso_directory_len;
 static int		_cd_iso_error=0;
 
@@ -68,7 +68,7 @@ static int _CdReadIsoDescriptor(int session_offs)
 
 	// Seek to volume descriptor
 	CdIntToPos(16+session_offs, &loc);
-	if( !CdControl(CdlSetloc, (u_char*)&loc, 0) )
+	if( !CdControl(CdlSetloc, (uint8_t*)&loc, 0) )
 	{
 #ifdef DEBUG
 		printf("psxcd: Could not set seek destination.\n");
@@ -85,7 +85,7 @@ static int _CdReadIsoDescriptor(int session_offs)
 	printf("psxcd: Read sectors.\n");
 #endif
 	// Read volume descriptor
-	CdRead(1, (u_long*)_cd_iso_descriptor_buff, CdlModeSpeed);
+	CdRead(1, (uint32_t*)_cd_iso_descriptor_buff, CdlModeSpeed);
 	
 	if( CdReadSync(0, 0) )
 	{
@@ -122,7 +122,7 @@ static int _CdReadIsoDescriptor(int session_offs)
 	{
 		free(_cd_iso_pathtable_buff);
 	}
-	_cd_iso_pathtable_buff = (u_char*)malloc(i);
+	_cd_iso_pathtable_buff = (uint8_t*)malloc(i);
 	
 #ifdef DEBUG
 	printf("psxcd_dbg: Allocated %d bytes for path table.\n", i);
@@ -130,8 +130,8 @@ static int _CdReadIsoDescriptor(int session_offs)
 	
 	// Read path table
 	CdIntToPos(descriptor->pathTable1Offs, &loc);
-	CdControl(CdlSetloc, (u_char*)&loc, 0);
-	CdRead(i>>11, (u_long*)_cd_iso_pathtable_buff, CdlModeSpeed);
+	CdControl(CdlSetloc, (uint8_t*)&loc, 0);
+	CdRead(i>>11, (uint32_t*)_cd_iso_pathtable_buff, CdlModeSpeed);
 	if( CdReadSync(0, 0) )
 	{
 #ifdef DEBUG
@@ -165,7 +165,7 @@ static int _CdReadIsoDirectory(int lba)
 #ifdef DEBUG
 	printf("psxcd_dbg: Seek to sector %d\n", i);
 #endif
-	if( !CdControl(CdlSetloc, (u_char*)&loc, 0) )
+	if( !CdControl(CdlSetloc, (uint8_t*)&loc, 0) )
 	{
 #ifdef DEBUG
 		printf("psxcd: Could not set seek destination.\n");
@@ -180,8 +180,8 @@ static int _CdReadIsoDirectory(int lba)
 	}
 	
 	// Read first sector of directory record
-	_cd_iso_directory_buff = (u_char*)malloc(2048);
-	CdRead(1, (u_long*)_cd_iso_directory_buff, CdlModeSpeed);
+	_cd_iso_directory_buff = (uint8_t*)malloc(2048);
+	CdRead(1, (uint32_t*)_cd_iso_directory_buff, CdlModeSpeed);
 	if( CdReadSync(0, 0) )
 	{
 #ifdef DEBUG
@@ -201,7 +201,7 @@ static int _CdReadIsoDirectory(int lba)
 
 	if( _cd_iso_directory_len > 2048 )
 	{
-		if( !CdControl(CdlSetloc, (u_char*)&loc, 0) )
+		if( !CdControl(CdlSetloc, (uint8_t*)&loc, 0) )
 		{
 #ifdef DEBUG
 			printf("psxcd: Could not set seek destination.\n");
@@ -212,12 +212,12 @@ static int _CdReadIsoDirectory(int lba)
 	
 		free(_cd_iso_directory_buff);
 		i = ((2047+_cd_iso_directory_len)>>11)<<11;
-		_cd_iso_directory_buff = (u_char*)malloc(i);
+		_cd_iso_directory_buff = (uint8_t*)malloc(i);
 #ifdef DEBUG
 		printf("psxcd_dbg: Allocated %d bytes for directory record.\n", i);
 #endif
 
-		CdRead(i>>11, (u_long*)_cd_iso_directory_buff, CdlModeSpeed);
+		CdRead(i>>11, (uint32_t*)_cd_iso_directory_buff, CdlModeSpeed);
 		if( CdReadSync(0, 0) )
 		{
 #ifdef DEBUG
@@ -279,7 +279,7 @@ static void dump_directory(void)
 
 static void dump_pathtable(void)
 {
-	u_char *tbl_pos;
+	uint8_t *tbl_pos;
 	ISO_PATHTABLE_ENTRY *tbl_entry;
 	ISO_DESCRIPTOR *descriptor;
 	char namebuff[16];
@@ -314,7 +314,7 @@ static void dump_pathtable(void)
 static int get_pathtable_entry(int entry, ISO_PATHTABLE_ENTRY *tbl, char *namebuff)
 {
 	int i;
-	u_char *tbl_pos;
+	uint8_t *tbl_pos;
 	ISO_PATHTABLE_ENTRY *tbl_entry;
 	ISO_DESCRIPTOR *descriptor;
 	

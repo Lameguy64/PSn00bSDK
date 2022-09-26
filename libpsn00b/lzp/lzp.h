@@ -16,7 +16,7 @@
 #ifndef _LZPACK_H
 #define _LZPACK_H
 
-#include <sys/types.h>
+#include <stdint.h>
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -64,9 +64,9 @@
 typedef struct {
 
 	//! File ID (must always be 'LZP')
-	char	id[3];
+	char	    id[3];
 	//! File count
-	u_char	numFiles;
+	uint8_t 	numFiles;
 
 } LZP_HEAD;
 
@@ -74,15 +74,15 @@ typedef struct {
 typedef struct {
 
 	//! File name
-    char	fileName[16];
+    char	    fileName[16];
     //! CRC32 checksum of file
-    u_int	crc;
+    uint32_t	crc;
     //! Original size of file in bytes
-    u_int	fileSize;
+    uint32_t	fileSize;
     //! Compressed size of file
-    u_int	packedSize;
+    uint32_t	packedSize;
     //! File data offset
-    u_int	offset;
+    uint32_t	offset;
 
 } LZP_FILE;
 
@@ -162,7 +162,7 @@ void lzResetHashSizes();
  *
  *	\returns CRC16 hash of specified buffer.
  */
-unsigned short lzCRC16(const void* buff, int bytes, unsigned short crc);
+uint16_t lzCRC16(const void* buff, int bytes, uint16_t crc);
 
 /*!	Calculates a CRC32 hash of the specified buffer.
  *
@@ -172,7 +172,7 @@ unsigned short lzCRC16(const void* buff, int bytes, unsigned short crc);
  *
  *	\returns CRC32 hash of specified buffer.
  */
-unsigned int lzCRC32(const void* buff, int bytes, unsigned int crc);
+uint32_t lzCRC32(const void* buff, int bytes, uint32_t crc);
 
 /*!	@}	*/
 

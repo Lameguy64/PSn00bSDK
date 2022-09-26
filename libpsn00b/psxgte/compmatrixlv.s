@@ -1,7 +1,7 @@
 .set noreorder
 
-.include "gtereg.h"
-.include "inline_s.h"
+.include "gtereg.inc"
+.include "inline_s.inc"
 
 .set MATRIX_r11r12,	0
 .set MATRIX_r13r21,	4

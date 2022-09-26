@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.20)
 
 project(
 	console
-	LANGUAGES    C
+	LANGUAGES    C ASM
 	VERSION      1.0.0
 	DESCRIPTION  "PSn00bSDK stdio console example"
 	HOMEPAGE_URL "http://lameguy64.net/?page=psn00bsdk"
@@ -14,5 +14,7 @@ project(
 file(GLOB _sources *.c)
 psn00bsdk_add_executable(console STATIC ${_sources})
 #psn00bsdk_add_cd_image(console_iso console iso.xml DEPENDS console)
+
+psn00bsdk_target_incbin(console PRIVATE ball16c ball16c.tim)
 
 install(FILES ${PROJECT_BINARY_DIR}/console.exe TYPE BIN)

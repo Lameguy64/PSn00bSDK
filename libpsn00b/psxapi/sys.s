@@ -6,7 +6,7 @@
 
 .set noreorder
 
-## A0 table functions (7)
+## A0 table functions (8)
 
 .section .text.b_setjmp
 .global b_setjmp
@@ -48,6 +48,14 @@ FlushCache:
 	jr $t2
 	li $t1, 0x44
 
+.section .text.SetConf
+.global SetConf
+.type SetConf, @function
+SetConf:
+	li $t2, 0xa0
+	jr $t2
+	li $t1, 0x9c
+
 .section .text._boot
 .global _boot
 .type _boot, @function
@@ -64,7 +72,7 @@ GetSystemInfo:
 	jr $t2
 	li $t1, 0xb4
 
-## B0 table functions (19)
+## B0 table functions (27)
 
 .section .text._kernel_malloc
 .global _kernel_malloc
@@ -122,6 +130,14 @@ ResetRCnt:
 	jr $t2
 	li $t1, 0x06
 
+.section .text.DeliverEvent
+.global DeliverEvent
+.type DeliverEvent, @function
+DeliverEvent:
+	li $t2, 0xb0
+	jr $t2
+	li $t1, 0x07
+
 .section .text.OpenEvent
 .global OpenEvent
 .type OpenEvent, @function
@@ -129,6 +145,30 @@ OpenEvent:
 	li $t2, 0xb0
 	jr $t2
 	li $t1, 0x08
+
+.section .text.CloseEvent
+.global CloseEvent
+.type CloseEvent, @function
+CloseEvent:
+	li $t2, 0xb0
+	jr $t2
+	li $t1, 0x09
+
+.section .text.WaitEvent
+.global WaitEvent
+.type WaitEvent, @function
+WaitEvent:
+	li $t2, 0xb0
+	jr $t2
+	li $t1, 0x0a
+
+.section .text.TestEvent
+.global TestEvent
+.type TestEvent, @function
+TestEvent:
+	li $t2, 0xb0
+	jr $t2
+	li $t1, 0x0b
 
 .section .text.EnableEvent
 .global EnableEvent
@@ -145,6 +185,30 @@ DisableEvent:
 	li $t2, 0xb0
 	jr $t2
 	li $t1, 0x0d
+
+.section .text.OpenTh
+.global OpenTh
+.type OpenTh, @function
+OpenTh:
+	li $t2, 0xb0
+	jr $t2
+	li $t1, 0x0e
+
+.section .text.CloseTh
+.global CloseTh
+.type CloseTh, @function
+CloseTh:
+	li $t2, 0xb0
+	jr $t2
+	li $t1, 0x0f
+
+.section .text.ChangeTh
+.global ChangeTh
+.type ChangeTh, @function
+ChangeTh:
+	li $t2, 0xb0
+	jr $t2
+	li $t1, 0x10
 
 .section .text.InitPAD
 .global InitPAD
@@ -194,6 +258,14 @@ SetCustomExitFromException:
 	jr $t2
 	li $t1, 0x19
 
+.section .text.UnDeliverEvent
+.global UnDeliverEvent
+.type UnDeliverEvent, @function
+UnDeliverEvent:
+	li $t2, 0xb0
+	jr $t2
+	li $t1, 0x20
+
 .section .text.GetC0Table
 .global GetC0Table
 .type GetC0Table, @function
@@ -218,7 +290,7 @@ ChangeClearPAD:
 	jr $t2
 	li $t1, 0x5b
 
-## C0 table functions (3)
+## C0 table functions (5)
 
 .section .text.SysEnqIntRP
 .global SysEnqIntRP
@@ -236,6 +308,22 @@ SysDeqIntRP:
 	jr $t2
 	li $t1, 0x03
 
+.section .text.InstallExceptionHandlers
+.global InstallExceptionHandlers
+.type InstallExceptionHandlers, @function
+InstallExceptionHandlers:
+	li $t2, 0xc0
+	jr $t2
+	li $t1, 0x07
+
+.section .text.SysInitMemory
+.global SysInitMemory
+.type SysInitMemory, @function
+SysInitMemory:
+	li $t2, 0xc0
+	jr $t2
+	li $t1, 0x08
+
 .section .text.ChangeClearRCnt
 .global ChangeClearRCnt
 .type ChangeClearRCnt, @function
@@ -243,24 +331,4 @@ ChangeClearRCnt:
 	li $t2, 0xc0
 	jr $t2
 	li $t1, 0x0a
-
-## Syscalls (2)
-
-.section .text.EnterCriticalSection
-.global EnterCriticalSection
-.type EnterCriticalSection, @function
-EnterCriticalSection:
-	li      $a0, 0x01
-	syscall 0
-	jr      $ra
-	nop
-
-.section .text.ExitCriticalSection
-.global ExitCriticalSection
-.type ExitCriticalSection, @function
-ExitCriticalSection:
-	li      $a0, 0x02
-	syscall 0
-	jr      $ra
-	nop
 

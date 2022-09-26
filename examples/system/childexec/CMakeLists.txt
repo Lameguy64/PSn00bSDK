@@ -17,6 +17,7 @@ psn00bsdk_add_executable(parent STATIC ${_sources})
 psn00bsdk_add_executable(child STATIC ${_child_sources})
 #psn00bsdk_add_cd_image(childexec_iso childexec iso.xml DEPENDS parent)
 
+psn00bsdk_target_incbin(parent PRIVATE ball16c ball16c.tim)
 psn00bsdk_target_incbin(
 	parent PRIVATE child_exe
 	${PROJECT_BINARY_DIR}/child.exe

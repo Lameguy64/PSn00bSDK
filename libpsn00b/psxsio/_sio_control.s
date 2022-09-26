@@ -1,6 +1,6 @@
 .set noreorder
 
-.include "hwregs_a.h"
+.include "hwregs_a.inc"
 
 .section .text
 

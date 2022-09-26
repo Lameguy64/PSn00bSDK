@@ -12,7 +12,7 @@ include(ExternalProject)
 project(
 	PSn00bSDK
 	LANGUAGES    NONE
-	VERSION      0.19
+	VERSION      0.20
 	DESCRIPTION  "Open source PlayStation 1 SDK"
 	HOMEPAGE_URL "http://lameguy64.net/?page=psn00bsdk"
 )

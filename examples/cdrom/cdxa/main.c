@@ -116,7 +116,7 @@
  *
  */
  
-#include <sys/types.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -129,13 +129,9 @@
 #include <psxspu.h>
 #include <psxcd.h>
 
-#include "ball16c.h"
-
-
 #define MAX_BALLS	1536		/* Number of balls to display */
 
 #define OT_LEN 		8			/* Ordering table length */
-
 
 /* Screen coordinates */
 #define SCREEN_XRES	320
@@ -150,7 +146,7 @@ DISPENV disp[2];
 DRAWENV draw[2];
 
 char pribuff[2][65536];			/* Primitive packet buffers */
-u_long ot[2][OT_LEN];		/* Ordering tables */
+uint32_t ot[2][OT_LEN];		/* Ordering tables */
 char *nextpri;					/* Pointer to next packet buffer offset */
 int db = 0;						/* Double buffer index */
 
@@ -165,6 +161,8 @@ typedef struct BALL_TYPE
 
 BALL_TYPE balls[MAX_BALLS];
 
+/* Ball texture reference */
+extern const uint32_t ball16c[];
 
 /* TIM image parameters for loading the ball texture and drawing sprites */
 TIM_IMAGE tim;
@@ -179,9 +177,9 @@ CdlLOC xa_loc;						/* XA data start location
 /* Sector header structure for video sector terminator */
 typedef struct SECTOR_HEAD
 {
-	u_short	id;
-	u_short chan;
-	u_char	pad[28];
+	uint16_t id;
+	uint16_t chan;
+	uint8_t  pad[28];
 } SECTOR_HEAD;
 
 
@@ -199,7 +197,7 @@ void xa_callback(int intr, unsigned char *result)
 	if (intr == CdlDataReady)
 	{
 		/* Fetch data sector */
-		CdGetSector((u_long*)&xa_sector_buff, 512);
+		CdGetSector(&xa_sector_buff, 512);
 		
 		/* Quirk: This CdGetSector() implementation must fetch 2048 bytes */
 		/* or more otherwise the following sectors will be read in an	  */
@@ -224,7 +222,7 @@ void xa_callback(int intr, unsigned char *result)
 				num_loops++;
 			
 				/* Retry playback by seeking to start of XA data and stream */
-				CdControlF(CdlReadS, (u_char*)&xa_loc);
+				CdControlF(CdlReadS, &xa_loc);
 			
 				/* Stop playback */
 				//CdControlF(CdlPause, 0);
@@ -276,7 +274,7 @@ void init()
 	
 	
 	/* Upload the ball texture */
-	GetTimInfo((u_long*)ball16c, &tim); /* Get TIM parameters */
+	GetTimInfo(ball16c, &tim); /* Get TIM parameters */
 	LoadImage(tim.prect, tim.paddr);		/* Upload texture to VRAM */
 	if( tim.mode & 0x8 )
 	{
@@ -355,7 +353,7 @@ int main(int argc, const char* argv[])
 
 	/* Set CD mode for XA streaming (2x speed, send XA to SPU, enable filter */
 	i = CdlModeSpeed|CdlModeRT|CdlModeSF;
-	CdControl(CdlSetmode, (u_char*)&i, 0);
+	CdControl(CdlSetmode, &i, 0);
 	
 	/* Set file 1 on filter for channels 0-7 */
 	filter.file = 1;
@@ -410,8 +408,8 @@ int main(int argc, const char* argv[])
 					if( !p_cross )
 					{
 						filter.chan = sel_channel;
-						CdControl(CdlSetfilter, (u_char*)&filter, 0);
-						CdControl(CdlReadS, (u_char*)&xa_loc, 0);
+						CdControl(CdlSetfilter, &filter, 0);
+						CdControl(CdlReadS, &xa_loc, 0);
 						xa_play_channel = sel_channel;
 						p_cross = 1;
 					}
@@ -441,7 +439,7 @@ int main(int argc, const char* argv[])
 					if( !p_right )
 					{
 						filter.chan = sel_channel;
-						CdControl(CdlSetfilter, (u_char*)&filter, 0);
+						CdControl(CdlSetfilter, &filter, 0);
 						xa_play_channel = sel_channel;
 						p_right = 1;
 					}
