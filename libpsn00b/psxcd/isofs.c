@@ -434,8 +434,8 @@ static int find_dir_entry(const char *name, ISO_DIR_ENTRY *dirent)
 
 static char* get_pathname(char *path, const char *filename)
 {
-	char *c = 0;
-	for (char *i = filename; *i; i++) {
+	const char *c = 0;
+	for (const char *i = filename; *i; i++) {
 		if (IS_PATH_SEP(*i))
 			c = i;
 	}
@@ -453,8 +453,8 @@ static char* get_pathname(char *path, const char *filename)
 
 static char* get_filename(char *name, const char *filename)
 {
-	char *c = 0;
-	for (char *i = filename; *i; i++) {
+	const char *c = 0;
+	for (const char *i = filename; *i; i++) {
 		if (IS_PATH_SEP(*i))
 			c = i;
 	}

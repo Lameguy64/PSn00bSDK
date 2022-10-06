@@ -27,16 +27,16 @@ void FntLoad(int x, int y) {
 	RECT pos;
 	TIM_IMAGE tim;
 	
-	GetTimInfo( (const uint32_t *) _gpu_debug_font, &tim );
+	GetTimInfo((const uint32_t *) _gpu_debug_font, &tim);
 	
 	// Load font image
 	pos = *tim.prect;
 	pos.x = x;
 	pos.y = y;
 	
-	_font_tpage = getTPage( 0, 0, pos.x, pos.y );
+	_font_tpage = getTPage(0, 0, pos.x, pos.y);
 	
-	LoadImage( &pos, tim.paddr );
+	LoadImage(&pos, tim.paddr);
 	DrawSync(0);
 	
 	// Load font clut
@@ -44,9 +44,9 @@ void FntLoad(int x, int y) {
 	pos.x = x;
 	pos.y = y+tim.prect->h;
 	
-	_font_clut = getClut( pos.x, pos.y );
+	_font_clut = getClut(pos.x, pos.y);
 	
-	LoadImage( &pos, tim.caddr );
+	LoadImage(&pos, tim.caddr);
 	DrawSync(0);
 	
 	// Clear previously opened text streams
@@ -193,10 +193,11 @@ char *FntFlush(int id) {
 		if( i > 0 ) {
 			
 			i--;
-			setSprt8( sprt );
-			setRGB0( sprt, 128, 128, 128 );
-			setXY0( sprt, sx, sy );
-			setUV0( sprt, (i%16)<<3, (i>>4)<<3 );
+			setSprt8(sprt);
+			setShadeTex(sprt, 1);
+			setSemiTrans(sprt, 1);
+			setXY0(sprt, sx, sy);
+			setUV0(sprt, (i % 16) * 8, (i / 16) * 8);
 			sprt->clut = _font_clut;
 			setaddr(opri, sprt);
 			opri = (char*)sprt;
@@ -237,12 +238,13 @@ char *FntSort(uint32_t *ot, char *pri, int x, int y, const char *text) {
 		if( i > 0 ) {
 			
 			i--;
-			setSprt8( sprt );
-			setRGB0( sprt, 128, 128, 128 );
-			setXY0( sprt, x, y );
-			setUV0( sprt, (i%16)<<3, (i>>4)<<3 );
+			setSprt8(sprt);
+			setShadeTex(sprt, 1);
+			setSemiTrans(sprt, 1);
+			setXY0(sprt, x, y);
+			setUV0(sprt, (i % 16) * 8, (i / 16) * 8);
 			sprt->clut = _font_clut;
-			addPrim( ot, sprt );
+			addPrim(ot, sprt);
 			sprt++;
 			
 		}
@@ -256,9 +258,9 @@ char *FntSort(uint32_t *ot, char *pri, int x, int y, const char *text) {
 	
 	tpage = (DR_TPAGE*)pri;
 	tpage->code[0] = _font_tpage;
-	setlen( tpage, 1 );
-	setcode( tpage, 0xe1 );
-	addPrim( ot, pri );
+	setlen(tpage, 1);
+	setcode(tpage, 0xe1);
+	addPrim(ot, pri);
 	pri += sizeof(DR_TPAGE);
 	
 	return pri;

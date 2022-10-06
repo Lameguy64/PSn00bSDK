@@ -490,13 +490,7 @@ CdSyncCallback:
 	
 
 .section .data
-	
-.global psxcd_credits
-.type psxcd_credits, @object
-psxgpu_credits:
-	.ascii "psxcd library programs by Lameguy64\n"
-	.asciiz "2020 PSn00bSDK Project / Meido-Tek Productions\n"
-	
+
 .comm	_cd_last_cmd, 1, 1
 .comm	_cd_last_mode, 1, 1
 .comm	_cd_ack_wait, 1, 1

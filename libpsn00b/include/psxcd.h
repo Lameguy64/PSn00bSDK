@@ -145,6 +145,7 @@ uint32_t CdSyncCallback(CdlCB func);
 
 long CdReadyCallback(CdlCB func);
 int CdGetSector(void *madr, int size);
+int CdGetSector2(void *madr, int size);
 
 CdlFILE* CdSearchFile(CdlFILE *loc, const char *filename);
 
