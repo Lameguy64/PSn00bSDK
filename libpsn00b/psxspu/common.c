@@ -17,7 +17,13 @@
 static SPU_TransferMode	_transfer_mode = SPU_TRANSFER_BY_DMA;
 static uint16_t			_transfer_addr = WRITABLE_AREA_ADDR;
 
-/* SPU initialization */
+/* Private utilities */
+
+#ifdef DEBUG
+#define _LOG(...) printf(__VA_ARGS__)
+#else
+#define _LOG(...)
+#endif
 
 static void _wait_status(uint16_t mask, uint16_t value) {
 	for (int i = STATUS_TIMEOUT; i; i--) {
@@ -25,8 +31,10 @@ static void _wait_status(uint16_t mask, uint16_t value) {
 			return;
 	}
 
-	printf("psxspu: status register timeout (0x%04x)\n", SPU_STAT);
+	_LOG("psxspu: status register timeout (0x%04x)\n", SPU_STAT);
 }
+
+/* Public API */
 
 void SpuInit(void) {
 	SPU_CTRL = 0x0000; // SPU disabled
@@ -75,19 +83,17 @@ void SpuInit(void) {
 	SPU_KEY_ON			= 0x00ffffff;
 	SPU_MASTER_VOL_L	= 0x3fff;
 	SPU_MASTER_VOL_R	= 0x3fff;
-	SPU_CD_VOL_L		= 0x3fff;
-	SPU_CD_VOL_R		= 0x3fff;
+	SPU_CD_VOL_L		= 0x7fff;
+	SPU_CD_VOL_R		= 0x7fff;
 }
-
-/* SPU RAM transfer API */
 
 static void _load_store_data(uint32_t *data, size_t length, int mode) {
 	if (length % 4)
-		printf("psxspu: can't transfer a number of bytes that isn't multiple of 4\n");
+		_LOG("psxspu: can't transfer a number of bytes that isn't multiple of 4\n");
 
 	length /= 4;
 	if ((length >= DMA_CHUNK_LENGTH) && (length % DMA_CHUNK_LENGTH)) {
-		printf("psxspu: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
+		_LOG("psxspu: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
 		length += DMA_CHUNK_LENGTH - 1;
 	}
 

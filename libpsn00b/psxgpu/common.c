@@ -29,7 +29,13 @@ static volatile uint8_t  _queue_head, _queue_tail, _queue_length;
 static volatile uint32_t _vblank_counter;
 static volatile uint16_t _last_hblank;
 
-/* Interrupt handlers */
+/* Private utilities and interrupt handlers */
+
+#ifdef DEBUG
+#define _LOG(...) printf(__VA_ARGS__)
+#else
+#define _LOG(...)
+#endif
 
 static void _vblank_handler(void) {
 	_vblank_counter++;
@@ -69,7 +75,7 @@ void ResetGraph(int mode) {
 		_gpu_video_mode = (GPU_GP1 >> 20) & 1;
 		ExitCriticalSection();
 
-		printf("psxgpu: setup done, default mode is %s\n", _gpu_video_mode ? "PAL" : "NTSC");
+		_LOG("psxgpu: setup done, default mode is %s\n", _gpu_video_mode ? "PAL" : "NTSC");
 	}
 
 	if (mode == 3) {
@@ -108,7 +114,7 @@ static void _default_vsync_halt(void) {
 			return;
 	}
 
-	printf("psxgpu: VSync() timeout\n");
+	_LOG("psxgpu: VSync() timeout\n");
 	ChangeClearPAD(0);
 	ChangeClearRCnt(3, 0);
 }
@@ -230,7 +236,7 @@ void DrawOTag(const uint32_t *ot) {
 		}
 
 		IRQ_MASK = mask;
-		printf("psxgpu: DrawOTag() failed, draw queue full\n");
+		_LOG("psxgpu: DrawOTag() failed, draw queue full\n");
 		return;
 	}
 

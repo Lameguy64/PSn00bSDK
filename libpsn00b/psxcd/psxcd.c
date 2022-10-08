@@ -20,13 +20,18 @@ volatile int _cd_last_sector_count;
 
 int _cd_media_changed;
 
+#ifdef DEBUG
+#define _LOG(...) printf(__VA_ARGS__)
+#else
+#define _LOG(...)
+#endif
+
 void _cd_init(void);
 void _cd_control(unsigned char com, const void *param, int plen);
 void _cd_wait_ack(void);
 void _cd_wait(void);
 
-int CdInit(void)
-{
+int CdInit(void) {
 	// Sets up CD-ROM hardware and low-level subsystem
 	_cd_init();
 	
@@ -37,14 +42,11 @@ int CdInit(void)
 	CdControl(CdlNop, 0, 0);
 	CdControl(CdlInit, 0, 0);
 	
-	if( CdSync(0, 0) != CdlDiskError )
-	{
+	if(CdSync(0, 0) != CdlDiskError) {
 		CdControl(CdlDemute, 0, 0);
-		printf("psxcd: Init Ok!\n");
-	}
-	else
-	{
-		printf("psxcd: Error initializing. Bad disc/drive or no disc inserted.\n");
+		_LOG("psxcd: setup done\n");
+	} else {
+		_LOG("psxcd: initialization error, bad disc/drive or no disc inserted\n");
 	}
 	
 	return 1;
@@ -319,7 +321,7 @@ static void CdDoRetry()
 {
 	int cb;
 	
-	printf( "CdRead: Retrying...\n" );
+	_LOG("psxcd: retrying read...\n");
 	
 	// Stop reading
 	CdControl(CdlPause, 0, 0);

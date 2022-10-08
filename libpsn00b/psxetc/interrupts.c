@@ -90,7 +90,7 @@ static void _global_dma_handler(void) {
 	}
 }
 
-/* Callback registration API */
+/* IRQ and DMA handler API */
 
 void *InterruptCallback(int irq, void (*func)(void)) {
 	if ((irq < 0) || (irq >= NUM_IRQ_CHANNELS))
@@ -127,12 +127,12 @@ void *DMACallback(int dma, void (*func)(void)) {
 	// the callback is being registered or removed. The main DMA IRQ dispatcher
 	// is also registered if this is the first DMA callback being configured,
 	// or disabled if it's the last one being removed.
-	if (func) {
+	if (!old_callback && func) {
 		DMA_DICR |= (0x10000 << dma) | (1 << 23);
 
 		if (!(_num_dma_handlers++))
 			InterruptCallback(3, &_global_dma_handler);
-	} else {
+	} else if (old_callback && !func) {
 		if (--_num_dma_handlers) {
 			DMA_DICR &= ~(0x10000 << dma);
 		} else {
@@ -158,7 +158,7 @@ int ResetCallback(void) {
 		return -1;
 
 	EnterCriticalSection();
-	_saved_irq_mask = 1 << 3; // Enable DMA IRQ by default
+	_saved_irq_mask = 0;
 	_saved_dma_dpcr = 0x03333333;
 	_saved_dma_dicr = 0;
 
@@ -166,10 +166,6 @@ int ResetCallback(void) {
 		_irq_handlers[i] = (void *) 0;
 	for (int i = 0; i < NUM_DMA_CHANNELS; i++)
 		_dma_handlers[i] = (void *) 0;
-
-	// Set up the DMA IRQ handler. This handler shall *not* be overridden using
-	// InterruptCallback().
-	_irq_handlers[3] = &_global_dma_handler;
 
 	_96_remove();
 	RestartCallback();

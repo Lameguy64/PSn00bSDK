@@ -10,7 +10,13 @@
 
 #define DMA_CHUNK_LENGTH 8
 
-/* VRAM transfer API */
+/* Private utilities */
+
+#ifdef DEBUG
+#define _LOG(...) printf(__VA_ARGS__)
+#else
+#define _LOG(...)
+#endif
 
 static void _load_store_image(
 	uint32_t	command,
@@ -20,11 +26,11 @@ static void _load_store_image(
 ) {
 	size_t length = rect->w * rect->h;
 	if (length % 2)
-		printf("psxgpu: can't transfer an odd number of pixels\n");
+		_LOG("psxgpu: can't transfer an odd number of pixels\n");
 
 	length /= 2;
 	if ((length >= DMA_CHUNK_LENGTH) && (length % DMA_CHUNK_LENGTH)) {
-		printf("psxgpu: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
+		_LOG("psxgpu: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
 		length += DMA_CHUNK_LENGTH - 1;
 	}
 
@@ -49,6 +55,8 @@ static void _load_store_image(
 
 	DMA_CHCR(2) = 0x01000200 | ((mode & 1) ^ 1);
 }
+
+/* VRAM transfer API */
 
 void LoadImage(const RECT *rect, const uint32_t *data) {
 	_load_store_image(0xa0000000, 2, rect, (uint32_t *) data);

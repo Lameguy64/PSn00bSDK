@@ -1,10 +1,16 @@
 
 #include <stdio.h>
 
+#ifdef DEBUG
+#define _LOG(...) printf(__VA_ARGS__)
+#else
+#define _LOG(...)
+#endif
+
 /* Standard abort */
 
 void abort() {
-	printf("abort()\n");
+	_LOG("abort()\n");
 
 	for (;;)
 		__asm__ volatile("");
@@ -13,7 +19,7 @@ void abort() {
 /* Internal function used by assert() macro */
 
 void _assert_abort(const char *file, int line, const char *expr) {
-	printf("%s:%d: assert(%s)\n", file, line, expr);
+	_LOG("%s:%d: assert(%s)\n", file, line, expr);
 
 	for (;;)
 		__asm__ volatile("");
@@ -22,7 +28,7 @@ void _assert_abort(const char *file, int line, const char *expr) {
 /* Pure virtual function call (C++) */
 
 void __cxa_pure_virtual(void) {
-	printf("__cxa_pure_virtual()\n");
+	_LOG("__cxa_pure_virtual()\n");
 
 	for (;;)
 		__asm__ volatile("");

@@ -10,7 +10,7 @@
 #include <hwregs_c.h>
 
 #define DMA_CHUNK_LENGTH	32
-#define MDEC_SYNC_TIMEOUT	0x1000000
+#define MDEC_SYNC_TIMEOUT	0x100000
 
 /* Default IDCT matrix and quantization tables */
 
@@ -81,6 +81,14 @@ static const DECDCTENV _default_mdec_env = {
 	}
 };
 
+/* Private utilities */
+
+#ifdef DEBUG
+#define _LOG(...) printf(__VA_ARGS__)
+#else
+#define _LOG(...)
+#endif
+
 /* Public API */
 
 void DecDCTReset(int mode) {
@@ -127,7 +135,7 @@ void DecDCTin(const uint32_t *data, int mode) {
 // the stream.
 void DecDCTinRaw(const uint32_t *data, size_t length) {
 	if ((length >= DMA_CHUNK_LENGTH) && (length % DMA_CHUNK_LENGTH)) {
-		printf("psxmdec: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
+		_LOG("psxpress: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
 		length += DMA_CHUNK_LENGTH - 1;
 	}
 
@@ -149,7 +157,7 @@ int DecDCTinSync(int mode) {
 			return 0;
 	}
 
-	printf("psxpress: DecDCTinSync() timeout\n");
+	_LOG("psxpress: DecDCTinSync() timeout\n");
 	return -1;
 }
 
@@ -174,6 +182,6 @@ int DecDCToutSync(int mode) {
 			return 0;
 	}
 
-	printf("psxpress: DecDCToutSync() timeout\n");
+	_LOG("psxpress: DecDCToutSync() timeout\n");
 	return -1;
 }
