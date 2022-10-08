@@ -12,6 +12,16 @@
 
 #define RAND_MAX 0x7fff
 
+/* Structure definitions */
+
+typedef struct _HeapUsage {
+	size_t total;		// Total size of heap + stack
+	size_t heap;		// Amount of memory currently reserved for heap
+	size_t stack;		// Amount of memory currently reserved for stack
+	size_t alloc;		// Amount of memory currently allocated
+	size_t alloc_max;	// Maximum amount of memory ever allocated
+} HeapUsage;
+
 /* API */
 
 #ifdef __cplusplus
@@ -33,10 +43,11 @@ long double strtold(const char *nptr, char **endptr);
 double strtod(const char *nptr, char **endptr);
 float strtof(const char *nptr, char **endptr);
 
-void _mem_init(size_t ram_size, size_t stack_max_size);
 void InitHeap(void *addr, size_t size);
-//int SetHeapSize(size_t size);
 void *sbrk(ptrdiff_t incr);
+
+void TrackHeapUsage(ptrdiff_t alloc_incr);
+void GetHeapUsage(HeapUsage *usage);
 
 void *malloc(size_t size);
 void *calloc(size_t num, size_t size);

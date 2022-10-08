@@ -9,6 +9,8 @@
  * latter being built on top of the former. This makes it possible to override
  * only InitHeap() and sbrk() while still using the default allocator, or
  * override malloc()/realloc()/free() while using the default heap manager.
+ * Custom allocators should call TrackHeapUsage() to let the heap manager know
+ * how much memory is allocated at a given time.
  */
 
 #include <stddef.h>
@@ -25,11 +27,13 @@ typedef struct _BlockHeader {
 	size_t				size;
 } BlockHeader;
 
-/* Data */
+/* Internal globals */
 
 static void			*_heap_start, *_heap_end, *_heap_limit;
-static void			*_alloc_start = 0;
-static BlockHeader	*_alloc_head = 0, *_alloc_tail = 0;
+static size_t		_heap_alloc, _heap_alloc_max;
+
+static void			*_alloc_start;
+static BlockHeader	*_alloc_head, *_alloc_tail;
 
 /* Heap management API */
 
@@ -37,6 +41,13 @@ __attribute__((weak)) void InitHeap(void *addr, size_t size) {
 	_heap_start = addr;
 	_heap_end   = addr;
 	_heap_limit = (void *) ((uintptr_t) addr + size);
+
+	_heap_alloc     = 0;
+	_heap_alloc_max = 0;
+
+	_alloc_start = addr;
+	_alloc_head  = 0;
+	_alloc_tail  = 0;
 }
 
 __attribute__((weak)) void *sbrk(ptrdiff_t incr) {
@@ -48,6 +59,22 @@ __attribute__((weak)) void *sbrk(ptrdiff_t incr) {
 
 	_heap_end = new_end;
 	return old_end;
+}
+
+__attribute__((weak)) void TrackHeapUsage(ptrdiff_t alloc_incr) {
+	_heap_alloc += alloc_incr;
+
+	if (_heap_alloc > _heap_alloc_max)
+		_heap_alloc_max = _heap_alloc;
+}
+
+__attribute__((weak)) void GetHeapUsage(HeapUsage *usage) {
+	usage->total = _heap_limit - _heap_start;
+	usage->heap  = _heap_end   - _heap_start;
+	usage->stack = _heap_limit - _heap_end;
+
+	usage->alloc     = _heap_alloc;
+	usage->alloc_max = _heap_alloc_max;
 }
 
 /* Memory allocator */
@@ -69,13 +96,16 @@ static BlockHeader *_find_fit(BlockHeader *head, size_t size) {
 }
 
 __attribute__((weak)) void *malloc(size_t size) {
+	if (!size)
+		return 0;
+
 	size_t _size = _align(size + sizeof(BlockHeader), 8);
 
 	// Nothing's initialized yet? Let's just initialize the bottom of our heap,
 	// flag it as allocated.
 	if (!_alloc_head) {
-		if (!_alloc_start)
-			_alloc_start = sbrk(0);
+		//if (!_alloc_start)
+			//_alloc_start = sbrk(0);
 
 		BlockHeader *new = (BlockHeader *) sbrk(_size);
 		if (!new)
@@ -89,6 +119,8 @@ __attribute__((weak)) void *malloc(size_t size) {
 
 		_alloc_head = new;
 		_alloc_tail = new;
+
+		TrackHeapUsage(_size);
 		return ptr;
 	}
 
@@ -106,6 +138,8 @@ __attribute__((weak)) void *malloc(size_t size) {
 
 		_alloc_head->prev = new;
 		_alloc_head       = new;
+
+		TrackHeapUsage(_size);
 		return ptr;
 	}
 
@@ -122,6 +156,8 @@ __attribute__((weak)) void *malloc(size_t size) {
 
 		(new->next)->prev = new;
 		prev->next        = new;
+
+		TrackHeapUsage(_size);
 		return ptr;
 	}
 
@@ -138,6 +174,8 @@ __attribute__((weak)) void *malloc(size_t size) {
 
 	_alloc_tail->next = new;
 	_alloc_tail       = new;
+
+	TrackHeapUsage(_size);
 	return ptr;
 }
 
@@ -153,13 +191,14 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 	if (!ptr)
 		return malloc(size);
 
-	size_t _size = _align(size + sizeof(BlockHeader), 8);
-
+	size_t      _size = _align(size + sizeof(BlockHeader), 8);
 	BlockHeader *prev = (BlockHeader *) ((uintptr_t) ptr - sizeof(BlockHeader));
 
 	// New memory block shorter?
 	if (prev->size >= _size) {
+		TrackHeapUsage(_size - prev->size);
 		prev->size = _size;
+
 		if (!prev->next)
 			sbrk((ptr - sbrk(0)) + _size);
 
@@ -172,12 +211,14 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 		if (!new)
 			return 0;
 
+		TrackHeapUsage(_size - prev->size);
 		prev->size = _size;
 		return ptr;
 	}
 
 	// Do we have free memory after it?
 	if (((prev->next)->ptr - ptr) > _size) {
+		TrackHeapUsage(_size - prev->size);
 		prev->size = _size;
 		return ptr;
 	}
@@ -209,11 +250,13 @@ __attribute__((weak)) void free(void *ptr) {
 			sbrk(-size);
 		}
 
+		TrackHeapUsage(-size);
 		return;
 	}
 
 	// Finding the proper block
 	BlockHeader *cur = _alloc_head;
+
 	for (cur = _alloc_head; ptr != cur->ptr; cur = cur->next) {
 		if (!cur->next)
 			return;
@@ -221,14 +264,17 @@ __attribute__((weak)) void free(void *ptr) {
 
 	if (cur->next) {
 		// In the middle, just unlink it
-		cur->next->prev = cur->prev;
+		(cur->next)->prev = cur->prev;
+		TrackHeapUsage(-(cur->size + sizeof(BlockHeader)));
 	} else {
 		// At the end, shrink heap
 		_alloc_tail = cur->prev;
 
 		void  *top  = sbrk(0);
 		size_t size = (top - (cur->prev)->ptr) - (cur->prev)->size;
+
 		sbrk(-size);
+		TrackHeapUsage(-size);
 	}
 
 	(cur->prev)->next = cur->next;
