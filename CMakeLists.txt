@@ -12,7 +12,7 @@ include(ExternalProject)
 project(
 	PSn00bSDK
 	LANGUAGES    NONE
-	VERSION      0.20
+	VERSION      0.21
 	DESCRIPTION  "Open source PlayStation 1 SDK"
 	HOMEPAGE_URL "http://lameguy64.net/?page=psn00bsdk"
 )
@@ -89,11 +89,17 @@ set(
 	-DPSN00BSDK_BUILD_DATE:STRING=${PSN00BSDK_BUILD_DATE}
 	-DPSN00BSDK_GIT_TAG:STRING=${PSN00BSDK_GIT_TAG}
 	-DPSN00BSDK_GIT_COMMIT:STRING=${PSN00BSDK_GIT_COMMIT}
-	-DMKPSXISO_NO_LIBFLAC:BOOL=${MKPSXISO_NO_LIBFLAC}
-	-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
 )
 set(
-	_sdk_args
+	_tools_args
+	${_common_args}
+	-DCMAKE_TOOLCHAIN_FILE:FILEPATH=${CMAKE_TOOLCHAIN_FILE}
+	-DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_BINARY_DIR}/tree
+	-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+	-DMKPSXISO_NO_LIBFLAC:BOOL=${MKPSXISO_NO_LIBFLAC}
+)
+set(
+	_libpsn00b_args
 	${_common_args}
 	-DCMAKE_TOOLCHAIN_FILE:FILEPATH=${CMAKE_TOOLCHAIN_FILE}
 	-DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_BINARY_DIR}/tree
@@ -103,6 +109,7 @@ set(
 	${_common_args}
 	-DCMAKE_TOOLCHAIN_FILE:FILEPATH=${PROJECT_BINARY_DIR}/tree/${CMAKE_INSTALL_LIBDIR}/libpsn00b/cmake/sdk.cmake
 	-DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_BINARY_DIR}/examples
+	-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
 )
 
 # Ensure PSn00bSDK isn't being built using the toolchain file from PSn00bSDK
@@ -120,35 +127,42 @@ endif()
 
 ExternalProject_Add(
 	tools
+	PREFIX           subprojects
 	SOURCE_DIR       ${PROJECT_SOURCE_DIR}/tools
-	BINARY_DIR       tools-build
-	CMAKE_CACHE_ARGS ${_sdk_args}
+	CMAKE_CACHE_ARGS ${_tools_args}
 	INSTALL_DIR      tree
 )
 ExternalProject_Add(
 	mkpsxiso
+	PREFIX           subprojects
 	SOURCE_DIR       ${PROJECT_SOURCE_DIR}/tools/mkpsxiso
-	BINARY_DIR       mkpsxiso-build
-	CMAKE_CACHE_ARGS ${_sdk_args}
+	CMAKE_CACHE_ARGS ${_tools_args}
 	INSTALL_DIR      tree
 )
 ExternalProject_Add(
-	libpsn00b
+	libpsn00b-debug
+	PREFIX           subprojects
 	SOURCE_DIR       ${PROJECT_SOURCE_DIR}/libpsn00b
-	BINARY_DIR       libpsn00b-build
 	CMAKE_GENERATOR  ${LIBPSN00B_GENERATOR}
-	CMAKE_CACHE_ARGS ${_sdk_args}
+	CMAKE_CACHE_ARGS ${_libpsn00b_args} -DCMAKE_BUILD_TYPE:STRING=Debug
 	INSTALL_DIR      tree
-	#DEPENDS          tools
+)
+ExternalProject_Add(
+	libpsn00b-release
+	PREFIX           subprojects
+	SOURCE_DIR       ${PROJECT_SOURCE_DIR}/libpsn00b
+	CMAKE_GENERATOR  ${LIBPSN00B_GENERATOR}
+	CMAKE_CACHE_ARGS ${_libpsn00b_args} -DCMAKE_BUILD_TYPE:STRING=Release
+	INSTALL_DIR      tree
 )
 ExternalProject_Add(
 	examples
+	PREFIX           subprojects
 	SOURCE_DIR       ${PROJECT_SOURCE_DIR}/examples
-	BINARY_DIR       examples-build
 	CMAKE_GENERATOR  ${LIBPSN00B_GENERATOR}
 	CMAKE_CACHE_ARGS ${_examples_args}
 	INSTALL_DIR      examples
-	DEPENDS          libpsn00b tools mkpsxiso
+	DEPENDS          libpsn00b-debug libpsn00b-release tools mkpsxiso
 	EXCLUDE_FROM_ALL ${SKIP_EXAMPLES}
 )
 

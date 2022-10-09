@@ -1,5 +1,5 @@
 # PSn00bSDK toolchain setup file for CMake
-# (C) 2021 spicyjpeg - MPL licensed
+# (C) 2021-2022 spicyjpeg - MPL licensed
 
 cmake_minimum_required(VERSION 3.20)
 
@@ -14,7 +14,7 @@ set(
 
 ## CMake configuration
 
-set(CMAKE_SYSTEM_NAME      PlayStation)
+set(CMAKE_SYSTEM_NAME      Generic)
 set(CMAKE_SYSTEM_PROCESSOR mipsel)
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
@@ -27,6 +27,11 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 # standard library errors.
 set(CMAKE_TRY_COMPILE_TARGET_TYPE        STATIC_LIBRARY)
 set(CMAKE_TRY_COMPILE_PLATFORM_VARIABLES PSN00BSDK_TC PSN00BSDK_TARGET PSN00BSDK_VERSION)
+
+# Always generate compile_commands.json alongside build scripts. This allows
+# some IDEs and tools (such as clangd) to automatically configure include
+# directories and other options.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 ## Toolchain path setup
 

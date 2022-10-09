@@ -1,40 +1,23 @@
-# libpsn00b interface targets
-# (C) 2021 spicyjpeg - MPL licensed
+# PSn00bSDK interface targets
+# (C) 2021-2022 spicyjpeg - MPL licensed
 
 # This script creates several "virtual" targets (psn00bsdk_*) that set include
-# directories and compiler flags when a target is linked against them. The
-# following targets are currently defined:
-# - psn00bsdk_common
-# - psn00bsdk_static_exe
-# - psn00bsdk_dynamic_exe
-# - psn00bsdk_static_lib
-# - psn00bsdk_object_lib (same as psn00bsdk_static_lib)
-# - psn00bsdk_shared_lib
-# - psn00bsdk_module_lib (same as psn00bsdk_shared_lib)
-#
-# NOTE: building a static library and linking it as part of a DLL is currently
-# *not* supported.
+# directories and compiler flags when a target is linked against them. It is
+# only used when building libpsn00b, as CMake automatically saves these targets
+# into the export script once libpsn00b is installed.
 
-if(NOT TARGET psn00bsdk_common) # Include guard
+## Options common to all target types
 
-add_library(psn00bsdk_common INTERFACE)
-
-foreach(
-	_target IN ITEMS
-	static_exe dynamic_exe static_lib object_lib shared_lib module_lib
-)
-	add_library          (psn00bsdk_${_target} INTERFACE)
-	target_link_libraries(psn00bsdk_${_target} INTERFACE psn00bsdk_common)
-endforeach()
-
-# Options common to all target types:
-# - Define PLAYSTATION=1
+# - Define PSN00BSDK=1
+# - Always generate debug symbols (stripped by elf2x)
 # - Optimize for MIPS R3000
 # - Inject zero checks into division operations (will throw breaks)
 # - All standard libraries (including libgcc) disabled
 # - Put all symbols into separate sections when building
 # - C++ features that require runtime support disabled
 # - Unused section stripping enabled
+
+add_library(psn00bsdk_common INTERFACE)
 target_compile_options(
 	psn00bsdk_common INTERFACE
 		# CPU options
@@ -52,6 +35,7 @@ target_compile_options(
 		-nostdlib
 		# Other options
 		-g
+		-Wa,--strip-local-absolute
 		-fdata-sections
 		-ffunction-sections
 		-fsigned-char
@@ -73,16 +57,20 @@ target_link_options(
 )
 target_compile_definitions(
 	psn00bsdk_common INTERFACE
-		PLAYSTATION=1
+		PSN00BSDK=1
 		$<$<CONFIG:DEBUG>:DEBUG=1>
 )
 
-# Options for executables without support for dynamic linking:
+## Options for executables without support for dynamic linking
+
 # - Position-independent code disabled
-# - GP-relative addressing enabled only for local symbols
-# - ABI-compatible calls disabled (incompatible with GP-relative addr)
+# - $gp-relative addressing enabled only for local symbols
+# - ABI-compatible calls disabled (incompatible with $gp-relative addressing)
+
+add_library(psn00bsdk_exe_gprel INTERFACE)
+target_link_libraries(psn00bsdk_exe_gprel INTERFACE psn00bsdk_common)
 target_compile_options(
-	psn00bsdk_static_exe INTERFACE
+	psn00bsdk_exe_gprel INTERFACE
 		-G8
 		-fno-pic
 		-mno-abicalls
@@ -90,50 +78,42 @@ target_compile_options(
 		-mno-extern-sdata
 )
 target_link_options(
-	psn00bsdk_static_exe INTERFACE
+	psn00bsdk_exe_gprel INTERFACE
 		-G8
 		-static
 )
 
-# Options for executables with support for dynamic linking:
+## Options for executables with support for dynamic linking
+
 # - Position-independent code disabled
-# - GP-relative addressing disabled
+# - $gp-relative addressing disabled
 # - ABI-compatible calls disabled (must be performed manually)
+
+add_library(psn00bsdk_exe_nogprel INTERFACE)
+target_link_libraries(psn00bsdk_exe_nogprel INTERFACE psn00bsdk_common)
 target_compile_options(
-	psn00bsdk_dynamic_exe INTERFACE
+	psn00bsdk_exe_nogprel INTERFACE
 		-G0
 		-fno-pic
 		-mno-abicalls
 		-mno-gpopt
 )
 target_link_options(
-	psn00bsdk_dynamic_exe INTERFACE
+	psn00bsdk_exe_nogprel INTERFACE
 		-G0
 		-static
 )
 
-# Options for static libraries:
-# - Position-independent code disabled
-# - GP-relative addressing disabled
-# - ABI-compatible calls disabled
-# - Local stripping enabled
-target_compile_options(
-	psn00bsdk_static_lib INTERFACE
-		-G0
-		-fno-pic
-		-mno-abicalls
-		-mno-gpopt
-		-Wa,--strip-local-absolute
-)
+## Options for dynamically-linked libraries
 
-target_link_libraries(psn00bsdk_object_lib INTERFACE psn00bsdk_static_lib)
-
-# Options for dynamically-loaded libraries:
 # - Position-independent code enabled
-# - GP-relative addressing disabled (incompatible with ABI calls)
+# - $gp-relative addressing disabled (incompatible with ABI calls)
 # - ABI-compatible calls enabled
+
+add_library(psn00bsdk_dll INTERFACE)
+target_link_libraries(psn00bsdk_dll INTERFACE psn00bsdk_common)
 target_compile_options(
-	psn00bsdk_shared_lib INTERFACE
+	psn00bsdk_dll INTERFACE
 		-G0
 		-fPIC
 		-mabicalls
@@ -141,11 +121,7 @@ target_compile_options(
 		-mshared
 )
 target_link_options(
-	psn00bsdk_shared_lib INTERFACE
+	psn00bsdk_dll INTERFACE
 		-G0
 		-shared
 )
-
-target_link_libraries(psn00bsdk_module_lib INTERFACE psn00bsdk_shared_lib)
-
-endif()

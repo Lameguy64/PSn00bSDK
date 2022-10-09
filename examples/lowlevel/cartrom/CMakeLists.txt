@@ -17,7 +17,7 @@ file(GLOB _sources *.c *.s)
 # executable has to be created manually and converted into raw binary format
 # (for testing on emulators or flashing to a cheat cartridge).
 add_executable       (cartrom ${_sources})
-target_link_libraries(cartrom psn00bsdk_static_exe)
+target_link_libraries(cartrom psn00bsdk_exe_nogprel)
 set_target_properties(cartrom PROPERTIES PREFIX "" SUFFIX ".elf")
 target_link_options  (cartrom PRIVATE -T${PROJECT_SOURCE_DIR}/rom.ld)
 
