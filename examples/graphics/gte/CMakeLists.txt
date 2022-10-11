@@ -1,7 +1,7 @@
 # PSn00bSDK example CMake script
 # (C) 2021 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 
 project(
 	gte
@@ -12,7 +12,7 @@ project(
 )
 
 file(GLOB _sources *.c)
-psn00bsdk_add_executable(gte STATIC ${_sources})
+psn00bsdk_add_executable(gte GPREL ${_sources})
 #psn00bsdk_add_cd_image(gte_iso gte iso.xml DEPENDS gte)
 
 psn00bsdk_target_incbin(gte PRIVATE tim_texture texture.tim)

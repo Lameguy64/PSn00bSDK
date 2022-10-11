@@ -2,8 +2,6 @@
 # rules to bundle the GCC toolchain and CMake in packages. It is included by
 # the main CMakeLists.txt script.
 
-cmake_minimum_required(VERSION 3.20)
-
 ## Settings
 
 # These can be set from the command line to completely disable bundling CMake

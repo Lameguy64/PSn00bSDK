@@ -1,7 +1,7 @@
 # PSn00bSDK example CMake script
 # (C) 2021 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 
 project(
 	childexec
@@ -13,8 +13,8 @@ project(
 
 file(GLOB _sources *.c)
 file(GLOB _child_sources child/*.c)
-psn00bsdk_add_executable(parent STATIC ${_sources})
-psn00bsdk_add_executable(child STATIC ${_child_sources})
+psn00bsdk_add_executable(parent GPREL ${_sources})
+psn00bsdk_add_executable(child GPREL ${_child_sources})
 #psn00bsdk_add_cd_image(childexec_iso childexec iso.xml DEPENDS parent)
 
 psn00bsdk_target_incbin(parent PRIVATE ball16c ball16c.tim)

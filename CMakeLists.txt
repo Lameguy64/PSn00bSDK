@@ -6,7 +6,7 @@
 # workaround is to use ExternalProject_Add() to launch multiple independent
 # CMake instances, creating what's known as a "superbuild".
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 include(ExternalProject)
 
 project(

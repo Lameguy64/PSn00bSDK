@@ -1,7 +1,7 @@
 # PSn00bSDK example CMake script
 # (C) 2021 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 
 project(
 	balls
@@ -12,7 +12,7 @@ project(
 )
 
 file(GLOB _sources *.c)
-psn00bsdk_add_executable(balls STATIC ${_sources})
+psn00bsdk_add_executable(balls GPREL ${_sources})
 #psn00bsdk_add_cd_image(balls_iso balls iso.xml DEPENDS balls)
 
 psn00bsdk_target_incbin(balls PRIVATE ball16c ball16c.tim)

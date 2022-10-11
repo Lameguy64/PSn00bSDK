@@ -1,7 +1,7 @@
 # PSn00bSDK example CMake script
 # (C) 2021 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 
 project(
 	mdecimage
@@ -12,7 +12,7 @@ project(
 )
 
 file(GLOB _sources *.c)
-psn00bsdk_add_executable(mdecimage STATIC ${_sources})
+psn00bsdk_add_executable(mdecimage GPREL ${_sources})
 #psn00bsdk_add_cd_image(mdecimage_iso mdecimage iso.xml DEPENDS mdecimage)
 
 psn00bsdk_target_incbin(mdecimage PRIVATE mdec_image image.bin)

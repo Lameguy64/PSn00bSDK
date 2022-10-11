@@ -1,7 +1,7 @@
 # PSn00bSDK example CMake script
 # (C) 2021 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 
 project(
 	hdtv
@@ -12,7 +12,7 @@ project(
 )
 
 file(GLOB _sources *.c)
-psn00bsdk_add_executable(hdtv STATIC ${_sources})
+psn00bsdk_add_executable(hdtv GPREL ${_sources})
 #psn00bsdk_add_cd_image(hdtv_iso hdtv iso.xml DEPENDS hdtv)
 
 install(FILES ${PROJECT_BINARY_DIR}/hdtv.exe TYPE BIN)
