@@ -83,10 +83,10 @@ static const DECDCTENV _default_mdec_env = {
 
 /* Private utilities */
 
-#ifdef DEBUG
-#define _LOG(...) printf(__VA_ARGS__)
-#else
+#ifdef NDEBUG
 #define _LOG(...)
+#else
+#define _LOG(...) printf(__VA_ARGS__)
 #endif
 
 /* Public API */

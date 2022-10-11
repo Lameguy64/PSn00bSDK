@@ -1,10 +1,10 @@
 
 #include <stdio.h>
 
-#ifdef DEBUG
-#define _LOG(...) printf(__VA_ARGS__)
-#else
+#ifdef NDEBUG
 #define _LOG(...)
+#else
+#define _LOG(...) printf(__VA_ARGS__)
 #endif
 
 /* Standard abort */

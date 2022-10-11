@@ -86,5 +86,5 @@ target_link_options(
 target_compile_definitions(
 	psn00bsdk INTERFACE
 		PSN00BSDK=1
-		$<$<CONFIG:DEBUG>:DEBUG=1>
+		$<$<CONFIG:Release>:NDEBUG=1>
 )

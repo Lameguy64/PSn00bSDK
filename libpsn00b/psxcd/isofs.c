@@ -7,13 +7,10 @@
 #include "psxcd.h"
 #include "isofs.h"
 
-// Uncommend to enable debug output
-//#define DEBUG
-
-#ifdef DEBUG
-#define _LOG(...) printf(__VA_ARGS__)
-#else
+#ifdef NDEBUG
 #define _LOG(...)
+#else
+#define _LOG(...) printf(__VA_ARGS__)
 #endif
 
 #define DEFAULT_PATH_SEP	'\\'
@@ -215,7 +212,7 @@ static int _CdReadIsoDirectory(int lba)
 	return 0;
 }
 
-#ifdef DEBUG
+#ifndef NDEBUG
 
 static void dump_directory(void)
 {
@@ -479,7 +476,7 @@ CdlFILE *CdSearchFile(CdlFILE *fp, const char *filename)
 	// Get number of directories in path table
 	num_dirs = get_pathtable_entry(0, NULL, NULL);
 	
-#ifdef DEBUG
+#ifndef NDEBUG
 	_LOG("psxcd: Directories in path table: %d\n", num_dirs);
 	
 	rbuff = resolve_pathtable_path(num_dirs-1, tpath_rbuff+127);
@@ -536,7 +533,7 @@ CdlFILE *CdSearchFile(CdlFILE *fp, const char *filename)
 		strcat(fp->name, ";1");
 	}
 	
-#ifdef DEBUG
+#ifndef NDEBUG
 	dump_directory();
 #endif
 	

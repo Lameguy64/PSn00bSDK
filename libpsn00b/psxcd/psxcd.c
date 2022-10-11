@@ -20,10 +20,10 @@ volatile int _cd_last_sector_count;
 
 int _cd_media_changed;
 
-#ifdef DEBUG
-#define _LOG(...) printf(__VA_ARGS__)
-#else
+#ifdef NDEBUG
 #define _LOG(...)
+#else
+#define _LOG(...) printf(__VA_ARGS__)
 #endif
 
 void _cd_init(void);
@@ -88,7 +88,7 @@ int CdControlB(unsigned char com, const void *param, unsigned char *result)
 int CdControlF(unsigned char com, const void *param)
 {
 	int param_len=0;
-	
+
 	// Command specific parameters
 	switch(com)
 	{
@@ -116,21 +116,21 @@ int CdControlF(unsigned char com, const void *param)
 			break;
 		case CdlGetTD:
 			param_len = 1;
+			break;
+		case CdlReadN:
+		case CdlReadS:
+		case CdlSeekL:
+		case CdlSeekP:
+			if( param )
+			{
+				_cd_control(CdlSetloc, param, 3);
+				_cd_last_setloc = *((CdlLOC*)param);
+			}
 	}
-	
-	// Issue Setloc if parameters are specified on CdlReadN and CdlReadS
-	if( ( com == CdlReadN ) || ( com == CdlReadS ) )
-	{
-		if( param )
-		{
-			_cd_control(CdlSetloc, param, 3);
-			_cd_last_setloc = *((CdlLOC*)param);
-		}
-	}
-	
+
 	// Issue CD command
 	_cd_control(com, param, param_len);
-	
+
 	return 1;
 }
 

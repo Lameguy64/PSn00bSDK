@@ -19,10 +19,10 @@ static uint16_t			_transfer_addr = WRITABLE_AREA_ADDR;
 
 /* Private utilities */
 
-#ifdef DEBUG
-#define _LOG(...) printf(__VA_ARGS__)
-#else
+#ifdef NDEBUG
 #define _LOG(...)
+#else
+#define _LOG(...) printf(__VA_ARGS__)
 #endif
 
 static void _wait_status(uint16_t mask, uint16_t value) {

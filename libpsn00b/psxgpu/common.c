@@ -31,10 +31,10 @@ static volatile uint16_t _last_hblank;
 
 /* Private utilities and interrupt handlers */
 
-#ifdef DEBUG
-#define _LOG(...) printf(__VA_ARGS__)
-#else
+#ifdef NDEBUG
 #define _LOG(...)
+#else
+#define _LOG(...) printf(__VA_ARGS__)
 #endif
 
 static void _vblank_handler(void) {
