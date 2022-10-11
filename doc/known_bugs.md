@@ -7,14 +7,15 @@ fixed.
 
 ## Toolchain
 
-- It is currently not possible to link static libraries (including the SDK
-  libraries themselves) with DLLs, since the build scripts currently assume that
-  static library object files are always going to be linked into executables.
-  This can be worked around by linking all static libraries as part of the main
-  executable rather than the DLLs: the dynamic linker will automatically search
-  the executable for undefined symbols used by a DLL and patch the code to use
-  them. It might be necessary to list such symbols in a dummy array to prevent
-  the compiler from stripping them away from the executable.
+- ~~It is currently not possible to link static libraries (including the SDK~~
+  ~~libraries themselves) with DLLs, since the build scripts currently assume~~
+  ~~that static library object files are always going to be linked into~~
+  ~~executables. This can be worked around by linking all static libraries as~~
+  ~~part of the main executable rather than the DLLs: the dynamic linker will~~
+  ~~automatically search the executable for undefined symbols used by a DLL~~
+  ~~and patch the code to use them.~~ Static libraries are now fully supported,
+  and SDK libraries can be linked to both executables and DLLs. See the CMake
+  reference for more details.
 
 - Link-time optimization is broken due to GCC not supporting it when linking
   weak functions written in assembly.
@@ -28,13 +29,18 @@ fixed.
   the length of the data *must* be a multiple of 32 bytes. Attempting to
   transfer any data whose length isn't a multiple of 32 bytes will result in
   `DrawSync()` hanging and never returning, however a warning will be printed
-  on the debug console.
+  on the debug console if the executable is built in debug mode.
 
 `psxspu`:
 
 - `SpuInit()`, `SpuRead()` and `SpuWrite()` may take several seconds on MAME
   due to the SPU status register being emulated incorrectly. They work as
   expected on other emulators as well as on real hardware.
+
+`psxcd`:
+
+- Custom callbacks registered using `CdReadyCallback()` seem to be unstable on
+  DuckStation (and possibly on real hardware), occasionally dropping sectors.
 
 `psxetc`:
 
@@ -48,4 +54,4 @@ fixed.
 See [README.md in the examples directory](../examples/README.md#examples-summary).
 
 -----------------------------------------
-_Last updated on 2022-08-21 by spicyjpeg_
+_Last updated on 2022-10-11 by spicyjpeg_

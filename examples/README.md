@@ -48,7 +48,7 @@ Notes:
 
 ## Building the examples
 
-The instructions below assume that PSn00bSDK, CMake 3.20+ and a GCC toolchain
+The instructions below assume that PSn00bSDK, CMake 3.21+ and a GCC toolchain
 are already installed. Refer to the [installation guide](../doc/installation.md)
 for details.
 
@@ -84,4 +84,4 @@ are for rebuilding the examples *after* the SDK has been installed.
    CD images for each example.
 
 -----------------------------------------
-_Last updated on 2022-08-11 by spicyjpeg_
+_Last updated on 2022-10-11 by spicyjpeg_

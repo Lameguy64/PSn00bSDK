@@ -19,6 +19,38 @@ to ensure the changelog can be parsed correctly.
 
 -------------------------------------------------------------------------------
 
+## 2022-10-11: 0.21
+
+spicyjpeg:
+
+- libpsn00b: Completely rewritten CMake scripts. Six copies of each library are
+  now built and installed, one for each combination of configuration (debug and
+  release) and target type (executable with/without $gp-relative addressing and
+  DLL). Library debug logging is now completely disabled when a project is
+  built in release mode (using `-DCMAKE_BUILD_TYPE=Release`).
+
+- libc: Replaced `memset()` with a much faster optimized implementation that
+  makes use of Duff's device. Added `GetHeapUsage()` and `TrackHeapUsage()`.
+  Removed `_mem_init()`.
+
+- psxetc: Fixed a critical bug in `DMACallback()` that would lead to the DMA
+  interrupt handler being disabled entirely in some edge cases.
+
+- psxgpu: Replaced the debug font with an improved one. No changes have been
+  made to the API.
+
+- psxcd: Added `CdGetSector2()` (asynchronous variant of `CdGetSector()`).
+  `CdControl()` can now take a `CdlLOC` as second argument when issuing a seek
+  command (previously the argument was ignored if the command was not `ReadN`
+  or `ReadS`).
+
+- Replaced the `DEBUG` macro with the standard C `NDEBUG` macro, which is only
+  defined if the project is being built in release mode.
+
+- Added `PSN00BSDK_*_LINK_LIBRARIES` CMake variables to control which SDK
+  libraries are linked to newly created executables and DLLs. Updated
+  `cmake_reference.md` to reflect the changes.
+
 ## 2022-09-22
 
 spicyjpeg:

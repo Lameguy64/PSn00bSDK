@@ -173,7 +173,6 @@ function(psn00bsdk_add_executable name type)
 			#$<${_repl},${PSN00BSDK_SYMBOL_MAP_SUFFIX}>
 			${CMAKE_CURRENT_BINARY_DIR}/${name}${PSN00BSDK_EXECUTABLE_SUFFIX}
 			${CMAKE_CURRENT_BINARY_DIR}/${name}${PSN00BSDK_SYMBOL_MAP_SUFFIX}
-		VERBATIM
 	)
 endfunction()
 
@@ -201,7 +200,6 @@ function(psn00bsdk_add_library name type)
 				$<SHELL_PATH:${CMAKE_CURRENT_BINARY_DIR}/${name}${PSN00BSDK_SHARED_LIBRARY_SUFFIX}>
 			#BYPRODUCTS $<${_repl},${PSN00BSDK_SHARED_LIBRARY_SUFFIX}>
 			BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/${name}${PSN00BSDK_SHARED_LIBRARY_SUFFIX}
-			VERBATIM
 		)
 	else()
 		message(FATAL_ERROR "Invalid library type: ${type} (must be STATIC, OBJECT, SHARED or MODULE)")

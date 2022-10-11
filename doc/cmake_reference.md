@@ -1,6 +1,15 @@
 
 # PSn00bSDK CMake reference
 
+- [Setup](#setup)
+- [Targets](#targets)
+- [Commands](#commands)
+- [Target properties](#target-properties)
+- [Preprocessor definitions](#preprocessor-definitions)
+- [Cached settings](#cached-settings)
+- [Internal settings](#internal-settings)
+- [Read-only variables](#read-only-variables)
+
 ## Setup
 
 The only requirement to use the SDK in CMake is to set the
@@ -10,32 +19,35 @@ This can be done on the command line (`-DCMAKE_TOOLCHAIN_FILE=...`), in
 `CMakeLists.txt` (`set(CMAKE_TOOLCHAIN_FILE ...)` before `project()`) or using
 [presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html).
 
-It's suggested to have a default preset that sets `CMAKE_TOOLCHAIN_FILE` to
+It's suggested to have a default preset that sets the toolchain file to
 `$env{PSN00BSDK_LIBS}/cmake/sdk.cmake`, taking advantage of the
 `PSN00BSDK_LIBS` environment variable (used by former PSn00bSDK versions) to
-automatically find the SDK. Such a preset can be created by placing a
+automatically find the SDK if set. Such a preset can be created by placing a
 `CMakePresets.json` file in the project's root with the following contents:
 
 ```json
 {
-  "version": 2,
+  "version": 3,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 20,
+    "minor": 21,
     "patch": 0
   },
   "configurePresets": [
     {
-      "name":        "default",
-      "displayName": "Default configuration",
-      "description": "Use this preset to build the project using PSn00bSDK.",
-      "generator":   "Ninja",
-      "binaryDir":   "${sourceDir}/build",
+      "name":          "default",
+      "displayName":   "Default configuration",
+      "description":   "Use this preset to build the project using PSn00bSDK.",
+      "generator":     "Ninja",
+      "toolchainFile": "$env{PSN00BSDK_LIBS}/cmake/sdk.cmake",
+      "binaryDir":     "${sourceDir}/build",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE":     "Debug",
-        "CMAKE_TOOLCHAIN_FILE": "$env{PSN00BSDK_LIBS}/cmake/sdk.cmake",
-        "PSN00BSDK_TC":         "",
-        "PSN00BSDK_TARGET":     "mipsel-none-elf"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "PSN00BSDK_TC":     "",
+        "PSN00BSDK_TARGET": "mipsel-none-elf"
+      },
+      "warnings": {
+        "dev": false
       }
     }
   ]
@@ -43,230 +55,345 @@ automatically find the SDK. Such a preset can be created by placing a
 ```
 
 To avoid having to pass variables to CMake each time the project is built, a
-second presets file named `CMakeUserPresets.json` can be created and populated
-with hardcoded values in the `cacheVariables` section. This file can be kept
-private (e.g. by adding it to `.gitignore`); CMake will automatically load
-presets from it instead of `CMakePresets.json` if it exists.
+second file named `CMakeUserPresets.json` can be created and populated with
+hardcoded values in the `cacheVariables` section. This file can be kept private
+(e.g. by adding it to `.gitignore`), and CMake will automatically load presets
+from it instead of `CMakePresets.json` if it exists.
 
 See the [template](../template/CMakeLists.txt) for an example CMake script
 showing how to build a simple project.
 
 ## Targets
 
-These targets are defined when using PSn00bSDK. There is no need to explicitly
-link against any of these, as the helper commands (see below) handle linking
-behind the scenes. To avoid conflicts, however, no target should be given any
-of these names.
+The toolchain script creates a target for each PSn00bSDK library. Currently
+the following targets are defined:
 
-- `c`, `psxgpu`, `psxgte`, `psxspu`, `psxcd`, `psxsio`, `psxetc`, `psxapi`, `lzp`
-- `psn00bsdk_common`, `psn00bsdk_object_lib`
-- `psn00bsdk_static_exe`
-- `psn00bsdk_dynamic_exe`
-- `psn00bsdk_static_lib`
-- `psn00bsdk_shared_lib`, `psn00bsdk_module_lib`
+- `psxgpu`
+- `psxgte`
+- `psxspu`
+- `psxcd`
+- `psxpress`
+- `psxsio`
+- `psxetc`
+- `psxapi`
+- `lzp`
+- `c`
+
+Note that these are not actual libraries but virtual targets that link to the
+appropriate version of the respective library, depending on the value of the
+`PSN00BSDK_TARGET_TYPE` property; refer to the target properties section for
+more information. Linking manually using the `target_link_libraries()` command
+is usually not necessary for executables as they are linked to all libraries
+by default (see `PSN00BSDK_EXECUTABLE_LINK_LIBRARIES`).
+
+Additionally, two "hidden" libraries named `gcc` and `psn00bsdk` are linked by
+default to all targets. The former is the GCC toolchain's `libgcc` (see
+`PSN00BSDK_LIBGCC`) while the latter is a virtual target used to set compiler
+flags and paths.
 
 ## Commands
 
-- `psn00bsdk_add_executable(<name> <STATIC|DYNAMIC> [EXCLUDE_FROM_ALL] [sources...])`
+### `psn00bsdk_add_executable`
 
-  A wrapper around `add_executable()` to create PS1 executables. Three files
-  will be generated for each call to this function:
+```cmake
+psn00bsdk_add_executable(
+  <target name> <GPREL|STATIC|NOGPREL|DYNAMIC>
+  [EXCLUDE_FROM_ALL]
+  [sources...]
+)
+```
 
-  - `<name>.elf` (regular ELF executable)
-  - `<name>.exe` (executable converted to the format expected by the PS1)
-  - `<name>.map` (symbol map file for dynamic linking/introspection)
+A wrapper around `add_executable()` to create PS1 executables. Three files will
+be generated for each call to this function:
 
-  The `.exe` and `.map` extensions can be customized by overriding
-  `PSN00BSDK_EXECUTABLE_SUFFIX` and `PSN00BSDK_SYMBOL_MAP_SUFFIX` prior to
-  creating the executable.
+- `<target name>.elf` (regular ELF executable)
+- `<target name>.exe` (executable converted to the format expected by the PS1)
+- `<target name>.map` (symbol map file for dynamic linking/introspection)
 
-  The second argument (mandatory) specifies whether the executable is going to
-  load DLLs at runtime. If set to `STATIC`, $gp-relative addressing (i.e.
-  reusing the $gp register normally used for DLL addressing) will be enabled,
-  slightly reducing executable size and RAM usage but breaking compatibility
-  with the dynamic linker.
+The `.exe` and `.map` extensions can be customized by overriding
+`PSN00BSDK_EXECUTABLE_SUFFIX` and `PSN00BSDK_SYMBOL_MAP_SUFFIX` prior to
+creating the executable.
 
-- `psn00bsdk_add_library(<name> <STATIC|OBJECT|SHARED|MODULE> [EXCLUDE_FROM_ALL] [sources...])`
+The second argument (mandatory) specifies whether the executable is going to
+load DLLs at runtime. If set to `GPREL` or `STATIC`, $gp-relative addressing
+(i.e. reusing the $gp register normally used for DLL addressing to reference
+global variables) will be enabled, slightly reducing executable size and RAM
+usage but breaking compatibility with the dynamic linker.
 
-  Wraps `add_library()` to create static libraries or dynamically-linked
-  libraries (DLLs).
+All executables are automatically linked to the libraries listed in
+`PSN00BSDK_EXECUTABLE_LINK_LIBRARIES` (all SDK libraries by default). This
+variable can be modified prior to creating the executable to select which
+libraries to link.
 
-  The second argument (mandatory, unlike `add_library()`) specifies the type of
-  library to create. `STATIC` will create a static library named `lib<name>.a`.
-  `SHARED` and `MODULE` will compile a DLL, producing the following files (note
-  that there is no `lib` prefix for DLLs):
+### `psn00bsdk_add_library`
 
-  - `<name>.so` (regular ELF shared library)
-  - `<name>.dll` (raw binary with some ELF headers prepended)
+```cmake
+psn00bsdk_add_library(
+  <target name> <STATIC|OBJECT|SHARED|MODULE>
+  [EXCLUDE_FROM_ALL]
+  [sources...]
+)
+```
 
-  As with executables, the `.dll` extension can be customized by setting
-  `PSN00BSDK_SHARED_LIBRARY_SUFFIX`.
+Wraps `add_library()` to create static libraries or dynamically-linked
+libraries (DLLs).
 
-- `psn00bsdk_add_cd_image(<name> <image name> <config file> [DEPENDS ...] [...])`
+The second argument (mandatory, unlike CMake's regular `add_library()`)
+specifies the type of library to create. `STATIC` will create a static library
+named `lib<target name>.a`. `SHARED` and `MODULE` will compile a DLL, producing
+the following files (there is no `lib` prefix for DLLs):
 
-  Creates a new target that will build a CD image using `mkpsxiso`.
+- `<target name>.so` (regular ELF shared library)
+- `<target name>.dll` (raw binary with some ELF headers prepended)
 
-  The first argument is the name of the target to create; next up is the name
-  of the generated image file (`<image name>.bin` + `<image name>.cue`). The
-  third argument is the path to the XML file (relative to the source directory)
-  passed to `mkpsxiso`.
+The `.dll` extension can be customized by setting
+`PSN00BSDK_SHARED_LIBRARY_SUFFIX` prior to creating the DLL.
 
-  The XML file is "configured" by CMake, i.e. any `${var}` or `@var@`
-  expressions are replaced with the values of the respective variables. In
-  particular `${CD_IMAGE_NAME}` is replaced with the second argument passed to
-  `psn00bsdk_add_cd_image()`; the file must properly set the output file names
-  like this:
+All DLLs are automatically linked to the libraries listed in
+`PSN00BSDK_SHARED_LIBRARY_LINK_LIBRARIES` (none by default). This variable can
+be modified prior to creating the DLL to select which libraries to link.
 
-  ```xml
-  <?xml version="1.0" encoding="utf-8"?>
-  <iso_project
-    image_name="${CD_IMAGE_NAME}.bin"
-    cue_sheet="${CD_IMAGE_NAME}.cue"
-  >
-  ```
+**IMPORTANT**: when adding a static library using this command (or CMake's
+`add_library()`), the `PSN00BSDK_TARGET_TYPE` property **must** be set on it
+afterwards in order to let CMake know whether the static library is going to be
+linked to an executable or a DLL. See `PSN00BSDK_TARGET_TYPE` for more
+information.
 
-  Any additional argument is passed through to the underlying call to
-  `add_custom_target()`, so most of the options supported by
-  `add_custom_target()` (including `DEPENDS`) are also supported here.
+### `psn00bsdk_add_cd_image`
 
-- `psn00bsdk_target_incbin(<target> <PRIVATE|PUBLIC|INTERFACE> <symbol name> <binary file>)`
+```cmake
+psn00bsdk_add_cd_image(
+  <target name>
+  <image name>
+  <path to XML config file>
+  [DEPENDS <targets|files...>]
+  [other options...]
+)
+```
 
-  Embeds the contents of a binary file into an executable or a library.
+Creates a new virtual target that will build a CD image using `mkpsxiso`. The
+CD image will always be considered out-of-date and built, even if none of its
+dependencies or any other files have been modified.
 
-  A new symbol/object will be created with the given name, escaped by replacing
-  non-alphanumeric characters with underscores. The contents of the file will
-  be aligned to 4 bytes and placed in the `.data` section. An unsigned 32-bit
-  integer named `<symbol name>_size` will also be defined and set to the length
-  of the file in bytes (without taking alignment/padding into account).
+The first argument is the name of the target to create; next up is the name of
+the generated image file (`<image name>.bin` + `<image name>.cue`). The third
+argument is the path to the XML file (relative to the source directory) passed
+to `mkpsxiso`.
 
-  Once added the file and its size can be accessed by C/C++ code by declaring
-  the respective symbols as an extern array and as an integer, like this:
+The XML file is "configured" by CMake, i.e. any `${var}` or `@var@` expressions
+are replaced with the values of the respective variables. In particular
+`${CD_IMAGE_NAME}` is replaced with the second argument passed to
+`psn00bsdk_add_cd_image()`; the file must properly set the output file names
+like this:
 
-  ```c
-  extern const uint8_t my_file[];
-  extern const size_t  my_file_size;
-  ```
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<iso_project
+  image_name="${CD_IMAGE_NAME}.bin"
+  cue_sheet="${CD_IMAGE_NAME}.cue"
+>
+  <!-- ... -->
+</iso_project>
+```
 
-  The fourth argument specifies the path to the binary file relative to the
-  source directory. This path can be prepended with `${PROJECT_BINARY_DIR}/` to
-  reference a file generated by the build script (such as an LZP archive): in
-  that case a file-level dependency will also be created, ensuring CMake does
-  not attempt to compile the executable or library before the file is built.
+Any additional argument is passed through to the underlying call to
+`add_custom_target()`, so most of the options supported by
+`add_custom_target()` (including `DEPENDS`) are also supported here.
 
-  **IMPORTANT**: in order for this command to work, assembly language support
-  must be enabled by specifying `LANGUAGES C ASM` (or `LANGUAGES C CXX ASM` if
-  C++ is also used) when invoking `project()`.
+### `psn00bsdk_target_incbin`
 
-- `psn00bsdk_target_incbin_a(<target> <PRIVATE|PUBLIC|INTERFACE> <symbol name> <size symbol name> <binary file> <alignment>)`
+```cmake
+psn00bsdk_target_incbin(
+  <target name> <PRIVATE|PUBLIC|INTERFACE>
+  <data symbol name>
+  <path to binary file>
+)
+```
 
-  Advanced variant of `psn00bsdk_target_incbin()` that allows specifying a
-  custom name for the size symbol and changing the default alignment setting.
-  Note that the size integer is always aligned to a multiple of 4 bytes as the
-  MIPS architecture doesn't support unaligned reads.
+Embeds the contents of a binary file into an executable or a library.
 
-## Definitions
+A new symbol/object will be created with the given name, escaped by replacing
+non-alphanumeric characters with underscores. The contents of the file will be
+aligned to 4 bytes and placed in the `.data` section. An unsigned 32-bit
+integer named `<symbol name>_size` will also be defined and set to the length
+of the file in bytes (without taking alignment/padding into account).
 
-When compiling executables and libraries using the above commands the following
-preprocessor macros are automatically `#define`'d:
+Once added the file and its size can be accessed by C/C++ code by declaring the
+respective symbols as an extern array and as an integer, like this:
 
-- `PLAYSTATION`
+```c
+extern const uint8_t my_file[];
+extern const size_t  my_file_size;
+```
 
-  Always set to 1. Can be used to implement different options or code paths for
-  libraries, so they can target both the host and PS1 (as it won't be defined
-  when compiling outside of the SDK).
+The fourth argument specifies the path to the binary file relative to the
+source directory. This path can be prepended with `${PROJECT_BINARY_DIR}/` to
+reference a file generated by the build script (such as an LZP archive): in
+that case a file-level dependency will also be created, ensuring CMake does not
+attempt to compile the executable or library before the file is built.
 
-- `DEBUG`
+**IMPORTANT**: in order for this command to work, assembly language support
+must be enabled by specifying `LANGUAGES C ASM` (or `LANGUAGES C CXX ASM` to
+enable C++ support as well) when invoking `project()`.
 
-  Defined and set to 1 in a debug configuration, i.e. when the
-  `CMAKE_BUILD_TYPE` variable is set to `Debug`. This value is used by the
-  PSn00bSDK libraries, and should be used in executables, to enable additional
-  debug logging.
+### `psn00bsdk_target_incbin_a`
 
-  Note that the default CMake configuration is usually debug, so it's
-  recommended to specify `-DCMAKE_BUILD_TYPE=Release` to get rid of the logging
-  overhead in release builds and reduce executable size.
+```cmake
+psn00bsdk_target_incbin_a(
+  <target name> <PRIVATE|PUBLIC|INTERFACE>
+  <data symbol name>
+  <size symbol name>
+  <path to binary file>
+  <section name>
+  <alignment>
+)
+```
+
+Advanced variant of `psn00bsdk_target_incbin()` that allows specifying a custom
+name for the size symbol and changing the default alignment setting. The value
+of the size integer is always rounded up to a multiple of 4 bytes.
+
+See `psn00bsdk_target_incbin()` above for more details.
+
+## Target properties
+
+Each of the following properties can be set individually for each executable or
+library using CMake's `set_property()` and `set_target_properties()` commands.
+
+### `PSN00BSDK_TARGET_TYPE`
+
+Determines which SDK libraries are linked to and which compiler flags are added
+to the target. Must be set to `EXECUTABLE_GPREL`, `EXECUTABLE_NOGPREL` or
+`SHARED_LIBRARY`.
+
+This property is initialized automatically on executables and DLLs created via
+`psn00bsdk_add_executable()` or `psn00bsdk_add_library()`, but *not* on static
+libraries as CMake has no way to know about their intended usage (i.e. whether
+they are going to be linked to an executable with or without $gp-relative
+addressing, or to a DLL). Thus, `PSN00BSDK_TARGET_TYPE` must be set manually on
+all static libraries and must match the value set on any executable or DLL the
+static library is going to be linked to.
+
+There is no way to build a "hybrid" static library that can be linked to
+multiple target types, short of building multiple copies of it. A workaround
+(used internally by PSn00bSDK) is to create a virtual target and use CMake
+generator expressions to link to one of the copies depending on the value of
+`PSN00BSDK_TARGET_TYPE`.
+
+## Preprocessor definitions
+
+When compiling executables and libraries using the commands listed above the
+following C/C++ preprocessor macros are automatically `#define`d:
+
+### `PSN00BSDK`
+
+Always set to 1. Can be used to implement different options or code paths for
+projects that target both PSn00bSDK and other platforms.
+
+### `NDEBUG`
+
+Defined and set to 1 in a release configuration, i.e. when `CMAKE_BUILD_TYPE`
+is set to `Release` or when a multi-configuration generator is building the
+project in release mode; not defined if the project is being built in debug
+mode. This value is used by the PSn00bSDK libraries, and should be used in
+projects, to enable assertions and additional debug logging (the `assert()`
+macro already resolves to a no-op in release mode).
+
+Note that the default CMake configuration is usually debug. It is recommended
+to build a project in release mode whenever appropriate (by specifying
+`-DCMAKE_BUILD_TYPE=Release` or using the Ninja multi-configuration generator)
+to get rid of logging overhead.
 
 ## Cached settings
 
-These variables are stored in CMake's cache and can be edited by the project's
-build script, from the CMake command line when configuring the project
-(`-Dname=value`) or using an editor such as the CMake GUI.
+These variables are stored in CMake's cache and are meant to be set by the end
+user when building the project (rather than by the project itself). They can be
+modified by the build script after invoking `project()`, from the CMake command
+line when configuring (`-Dname=value`) or using an IDE or other editor such as
+the CMake GUI.
 
-- `PSN00BSDK_TARGET` (`STRING`)
+### `PSN00BSDK_TARGET` (`STRING`)
 
-  The GCC toolchain's target triplet. PSn00bSDK assumes the toolchain targets
-  `mipsel-none-elf` by default, however this can be changed to e.g. use a MIPS
-  toolchain that was compiled for a slightly-different-but-equivalent target.
+The GCC toolchain's target triplet. PSn00bSDK assumes the toolchain targets
+`mipsel-none-elf` by default, however this can be changed to e.g. use a MIPS
+toolchain that was compiled for `mipsel-unknown-elf` (as used by previous
+versions of PSn00bSDK).
 
-  The following GCC target triplets have been confirmed to work with PSn00bSDK:
+Toolchains that target `mipsel-linux-gnu` are not supported by PSn00bSDK.
 
-  - `mipsel-none-elf`
-  - `mipsel-unknown-elf`
-  - ~~`mipsel-linux-gnu`~~ (has issues with linking)
+### `PSN00BSDK_TC` (`PATH`)
 
-- `PSN00BSDK_TC` (`PATH`)
+Path to the GCC toolchain's installation prefix/directory. If not set, CMake
+will attempt to find the toolchain in the `PATH` environment variable and store
+its path in the project's variable cache (so the search does not have to be
+repeated). It is recommended to add the toolchain's `bin` subfolder to `PATH`
+rather than setting this variable.
 
-  Path to the GCC toolchain's installation prefix/directory. If not set, CMake
-  will attempt to find the toolchain in the `PATH` environment variable and
-  store its path in the project's variable cache (so the search does not have
-  to be repeated). It is recommended to add the toolchain's `bin` subfolder to
-  `PATH` rather than setting this variable.
+**IMPORTANT**: if the toolchain's target triplet is not `mipsel-none-elf`,
+`PSN00BSDK_TARGET` must be set regardless of whether or not `PSN00BSDK_TC` is
+also set.
 
-  **IMPORTANT**: if the toolchain's target is not `mipsel-none-elf`,
-  `PSN00BSDK_TARGET` must be set regardless of whether or not `PSN00BSDK_TC` is
-  also set.
+### `PSN00BSDK_LIBGCC` (`FILEPATH`)
 
-- `PSN00BSDK_LIBGCC` (`FILEPATH`)
-
-  Path to the `libgcc.a` library bundled with the GCC toolchain. The contents
-  of this library are merged into `libc` when building the SDK, so this
-  variable is only actually needed when compiling `libpsn00b`. Setting this
-  variable manually usually isn't necessary as CMake will locate `libgcc.a`
-  automatically after finding the toolchain.
+Path to the `libgcc` library bundled with the GCC toolchain. As required by GCC
+this library is always linked to all targets, regardless of whether any SDK
+libraries are linked or not. CMake will attempt to locate `libgcc`
+automatically after finding the toolchain, so setting this variable manually is
+not required in most cases.
 
 ## Internal settings
 
 These settings are not stored in CMake's cache and can only be set from within
-the build script.
+the build script after invoking `project()`.
 
-- `PSN00BSDK_LIBRARIES`
+### `PSN00BSDK_EXECUTABLE_LINK_LIBRARIES`, `PSN00BSDK_SHARED_LIBRARY_LINK_LIBRARIES` (list of `STRING`)
 
-  List of libraries to link all created targets against. By default this
-  includes all PSn00bSDK libraries.
+Lists of SDK libraries to be linked automatically to all new executables and
+DLLs, respectively. By default `PSN00BSDK_EXECUTABLE_LINK_LIBRARIES` includes
+all libraries that ship with PSn00bSDK while
+`PSN00BSDK_SHARED_LIBRARY_LINK_LIBRARIES` is empty.
 
-- `PSN00BSDK_EXECUTABLE_SUFFIX`, `PSN00BSDK_SHARED_LIBRARY_SUFFIX`,
-  `PSN00BSDK_SYMBOL_MAP_SUFFIX`
+These variables can be modified before invoking `psn00bsdk_add_executable()` or
+`psn00bsdk_add_library()` to only link a subset of the SDK. Static libraries
+are *not* automatically linked to any SDK libraries.
 
-  File extensions to use for generated PS1 files. The default values are
-  `.exe`, `.dll` and `.map` respectively. Note that file names and extensions
-  can be changed anyway when building a CD image.
+### `PSN00BSDK_EXECUTABLE_SUFFIX`, `PSN00BSDK_SHARED_LIBRARY_SUFFIX`, `PSN00BSDK_SYMBOL_MAP_SUFFIX` (`STRING`)
+
+File extensions to use for generated PS1 files. The default values are `.exe`,
+`.dll` and `.map` respectively. These extensions do not have to match the ones
+used in the CD image (if any).
 
 ## Read-only variables
 
-- `PSN00BSDK_VERSION`, `PSN00BSDK_BUILD_DATE`, `PSN00BSDK_GIT_TAG`,
-  `PSN00BSDK_GIT_COMMIT`
+### `PSN00BSDK_VERSION`, `PSN00BSDK_BUILD_DATE`, `PSN00BSDK_GIT_TAG`, `PSN00BSDK_GIT_COMMIT` (`STRING`)
 
-  These variables are loaded from `lib/libpsn00b/build.json` and contain
-  information about the SDK's version. Note that `PSN00BSDK_GIT_TAG` and
-  `PSN00BSDK_GIT_COMMIT` are not populated by default when building PSn00bSDK
-  manually from source, so they might be empty strings.
+These variables are loaded from `lib/libpsn00b/build.json` and contain
+information about the SDK's version. `PSN00BSDK_GIT_TAG` and
+`PSN00BSDK_GIT_COMMIT` might be empty strings as they are only populated in CI
+builds of PSn00bSDK.
 
-- `PSN00BSDK_TOOLS`, `PSN00BSDK_INCLUDE`, `PSN00BSDK_LDSCRIPTS`
+### `PSN00BSDK_LIBRARIES` (list of `STRING`)
 
-  Lists of paths used internally. Should not be set, manipulated or overridden
-  by scripts.
+List of all libraries that ship with PSn00bSDK, excluding `libgcc`. Each
+library in this list is also defined as a target. See the targets section for
+more details.
 
-- `TOOLCHAIN_NM`
+### `PSN00BSDK_TOOLS`, `PSN00BSDK_INCLUDE`, `PSN00BSDK_LDSCRIPTS` (list of `PATH`)
 
-  Path to the `nm` executable used to generate symbol maps. Although not used
-  internally by CMake, this program is part of the GCC toolchain.
+Lists of paths used internally. Should not be set, manipulated or overridden by
+scripts.
 
-- `ELF2X`, `ELF2CPE`, `MKPSXISO`, `LZPACK`, `SMXLINK`
+### `TOOLCHAIN_NM` (`FILEPATH`)
 
-  Paths to the PSn00bSDK tools' executables. As no functions are currently
-  provided for building assets, `LZPACK` and `SMXLINK` can be used with
-  `add_custom_command()`/`add_custom_target()` to convert models and generate
-  LZP archives as part of the build pipeline.
+Path to the `nm` executable used to generate symbol maps. Although not used
+internally by CMake, this program is part of the GCC toolchain.
+
+### `ELF2X`, `ELF2CPE`, `MKPSXISO`, `LZPACK`, `SMXLINK` (`FILEPATH`)
+
+Paths to the PSn00bSDK tools' executables. As no functions are currently
+provided for building assets, `LZPACK` and `SMXLINK` can be used manually with
+CMake's `add_custom_command()` and `add_custom_target()` to convert models and
+generate LZP archives as part of the build pipeline.
 
 -----------------------------------------
-_Last updated on 2022-02-26 by spicyjpeg_
+_Last updated on 2022-10-11 by spicyjpeg_
