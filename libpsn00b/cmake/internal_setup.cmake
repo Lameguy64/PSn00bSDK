@@ -4,12 +4,25 @@
 # This script is included automatically when using the toolchain file and
 # defines helper functions.
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 include(GNUInstallDirs)
 
-# Re-enable support for dynamic linking as CMake's "Generic" system type
-# disables it.
+## CMake configuration
+
+# Setting these variables and properties would technically be the toolchain
+# script's responsibility, however they are overridden by project() so their
+# setting is deferred to this script.
+set(CMAKE_EXECUTABLE_SUFFIX     ".elf")
+set(CMAKE_STATIC_LIBRARY_PREFIX "lib")
+set(CMAKE_STATIC_LIBRARY_SUFFIX ".a")
+set(CMAKE_SHARED_LIBRARY_PREFIX "")
+set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
+set(CMAKE_SHARED_MODULE_PREFIX  "")
+set(CMAKE_SHARED_MODULE_SUFFIX  ".so")
+
 set_property(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS ON)
+
+## PSn00bSDK initialization
 
 # Fetch SDK version information from build.json.
 if(NOT DEFINED PSN00BSDK_VERSION)
@@ -22,8 +35,9 @@ if(NOT DEFINED PSN00BSDK_VERSION)
 endif()
 
 include(${CMAKE_CURRENT_LIST_DIR}/../libpsn00b.cmake OPTIONAL)
-
-## Settings (can be overridden by projects)
+if(TARGET psn00bsdk)
+	link_libraries(psn00bsdk)
+endif()
 
 # DON'T CHANGE THE ORDER or you'll break the libraries' internal dependencies.
 set(
@@ -40,12 +54,20 @@ set(
 		c
 )
 
+## Settings (can be overridden by projects)
+
 set(PSN00BSDK_EXECUTABLE_LINK_LIBRARIES     ${PSN00BSDK_LIBRARIES})
 set(PSN00BSDK_SHARED_LIBRARY_LINK_LIBRARIES "")
 
 set(PSN00BSDK_EXECUTABLE_SUFFIX     ".exe")
 set(PSN00BSDK_SHARED_LIBRARY_SUFFIX ".dll")
 set(PSN00BSDK_SYMBOL_MAP_SUFFIX     ".map")
+
+define_property(
+	TARGET PROPERTY PSN00BSDK_TARGET_TYPE
+	BRIEF_DOCS      "Type of this target (EXECUTABLE_GPREL, EXECUTABLE_NOGPREL or SHARED_LIBRARY)"
+	FULL_DOCS       "Type of this target (if executable or DLL) or of the executable/DLL this target is going to be linked to (if static library)"
+)
 
 ## Include paths
 
@@ -55,6 +77,8 @@ if(IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/../include)
 else()
 	set(PSN00BSDK_INCLUDE ${CMAKE_CURRENT_LIST_DIR}/../../../include/libpsn00b)
 endif()
+
+include_directories(AFTER ${PSN00BSDK_INCLUDE})
 
 ## Tool paths
 
@@ -97,14 +121,24 @@ if(CMAKE_C_COMPILER_VERSION)
 		message(FATAL_ERROR "Failed to find libgcc in the GCC toolchain's files. Check your toolchain settings, or set the path to libgcc using -DPSN00BSDK_LIBGCC.")
 	endif()
 
-	add_library(gcc STATIC IMPORTED)
-	set_property(TARGET gcc PROPERTY IMPORTED_LOCATION ${PSN00BSDK_LIBGCC})
-	link_libraries(gcc)
+	add_library          (gcc STATIC IMPORTED)
+	set_target_properties(gcc PROPERTIES IMPORTED_LOCATION ${PSN00BSDK_LIBGCC})
+	link_libraries       (gcc)
 endif()
 
 ## Target helpers
 
 function(psn00bsdk_add_executable name type)
+	string(TOUPPER ${type} _type)
+
+	if(_type MATCHES "^(STATIC|GPREL)$")
+		set(_type EXECUTABLE_GPREL)
+	elseif(_type MATCHES "^(DYNAMIC|NOGPREL)$")
+		set(_type EXECUTABLE_NOGPREL)
+	else()
+		message(FATAL_ERROR "Invalid executable type: ${type} (must be STATIC, GPREL, DYNAMIC or NOGPREL)")
+	endif()
+
 	# Throw an error if elf2x was not found (which should never happen if the
 	# SDK is installed properly).
 	if(ELF2X STREQUAL "ELF2X-NOTFOUND")
@@ -112,19 +146,34 @@ function(psn00bsdk_add_executable name type)
 	endif()
 
 	add_executable       (${name} ${ARGN})
-	set_target_properties(${name} PROPERTIES PREFIX "" SUFFIX ".elf")
-	target_link_options  (${name} PRIVATE -T${PSN00BSDK_LDSCRIPTS}/exe.ld)
-
-	psn00bsdk_target_link_sdk (${name} PRIVATE EXECUTABLE ${type} ${PSN00BSDK_EXECUTABLE_LINK_LIBRARIES})
-	target_include_directories(${name} PRIVATE ${PSN00BSDK_INCLUDE})
+	set_target_properties(${name} PROPERTIES PSN00BSDK_TARGET_TYPE ${_type})
+	target_link_libraries(${name} PRIVATE ${PSN00BSDK_EXECUTABLE_LINK_LIBRARIES})
+	target_link_options  (${name} PRIVATE -T$<SHELL_PATH:${PSN00BSDK_LDSCRIPTS}/exe.ld>)
 
 	# Add post-build steps to generate the .exe and symbol map once the
 	# executable is built.
+	# FIXME: CMake does not (yet) allow target-dependent generator expressions
+	# to specify the byproducts, so we have to make sure the generated files
+	# have no prefix/suffix and are in the current build directory.
+	#set(_repl PATH:REPLACE_EXTENSION,LAST_ONLY,$<TARGET_FILE:${name}>)
 	add_custom_command(
-		TARGET     ${name} POST_BUILD
-		COMMAND    ${ELF2X} -q ${name}.elf ${name}${PSN00BSDK_EXECUTABLE_SUFFIX}
-		COMMAND    ${TOOLCHAIN_NM} -f posix -l -n ${name}.elf $<ANGLE-R>${name}${PSN00BSDK_SYMBOL_MAP_SUFFIX}
-		BYPRODUCTS ${name}${PSN00BSDK_EXECUTABLE_SUFFIX} ${name}${PSN00BSDK_SYMBOL_MAP_SUFFIX}
+		TARGET ${name} POST_BUILD
+		COMMAND
+			${ELF2X} -q
+			$<SHELL_PATH:$<TARGET_FILE:${name}>>
+			#$<SHELL_PATH:$<${_repl},${PSN00BSDK_EXECUTABLE_SUFFIX}>>
+			$<SHELL_PATH:${CMAKE_CURRENT_BINARY_DIR}/${name}${PSN00BSDK_EXECUTABLE_SUFFIX}>
+		COMMAND
+			${TOOLCHAIN_NM} -f posix -l -n
+			$<SHELL_PATH:$<TARGET_FILE:${name}>>
+			#$<ANGLE-R>$<SHELL_PATH:$<${_repl},${PSN00BSDK_SYMBOL_MAP_SUFFIX}>>
+			$<ANGLE-R>$<SHELL_PATH:${CMAKE_CURRENT_BINARY_DIR}/${name}${PSN00BSDK_SYMBOL_MAP_SUFFIX}>
+		BYPRODUCTS
+			#$<${_repl},${PSN00BSDK_EXECUTABLE_SUFFIX}>
+			#$<${_repl},${PSN00BSDK_SYMBOL_MAP_SUFFIX}>
+			${CMAKE_CURRENT_BINARY_DIR}/${name}${PSN00BSDK_EXECUTABLE_SUFFIX}
+			${CMAKE_CURRENT_BINARY_DIR}/${name}${PSN00BSDK_SYMBOL_MAP_SUFFIX}
+		VERBATIM
 	)
 endfunction()
 
@@ -132,28 +181,27 @@ function(psn00bsdk_add_library name type)
 	string(TOUPPER ${type} _type)
 
 	if(_type MATCHES "^(STATIC|OBJECT)$")
-		# Remove virtual target dependencies to make sure linking against the
-		# library does not also propagate static library flags.
 		add_library          (${name} ${_type} ${ARGN})
-		set_target_properties(${name} PROPERTIES PREFIX "lib" SUFFIX ".a")
-		set_target_properties(${name} PROPERTIES INTERFACE_LINK_LIBRARIES "")
-		target_link_libraries(${name} PRIVATE psn00bsdk_common)
-
-		target_include_directories(${name} PRIVATE ${PSN00BSDK_INCLUDE})
+		#target_link_libraries(${name} PRIVATE psn00bsdk)
 	elseif(_type MATCHES "^(SHARED|MODULE)$")
 		add_library          (${name} ${_type} ${ARGN})
-		set_target_properties(${name} PROPERTIES PREFIX "" SUFFIX ".so")
-		target_link_options  (${name} PRIVATE -T${PSN00BSDK_LDSCRIPTS}/dll.ld)
-
-		psn00bsdk_target_link_sdk (${name} PRIVATE SHARED_LIBRARY ${PSN00BSDK_SHARED_LIBRARY_LINK_LIBRARIES})
-		target_include_directories(${name} PRIVATE ${PSN00BSDK_INCLUDE})
+		set_target_properties(${name} PROPERTIES PSN00BSDK_TARGET_TYPE SHARED_LIBRARY)
+		target_link_libraries(${name} PRIVATE ${PSN00BSDK_SHARED_LIBRARY_LINK_LIBRARIES})
+		target_link_options  (${name} PRIVATE -T$<SHELL_PATH:${PSN00BSDK_LDSCRIPTS}/dll.ld>)
 
 		# Add a post-build step to dump the DLL's raw contents into a new file
 		# separate from the built ELF.
+		#set(_repl PATH:REPLACE_EXTENSION,LAST_ONLY,$<TARGET_FILE:${name}>)
 		add_custom_command(
-			TARGET     ${name} POST_BUILD
-			COMMAND    ${CMAKE_OBJCOPY} -O binary ${name}.so ${name}${PSN00BSDK_SHARED_LIBRARY_SUFFIX}
-			BYPRODUCTS ${name}${PSN00BSDK_SHARED_LIBRARY_SUFFIX}
+			TARGET ${name} POST_BUILD
+			COMMAND
+				${CMAKE_OBJCOPY} -O binary
+				$<SHELL_PATH:$<TARGET_FILE:${name}>>
+				#$<SHELL_PATH:$<${_repl},${PSN00BSDK_SHARED_LIBRARY_SUFFIX}>>
+				$<SHELL_PATH:${CMAKE_CURRENT_BINARY_DIR}/${name}${PSN00BSDK_SHARED_LIBRARY_SUFFIX}>
+			#BYPRODUCTS $<${_repl},${PSN00BSDK_SHARED_LIBRARY_SUFFIX}>
+			BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/${name}${PSN00BSDK_SHARED_LIBRARY_SUFFIX}
+			VERBATIM
 		)
 	else()
 		message(FATAL_ERROR "Invalid library type: ${type} (must be STATIC, OBJECT, SHARED or MODULE)")
@@ -161,31 +209,6 @@ function(psn00bsdk_add_library name type)
 endfunction()
 
 ## Linking helpers
-
-function(psn00bsdk_target_link_sdk name type target_type)
-	set(_libraries ${ARGN})
-	string(TOUPPER ${target_type} _target_type)
-
-	if(_target_type STREQUAL "EXECUTABLE")
-		list(POP_FRONT _libraries)
-		string(TOUPPER ${ARGV3} _exe_type)
-
-		if(_exe_type MATCHES "^(STATIC|GPREL)$")
-			set(_suffix _exe_gprel)
-		elseif(_exe_type MATCHES "^(DYNAMIC|NOGPREL)$")
-			set(_suffix _exe_nogprel)
-		else()
-			message(FATAL_ERROR "Invalid executable type: ${ARGV3} (must be STATIC, GPREL, DYNAMIC or NOGPREL)")
-		endif()
-	elseif(_target_type STREQUAL "SHARED_LIBRARY")
-		set(_suffix _dll)
-	else()
-		message(FATAL_ERROR "Invalid target type: ${target_type} (must be EXECUTABLE or SHARED_LIBRARY)")
-	endif()
-
-	list(TRANSFORM _libraries APPEND ${_suffix})
-	target_link_libraries(${name} ${type} psn00bsdk${_suffix} ${_libraries})
-endfunction()
 
 function(psn00bsdk_target_incbin_a name type symbol_name size_name path section align)
 	string(MAKE_C_IDENTIFIER ${symbol_name} _id)

@@ -1,7 +1,7 @@
 # libpsn00b build script
-# (C) 2021 spicyjpeg - MPL licensed
+# (C) 2021-2022 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 
 # ${PROJECT_SOURCE_DIR} is not available until project() is called.
 set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/cmake/sdk.cmake)
@@ -17,6 +17,9 @@ include(${PROJECT_SOURCE_DIR}/cmake/flags.cmake)
 
 ## Libraries
 
+set(_types    EXECUTABLE_GPREL EXECUTABLE_NOGPREL SHARED_LIBRARY)
+set(_suffixes _exe_gprel _exe_nogprel _dll)
+
 foreach(_library IN LISTS PSN00BSDK_LIBRARIES)
 	# libc needs special handling due to the different directory name.
 	if(${_library} STREQUAL "c")
@@ -30,17 +33,26 @@ foreach(_library IN LISTS PSN00BSDK_LIBRARIES)
 		${_path}/*.s ${_path}/*.c ${_path}/*.cpp
 	)
 
-	foreach(_suffix IN ITEMS _exe_nogprel _exe_gprel _dll)
+	# Build a separate version of the library for each supported target type
+	# and create a virtual target that links the appropriate version of the
+	# library.
+	add_library(${_library} INTERFACE)
+
+	foreach(_type _suffix IN ZIP_LISTS _types _suffixes)
 		set(_name ${_library}${_suffix})
 		list(APPEND _libraries ${_name})
 
 		psn00bsdk_add_library(${_name} STATIC ${_sources})
-		target_link_libraries(${_name} PUBLIC psn00bsdk${_suffix})
+		set_target_properties(${_name} PROPERTIES PSN00BSDK_TARGET_TYPE ${_type})
+		target_link_libraries(
+			${_library} INTERFACE
+			$<$<STREQUAL:$<UPPER_CASE:$<TARGET_PROPERTY:PSN00BSDK_TARGET_TYPE>>,${_type}>:${_name}>
+		)
 	endforeach()
 endforeach()
 
 # Add binary assets to each version of the libraries.
-foreach(_suffix IN ITEMS _exe_nogprel _exe_gprel _dll)
+foreach(_suffix IN LISTS _suffixes)
 	psn00bsdk_target_incbin(
 		psxgpu${_suffix} PRIVATE _gpu_debug_font
 		psxgpu/dbugfont.tim
@@ -50,12 +62,7 @@ endforeach()
 ## Installation
 
 install(
-	TARGETS
-		psn00bsdk_common
-		psn00bsdk_exe_gprel
-		psn00bsdk_exe_nogprel
-		psn00bsdk_dll
-		${_libraries}
+	TARGETS     psn00bsdk ${PSN00BSDK_LIBRARIES} ${_libraries}
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/libpsn00b/$<LOWER_CASE:$<CONFIG>>
 	EXPORT      libpsn00b
 )
