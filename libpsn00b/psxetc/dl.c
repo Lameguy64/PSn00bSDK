@@ -34,9 +34,6 @@
 
 /* Compile options */
 
-// Uncomment before building to enable debug logging (via printf()).
-//#define DEBUG
-
 // Comment before building to disable functions that rely on BIOS file APIs,
 // i.e. DL_LoadSymbolMapFromFile() and DL_LoadDLLFromFile().
 // FIXME: those seem to be broken currently, and shouldn't be used anyway
@@ -95,7 +92,7 @@ void *_dl_resolve_helper(DLL *dll, uint32_t index) {
 		address = DL_GetSymbolByName(_name);
 
 	if (!address) {
-		_LOG("psxetc: FATAL! Can't resolve %s, locking up\n", _name);
+		_LOG("psxetc: FATAL! can't resolve %s, locking up\n", _name);
 		while (1)
 			__asm__ volatile("nop");
 	}
@@ -136,7 +133,7 @@ static uint32_t _elf_hash(const char *str) {
 static uint8_t *_dl_load_file(const char *filename, size_t *size_output) {
 	int32_t fd = open(filename, 1);
 	if (fd < 0) {
-		_LOG("psxetc: Can't open %s, error = %d\n", filename, fd);
+		_LOG("psxetc: can't open %s, error = %d\n", filename, fd);
 		_ERROR(RTLD_E_FILE_OPEN, 0);
 	}
 
@@ -147,11 +144,11 @@ static uint8_t *_dl_load_file(const char *filename, size_t *size_output) {
 
 	uint8_t *buffer = malloc(size);
 	if (!buffer) {
-		_LOG("psxetc: Unable to allocate %d bytes for %s\n", size, filename);
+		_LOG("psxetc: unable to allocate %d bytes for %s\n", size, filename);
 		_ERROR(RTLD_E_FILE_ALLOC, 0);
 	}
 
-	_LOG("psxetc: Loading %s (%d bytes)..", filename, size);
+	//_LOG("psxetc: loading %s (%d bytes)..", filename, size);
 
 	for (uint32_t offset = 0; offset < size; ) {
 		int32_t length = read(fd, &(buffer[offset]), 0x800);
@@ -164,7 +161,7 @@ static uint8_t *_dl_load_file(const char *filename, size_t *size_output) {
 			_ERROR(RTLD_E_FILE_READ, 0);
 		}
 
-		_LOG(".");
+		//_LOG(".");
 		offset += length;
 	}
 
@@ -196,7 +193,7 @@ int32_t DL_ParseSymbolMap(const char *ptr, size_t size) {
 	_symbol_map.nbucket = entries;
 	_symbol_map.nchain  = entries;
 	_LOG(
-		"psxetc: Allocating nbucket = %d, nchain = %d\n",
+		"psxetc: allocating nbucket = %d, nchain = %d\n",
 		_symbol_map.nbucket,
 		entries
 	);
@@ -208,7 +205,7 @@ int32_t DL_ParseSymbolMap(const char *ptr, size_t size) {
 	_symbol_map.chain   = malloc(sizeof(uint32_t) * entries);
 
 	if (!_symbol_map.entries || !_symbol_map.bucket || !_symbol_map.chain) {
-		_LOG("psxetc: Unable to allocate symbol map table\n");
+		_LOG("psxetc: unable to allocate symbol map table\n");
 		_ERROR(RTLD_E_MAP_ALLOC, -1);
 	}
 
@@ -251,13 +248,10 @@ int32_t DL_ParseSymbolMap(const char *ptr, size_t size) {
 				(_type == 'D') || // .data
 				(_type == 'B')    // .bss
 			)) {
-				_LOG(
-					"psxetc: Map sym: %08x,%08x [%c %s]\n",
-					address,
-					_size,
-					_type,
-					name
-				);
+				//_LOG(
+					//"psxetc: map sym: %08x,%08x [%c %s]\n",
+					//address, _size, _type, name
+				//);
 
 				MapEntry *entry = &(_symbol_map.entries[index]);
 				entry->hash     = hash;
@@ -280,7 +274,7 @@ int32_t DL_ParseSymbolMap(const char *ptr, size_t size) {
 			pos++;
 	}
 
-	_LOG("psxetc: Parsed %d symbols\n", entries);
+	_LOG("psxetc: parsed %d symbols\n", entries);
 	if (!entries)
 		_ERROR(RTLD_E_NO_SYMBOLS, -1);
 
@@ -313,7 +307,7 @@ void DL_UnloadSymbolMap(void) {
 
 void *DL_GetSymbolByName(const char *name) {
 	if (!_symbol_map.entries) {
-		_LOG("psxetc: Attempted lookup with no map loaded\n");
+		_LOG("psxetc: attempted lookup with no map loaded\n");
 		_ERROR(RTLD_E_NO_MAP, 0);
 	}
 
@@ -326,9 +320,8 @@ void *DL_GetSymbolByName(const char *name) {
 	for (uint32_t i = _symbol_map.bucket[hash_mod]; i != 0xffffffff;) {
 		if (i >= _symbol_map.nchain) {
 			_LOG(
-				"psxetc: GetSymbolByName() index out of bounds (i = %d, n = %d)\n",
-				i,
-				_symbol_map.nchain
+				"psxetc: GetSymbolByName() index out of bounds (%d >= %d)\n",
+				i, _symbol_map.nchain
 			);
 			_ERROR(RTLD_E_HASH_LOOKUP, 0);
 		}
@@ -336,14 +329,14 @@ void *DL_GetSymbolByName(const char *name) {
 		MapEntry *entry = &(_symbol_map.entries[i]);
 
 		if (hash == entry->hash) {
-			_LOG("psxetc: Map lookup [%s = %08x]\n", name, entry->ptr);
+			//_LOG("psxetc: map lookup [%s = %08x]\n", name, entry->ptr);
 			return entry->ptr;
 		}
 
 		i = _symbol_map.chain[i];
 	}
 
-	_LOG("psxetc: Map lookup [%s not found]\n", name);
+	_LOG("psxetc: map lookup [%s not found]\n", name);
 	_ERROR(RTLD_E_MAP_SYMBOL, 0);
 }
 
@@ -359,14 +352,14 @@ DLL *DL_CreateDLL(void *ptr, size_t size, DL_ResolveMode mode) {
 
 	DLL *dll = malloc(sizeof(DLL));
 	if (!dll) {
-		_LOG("psxetc: Unable to allocate DLL struct\n");
+		_LOG("psxetc: unable to allocate DLL struct\n");
 		_ERROR(RTLD_E_DLL_ALLOC, 0);
 	}
 
 	dll->ptr        = ptr;
 	dll->malloc_ptr = (mode & RTLD_FREE_ON_DESTROY) ? ptr : 0;
 	dll->size       = size;
-	_LOG("psxetc: Initializing DLL at %08x\n", ptr);
+	_LOG("psxetc: initializing DLL at %08x\n", ptr);
 
 	// Interpret the key-value pairs in the .dynamic section to obtain info
 	// about all the other sections. The pairs are null-terminated, which makes
@@ -375,33 +368,33 @@ DLL *DL_CreateDLL(void *ptr, size_t size, DL_ResolveMode mode) {
 	uint32_t first_got_sym = 0;
 
 	for (Elf32_Dyn *dyn = (Elf32_Dyn *) ptr; dyn->d_tag; dyn++) {
-		_LOG("psxetc: .dynamic %08x=%08x ", dyn->d_tag, dyn->d_un.d_val);
+		//_LOG("psxetc: .dynamic %08x=%08x ", dyn->d_tag, dyn->d_un.d_val);
 
 		switch (dyn->d_tag) {
 			// Offset of .got section
 			case DT_PLTGOT:
-				_LOG("[PLTGOT]\n");
+				//_LOG("[PLTGOT]\n");
 
 				dll->got = (void *) (ptr + dyn->d_un.d_val);
 				break;
 
 			// Offset of .hash section
 			case DT_HASH:
-				_LOG("[HASH]\n");
+				//_LOG("[HASH]\n");
 
 				dll->hash = (void *) (ptr + dyn->d_un.d_val);
 				break;
 
 			// Offset of .dynstr (NOT .strtab) section
 			case DT_STRTAB:
-				_LOG("[STRTAB]\n");
+				//_LOG("[STRTAB]\n");
 
 				dll->strtab = (void *) (ptr + dyn->d_un.d_val);
 				break;
 
 			// Offset of .dynsym (NOT .symtab) section
 			case DT_SYMTAB:
-				_LOG("[SYMTAB]\n");
+				//_LOG("[SYMTAB]\n");
 
 				dll->symtab = (void *) (ptr + dyn->d_un.d_val);
 				break;
@@ -413,67 +406,67 @@ DLL *DL_CreateDLL(void *ptr, size_t size, DL_ResolveMode mode) {
 
 			// Length of each .dynsym entry
 			case DT_SYMENT:
-				_LOG("[SYMENT]\n");
+				//_LOG("[SYMENT]\n");
 
 				// Only 16-byte symbol table entries are supported.
 				if (dyn->d_un.d_val != sizeof(Elf32_Sym)) {
 					free(dll);
 
-					_LOG("psxetc: Invalid symtab entry size %d\n", dyn->d_un.d_val);
+					_LOG("psxetc: invalid DLL symtab entry size %d\n", dyn->d_un.d_val);
 					_ERROR(RTLD_E_DLL_FORMAT, 0);
 				}
 				break;
 
 			// MIPS ABI (?) version
 			case DT_MIPS_RLD_VERSION:
-				_LOG("[MIPS_RLD_VERSION]\n");
+				//_LOG("[MIPS_RLD_VERSION]\n");
 
 				// Versions other than 1 are unsupported (do they even exist?).
 				if (dyn->d_un.d_val != 1) {
 					free(dll);
 
-					_LOG("psxetc: Invalid DLL version %d\n", dyn->d_un.d_val);
+					_LOG("psxetc: invalid DLL version %d\n", dyn->d_un.d_val);
 					_ERROR(RTLD_E_DLL_FORMAT, 0);
 				}
 				break;
 
 			// DLL/ABI flags
 			case DT_MIPS_FLAGS:
-				_LOG("[MIPS_FLAGS]\n");
+				//_LOG("[MIPS_FLAGS]\n");
 
 				// Shortcut pointers (whatever they are) are not supported.
 				if (dyn->d_un.d_val & RHF_QUICKSTART) {
 					free(dll);
 
-					_LOG("psxetc: Invalid flags\n");
+					_LOG("psxetc: invalid DLL flags\n");
 					_ERROR(RTLD_E_DLL_FORMAT, 0);
 				}
 				break;
 
 			// Number of local (not to resolve) GOT entries
 			case DT_MIPS_LOCAL_GOTNO:
-				_LOG("[MIPS_LOCAL_GOTNO]\n");
+				//_LOG("[MIPS_LOCAL_GOTNO]\n");
 
 				local_got_len = dyn->d_un.d_val;
 				break;
 
 			// Base address DLL was compiled for
 			case DT_MIPS_BASE_ADDRESS:
-				_LOG("[MIPS_BASE_ADDRESS]\n");
+				//_LOG("[MIPS_BASE_ADDRESS]\n");
 
 				// Base addresses other than zero are not supported. It would
 				// be easy enough to support them, but why?
 				if (dyn->d_un.d_val) {
 					free(dll);
 
-					_LOG("psxetc: Invalid base address %08x\n", dyn->d_un.d_val);
+					_LOG("psxetc: invalid DLL base address %08x\n", dyn->d_un.d_val);
 					_ERROR(RTLD_E_DLL_FORMAT, 0);
 				}
 				break;
 
 			// Number of symbol table entries
 			case DT_MIPS_SYMTABNO:
-				_LOG("[MIPS_SYMTABNO]\n");
+				//_LOG("[MIPS_SYMTABNO]\n");
 
 				dll->symbol_count = dyn->d_un.d_val;
 				break;
@@ -485,7 +478,7 @@ DLL *DL_CreateDLL(void *ptr, size_t size, DL_ResolveMode mode) {
 
 			// Index of first symbol table entry which has a matching GOT entry
 			case DT_MIPS_GOTSYM:
-				_LOG("[MIPS_GOTSYM]\n");
+				//_LOG("[MIPS_GOTSYM]\n");
 
 				first_got_sym = dyn->d_un.d_val;
 				break;
@@ -495,8 +488,8 @@ DLL *DL_CreateDLL(void *ptr, size_t size, DL_ResolveMode mode) {
 				//_LOG("[MIPS_HIPAGENO]\n");
 				//break;
 
-			default:
-				_LOG("[ignored]\n");
+			//default:
+				//_LOG("[ignored]\n");
 		}
 	}
 
@@ -510,8 +503,7 @@ DLL *DL_CreateDLL(void *ptr, size_t size, DL_ResolveMode mode) {
 	dll->got_length = local_got_len + (dll->symbol_count - first_got_sym) - 2;
 	_LOG(
 		"psxetc: %d symbols, %d GOT entries\n",
-		dll->symbol_count,
-		dll->got_length
+		dll->symbol_count, dll->got_length
 	);
 
 	// Relocate the DLL by adding its base address to all pointers in the GOT
@@ -538,12 +530,10 @@ DLL *DL_CreateDLL(void *ptr, size_t size, DL_ResolveMode mode) {
 			continue;
 
 		sym->st_value += (uint32_t) ptr;
-		_LOG(
-			"psxetc: DLL sym: %08x,%08x [%s]\n",
-			sym->st_value,
-			sym->st_size,
-			_name
-		);
+		//_LOG(
+			//"psxetc: DLL sym: %08x,%08x [%s]\n",
+			//sym->st_value, sym->st_size, _name
+		//);
 
 		// If RTLD_NOW was passed, resolve GOT entries ahead of time by
 		// cross-referencing them with the symbol table.
@@ -651,7 +641,7 @@ void *DL_GetDLLSymbol(const DLL *dll, const char *name) {
 	// provided.
 	for (uint32_t i = bucket[hash_mod]; i != 0xffffffff;) {
 		if (i >= nchain) {
-			_LOG("psxetc: DL_GetDLLSymbol() index out of bounds (i = %d, n = %d)\n", i, nchain);
+			_LOG("psxetc: DL_GetDLLSymbol() index out of bounds (%d >= %d)\n", i, nchain);
 			_ERROR(RTLD_E_HASH_LOOKUP, 0);
 		}
 
@@ -659,7 +649,7 @@ void *DL_GetDLLSymbol(const DLL *dll, const char *name) {
 		const char *_name = &(dll->strtab[sym->st_name]);
 
 		if (!strcmp(name, _name)) {
-			_LOG("psxetc: DLL lookup [%s = %08x]\n", name, sym->st_value);
+			//_LOG("psxetc: DLL lookup [%s = %08x]\n", name, sym->st_value);
 			return sym->st_value;
 		}
 

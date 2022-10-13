@@ -37,11 +37,6 @@ fixed.
   due to the SPU status register being emulated incorrectly. They work as
   expected on other emulators as well as on real hardware.
 
-`psxcd`:
-
-- Custom callbacks registered using `CdReadyCallback()` seem to be unstable on
-  DuckStation (and possibly on real hardware), occasionally dropping sectors.
-
 `psxetc`:
 
 - `DL_LoadSymbolMapFromFile()`, `DL_LoadDLLFromFile()` and `dlopen()` have been
@@ -54,4 +49,4 @@ fixed.
 See [README.md in the examples directory](../examples/README.md#examples-summary).
 
 -----------------------------------------
-_Last updated on 2022-10-11 by spicyjpeg_
+_Last updated on 2022-10-13 by spicyjpeg_

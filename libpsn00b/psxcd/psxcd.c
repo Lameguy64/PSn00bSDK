@@ -46,7 +46,7 @@ int CdInit(void) {
 		CdControl(CdlDemute, 0, 0);
 		_LOG("psxcd: setup done\n");
 	} else {
-		_LOG("psxcd: initialization error, bad disc/drive or no disc inserted\n");
+		_LOG("psxcd: setup error, bad disc/drive or no disc inserted\n");
 	}
 	
 	return 1;
@@ -106,14 +106,8 @@ int CdControlF(unsigned char com, const void *param)
 			param_len = 2;
 			break;
 		case CdlSetmode:
-			param_len = 1;
-			break;
 		case CdlSetsession:
-			param_len = 1;
-			break;
 		case CdlTest:
-			param_len = 1;
-			break;
 		case CdlGetTD:
 			param_len = 1;
 			break;
@@ -126,6 +120,7 @@ int CdControlF(unsigned char com, const void *param)
 				_cd_control(CdlSetloc, param, 3);
 				_cd_last_setloc = *((CdlLOC*)param);
 			}
+			break;
 	}
 
 	// Issue CD command

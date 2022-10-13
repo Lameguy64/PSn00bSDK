@@ -53,40 +53,46 @@ static const struct JMP_BUF _isr_jmp_buf = {
 /* Internal IRQ and DMA handlers */
 
 static void _global_isr(void) {
-	uint16_t stat = IRQ_STAT, mask = IRQ_MASK;
+	uint16_t stat = IRQ_STAT & IRQ_MASK;
 
-	// Clear all IRQ flags in one shot. This is not the "proper" way to do it
-	// but it's much faster than clearing one flag at a time.
-	IRQ_STAT = ~mask;
+	for (; stat; stat = IRQ_STAT & IRQ_MASK) {
+		//for (int i = 0; i < NUM_IRQ_CHANNELS; i++) {
+		for (int i = 0, mask = 1; stat; i++, stat >>= 1, mask <<= 1) {
+			if (!(stat & 1))
+				continue;
 
-	//for (int i = 0; i < NUM_IRQ_CHANNELS; i++) {
-	for (int i = 0; stat; i++, stat >>= 1) {
-		if (!(stat & 1))
-			continue;
+			// Acknowledge the current IRQ. Note that clearing all IRQ flags in one
+			// shot would result in hard-to-debug race conditions (been there, done
+			// that).
+			IRQ_STAT = (uint16_t) (mask ^ 0xffff);
 
-		if (_irq_handlers[i])
-			_irq_handlers[i]();
+			if (_irq_handlers[i])
+				_irq_handlers[i]();
+		}
 	}
 
 	ReturnFromException();
 }
 
 static void _global_dma_handler(void) {
-	uint32_t stat = DMA_DICR;
+	uint32_t dicr = DMA_DICR;
+	uint32_t stat = (dicr >> 24) & 0x7f;
 
-	// Clear all DMA IRQ flags in one shot (note that flags are cleared by
-	// writing 1 to them rather than 0).
-	stat    &= 0x7fff0000;
-	DMA_DICR = stat;
-	stat   >>= 24;
+	for (; stat; dicr = DMA_DICR, stat = (dicr >> 24) & 0x7f) {
+		uint32_t base = dicr & 0x00ffffff;
 
-	//for (int i = 0; i < NUM_DMA_CHANNELS; i++) {
-		for (int i = 0; stat; i++, stat >>= 1) {
-		if (!(stat & 1))
-			continue;
+		//for (int i = 0; i < NUM_DMA_CHANNELS; i++) {
+		for (int i = 0, mask = (1 << 24); stat; i++, stat >>= 1, mask <<= 1) {
+			if (!(stat & 1))
+				continue;
 
-		if (_dma_handlers[i])
-			_dma_handlers[i]();
+			// Acknowledge the current DMA channel's IRQ. For whatever reason
+			// DMA IRQ flags are cleared by writing 1 to them rather than 0.
+			DMA_DICR = base | mask;
+
+			if (_dma_handlers[i])
+				_dma_handlers[i]();
+		}
 	}
 }
 

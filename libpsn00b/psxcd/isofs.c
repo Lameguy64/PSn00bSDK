@@ -148,7 +148,7 @@ static int _CdReadIsoDirectory(int lba)
 	CdIntToPos(lba, &loc);
 	i = CdPosToInt(&loc);
 
-	_LOG("psxcd_dbg: Seek to sector %d\n", i);
+	_LOG("psxcd: Seek to sector %d\n", i);
 
 	if( !CdControl(CdlSetloc, (uint8_t*)&loc, 0) )
 	{
@@ -232,7 +232,7 @@ static void dump_directory(void)
 		strncpy(namebuff, 
 			_cd_iso_directory_buff+dir_pos+sizeof(ISO_DIR_ENTRY), dir_entry->identifierLen);
 			
-		_LOG("P:%d L:%d %s\n", dir_pos, dir_entry->identifierLen, namebuff);
+		_LOG("psxcd: P:%d L:%d %s\n", dir_pos, dir_entry->identifierLen, namebuff);
 		
 		dir_pos += dir_entry->entryLength;
 		i++;
@@ -251,7 +251,7 @@ static void dump_directory(void)
 		}
 	}
 	
-	_LOG("--\n");
+	_LOG("psxcd: --\n");
 	
 }
 
@@ -534,7 +534,7 @@ CdlFILE *CdSearchFile(CdlFILE *fp, const char *filename)
 	}
 	
 #ifndef NDEBUG
-	dump_directory();
+	//dump_directory();
 #endif
 	
 	if( find_dir_entry(fp->name, &dir_entry) )
@@ -582,7 +582,7 @@ CdlDIR *CdOpenDir(const char* path)
 	for( i=1; i<num_dirs; i++ )
 	{
 		rbuff = resolve_pathtable_path( i, tpath_rbuff+127 );
-		_LOG( "psxcd_dbg: Found = %s|\n", rbuff );
+		_LOG( "psxcd: Found = %s|\n", rbuff );
 
 		if( rbuff )
 		{
@@ -596,14 +596,14 @@ CdlDIR *CdOpenDir(const char* path)
 	
 	if( !found_dir )
 	{
-		_LOG( "psxcd_dbg: Directory path not found.\n" );
+		_LOG( "psxcd: Directory path not found.\n" );
 		return NULL;
 	}
 
-	_LOG( "psxcd_dbg: Found directory at record %d!\n", found_dir );
+	_LOG( "psxcd: Found directory at record %d!\n", found_dir );
 
 	get_pathtable_entry( found_dir, &tbl_entry, NULL );
-	_LOG( "psxcd_dbg: Directory LBA = %d\n", tbl_entry.dirOffs );
+	_LOG( "psxcd: Directory LBA = %d\n", tbl_entry.dirOffs );
 
 	_CdReadIsoDirectory( tbl_entry.dirOffs );
 
@@ -668,11 +668,11 @@ int CdReadDir(CdlDIR *dir, CdlFILE* file)
 	
 	file->size = dir_entry->entrySize.lsb;
 
-	_LOG("dir_entry->entryLength = %d, ", dir_entry->entryLength);
+	_LOG("psxcd: dir_entry->entryLength = %d, ", dir_entry->entryLength);
 
 	d_dir->_pos += dir_entry->entryLength;
 
-	_LOG("d_dir->_pos = %d\n", d_dir->_pos);
+	_LOG("psxcd: d_dir->_pos = %d\n", d_dir->_pos);
 
 	// Check if padding is reached (end of record sector)
 	if( d_dir->_dir[d_dir->_pos] == 0 )
