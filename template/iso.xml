@@ -13,6 +13,7 @@
 	<track type="data">
 		<identifiers
 			system			="PLAYSTATION"
+			application		="PLAYSTATION"
 			volume			="PSN00BSDK_TEMPLATE"
 			volume_set		="PSN00BSDK_TEMPLATE"
 			publisher		="MEIDOTEK"
@@ -20,6 +21,19 @@
 			application		="PLAYSTATION"
 			copyright		="README.TXT;1"
 		/>
+
+		<!-- <license>
+			Optional, specifies the license file to use. The file format of the license file must be in
+			raw 2336 byte sector format, like the ones included with the PlayStation Programmer's Tool
+			SDK (also known as PsyQ SDK) in PS\CDGEN\LCNSFILE.
+
+			License data is not included within the MKPSXISO program to avoid possible legal problems
+			in the open source environment... Better be safe than sorry.
+
+			Attributes:
+				file	- Specifies the license file to inject into the ISO image.
+		-->
+		<!-- <license file="${PROJECT_SOURCE_DIR}/license.dat"/> -->
 
 		<directory_tree>
 			<file name="SYSTEM.CNF"		type="data" source="${PROJECT_SOURCE_DIR}/system.cnf" />
