@@ -47,7 +47,7 @@ typedef struct _SPI_Context {
 } SPI_Context;
 
 static volatile SPI_Context				_context;
-static volatile SPI_Request volatile	*_current_req;
+static volatile SPI_Request *_current_req;
 static volatile SPI_Callback			_default_cb;
 
 /* Request queue management */
