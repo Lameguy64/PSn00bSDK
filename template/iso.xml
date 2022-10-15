@@ -24,7 +24,7 @@
 		<directory_tree>
 			<file name="SYSTEM.CNF"		type="data" source="${PROJECT_SOURCE_DIR}/system.cnf" />
 			<file name="TEMPLATE.EXE"	type="data" source="template.exe" />
-			<file name="TEMPLATE.MAP"	type="data" source="template.map" />
+			<!--<file name="TEMPLATE.MAP"	type="data" source="template.map" />-->
 
 			<dummy sectors="1024"/>
 		</directory_tree>

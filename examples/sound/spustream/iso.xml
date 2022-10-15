@@ -17,7 +17,6 @@
 		<directory_tree>
 			<file name="SYSTEM.CNF"		type="data" source="${PROJECT_SOURCE_DIR}/system.cnf" />
 			<file name="SPUSTRM.EXE"	type="data" source="spustream.exe" />
-			<file name="SPUSTRM.MAP"	type="data" source="spustream.map" />
 
 			<file name="STREAM.BIN"		type="data" source="${PROJECT_SOURCE_DIR}/stream.bin" />
 

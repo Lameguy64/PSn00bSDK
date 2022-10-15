@@ -30,8 +30,6 @@
 			-->
 			<!--<file name="SYSTEM.CNF"	type="data" source="${PROJECT_SOURCE_DIR}/system.cnf" />-->
 			<file name="PSX.EXE"	type="data" source="system573.exe" />
-			<file name="PSX.MAP"	type="data" source="system573.map" />
-
 			<file name="QSY.DXD"	type="data" source="system573.exe" />
 			<file name="SSW.BXF"	type="data" source="system573.exe" />
 			<file name="TSV.AXG"	type="data" source="system573.exe" />

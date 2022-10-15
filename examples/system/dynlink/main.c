@@ -83,12 +83,10 @@ static const char *const DLL_FILENAMES[] = {
 #define BGCOLOR_G 24
 #define BGCOLOR_B  0
 
-void init_context(CONTEXT *ctx) {
-	DB *db;
+void init_context(RenderContext *ctx) {
+	Framebuffer *db;
 
 	ResetGraph(0);
-	ctx->xres      = SCREEN_XRES;
-	ctx->yres      = SCREEN_YRES;
 	ctx->db_active = 0;
 
 	db = &(ctx->db[0]);
@@ -121,8 +119,8 @@ void init_context(CONTEXT *ctx) {
 	FntOpen(4, 12, 312, 32, 2, 256);
 }
 
-void display(CONTEXT *ctx) {
-	DB *db;
+void display(RenderContext *ctx) {
+	Framebuffer *db;
 
 	DrawSync(0);
 	VSync(0);
@@ -185,13 +183,14 @@ void *custom_resolver(DLL *dll, const char *name) {
 // and the pointers returned by DL_GetDLLSymbol() should be saved and reused as
 // much as possible.
 typedef struct {
-	void (*init)(CONTEXT *);
-	void (*render)(CONTEXT *, uint16_t buttons);
+	void (*init)(RenderContext *);
+	void (*render)(RenderContext *, uint16_t buttons);
 } DLL_API;
 
 static DLL     *dll = 0;
 static DLL_API dll_api;
-static CONTEXT ctx;
+
+static RenderContext ctx;
 
 /* Main */
 

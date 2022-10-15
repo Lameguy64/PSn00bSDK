@@ -81,16 +81,18 @@ static SVECTOR  rot   = { 0 };
 static VECTOR   pos   = { 0, 0, 400 };
 static MATRIX   mtx, lmtx;
 
-void init(CONTEXT *ctx) {
+void init(RenderContext *ctx) {
+	Framebuffer *db = &(ctx->db[ctx->db_active]);
+
 	InitGeom();
 
-	gte_SetGeomOffset(ctx->xres / 2, ctx->yres / 2);
-	gte_SetGeomScreen(ctx->xres / 2);
+	gte_SetGeomOffset(db->draw.clip.w / 2, db->draw.clip.h / 2);
+	gte_SetGeomScreen(db->draw.clip.w / 2);
 	gte_SetBackColor(63, 63, 63);
 	gte_SetColorMatrix(&color_mtx);
 }
 
-void render(CONTEXT *ctx, uint16_t buttons) {
+void render(RenderContext *ctx, uint16_t buttons) {
 	RotMatrix(&rot, &mtx);
 	TransMatrix(&mtx, &pos);
 	MulMatrix0(&light_mtx, &mtx, &lmtx);
@@ -104,8 +106,8 @@ void render(CONTEXT *ctx, uint16_t buttons) {
 	rot.vx += step;
 	rot.vz += step;
 
-	DB      *db   = &(ctx->db[ctx->db_active]);
-	POLY_F4	*pol4 = (POLY_F4 *) ctx->db_nextpri;
+	Framebuffer *db   = &(ctx->db[ctx->db_active]);
+	POLY_F4	    *pol4 = (POLY_F4 *) ctx->db_nextpri;
 
 	for (uint32_t i = 0; i < CUBE_FACES; i++) {
 		int32_t p;

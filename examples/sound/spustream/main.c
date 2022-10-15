@@ -117,17 +117,17 @@
 #define BGCOLOR_B  0
 
 typedef struct {
-	DISPENV  disp;
-	DRAWENV  draw;
-} DB;
+	DISPENV disp;
+	DRAWENV draw;
+} Framebuffer;
 
 typedef struct {
-	DB  db[2];
-	int db_active;
-} CONTEXT;
+	Framebuffer db[2];
+	int         db_active;
+} RenderContext;
 
-void init_context(CONTEXT *ctx) {
-	DB *db;
+void init_context(RenderContext *ctx) {
+	Framebuffer *db;
 
 	ResetGraph(0);
 	ctx->db_active = 0;
@@ -154,8 +154,8 @@ void init_context(CONTEXT *ctx) {
 	FntOpen(8, 16, 304, 208, 2, 512);
 }
 
-void display(CONTEXT *ctx) {
-	DB *db;
+void display(RenderContext *ctx) {
+	Framebuffer *db;
 
 	DrawSync(0);
 	VSync(0);
@@ -181,13 +181,9 @@ void display(CONTEXT *ctx) {
 #define CHUNK_SIZE			(BUFFER_SIZE * NUM_CHANNELS)
 
 typedef struct {
-	uint32_t lba;
-	uint32_t length;
-	uint32_t pos;
-
-	uint32_t spu_addr;
-	uint32_t spu_pos;
-	uint32_t db_active;
+	int lba, length, pos;
+	int spu_addr, spu_pos;
+	int db_active;
 } StreamContext;
 
 static volatile StreamContext str_ctx;
@@ -316,10 +312,10 @@ void init_stream(CdlFILE *file) {
 }
 
 void start_stream(void) {
-	SPU_KEY_OFF = CHANNEL_MASK;
+	uint32_t addr = BUFFER_START_ADDR + CHUNK_SIZE * str_ctx.db_active;
 
 	for (int i = 0; i < NUM_CHANNELS; i++) {
-		SPU_CH_ADDR(i) = SPU_RAM_ADDR(BUFFER_START_ADDR + BUFFER_SIZE * i);
+		SPU_CH_ADDR(i) = SPU_RAM_ADDR(addr + BUFFER_SIZE * i);
 		SPU_CH_FREQ(i) = SAMPLE_RATE;
 		SPU_CH_ADSR(i) = 0x1fee80ff;
 	}
@@ -332,13 +328,25 @@ void start_stream(void) {
 	SPU_CH_VOL_L(1) = 0x0000;
 	SPU_CH_VOL_R(1) = 0x3fff;
 
-	SPU_KEY_ON = CHANNEL_MASK;
 	spu_irq_handler();
+	SPU_KEY_ON = CHANNEL_MASK;
+}
+
+// This is basically a variant of reset_spu_channels() that only resets the
+// channels used to play the stream, to (again) prevent them from triggering
+// the SPU IRQ while the stream is paused.
+void stop_stream(void) {
+	SPU_KEY_OFF = CHANNEL_MASK;
+
+	for (int i = 0; i < NUM_CHANNELS; i++)
+		SPU_CH_ADDR(i) = SPU_RAM_ADDR(DUMMY_BLOCK_ADDR);
+
+	SPU_KEY_ON = CHANNEL_MASK;
 }
 
 /* Main */
 
-static CONTEXT ctx;
+static RenderContext ctx;
 
 #define SHOW_STATUS(...) { FntPrint(-1, __VA_ARGS__); FntFlush(-1); display(&ctx); }
 #define SHOW_ERROR(...)  { SHOW_STATUS(__VA_ARGS__); while (1) __asm__("nop"); }
@@ -351,7 +359,13 @@ int main(int argc, const char* argv[]) {
 	CdInit();
 	reset_spu_channels();
 
-	SHOW_STATUS("LOCATING STREAM FILE\n");
+	// Set up controller polling.
+	uint8_t pad_buff[2][34];
+	InitPAD(pad_buff[0], 34, pad_buff[1], 34);
+	StartPAD();
+	ChangeClearPAD(0);
+
+	SHOW_STATUS("OPENING STREAM FILE\n");
 
 	CdlFILE file;
 	if (!CdSearchFile(&file, "\\STREAM.BIN"))
@@ -361,28 +375,27 @@ int main(int argc, const char* argv[]) {
 	init_stream(&file);
 	start_stream();
 
-	// Set up controller polling.
-	uint8_t pad_buff[2][34];
-	InitPAD(pad_buff[0], 34, pad_buff[1], 34);
-	StartPAD();
-	ChangeClearPAD(0);
+	int paused = 0;
 
 	uint16_t sample_rate  = SAMPLE_RATE;
 	uint16_t last_buttons = 0xffff;
 
 	while (1) {
-		FntPrint(-1, "PLAYING SPU STREAM\n");
+		FntPrint(-1, "PLAYING SPU STREAM\n\n");
+
+		FntPrint(-1, "BUFFER: %d\nSTATUS: ", str_ctx.db_active);
 		if (str_ctx.spu_pos >= CHUNK_SIZE)
-			FntPrint(-1, "STATUS: IDLE\n\n");
-		else if (!str_ctx.spu_pos)
-			FntPrint(-1, "STATUS: SEEKING\n\n");
+			FntPrint(-1, "IDLE\n\n");
+		else if (str_ctx.spu_pos)
+			FntPrint(-1, "BUFFERING\n\n");
 		else
-			FntPrint(-1, "STATUS: BUFFERING\n\n");
+			FntPrint(-1, "SEEKING\n\n");
 
-		FntPrint(-1, "POSITION=%5d/%5d\n",  str_ctx.pos, str_ctx.length);
-		FntPrint(-1, "BUFFERED=%5d/%5d\n",  str_ctx.spu_pos, CHUNK_SIZE);
-		FntPrint(-1, "SMP RATE=%5d HZ\n\n", (sample_rate * 44100) >> 12);
+		FntPrint(-1, "POSITION: %5d/%5d\n",  str_ctx.pos, str_ctx.length);
+		FntPrint(-1, "BUFFERED: %5d/%5d\n",  str_ctx.spu_pos, CHUNK_SIZE);
+		FntPrint(-1, "SMP RATE: %5d HZ\n\n", (sample_rate * 44100) >> 12);
 
+		FntPrint(-1, "[START]      %s\n", paused ? "RESUME" : "PAUSE");
 		FntPrint(-1, "[LEFT/RIGHT] SEEK\n");
 		FntPrint(-1, "[O]          RESET POSITION\n");
 		FntPrint(-1, "[UP/DOWN]    CHANGE SAMPLE RATE\n");
@@ -398,6 +411,14 @@ int main(int argc, const char* argv[]) {
 			continue;
 		if ((pad->type != 4) && (pad->type != 5) && (pad->type != 7))
 			continue;
+
+		if ((last_buttons & PAD_START) && !(pad->btn & PAD_START)) {
+			paused ^= 1;
+			if (paused)
+				stop_stream();
+			else
+				start_stream();
+		}
 
 		// Seeking by an arbitrary number of sectors isn't a problem as
 		// spu_irq_handler() always realigns the counter.

@@ -83,17 +83,17 @@ const char *const IO_BOARD_TYPES[] = {
 #define BGCOLOR_B  0
 
 typedef struct {
-	DISPENV  disp;
-	DRAWENV  draw;
-} DB;
+	DISPENV disp;
+	DRAWENV draw;
+} Framebuffer;
 
 typedef struct {
-	DB       db[2];
-	uint32_t db_active;
-} CONTEXT;
+	Framebuffer db[2];
+	int         db_active;
+} RenderContext;
 
-void init_context(CONTEXT *ctx) {
-	DB *db;
+void init_context(RenderContext *ctx) {
+	Framebuffer *db;
 
 	ResetGraph(0);
 	ctx->db_active = 0;
@@ -120,8 +120,8 @@ void init_context(CONTEXT *ctx) {
 	FntOpen(8, 16, 304, 208, 2, 512);
 }
 
-void display(CONTEXT *ctx) {
-	DB *db;
+void display(RenderContext *ctx) {
+	Framebuffer *db;
 
 	DrawSync(0);
 	VSync(0);
@@ -135,7 +135,7 @@ void display(CONTEXT *ctx) {
 
 /* Main */
 
-static CONTEXT ctx;
+static RenderContext ctx;
 
 #define SHOW_STATUS(...) { FntPrint(-1, __VA_ARGS__); FntFlush(-1); display(&ctx); }
 #define SHOW_ERROR(...)  { SHOW_STATUS(__VA_ARGS__); while (1) __asm__("nop"); }

@@ -17,7 +17,6 @@
 		<directory_tree>
 			<file name="SYSTEM.CNF"		type="data" source="${PROJECT_SOURCE_DIR}/system.cnf" />
 			<file name="CDXA.EXE"		type="data" source="cdxa.exe" />
-			<file name="CDXA.MAP"		type="data" source="cdxa.map" />
 
 			<!-- CD-XA file, you'll have to provide your own to make this example work -->
 			<file name="XASAMPLE.XA"	type="mixed" source="${PROJECT_SOURCE_DIR}/xasample.xa"/>

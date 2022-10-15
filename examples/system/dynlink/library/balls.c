@@ -21,7 +21,7 @@ typedef struct {
 	int16_t x, y;
 	int16_t xdir, ydir;
 	uint8_t r, g, b, p;
-} BALL_TYPE;
+} Ball;
 
 #define MAX_BALLS 512
 
@@ -35,12 +35,13 @@ typedef struct {
 // initialize variables or hardware.
 
 static uint32_t  frame = 0;
-static BALL_TYPE balls[MAX_BALLS];
+static Ball      balls[MAX_BALLS];
 static TIM_IMAGE ball_tim;
 
-void init(CONTEXT *ctx) {
-	GetTimInfo(ball16c, &ball_tim);
+void init(RenderContext *ctx) {
+	Framebuffer *db = &(ctx->db[ctx->db_active]);
 
+	GetTimInfo(ball16c, &ball_tim);
 	LoadImage(ball_tim.prect, ball_tim.paddr);
 	if (ball_tim.mode & 8)
 		LoadImage(ball_tim.crect, ball_tim.caddr);
@@ -48,10 +49,10 @@ void init(CONTEXT *ctx) {
 	// Initialize the balls by giving them a random initial position, velocity
 	// and color.
 	for (uint32_t i = 0; i < MAX_BALLS; i++) {
-		BALL_TYPE *b = &(balls[i]);
+		Ball *b = &(balls[i]);
 
-		b->x    = rand() % (ctx->xres - 16);
-		b->y    = rand() % (ctx->yres - 16);
+		b->x    = rand() % (db->draw.clip.w - 16);
+		b->y    = rand() % (db->draw.clip.h - 16);
 		b->xdir = ((rand() & 1) ? 1 : -1) * ((rand() % 3) + 1);
 		b->ydir = ((rand() & 1) ? 1 : -1) * ((rand() % 3) + 1);
 		b->r    = rand() & 0xff;
@@ -60,12 +61,12 @@ void init(CONTEXT *ctx) {
 	}
 }
 
-void render(CONTEXT *ctx, uint16_t buttons) {
-	DB      *db   = &(ctx->db[ctx->db_active]);
-	SPRT_16 *sprt = (SPRT_16 *) ctx->db_nextpri;
+void render(RenderContext *ctx, uint16_t buttons) {
+	Framebuffer *db   = &(ctx->db[ctx->db_active]);
+	SPRT_16     *sprt = (SPRT_16 *) ctx->db_nextpri;
 
 	for (uint32_t i = 0; i < MAX_BALLS; i++) {
-		BALL_TYPE *b = &(balls[i]);
+		Ball *b = &(balls[i]);
 
 		setSprt16(sprt);
 
@@ -85,12 +86,12 @@ void render(CONTEXT *ctx, uint16_t buttons) {
 
 		if (
 			(b->x < 0) ||
-			((b->x + 16) > ctx->xres)
+			((b->x + 16) > db->draw.clip.w)
 		)
 			b->xdir *= -1;
 		if (
 			(b->y < 0) ||
-			((b->y + 16) > ctx->yres)
+			((b->y + 16) > db->draw.clip.h)
 		)
 			b->ydir *= -1;
 	}
