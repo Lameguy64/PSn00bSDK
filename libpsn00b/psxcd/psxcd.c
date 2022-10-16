@@ -285,18 +285,10 @@ int CdRead(int sectors, uint32_t *buf, int mode)
 	_cd_read_addr = buf;
 	
 	// Determine sector based on mode flags
-	if( mode & CdlModeSize0 )
-	{
-		_cd_read_sector_sz = 2328 / 4;
-	}
-	else if( mode & CdlModeSize1 )
-	{
+	if( mode & CdlModeSize )
 		_cd_read_sector_sz = 2340 / 4;
-	}
 	else
-	{
 		_cd_read_sector_sz = 2048 / 4;
-	}
 	
 	_cd_read_counter = VSync(-1);
 	

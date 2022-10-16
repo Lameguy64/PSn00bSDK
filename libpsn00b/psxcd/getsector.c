@@ -7,6 +7,16 @@
 #include <psxcd.h>
 #include <hwregs_c.h>
 
+#define DATA_SYNC_TIMEOUT	0x100000
+
+/* Private utilities */
+
+#ifdef NDEBUG
+#define _LOG(...)
+#else
+#define _LOG(...) printf(__VA_ARGS__)
+#endif
+
 /* DMA transfer functions */
 
 int CdGetSector(void *madr, int size) {
@@ -32,4 +42,17 @@ int CdGetSector2(void *madr, int size) {
 	DMA_CHCR(3) = 0x11400100; // Transfer 1 word every 16 CPU cycles
 
 	return 1;
+}
+
+int CdDataSync(int mode) {
+	if (mode)
+		return (DMA_CHCR(3) >> 24) & 1;
+
+	for (int i = DATA_SYNC_TIMEOUT; i; i--) {
+		if (!(DMA_CHCR(3) & (1 << 24)))
+			return 0;
+	}
+
+	_LOG("psxcd: CdDataSync() timeout\n");
+	return -1;
 }

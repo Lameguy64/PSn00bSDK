@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<iso_project
+	image_name="${CD_IMAGE_NAME}.bin"
+	cue_sheet="${CD_IMAGE_NAME}.cue"
+>
+	<track type="data">
+		<identifiers
+			system			="PLAYSTATION"
+			volume			="STRVIDEO"
+			volume_set		="STRVIDEO"
+			publisher		="MEIDOTEK"
+			data_preparer	="PSN00BSDK ${PSN00BSDK_VERSION}"
+			application		="PLAYSTATION"
+			copyright		="README.TXT;1"
+		/>
+
+		<directory_tree>
+			<file name="SYSTEM.CNF"		type="data" source="${PROJECT_SOURCE_DIR}/system.cnf" />
+			<file name="STRVIDEO.EXE"	type="data" source="strvideo.exe" />
+
+			<file name="VIDEO.STR"		type="mixed" source="${PROJECT_SOURCE_DIR}/video.str"/>
+
+			<dummy sectors="1024"/>
+		</directory_tree>
+	</track>
+
+	<!--<track type="audio" source="track2.wav" />-->
+</iso_project>

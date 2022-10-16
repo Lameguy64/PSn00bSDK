@@ -164,6 +164,11 @@ int DecDCTinSync(int mode) {
 void DecDCTout(uint32_t *data, size_t length) {
 	DecDCToutSync(0);
 
+	if ((length >= DMA_CHUNK_LENGTH) && (length % DMA_CHUNK_LENGTH)) {
+		_LOG("psxpress: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
+		length += DMA_CHUNK_LENGTH - 1;
+	}
+
 	DMA_MADR(1) = (uint32_t) data;
 	if (length < DMA_CHUNK_LENGTH)
 		DMA_BCR(1) = 0x00010000 | length;

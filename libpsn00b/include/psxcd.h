@@ -55,8 +55,10 @@
 #define CdlModeAP			0x02
 #define CdlModeRept			0x04
 #define CdlModeSF			0x08
-#define CdlModeSize0		0x10
-#define CdlModeSize1		0x20
+//#define CdlModeSize0		0x10
+//#define CdlModeSize1		0x20
+#define CdlModeIgnore		0x10
+#define CdlModeSize			0x20
 #define CdlModeRT			0x40
 #define CdlModeSpeed		0x80
 
@@ -146,6 +148,7 @@ uint32_t CdSyncCallback(CdlCB func);
 long CdReadyCallback(CdlCB func);
 int CdGetSector(void *madr, int size);
 int CdGetSector2(void *madr, int size);
+int CdDataSync(int mode);
 
 CdlFILE* CdSearchFile(CdlFILE *loc, const char *filename);
 
