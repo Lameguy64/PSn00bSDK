@@ -181,12 +181,14 @@ void display(RenderContext *ctx) {
 #define CHUNK_SIZE			(BUFFER_SIZE * NUM_CHANNELS)
 
 typedef struct {
-	int lba, length, pos;
-	int spu_addr, spu_pos;
-	int db_active;
+	int lba, length;
+
+	volatile int pos;
+	volatile int spu_addr, spu_pos;
+	volatile int db_active;
 } StreamContext;
 
-static volatile StreamContext str_ctx;
+static StreamContext str_ctx;
 
 // This buffer is used by cd_event_handler() as a temporary area for sectors
 // read from the CD and uploaded to SPU RAM. Due to DMA limitations it can't be
@@ -328,8 +330,8 @@ void start_stream(void) {
 	SPU_CH_VOL_L(1) = 0x0000;
 	SPU_CH_VOL_R(1) = 0x3fff;
 
-	spu_irq_handler();
 	SPU_KEY_ON = CHANNEL_MASK;
+	spu_irq_handler();
 }
 
 // This is basically a variant of reset_spu_channels() that only resets the

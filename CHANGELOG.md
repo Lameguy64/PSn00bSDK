@@ -19,7 +19,28 @@ to ensure the changelog can be parsed correctly.
 
 -------------------------------------------------------------------------------
 
-## 2022-10-11: 0.21
+## 2022-10-16: 0.21
+
+spicyjpeg:
+
+- psxetc: Fixed (another) critical bug in the IRQ callback dispatcher. This
+  also fixed some examples that were broken ever since the library was
+  rewritten in C. Made the dynamic linker less verbose, improving DLL loading
+  speed in debug mode.
+
+- psxcd: Added `CdDataSync()`. Renamed `CdlModeSize0` and `CdlModeSize1` to
+  `CdlModeIgnore` and `CdlModeSize` respectively.
+
+- psxpress: Fixed a bug in the Huffman decompression API that would make it
+  crash if the bitstream header didn't contain a valid decompressed length,
+  even if the bitstream was properly encoded. This fix makes the API fully
+  usable for video playback (as demonstrated by the new example).
+
+- examples: Added `mdec/strvideo` FMV playback example. Fixed
+  `system/childexec` not properly uninstalling BIOS callbacks before launching
+  the child executable. Added pause/resume code to `sound/spustream`.
+
+## 2022-10-11
 
 spicyjpeg:
 
