@@ -349,7 +349,9 @@ int main(int argc, const char* argv[])
 	xa_loc = file.pos;
 	
 	/* Hook XA callback function to CdReadyCallback (for auto stop/loop */
+	EnterCriticalSection();
 	CdReadyCallback(xa_callback);
+	ExitCriticalSection();
 
 	/* Set CD mode for XA streaming (2x speed, send XA to SPU, enable filter */
 	i = CdlModeSpeed|CdlModeRT|CdlModeSF;

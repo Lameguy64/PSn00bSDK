@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <psxgpu.h>
-#include <psxsio.h>
+#include <psxapi.h>
 #include "psxcd.h"
 #include "isofs.h"
 
@@ -795,8 +795,10 @@ int CdLoadSession(int session)
 	}
 	
 	// Set search routine callback
+	EnterCriticalSection();
 	ready_oldcb = CdReadyCallback(_scan_callback);
-	
+	ExitCriticalSection();
+
 	_ses_scanfound = 0;
 	_ses_scancount = 0;
 	_ses_scancomplete = 0;
@@ -811,21 +813,28 @@ int CdLoadSession(int session)
 	
 	// Wait until scan complete
 	while(!_ses_scancomplete);
-		
+
+	EnterCriticalSection();
 	CdReadyCallback((void*)_ready_oldcb);
-	
+	ExitCriticalSection();
+
 	if( !_ses_scanfound )
 	{
 		_LOG("psxcd: CdLoadSession(): Did not find volume descriptor.\n");
 
 		_cd_iso_error = CdlIsoInvalidFs;
+		EnterCriticalSection();
 		CdReadyCallback((CdlCB)ready_oldcb);
+		ExitCriticalSection();
+
 		return -1;
 	}
 	
 	// Restore old callback if any
+	EnterCriticalSection();
 	CdReadyCallback((CdlCB)ready_oldcb);
-	
+	ExitCriticalSection();
+
 	// Wait until CD-ROM has completely stopped reading, to get a consistent
 	// fix of the CD-ROM pickup's current location
 	do

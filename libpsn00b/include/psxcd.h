@@ -145,7 +145,7 @@ int CdControlF(uint8_t com, const void *param);
 int CdSync(int mode, uint8_t *result);
 uint32_t CdSyncCallback(CdlCB func);
 
-long CdReadyCallback(CdlCB func);
+int CdReadyCallback(CdlCB func);
 int CdGetSector(void *madr, int size);
 int CdGetSector2(void *madr, int size);
 int CdDataSync(int mode);
@@ -168,7 +168,7 @@ void CdCloseDir(CdlDIR* dir);
 
 int CdGetVolumeLabel(char* label);
 
-long* CdAutoPauseCallback(void(*func)());
+int* CdAutoPauseCallback(void(*func)());
 int CdIsoError();
 
 int CdLoadSession(int session);

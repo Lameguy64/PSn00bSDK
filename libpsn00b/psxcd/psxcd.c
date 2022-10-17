@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <psxgpu.h>
+#include <psxapi.h>
 #include "psxcd.h"
 
 #define READ_TIMEOUT	600		// 10 seconds for NTSC
@@ -293,8 +294,10 @@ int CdRead(int sectors, uint32_t *buf, int mode)
 	_cd_read_counter = VSync(-1);
 	
 	// Set read callback
+	EnterCriticalSection();
 	_cd_read_oldcb = CdReadyCallback(_CdReadReadyCallback);
-	
+	ExitCriticalSection();
+
 	// Set specified mode
 	CdControl(CdlSetmode, (uint8_t*)&mode, 0);
 	
@@ -320,9 +323,11 @@ static void CdDoRetry()
 	
 	// Reset timeout
 	_cd_read_counter = VSync(-1);
-	
+
+	EnterCriticalSection();
 	CdReadyCallback(_CdReadReadyCallback);
-	
+	ExitCriticalSection();
+
 	// Retry read
 	CdControl(CdlSetloc, (void*)&_cd_last_setloc, 0);
 	CdControl(CdlReadN, 0, (uint8_t*)_cd_read_result);
