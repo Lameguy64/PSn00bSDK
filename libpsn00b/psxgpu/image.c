@@ -4,7 +4,7 @@
  */
 
 #include <stdint.h>
-#include <stdio.h>
+#include <psxetc.h>
 #include <psxgpu.h>
 #include <hwregs_c.h>
 
@@ -12,20 +12,14 @@
 
 /* Private utilities */
 
-#ifdef NDEBUG
-#define _LOG(...)
-#else
-#define _LOG(...) printf(__VA_ARGS__)
-#endif
-
 static void _dma_transfer(const RECT *rect, uint32_t *data, int write) {
 	size_t length = rect->w * rect->h;
 	if (length % 2)
-		_LOG("psxgpu: can't transfer an odd number of pixels\n");
+		_sdk_log("psxgpu: can't transfer an odd number of pixels\n");
 
 	length /= 2;
 	if ((length >= DMA_CHUNK_LENGTH) && (length % DMA_CHUNK_LENGTH)) {
-		_LOG("psxgpu: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
+		_sdk_log("psxgpu: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
 		length += DMA_CHUNK_LENGTH - 1;
 	}
 
@@ -53,15 +47,19 @@ static void _dma_transfer(const RECT *rect, uint32_t *data, int write) {
 /* VRAM transfer API */
 
 int LoadImage(const RECT *rect, const uint32_t *data) {
-	return EnqueueDrawOp(&_dma_transfer, (uint32_t) rect, (uint32_t) data, 1);
+	return EnqueueDrawOp(
+		(void *) &_dma_transfer, (uint32_t) rect, (uint32_t) data, 1
+	);
 }
 
 int StoreImage(const RECT *rect, uint32_t *data) {
-	return EnqueueDrawOp(&_dma_transfer, (uint32_t) rect, (uint32_t) data, 0);
+	return EnqueueDrawOp(
+		(void *) &_dma_transfer, (uint32_t) rect, (uint32_t) data, 0
+	);
 }
 
 int MoveImage(const RECT *rect, int x, int y) {
-	return EnqueueDrawOp(&MoveImage2, (uint32_t) rect, x, y);
+	return EnqueueDrawOp((void *) &MoveImage2, (uint32_t) rect, x, y);
 }
 
 void LoadImage2(const RECT *rect, const uint32_t *data) {

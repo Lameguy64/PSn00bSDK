@@ -85,7 +85,7 @@ int DrawOTagEnv(const uint32_t *ot, DRAWENV *env) {
 	//while (!(GPU_GP1 & (1 << 26)))
 		//__asm__ volatile("");
 
-	return EnqueueDrawOp(&DrawOTag2, (uint32_t) prim, 0, 0);
+	return EnqueueDrawOp((void *) &DrawOTag2, (uint32_t) prim, 0, 0);
 }
 
 void PutDrawEnv(DRAWENV *env) {

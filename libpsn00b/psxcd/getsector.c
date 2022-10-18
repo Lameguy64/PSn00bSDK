@@ -4,18 +4,11 @@
  */
 
 #include <stdint.h>
+#include <psxetc.h>
 #include <psxcd.h>
 #include <hwregs_c.h>
 
 #define DATA_SYNC_TIMEOUT	0x100000
-
-/* Private utilities */
-
-#ifdef NDEBUG
-#define _LOG(...)
-#else
-#define _LOG(...) printf(__VA_ARGS__)
-#endif
 
 /* DMA transfer functions */
 
@@ -53,6 +46,6 @@ int CdDataSync(int mode) {
 			return 0;
 	}
 
-	_LOG("psxcd: CdDataSync() timeout\n");
+	_sdk_log("psxcd: CdDataSync() timeout\n");
 	return -1;
 }

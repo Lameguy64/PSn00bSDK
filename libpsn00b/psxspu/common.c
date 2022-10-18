@@ -4,7 +4,7 @@
  */
 
 #include <stdint.h>
-#include <stdio.h>
+#include <psxetc.h>
 #include <psxspu.h>
 #include <hwregs_c.h>
 
@@ -19,28 +19,22 @@ static uint16_t			_transfer_addr = WRITABLE_AREA_ADDR;
 
 /* Private utilities */
 
-#ifdef NDEBUG
-#define _LOG(...)
-#else
-#define _LOG(...) printf(__VA_ARGS__)
-#endif
-
 static void _wait_status(uint16_t mask, uint16_t value) {
 	for (int i = STATUS_TIMEOUT; i; i--) {
 		if ((SPU_STAT & mask) == value)
 			return;
 	}
 
-	_LOG("psxspu: status register timeout (0x%04x)\n", SPU_STAT);
+	_sdk_log("psxspu: status register timeout (0x%04x)\n", SPU_STAT);
 }
 
 static void _dma_transfer(uint32_t *data, size_t length, int write) {
 	if (length % 4)
-		_LOG("psxspu: can't transfer a number of bytes that isn't multiple of 4\n");
+		_sdk_log("psxspu: can't transfer a number of bytes that isn't multiple of 4\n");
 
 	length /= 4;
 	if ((length >= DMA_CHUNK_LENGTH) && (length % DMA_CHUNK_LENGTH)) {
-		_LOG("psxspu: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
+		_sdk_log("psxspu: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
 		length += DMA_CHUNK_LENGTH - 1;
 	}
 

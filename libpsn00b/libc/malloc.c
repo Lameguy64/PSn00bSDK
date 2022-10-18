@@ -120,7 +120,7 @@ __attribute__((weak)) void *malloc(size_t size) {
 		_alloc_head = new;
 		_alloc_tail = new;
 
-		TrackHeapUsage(_size);
+		TrackHeapUsage(size);
 		return ptr;
 	}
 
@@ -139,7 +139,7 @@ __attribute__((weak)) void *malloc(size_t size) {
 		_alloc_head->prev = new;
 		_alloc_head       = new;
 
-		TrackHeapUsage(_size);
+		TrackHeapUsage(size);
 		return ptr;
 	}
 
@@ -157,7 +157,7 @@ __attribute__((weak)) void *malloc(size_t size) {
 		(new->next)->prev = new;
 		prev->next        = new;
 
-		TrackHeapUsage(_size);
+		TrackHeapUsage(size);
 		return ptr;
 	}
 
@@ -175,7 +175,7 @@ __attribute__((weak)) void *malloc(size_t size) {
 	_alloc_tail->next = new;
 	_alloc_tail       = new;
 
-	TrackHeapUsage(_size);
+	TrackHeapUsage(size);
 	return ptr;
 }
 
@@ -196,7 +196,7 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 
 	// New memory block shorter?
 	if (prev->size >= _size) {
-		TrackHeapUsage(_size - prev->size);
+		TrackHeapUsage(size - prev->size);
 		prev->size = _size;
 
 		if (!prev->next)
@@ -211,14 +211,14 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 		if (!new)
 			return 0;
 
-		TrackHeapUsage(_size - prev->size);
+		TrackHeapUsage(size - prev->size);
 		prev->size = _size;
 		return ptr;
 	}
 
 	// Do we have free memory after it?
 	if (((prev->next)->ptr - ptr) > _size) {
-		TrackHeapUsage(_size - prev->size);
+		TrackHeapUsage(size - prev->size);
 		prev->size = _size;
 		return ptr;
 	}
@@ -250,7 +250,7 @@ __attribute__((weak)) void free(void *ptr) {
 			sbrk(-size);
 		}
 
-		TrackHeapUsage(-size);
+		TrackHeapUsage(-(_alloc_head->size));
 		return;
 	}
 
@@ -265,17 +265,15 @@ __attribute__((weak)) void free(void *ptr) {
 	if (cur->next) {
 		// In the middle, just unlink it
 		(cur->next)->prev = cur->prev;
-		TrackHeapUsage(-(cur->size + sizeof(BlockHeader)));
 	} else {
 		// At the end, shrink heap
-		_alloc_tail = cur->prev;
-
 		void  *top  = sbrk(0);
 		size_t size = (top - (cur->prev)->ptr) - (cur->prev)->size;
+		_alloc_tail = cur->prev;
 
 		sbrk(-size);
-		TrackHeapUsage(-size);
 	}
 
+	TrackHeapUsage(-(cur->size));
 	(cur->prev)->next = cur->next;
 }

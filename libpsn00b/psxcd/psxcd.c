@@ -1,6 +1,6 @@
 #include <stdint.h>
-#include <stdio.h>
 #include <psxgpu.h>
+#include <psxetc.h>
 #include <psxapi.h>
 #include "psxcd.h"
 
@@ -21,12 +21,6 @@ volatile int _cd_last_sector_count;
 
 int _cd_media_changed;
 
-#ifdef NDEBUG
-#define _LOG(...)
-#else
-#define _LOG(...) printf(__VA_ARGS__)
-#endif
-
 void _cd_init(void);
 void _cd_control(unsigned char com, const void *param, int plen);
 void _cd_wait_ack(void);
@@ -45,9 +39,9 @@ int CdInit(void) {
 	
 	if(CdSync(0, 0) != CdlDiskError) {
 		CdControl(CdlDemute, 0, 0);
-		_LOG("psxcd: setup done\n");
+		_sdk_log("psxcd: setup done\n");
 	} else {
-		_LOG("psxcd: setup error, bad disc/drive or no disc inserted\n");
+		_sdk_log("psxcd: setup error, bad disc/drive or no disc inserted\n");
 	}
 	
 	return 1;
@@ -311,7 +305,7 @@ static void CdDoRetry()
 {
 	int cb;
 	
-	_LOG("psxcd: retrying read...\n");
+	_sdk_log("psxcd: retrying read...\n");
 	
 	// Stop reading
 	CdControl(CdlPause, 0, 0);

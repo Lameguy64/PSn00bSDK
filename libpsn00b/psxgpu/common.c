@@ -4,7 +4,6 @@
  */
 
 #include <stdint.h>
-#include <stdio.h>
 #include <psxetc.h>
 #include <psxapi.h>
 #include <psxgpu.h>
@@ -36,13 +35,7 @@ static volatile uint8_t    _queue_head, _queue_tail, _queue_length;
 static volatile uint32_t   _vblank_counter;
 static volatile uint16_t   _last_hblank;
 
-/* Private utilities and interrupt handlers */
-
-#ifdef NDEBUG
-#define _LOG(...)
-#else
-#define _LOG(...) printf(__VA_ARGS__)
-#endif
+/* Private interrupt handlers */
 
 static void _vblank_handler(void) {
 	_vblank_counter++;
@@ -57,8 +50,8 @@ static void _gpu_dma_handler(void) {
 		__asm__ volatile("");
 
 	if (--_queue_length) {
-		QueueEntry *entry = &_draw_queue[_queue_head++];
-		_queue_head      %= QUEUE_LENGTH;
+		volatile QueueEntry *entry = &_draw_queue[_queue_head++];
+		_queue_head %= QUEUE_LENGTH;
 
 		entry->func(entry->arg1, entry->arg2, entry->arg3);
 	} else {
@@ -82,7 +75,7 @@ void ResetGraph(int mode) {
 		_gpu_video_mode = (GPU_GP1 >> 20) & 1;
 		ExitCriticalSection();
 
-		_LOG("psxgpu: setup done, default mode is %s\n", _gpu_video_mode ? "PAL" : "NTSC");
+		_sdk_log("psxgpu: setup done, default mode is %s\n", _gpu_video_mode ? "PAL" : "NTSC");
 	}
 
 	if (mode == 3) {
@@ -115,13 +108,13 @@ void ResetGraph(int mode) {
 // TODO: add support for no$psx's "halt" register
 static void _default_vsync_halt(void) {
 	int counter = _vblank_counter;
-
 	for (int i = VSYNC_TIMEOUT; i; i--) {
 		if (counter != _vblank_counter)
 			return;
 	}
 
-	_LOG("psxgpu: VSync() timeout\n");
+	_sdk_log("psxgpu: VSync() timeout\n");
+	_sdk_dump_log();
 	ChangeClearPAD(0);
 	ChangeClearRCnt(3, 0);
 }
@@ -137,6 +130,7 @@ int VSync(int mode) {
 
 	// Wait for at least one vertical blank event to occur.
 	do {
+		_sdk_dump_log();
 		_vsync_halt_func();
 
 		// If interlaced mode is enabled, wait until the GPU starts displaying
@@ -190,15 +184,15 @@ int EnqueueDrawOp(
 	if (_queue_length) {
 		if (_queue_length >= QUEUE_LENGTH) {
 			IRQ_MASK = mask;
-			_LOG("psxgpu: draw queue overflow, dropping commands\n");
+			_sdk_log("psxgpu: draw queue overflow, dropping commands\n");
 			return -1;
 		}
 
 		int length    = _queue_length;
 		_queue_length = length + 1;
 
-		QueueEntry *entry = &_draw_queue[_queue_tail++];
-		_queue_tail      %= QUEUE_LENGTH;
+		volatile QueueEntry *entry = &_draw_queue[_queue_tail++];
+		_queue_tail %= QUEUE_LENGTH;
 
 		entry->func = func;
 		entry->arg1 = arg1;
@@ -236,7 +230,8 @@ int DrawSync(int mode) {
 		while (!(GPU_GP1 & (1 << 26)))
 			__asm__ volatile("");
 	} else {
-		printf("psxgpu: DrawSync() timeout\n");
+		_sdk_log("psxgpu: DrawSync() timeout\n");
+		_sdk_dump_log();
 	}
 
 	return _queue_length;
@@ -297,7 +292,7 @@ void DrawPrim(const uint32_t *pri) {
 }
 
 int DrawOTag(const uint32_t *ot) {
-	return EnqueueDrawOp(&DrawOTag2, (uint32_t) ot, 0, 0);
+	return EnqueueDrawOp((void *) &DrawOTag2, (uint32_t) ot, 0, 0);
 }
 
 void DrawOTag2(const uint32_t *ot) {
