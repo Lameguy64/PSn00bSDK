@@ -16,6 +16,13 @@
 
 static void _default_vsync_halt(void);
 
+/* Private types */
+
+typedef struct {
+	void     (*func)(uint32_t, uint32_t, uint32_t);
+	uint32_t arg1, arg2, arg3;
+} QueueEntry;
+
 /* Internal globals */
 
 GPU_VideoMode _gpu_video_mode;
@@ -24,10 +31,10 @@ static void (*_vsync_halt_func)(void)   = &_default_vsync_halt;
 static void (*_vsync_callback)(void)    = (void *) 0;
 static void (*_drawsync_callback)(void) = (void *) 0;
 
-static const uint32_t *volatile _draw_queue[QUEUE_LENGTH];
-static volatile uint8_t  _queue_head, _queue_tail, _queue_length;
-static volatile uint32_t _vblank_counter;
-static volatile uint16_t _last_hblank;
+static volatile QueueEntry _draw_queue[QUEUE_LENGTH];
+static volatile uint8_t    _queue_head, _queue_tail, _queue_length;
+static volatile uint32_t   _vblank_counter;
+static volatile uint16_t   _last_hblank;
 
 /* Private utilities and interrupt handlers */
 
@@ -49,11 +56,11 @@ static void _gpu_dma_handler(void) {
 	while (!(GPU_GP1 & (1 << 26)))
 		__asm__ volatile("");
 
-	if (_queue_length) {
-		DrawOTag2(_draw_queue[_queue_head++]);
+	if (--_queue_length) {
+		QueueEntry *entry = &_draw_queue[_queue_head++];
+		_queue_head      %= QUEUE_LENGTH;
 
-		_queue_length--;
-		_queue_head %= QUEUE_LENGTH;
+		entry->func(entry->arg1, entry->arg2, entry->arg3);
 	} else {
 		GPU_GP1 = 0x04000000; // Disable DMA request
 
@@ -103,7 +110,7 @@ void ResetGraph(int mode) {
 	_last_hblank    = 0;
 }
 
-/* Syncing API */
+/* VSync() API */
 
 // TODO: add support for no$psx's "halt" register
 static void _default_vsync_halt(void) {
@@ -144,27 +151,6 @@ int VSync(int mode) {
 	return delta;
 }
 
-int DrawSync(int mode) {
-	if (mode)
-		return (DMA_BCR(2) >> 16);
-
-	// Wait for the queue to become empty.
-	// TODO: add a timeout
-	while (_queue_length)
-		__asm__ volatile("");
-
-	// Wait for any DMA transfer to finish if DMA is enabled.
-	if (GPU_GP1 & (3 << 29)) {
-		while (!(GPU_GP1 & (1 << 28)) || (DMA_CHCR(2) & (1 << 24)))
-			__asm__ volatile("");
-	}
-
-	while (!(GPU_GP1 & (1 << 26)))
-		__asm__ volatile("");
-
-	return 0;
-}
-
 void *VSyncHaltFunction(void (*func)(void)) {
 	void *old_callback  = _vsync_halt_func;
 	_vsync_halt_func    = func;
@@ -180,6 +166,80 @@ void *VSyncCallback(void (*func)(void)) {
 
 	ExitCriticalSection();
 	return old_callback;
+}
+
+/* Command queue API */
+
+// This function is normally only used internally, but it is exposed for
+// advanced use cases.
+int EnqueueDrawOp(
+	void		(*func)(uint32_t, uint32_t, uint32_t),
+	uint32_t	arg1,
+	uint32_t	arg2,
+	uint32_t	arg3
+) {
+	// If GPU DMA is currently busy, append the command to the queue instead of
+	// executing it immediately. Note that interrupts must be disabled *prior*
+	// to checking if DMA is busy; disabling them afterwards would create a
+	// race condition where the DMA transfer could end while interrupts are
+	// being disabled. Interrupts are disabled through the IRQ_MASK register
+	// rather than by calling EnterCriticalSection() for performance reasons.
+	uint16_t mask = IRQ_MASK;
+	IRQ_MASK      = 0;
+
+	if (_queue_length) {
+		if (_queue_length >= QUEUE_LENGTH) {
+			IRQ_MASK = mask;
+			_LOG("psxgpu: draw queue overflow, dropping commands\n");
+			return -1;
+		}
+
+		int length    = _queue_length;
+		_queue_length = length + 1;
+
+		QueueEntry *entry = &_draw_queue[_queue_tail++];
+		_queue_tail      %= QUEUE_LENGTH;
+
+		entry->func = func;
+		entry->arg1 = arg1;
+		entry->arg2 = arg2;
+		entry->arg3 = arg3;
+
+		IRQ_MASK = mask;
+		return length;
+	}
+
+	_queue_length = 1;
+
+	IRQ_MASK = mask;
+	func(arg1, arg2, arg3);
+	return 0;
+}
+
+int DrawSync(int mode) {
+	if (mode)
+		return _queue_length;
+
+	// Wait for the queue to become empty.
+	for (int i = VSYNC_TIMEOUT; i; i--) {
+		if (!_queue_length)
+			break;
+	}
+
+	if (!_queue_length) {
+		// Wait for any DMA transfer to finish if DMA is enabled.
+		if (GPU_GP1 & (3 << 29)) {
+			while (!(GPU_GP1 & (1 << 28)) || (DMA_CHCR(2) & (1 << 24)))
+				__asm__ volatile("");
+		}
+
+		while (!(GPU_GP1 & (1 << 26)))
+			__asm__ volatile("");
+	} else {
+		printf("psxgpu: DrawSync() timeout\n");
+	}
+
+	return _queue_length;
 }
 
 void *DrawSyncCallback(void (*func)(void)) {
@@ -214,45 +274,8 @@ void ClearOTag(uint32_t *ot, size_t length) {
 	ot[length - 1] = 0x00ffffff;
 }
 
-void DrawOTag(const uint32_t *ot) {
-	// If GPU DMA is currently busy, append the OT to the queue instead of
-	// drawing it immediately. Note that interrupts must be disabled *prior* to
-	// checking if DMA is busy; disabling them afterwards would create a race
-	// condition where the DMA transfer could end while interrupts are being
-	// disabled. Interrupts are disabled through the IRQ_MASK register rather
-	// than by calling EnterCriticalSection() for performance reasons.
-	uint16_t mask = IRQ_MASK;
-	IRQ_MASK      = 0;
-
-	if (DMA_CHCR(2) & (1 << 24)) {
-		if (_queue_length < QUEUE_LENGTH) {
-			_draw_queue[_queue_tail++] = ot;
-
-			_queue_length++;
-			_queue_tail %= QUEUE_LENGTH;
-
-			IRQ_MASK = mask;
-			return;
-		}
-
-		IRQ_MASK = mask;
-		_LOG("psxgpu: DrawOTag() failed, draw queue full\n");
-		return;
-	}
-
-	IRQ_MASK = mask;
-	DrawOTag2(ot);
-}
-
-void DrawOTag2(const uint32_t *ot) {
-	GPU_GP1 = 0x04000002;
-
-	while (!(GPU_GP1 & (1 << 26)) || (DMA_CHCR(2) & (1 << 24)))
-		__asm__ volatile("");
-
-	DMA_MADR(2) = (uint32_t) ot;
-	DMA_BCR(2)  = 0;
-	DMA_CHCR(2) = 0x01000401;
+void AddPrim(uint32_t *ot, const void *pri) {
+	addPrim(ot, pri);
 }
 
 void DrawPrim(const uint32_t *pri) {	
@@ -273,8 +296,19 @@ void DrawPrim(const uint32_t *pri) {
 	DMA_CHCR(2) = 0x01000201;
 }
 
-void AddPrim(uint32_t *ot, const void *pri) {
-	addPrim(ot, pri);
+int DrawOTag(const uint32_t *ot) {
+	return EnqueueDrawOp(&DrawOTag2, (uint32_t) ot, 0, 0);
+}
+
+void DrawOTag2(const uint32_t *ot) {
+	GPU_GP1 = 0x04000002;
+
+	while (!(GPU_GP1 & (1 << 26)) || (DMA_CHCR(2) & (1 << 24)))
+		__asm__ volatile("");
+
+	DMA_MADR(2) = (uint32_t) ot;
+	DMA_BCR(2)  = 0;
+	DMA_CHCR(2) = 0x01000401;
 }
 
 /* Misc. functions */

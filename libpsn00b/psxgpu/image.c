@@ -18,12 +18,7 @@
 #define _LOG(...) printf(__VA_ARGS__)
 #endif
 
-static void _load_store_image(
-	uint32_t	command,
-	int			mode,
-	const RECT	*rect,
-	uint32_t	*data
-) {
+static void _dma_transfer(const RECT *rect, uint32_t *data, int write) {
 	size_t length = rect->w * rect->h;
 	if (length % 2)
 		_LOG("psxgpu: can't transfer an odd number of pixels\n");
@@ -34,18 +29,17 @@ static void _load_store_image(
 		length += DMA_CHUNK_LENGTH - 1;
 	}
 
-	DrawSync(0);
 	GPU_GP1 = 0x04000000; // Disable DMA request
 	GPU_GP0 = 0x01000000; // Flush cache
 
-	GPU_GP0 = command;
+	GPU_GP0 = write ? 0xa0000000 : 0xc0000000;
 	//GPU_GP0 = rect->x | (rect->y << 16);
 	GPU_GP0 = *((const uint32_t *) &(rect->x));
 	//GPU_GP0 = rect->w | (rect->h << 16);
 	GPU_GP0 = *((const uint32_t *) &(rect->w));
 
 	// Enable DMA request, route to GP0 (2) or from GPU_READ (3)
-	GPU_GP1 = 0x04000000 | mode;
+	GPU_GP1 = 0x04000002 | (write ^ 1);
 
 	DMA_MADR(2) = (uint32_t) data;
 	if (length < DMA_CHUNK_LENGTH)
@@ -53,17 +47,38 @@ static void _load_store_image(
 	else
 		DMA_BCR(2) = DMA_CHUNK_LENGTH | ((length / DMA_CHUNK_LENGTH) << 16);
 
-	DMA_CHCR(2) = 0x01000200 | ((mode & 1) ^ 1);
+	DMA_CHCR(2) = 0x01000200 | write;
 }
 
 /* VRAM transfer API */
 
-void LoadImage(const RECT *rect, const uint32_t *data) {
-	_load_store_image(0xa0000000, 2, rect, (uint32_t *) data);
+int LoadImage(const RECT *rect, const uint32_t *data) {
+	return EnqueueDrawOp(&_dma_transfer, (uint32_t) rect, (uint32_t) data, 1);
 }
 
-void StoreImage(const RECT *rect, uint32_t *data) {
-	_load_store_image(0xc0000000, 3, rect, data);
+int StoreImage(const RECT *rect, uint32_t *data) {
+	return EnqueueDrawOp(&_dma_transfer, (uint32_t) rect, (uint32_t) data, 0);
+}
+
+int MoveImage(const RECT *rect, int x, int y) {
+	return EnqueueDrawOp(&MoveImage2, (uint32_t) rect, x, y);
+}
+
+void LoadImage2(const RECT *rect, const uint32_t *data) {
+	_dma_transfer(rect, (uint32_t *) data, 1);
+}
+
+void StoreImage2(const RECT *rect, uint32_t *data) {
+	_dma_transfer(rect, data, 0);
+}
+
+void MoveImage2(const RECT *rect, int x, int y) {
+	GPU_GP0 = 0x80000000;
+	//GPU_GP0 = rect->x | (rect->y << 16);
+	GPU_GP0 = *((const uint32_t *) &(rect->x));
+	GPU_GP0 = (x & 0xffff) | (y << 16);
+	//GPU_GP0 = rect->w | (rect->h << 16);
+	GPU_GP0 = *((const uint32_t *) &(rect->w));
 }
 
 /* .TIM image parsers */

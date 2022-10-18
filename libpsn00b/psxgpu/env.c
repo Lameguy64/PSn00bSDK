@@ -37,7 +37,7 @@ DRAWENV *SetDefDrawEnv(DRAWENV *env, int x, int y, int w, int h) {
 	return env;
 }
 
-void DrawOTagEnv(const uint32_t *ot, DRAWENV *env) {
+int DrawOTagEnv(const uint32_t *ot, DRAWENV *env) {
 	DR_ENV *prim = &(env->dr_env);
 
 	// All commands are grouped into a single display list packet for
@@ -85,7 +85,7 @@ void DrawOTagEnv(const uint32_t *ot, DRAWENV *env) {
 	//while (!(GPU_GP1 & (1 << 26)))
 		//__asm__ volatile("");
 
-	DrawOTag((const uint32_t *) prim);
+	return EnqueueDrawOp(&DrawOTag2, (uint32_t) prim, 0, 0);
 }
 
 void PutDrawEnv(DRAWENV *env) {
