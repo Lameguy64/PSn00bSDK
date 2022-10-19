@@ -2,9 +2,7 @@
 
 .include "gtereg.inc"
 
-.section .text
-
-
+.section .text.InitGeom
 .global InitGeom
 .type InitGeom, @function
 InitGeom:
