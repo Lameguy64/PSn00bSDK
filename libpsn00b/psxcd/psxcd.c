@@ -1,8 +1,8 @@
 #include <stdint.h>
+#include <assert.h>
 #include <psxgpu.h>
-#include <psxetc.h>
 #include <psxapi.h>
-#include "psxcd.h"
+#include <psxcd.h>
 
 #define READ_TIMEOUT	600		// 10 seconds for NTSC
 
@@ -39,9 +39,9 @@ int CdInit(void) {
 	
 	if(CdSync(0, 0) != CdlDiskError) {
 		CdControl(CdlDemute, 0, 0);
-		_sdk_log("psxcd: setup done\n");
+		_sdk_log("setup done\n");
 	} else {
-		_sdk_log("psxcd: setup error, bad disc/drive or no disc inserted\n");
+		_sdk_log("setup error, bad disc/drive or no disc inserted\n");
 	}
 	
 	return 1;
@@ -305,7 +305,7 @@ static void CdDoRetry()
 {
 	int cb;
 	
-	_sdk_log("psxcd: retrying read...\n");
+	_sdk_log("retrying read...\n");
 	
 	// Stop reading
 	CdControl(CdlPause, 0, 0);

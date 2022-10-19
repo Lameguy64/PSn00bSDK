@@ -4,7 +4,7 @@
  */
 
 #include <stdint.h>
-#include <psxetc.h>
+#include <assert.h>
 #include <psxcd.h>
 #include <hwregs_c.h>
 
@@ -46,6 +46,6 @@ int CdDataSync(int mode) {
 			return 0;
 	}
 
-	_sdk_log("psxcd: CdDataSync() timeout\n");
+	_sdk_log("CdDataSync() timeout\n");
 	return -1;
 }

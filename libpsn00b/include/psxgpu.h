@@ -31,65 +31,65 @@ typedef enum _GPU_VideoMode {
 /* Structure macros */
 
 #define setVector(v, _x, _y, _z) \
-	(v)->vx = _x, (v)->vy = _y, (v)->vz = _z
+	(v)->vx = (_x), (v)->vy = (_y), (v)->vz = (_z)
 
 #define setRECT(v, _x, _y, _w, _h) \
-	(v)->x = _x, (v)->y = _y, (v)->w = _w, (v)->h = _h
+	(v)->x = (_x), (v)->y = (_y), (v)->w = (_w), (v)->h = (_h)
 
 #define setTPage(p, tp, abr, x, y)	((p)->tpage = getTPage(tp, abr, x, y))
 #define setClut(p, x, y)			((p)->clut = getClut(x, y))
 
-#define setRGB0(p, r, g, b) ((p)->r0 = r, (p)->g0 = g, (p)->b0 = b)
-#define setRGB1(p, r, g, b) ((p)->r1 = r, (p)->g1 = g, (p)->b1 = b)
-#define setRGB2(p, r, g, b) ((p)->r2 = r, (p)->g2 = g, (p)->b2 = b)
-#define setRGB3(p, r, g, b) ((p)->r3 = r, (p)->g3 = g, (p)->b3 = b)
+#define setRGB0(p, r, g, b) ((p)->r0 = (r), (p)->g0 = (g), (p)->b0 = (b))
+#define setRGB1(p, r, g, b) ((p)->r1 = (r), (p)->g1 = (g), (p)->b1 = (b))
+#define setRGB2(p, r, g, b) ((p)->r2 = (r), (p)->g2 = (g), (p)->b2 = (b))
+#define setRGB3(p, r, g, b) ((p)->r3 = (r), (p)->g3 = (g), (p)->b3 = (b))
 
 #define setXY0(p, _x0, _y0) \
-	(p)->x0 = _x0, (p)->y0 = _y0
+	(p)->x0 = (_x0), (p)->y0 = (_y0)
 
 #define setXY2(p, _x0, _y0, _x1, _y1) \
-	(p)->x0 = _x0, (p)->y0 = _y0, \
-	(p)->x1 = _x1, (p)->y1 = _y1
+	(p)->x0 = (_x0), (p)->y0 = (_y0), \
+	(p)->x1 = (_x1), (p)->y1 = (_y1)
 
 #define setXY3(p, _x0, _y0, _x1, _y1, _x2, _y2) \
-	(p)->x0 = _x0, (p)->y0 = _y0, \
-	(p)->x1 = _x1, (p)->y1 = _y1, \
-	(p)->x2 = _x2, (p)->y2 = _y2
+	(p)->x0 = (_x0), (p)->y0 = (_y0), \
+	(p)->x1 = (_x1), (p)->y1 = (_y1), \
+	(p)->x2 = (_x2), (p)->y2 = (_y2)
 
 #define setXY4(p, _x0, _y0, _x1, _y1, _x2, _y2, _x3, _y3) \
-	(p)->x0 = _x0, (p)->y0 = _y0, \
-	(p)->x1 = _x1, (p)->y1 = _y1, \
-	(p)->x2 = _x2, (p)->y2 = _y2, \
-	(p)->x3 = _x3, (p)->y3 = _y3
+	(p)->x0 = (_x0), (p)->y0 = (_y0), \
+	(p)->x1 = (_x1), (p)->y1 = (_y1), \
+	(p)->x2 = (_x2), (p)->y2 = (_y2), \
+	(p)->x3 = (_x3), (p)->y3 = (_y3)
 
 #define setWH(p, _w, _h) \
-	(p)->w = _w, (p)->h = _h
+	(p)->w = (_w), (p)->h = (_h)
 
 #define setXYWH(p, _x0, _y0, _w, _h) \
-	(p)->x0 = _x0,			(p)->y0 = _y0, \
-	(p)->x1 = (_x0 + (_w)),	(p)->y1 = _y0, \
-	(p)->x2 = _x0,			(p)->y2 = (_y0 + (_h)), \
-	(p)->x3 = (_x0 + (_w)),	(p)->y3 = (_y0 + (_h))
+	(p)->x0 = (_x0),			(p)->y0 = (_y0), \
+	(p)->x1 = ((_x0) + (_w)),	(p)->y1 = (_y0), \
+	(p)->x2 = (_x0),			(p)->y2 = ((_y0) + (_h)), \
+	(p)->x3 = ((_x0) + (_w)),	(p)->y3 = ((_y0) + (_h))
 
 #define setUV0(p, _u0, _v0) \
-	(p)->u0 = _u0, (p)->v0 = _v0
+	(p)->u0 = (_u0), (p)->v0 = (_v0)
 
 #define setUV3(p, _u0, _v0, _u1, _v1, _u2, _v2) \
-	(p)->u0 = _u0, (p)->v0 = _v0, \
-	(p)->u1 = _u1, (p)->v1 = _v1, \
-	(p)->u2 = _u2, (p)->v2 = _v2
+	(p)->u0 = (_u0), (p)->v0 = (_v0), \
+	(p)->u1 = (_u1), (p)->v1 = (_v1), \
+	(p)->u2 = (_u2), (p)->v2 = (_v2)
 	
 #define setUV4(p, _u0, _v0, _u1, _v1, _u2, _v2, _u3, _v3) \
-	(p)->u0 = _u0, (p)->v0 = _v0, \
-	(p)->u1 = _u1, (p)->v1 = _v1, \
-	(p)->u2 = _u2, (p)->v2 = _v2, \
-	(p)->u3 = _u3, (p)->v3 = _v3
+	(p)->u0 = (_u0), (p)->v0 = (_v0), \
+	(p)->u1 = (_u1), (p)->v1 = (_v1), \
+	(p)->u2 = (_u2), (p)->v2 = (_v2), \
+	(p)->u3 = (_u3), (p)->v3 = (_v3)
 
 #define setUVWH(p, _u0, _v0, _w, _h) \
-	(p)->u0 = _u0,			(p)->v0 = _v0, \
-	(p)->u1 = (_u0 + (_w)),	(p)->v1 = _v0, \
-	(p)->u2 = _u0,			(p)->v2 = (_v0 + (_h)), \
-	(p)->u3 = (_u0 + (_w)),	(p)->v3 = (_v0 + (_h))
+	(p)->u0 = (_u0),			(p)->v0 = (_v0), \
+	(p)->u1 = ((_u0) + (_w)),	(p)->v1 = (_v0), \
+	(p)->u2 = (_u0),			(p)->v2 = ((_v0) + (_h)), \
+	(p)->u3 = ((_u0) + (_w)),	(p)->v3 = ((_v0) + (_h))
 
 /* Primitive handling macros */
 
@@ -113,8 +113,13 @@ typedef enum _GPU_VideoMode {
 #define setShadeTex(p, tge) \
 	((tge) ? (getcode(p) |= 1) : (getcode(p) &= ~1))
 
-#define getTPage(tp, abr, x, y) \
-	((((x) & 0x3ff) >> 6) | (((y) >> 8) << 4) | (((abr) & 3) << 5) | (((tp) & 3) << 7))
+#define getTPage(tp, abr, x, y) ( \
+	(((x)  /  64) & 15) | \
+	((((y) / 256) &  1) <<  4) | \
+	(((abr)       &  3) <<  5) | \
+	(((tp)        &  3) <<  7) | \
+	((((y) / 512) &  1) << 11) \
+)
 
 #define getClut(x, y) (((y) << 6) | (((x) >> 4) & 0x3f))
 
@@ -151,24 +156,42 @@ typedef enum _GPU_VideoMode {
 
 #define setDrawTPage(p, dfe, dtd, tpage) \
 	setlen(p, 1), \
-	(p)->code[0] = 0xe1000000 | tpage | (dfe << 10) | (dtd << 9)
+	(p)->code[0] = (0xe1000000 | \
+		(tpage) | \
+		((dtd) <<  9) | \
+		((dfe) << 10) \
+	)
 
 #define setDrawOffset(p, _x, _y) \
 	setlen(p, 1), \
-	(p)->code[0] = 0xe5000000 | (_x & 0x3ff) | ((_y & 0x3ff) << 11)
+	(p)->code[0] = (0xe5000000 | \
+		((_x)  % 1024) | \
+		(((_y) % 1024) << 11) \
+	)
 
 #define setDrawMask(p, sb, mt) \
 	setlen(p, 1), \
-	(p)->code[0] = 0xe6000000 | sb | (mt << 1)
+	(p)->code[0] = (0xe6000000 | (sb) | ((mt) << 1))
 
 #define setDrawArea(p, r) \
 	setlen(p, 2), \
-	(p)->code[0] = 0xe3000000 | ((r)->x & 0x3ff) | (((r)->y & 0x1ff) << 10), \
-	(p)->code[1] = 0xe4000000 | (((r)->x + (r)->w - 1) & 0x3ff) | ((((r)->y + (r)->h - 1) & 0x1ff) << 10)
+	(p)->code[0] = (0xe3000000 | \
+		((r)->x  % 1024) | \
+		(((r)->y % 1024) << 10) \
+	), \
+	(p)->code[1] = (0xe4000000 | \
+		(((r)->x  + (r)->w - 1) % 1024) | \
+		((((r)->y + (r)->h - 1) % 1024) << 10) \
+	)
 
 #define setTexWindow(p, r) \
 	setlen(p, 1), \
-	(p)->code[0] = 0xe2000000 | ((r)->w & 0x1f) | (((r)->h & 0x1f) << 5) | (((r)->x & 0x1f) << 10) | (((r)->y & 0x1f) << 15)
+	(p)->code[0] = (0xe2000000 | \
+		((r)->w  % 32) | \
+		(((r)->h % 32) <<  5) | \
+		(((r)->x % 32) << 10) | \
+		(((r)->y % 32) << 15) \
+	)
 
 /* Primitive structure definitions */
 

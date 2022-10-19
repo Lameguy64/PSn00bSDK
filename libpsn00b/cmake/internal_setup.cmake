@@ -34,7 +34,7 @@ if(NOT DEFINED PSN00BSDK_VERSION)
 	string(JSON PSN00BSDK_GIT_COMMIT GET ${_json} git_commit)
 endif()
 
-include(${CMAKE_CURRENT_LIST_DIR}/../libpsn00b.cmake OPTIONAL)
+include(${CMAKE_CURRENT_LIST_DIR}/libpsn00b.cmake OPTIONAL)
 if(TARGET psn00bsdk)
 	link_libraries(psn00bsdk)
 endif()

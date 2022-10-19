@@ -4,7 +4,7 @@
  */
 
 #include <stdint.h>
-#include <psxetc.h>
+#include <assert.h>
 #include <psxspu.h>
 #include <hwregs_c.h>
 
@@ -25,16 +25,16 @@ static void _wait_status(uint16_t mask, uint16_t value) {
 			return;
 	}
 
-	_sdk_log("psxspu: status register timeout (0x%04x)\n", SPU_STAT);
+	_sdk_log("status register timeout (0x%04x)\n", SPU_STAT);
 }
 
 static void _dma_transfer(uint32_t *data, size_t length, int write) {
 	if (length % 4)
-		_sdk_log("psxspu: can't transfer a number of bytes that isn't multiple of 4\n");
+		_sdk_log("can't transfer a number of bytes that isn't multiple of 4\n");
 
 	length /= 4;
 	if ((length >= DMA_CHUNK_LENGTH) && (length % DMA_CHUNK_LENGTH)) {
-		_sdk_log("psxspu: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
+		_sdk_log("transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
 		length += DMA_CHUNK_LENGTH - 1;
 	}
 

@@ -1,10 +1,13 @@
+
+#define SDK_LIBRARY_NAME "psxcd/iso"
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include <psxgpu.h>
 #include <psxapi.h>
-#include <psxetc.h>
-#include "psxcd.h"
+#include <psxcd.h>
 #include "isofs.h"
 
 #define DEFAULT_PATH_SEP	'\\'
@@ -43,7 +46,7 @@ static int _CdReadIsoDescriptor(int session_offs)
 			CdControl(CdlNop, 0, 0);
 			if( (CdStatus()&0x10) )
 			{
-				_sdk_log("psxcd: Lid is still open.\n");
+				_sdk_log("Lid is still open.\n");
 
 				_cd_iso_error = CdlIsoLidOpen;
 				return -1;
@@ -58,45 +61,45 @@ static int _CdReadIsoDescriptor(int session_offs)
 		return 0;
 	}
 
-	_sdk_log("psxcd: Parsing ISO file system.\n");
+	_sdk_log("Parsing ISO file system.\n");
 
 	// Seek to volume descriptor
 	CdIntToPos(16+session_offs, &loc);
 	if( !CdControl(CdlSetloc, (uint8_t*)&loc, 0) )
 	{
-		_sdk_log("psxcd: Could not set seek destination.\n");
+		_sdk_log("Could not set seek destination.\n");
 
 		_cd_iso_error = CdlIsoSeekError;
 		return -1;
 	}
 
-	_sdk_log("psxcd: Read sectors.\n");
+	_sdk_log("Read sectors.\n");
 
 	// Read volume descriptor
 	CdRead(1, (uint32_t*)_cd_iso_descriptor_buff, CdlModeSpeed);
 	
 	if( CdReadSync(0, 0) )
 	{
-		_sdk_log("psxcd: Error reading ISO volume descriptor.\n");
+		_sdk_log("Error reading ISO volume descriptor.\n");
 
 		_cd_iso_error = CdlIsoReadError;
 		return -1;
 	}
 
-	_sdk_log("psxcd: Read complete.\n");
+	_sdk_log("Read complete.\n");
 
 	// Verify if volume descriptor is present
 	descriptor = (ISO_DESCRIPTOR*)_cd_iso_descriptor_buff;
 	if( strncmp("CD001", descriptor->header.id, 5) )
 	{
-		_sdk_log("psxcd: Disc does not contain a ISO9660 file system.\n");
+		_sdk_log("Disc does not contain a ISO9660 file system.\n");
 
 		_cd_iso_error = CdlIsoInvalidFs;
 		return -1;
 	}
 
-	_sdk_log("psxcd: Path table LBA = %d\n", descriptor->pathTable1Offs);
-	_sdk_log("psxcd: Path table len = %d\n", descriptor->pathTableSize.lsb);
+	_sdk_log("Path table LBA = %d\n", descriptor->pathTable1Offs);
+	_sdk_log("Path table len = %d\n", descriptor->pathTableSize.lsb);
 
 	// Allocate path table buffer
 	i = ((2047+descriptor->pathTableSize.lsb)>>11)<<11;
@@ -106,7 +109,7 @@ static int _CdReadIsoDescriptor(int session_offs)
 	}
 	_cd_iso_pathtable_buff = (uint8_t*)malloc(i);
 
-	_sdk_log("psxcd: Allocated %d bytes for path table.\n", i);
+	_sdk_log("Allocated %d bytes for path table.\n", i);
 
 	// Read path table
 	CdIntToPos(descriptor->pathTable1Offs, &loc);
@@ -114,7 +117,7 @@ static int _CdReadIsoDescriptor(int session_offs)
 	CdRead(i>>11, (uint32_t*)_cd_iso_pathtable_buff, CdlModeSpeed);
 	if( CdReadSync(0, 0) )
 	{
-		_sdk_log("psxcd: Error reading ISO path table.\n");
+		_sdk_log("Error reading ISO path table.\n");
 
 		_cd_iso_error = CdlIsoReadError;
 		return -1;
@@ -142,11 +145,11 @@ static int _CdReadIsoDirectory(int lba)
 	CdIntToPos(lba, &loc);
 	i = CdPosToInt(&loc);
 
-	_sdk_log("psxcd: Seek to sector %d\n", i);
+	_sdk_log("Seek to sector %d\n", i);
 
 	if( !CdControl(CdlSetloc, (uint8_t*)&loc, 0) )
 	{
-		_sdk_log("psxcd: Could not set seek destination.\n");
+		_sdk_log("Could not set seek destination.\n");
 
 		_cd_iso_error = CdlIsoSeekError;
 		return -1;
@@ -162,7 +165,7 @@ static int _CdReadIsoDirectory(int lba)
 	CdRead(1, (uint32_t*)_cd_iso_directory_buff, CdlModeSpeed);
 	if( CdReadSync(0, 0) )
 	{
-		_sdk_log("psxcd: Error reading initial directory record.\n");
+		_sdk_log("Error reading initial directory record.\n");
 
 		_cd_iso_error = CdlIsoReadError;
 		return -1;
@@ -171,14 +174,14 @@ static int _CdReadIsoDirectory(int lba)
 	direntry = (ISO_DIR_ENTRY*)_cd_iso_directory_buff;
 	_cd_iso_directory_len = direntry->entrySize.lsb;
 
-	_sdk_log("psxcd: Location of directory record = %d\n", direntry->entryOffs.lsb);
-	_sdk_log("psxcd: Size of directory record = %d\n", _cd_iso_directory_len);
+	_sdk_log("Location of directory record = %d\n", direntry->entryOffs.lsb);
+	_sdk_log("Size of directory record = %d\n", _cd_iso_directory_len);
 
 	if( _cd_iso_directory_len > 2048 )
 	{
 		if( !CdControl(CdlSetloc, (uint8_t*)&loc, 0) )
 		{
-			_sdk_log("psxcd: Could not set seek destination.\n");
+			_sdk_log("Could not set seek destination.\n");
 
 			_cd_iso_error = CdlIsoSeekError;
 			return -1;
@@ -188,12 +191,12 @@ static int _CdReadIsoDirectory(int lba)
 		i = ((2047+_cd_iso_directory_len)>>11)<<11;
 		_cd_iso_directory_buff = (uint8_t*)malloc(i);
 
-		_sdk_log("psxcd: Allocated %d bytes for directory record.\n", i);
+		_sdk_log("Allocated %d bytes for directory record.\n", i);
 
 		CdRead(i>>11, (uint32_t*)_cd_iso_directory_buff, CdlModeSpeed);
 		if( CdReadSync(0, 0) )
 		{
-			_sdk_log("psxcd: Error reading remaining directory record.\n");
+			_sdk_log("Error reading remaining directory record.\n");
 
 			_cd_iso_error = CdlIsoReadError;
 			return -1;
@@ -215,7 +218,7 @@ static void dump_directory(void)
 	ISO_DIR_ENTRY *dir_entry;
 	char namebuff[16];
 	
-	_sdk_log("psxcd: Cached directory record contents:\n");
+	_sdk_log("Cached directory record contents:\n");
 	
 	i = 0;
 	dir_pos = 0;
@@ -226,7 +229,7 @@ static void dump_directory(void)
 		strncpy(namebuff, 
 			_cd_iso_directory_buff+dir_pos+sizeof(ISO_DIR_ENTRY), dir_entry->identifierLen);
 			
-		_sdk_log("psxcd: P:%d L:%d %s\n", dir_pos, dir_entry->identifierLen, namebuff);
+		_sdk_log("P:%d L:%d %s\n", dir_pos, dir_entry->identifierLen, namebuff);
 		
 		dir_pos += dir_entry->entryLength;
 		i++;
@@ -245,7 +248,7 @@ static void dump_directory(void)
 		}
 	}
 	
-	_sdk_log("psxcd: --\n");
+	_sdk_log("--\n");
 	
 }
 
@@ -256,7 +259,7 @@ static void dump_pathtable(void)
 	ISO_DESCRIPTOR *descriptor;
 	char namebuff[16];
 	
-	_sdk_log("psxcd: Path table entries:\n");
+	_sdk_log("Path table entries:\n");
 	
 	descriptor = (ISO_DESCRIPTOR*)_cd_iso_descriptor_buff;
 	
@@ -270,7 +273,7 @@ static void dump_pathtable(void)
 			tbl_pos+sizeof(ISO_PATHTABLE_ENTRY), 
 			tbl_entry->nameLength);
 		
-		_sdk_log("psxcd: %s\n", namebuff);
+		_sdk_log("%s\n", namebuff);
 		
 		// Advance to next entry
 		tbl_pos += sizeof(ISO_PATHTABLE_ENTRY)
@@ -366,7 +369,7 @@ static int find_dir_entry(const char *name, ISO_DIR_ENTRY *dirent)
 	ISO_DIR_ENTRY *dir_entry;
 	char namebuff[16];
 
-	_sdk_log("psxcd: Locating file %s.\n", name);
+	_sdk_log("Locating file %s.\n", name);
 
 	i = 0;
 	dir_pos = 0;
@@ -459,11 +462,11 @@ CdlFILE *CdSearchFile(CdlFILE *fp, const char *filename)
 		// Read ISO descriptor and path table
 	if( _CdReadIsoDescriptor(0) )
 	{
-		_sdk_log("psxcd: Could not read ISO file system.\n");
+		_sdk_log("Could not read ISO file system.\n");
 		return NULL;
 	}
 
-	//	_sdk_log("psxcd: ISO file system cache updated.\n");
+	//	_sdk_log("ISO file system cache updated.\n");
 	//	_cd_media_changed = 0;
 	//}
 	
@@ -471,23 +474,23 @@ CdlFILE *CdSearchFile(CdlFILE *fp, const char *filename)
 	num_dirs = get_pathtable_entry(0, NULL, NULL);
 	
 #ifndef NDEBUG
-	_sdk_log("psxcd: Directories in path table: %d\n", num_dirs);
+	_sdk_log("Directories in path table: %d\n", num_dirs);
 	
 	rbuff = resolve_pathtable_path(num_dirs-1, tpath_rbuff+127);
 
 	if( !rbuff )
 	{
-		_sdk_log("psxcd: Could not resolve path.\n");
+		_sdk_log("Could not resolve path.\n");
 	}
 	else
 	{
-		_sdk_log("psxcd: Longest path: %s|\n", rbuff);
+		_sdk_log("Longest path: %s|\n", rbuff);
 	}
 #endif
 	
 	if( get_pathname(search_path, filename) )
 	{
-		_sdk_log("psxcd: Search path = %s|\n", search_path);
+		_sdk_log("Search path = %s|\n", search_path);
 	}
 	
 	// Search the pathtable for a matching path
@@ -495,7 +498,7 @@ CdlFILE *CdSearchFile(CdlFILE *fp, const char *filename)
 	for(i=1; i<num_dirs; i++)
 	{
 		rbuff = resolve_pathtable_path(i, tpath_rbuff+127);
-		_sdk_log("psxcd: Found = %s|\n", rbuff);
+		_sdk_log("Found = %s|\n", rbuff);
 
 		if( rbuff )
 		{
@@ -509,14 +512,14 @@ CdlFILE *CdSearchFile(CdlFILE *fp, const char *filename)
 	
 	if( !found_dir )
 	{
-		_sdk_log("psxcd: Directory path not found.\n");
+		_sdk_log("Directory path not found.\n");
 		return NULL;
 	}
 
-	_sdk_log("psxcd: Found directory at record %d!\n", found_dir);
+	_sdk_log("Found directory at record %d!\n", found_dir);
 
 	get_pathtable_entry(found_dir, &tbl_entry, NULL);
-	_sdk_log("psxcd: Directory LBA = %d\n", tbl_entry.dirOffs);
+	_sdk_log("Directory LBA = %d\n", tbl_entry.dirOffs);
 
 	_CdReadIsoDirectory(tbl_entry.dirOffs);
 	get_filename(fp->name, filename);
@@ -533,12 +536,12 @@ CdlFILE *CdSearchFile(CdlFILE *fp, const char *filename)
 	
 	if( find_dir_entry(fp->name, &dir_entry) )
 	{
-		_sdk_log("psxcd: Could not find file.\n");
+		_sdk_log("Could not find file.\n");
 
 		return NULL;
 	}
 
-	_sdk_log("psxcd: Located file at LBA %d.\n", dir_entry.entryOffs.lsb);
+	_sdk_log("Located file at LBA %d.\n", dir_entry.entryOffs.lsb);
 
 	CdIntToPos(dir_entry.entryOffs.lsb, &fp->pos);
 	fp->size = dir_entry.entrySize.lsb;
@@ -562,11 +565,11 @@ CdlDIR *CdOpenDir(const char* path)
 	// Read ISO descriptor and path table
 	if( _CdReadIsoDescriptor( 0 ) )
 	{
-		_sdk_log( "psxcd: Could not read ISO file system.\n" );
+		_sdk_log( "Could not read ISO file system.\n" );
 		return NULL;
 	}
 
-//		_sdk_log( "psxcd: ISO file system cache updated.\n" );
+//		_sdk_log( "ISO file system cache updated.\n" );
 //		_cd_media_changed = 0;
 //	}
 	
@@ -576,7 +579,7 @@ CdlDIR *CdOpenDir(const char* path)
 	for( i=1; i<num_dirs; i++ )
 	{
 		rbuff = resolve_pathtable_path( i, tpath_rbuff+127 );
-		_sdk_log( "psxcd: Found = %s|\n", rbuff );
+		_sdk_log( "Found = %s|\n", rbuff );
 
 		if( rbuff )
 		{
@@ -590,14 +593,14 @@ CdlDIR *CdOpenDir(const char* path)
 	
 	if( !found_dir )
 	{
-		_sdk_log( "psxcd: Directory path not found.\n" );
+		_sdk_log( "Directory path not found.\n" );
 		return NULL;
 	}
 
-	_sdk_log( "psxcd: Found directory at record %d!\n", found_dir );
+	_sdk_log( "Found directory at record %d!\n", found_dir );
 
 	get_pathtable_entry( found_dir, &tbl_entry, NULL );
-	_sdk_log( "psxcd: Directory LBA = %d\n", tbl_entry.dirOffs );
+	_sdk_log( "Directory LBA = %d\n", tbl_entry.dirOffs );
 
 	_CdReadIsoDirectory( tbl_entry.dirOffs );
 
@@ -662,11 +665,11 @@ int CdReadDir(CdlDIR *dir, CdlFILE* file)
 	
 	file->size = dir_entry->entrySize.lsb;
 
-	_sdk_log("psxcd: dir_entry->entryLength = %d, ", dir_entry->entryLength);
+	_sdk_log("dir_entry->entryLength = %d, ", dir_entry->entryLength);
 
 	d_dir->_pos += dir_entry->entryLength;
 
-	_sdk_log("psxcd: d_dir->_pos = %d\n", d_dir->_pos);
+	_sdk_log("d_dir->_pos = %d\n", d_dir->_pos);
 
 	// Check if padding is reached (end of record sector)
 	if( d_dir->_dir[d_dir->_pos] == 0 )
@@ -770,13 +773,13 @@ int CdLoadSession(int session)
 	int i;
 
 	// Seek to specified session	
-	_sdk_log("psxcd: CdLoadSession(): Seeking to session %d...\n", session);
+	_sdk_log("CdLoadSession(): Seeking to session %d...\n", session);
 	CdControl(CdlSetsession, (unsigned char*)&session, 
 		(unsigned char*)&resultbuff);
 	
 	if( CdSync(0, 0) == CdlDiskError )
 	{
-		_sdk_log("psxcd: CdLoadSession(): Session seek failed, session does not exist. Restarting CD-ROM...\n");
+		_sdk_log("CdLoadSession(): Session seek failed, session does not exist. Restarting CD-ROM...\n");
 
 		// Restart CD-ROM on session seek failure
 		CdControl(CdlNop, 0, 0);
@@ -797,7 +800,7 @@ int CdLoadSession(int session)
 	_ses_scanbuff = scanbuff;
 	
 	// Begin scan for an ISO volume descriptor
-	_sdk_log("psxcd: CdLoadSession(): Scanning for ISO9660 volume descriptor.\n");
+	_sdk_log("CdLoadSession(): Scanning for ISO9660 volume descriptor.\n");
 
 	i = CdlModeSpeed;
 	CdControl(CdlSetmode, (unsigned char*)&i, 0);
@@ -812,7 +815,7 @@ int CdLoadSession(int session)
 
 	if( !_ses_scanfound )
 	{
-		_sdk_log("psxcd: CdLoadSession(): Did not find volume descriptor.\n");
+		_sdk_log("CdLoadSession(): Did not find volume descriptor.\n");
 
 		_cd_iso_error = CdlIsoInvalidFs;
 		EnterCriticalSection();
@@ -841,11 +844,11 @@ int CdLoadSession(int session)
 	
 	loc = (CdlLOC*)resultbuff;
 
-	_sdk_log("psxcd: CdLoadSession(): Session found in %02d:%02d:%02d (LBA=%d)\n",
+	_sdk_log("CdLoadSession(): Session found in %02d:%02d:%02d (LBA=%d)\n",
 		btoi(loc->minute), btoi(loc->second), btoi(loc->sector), CdPosToInt(loc));
 
 	i = CdPosToInt(loc)-17;
-	_sdk_log("psxcd: CdLoadSession(): Session starting at LBA=%d\n", i);
+	_sdk_log("CdLoadSession(): Session starting at LBA=%d\n", i);
 
 	_cd_media_changed = 1;
 	

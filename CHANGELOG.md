@@ -19,7 +19,19 @@ to ensure the changelog can be parsed correctly.
 
 -------------------------------------------------------------------------------
 
-## 2022-10-16: 0.21
+## 2022-10-19: 0.21
+
+spicyjpeg:
+
+- libpsn00b: Cleaned up the internal logging system.
+
+- psxgpu: Added `MoveImage()` as well as `MoveImage2()`, `LoadImage2()` and
+  `StoreImage2()`. `LoadImage()` and `StoreImage()` now make use of the
+  library's internal drawing queue instead of blocking. Added `EnqueueDrawOp()`
+  for more advanced control of the drawing queue. The `getTPage()` macro now
+  supports extended Y coordinates (512-1023) on systems with 2 MB of VRAM.
+
+## 2022-10-16
 
 spicyjpeg:
 

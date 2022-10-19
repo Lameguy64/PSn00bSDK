@@ -4,6 +4,7 @@
  */
 
 #include <stdint.h>
+#include <assert.h>
 #include <psxetc.h>
 #include <psxapi.h>
 #include <psxgpu.h>
@@ -75,7 +76,7 @@ void ResetGraph(int mode) {
 		_gpu_video_mode = (GPU_GP1 >> 20) & 1;
 		ExitCriticalSection();
 
-		_sdk_log("psxgpu: setup done, default mode is %s\n", _gpu_video_mode ? "PAL" : "NTSC");
+		_sdk_log("setup done, default mode is %s\n", _gpu_video_mode ? "PAL" : "NTSC");
 	}
 
 	if (mode == 3) {
@@ -113,8 +114,7 @@ static void _default_vsync_halt(void) {
 			return;
 	}
 
-	_sdk_log("psxgpu: VSync() timeout\n");
-	_sdk_dump_log();
+	_sdk_log("VSync() timeout\n");
 	ChangeClearPAD(0);
 	ChangeClearRCnt(3, 0);
 }
@@ -130,7 +130,6 @@ int VSync(int mode) {
 
 	// Wait for at least one vertical blank event to occur.
 	do {
-		_sdk_dump_log();
 		_vsync_halt_func();
 
 		// If interlaced mode is enabled, wait until the GPU starts displaying
@@ -182,17 +181,17 @@ int EnqueueDrawOp(
 	IRQ_MASK      = 0;
 
 	if (_queue_length) {
-		if (_queue_length >= QUEUE_LENGTH) {
+		int length = _queue_length;
+
+		if (length >= QUEUE_LENGTH) {
 			IRQ_MASK = mask;
-			_sdk_log("psxgpu: draw queue overflow, dropping commands\n");
+			_sdk_log("draw queue overflow, dropping commands\n");
 			return -1;
 		}
 
-		int length    = _queue_length;
-		_queue_length = length + 1;
-
 		volatile QueueEntry *entry = &_draw_queue[_queue_tail++];
-		_queue_tail %= QUEUE_LENGTH;
+		_queue_tail  %= QUEUE_LENGTH;
+		_queue_length = length + 1;
 
 		entry->func = func;
 		entry->arg1 = arg1;
@@ -230,8 +229,7 @@ int DrawSync(int mode) {
 		while (!(GPU_GP1 & (1 << 26)))
 			__asm__ volatile("");
 	} else {
-		_sdk_log("psxgpu: DrawSync() timeout\n");
-		_sdk_dump_log();
+		_sdk_log("DrawSync() timeout\n");
 	}
 
 	return _queue_length;
