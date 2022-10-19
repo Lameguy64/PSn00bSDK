@@ -1,7 +1,7 @@
 # libpsn00b build script
-# (C) 2021 spicyjpeg - MPL licensed
+# (C) 2021-2022 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 
 # ${PROJECT_SOURCE_DIR} is not available until project() is called.
 set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/cmake/sdk.cmake)
@@ -13,13 +13,12 @@ project(
 	HOMEPAGE_URL "http://lameguy64.net/?page=psn00bsdk"
 )
 
-if(NOT DEFINED PSN00BSDK_LIBGCC)
-	message(FATAL_ERROR "Failed to obtain information about the GCC toolchain. Check your toolchain settings.")
-elseif(PSN00BSDK_LIBGCC STREQUAL "PSN00BSDK_LIBGCC-NOTFOUND")
-	message(FATAL_ERROR "Failed to find libgcc in the GCC toolchain's files. Check your toolchain settings, or set the path to libgcc using -DPSN00BSDK_LIBGCC.")
-endif()
+include(${PROJECT_SOURCE_DIR}/cmake/flags.cmake)
 
 ## Libraries
+
+set(_types    EXECUTABLE_GPREL EXECUTABLE_NOGPREL SHARED_LIBRARY)
+set(_suffixes _exe_gprel _exe_nogprel _dll)
 
 foreach(_library IN LISTS PSN00BSDK_LIBRARIES)
 	# libc needs special handling due to the different directory name.
@@ -31,37 +30,40 @@ foreach(_library IN LISTS PSN00BSDK_LIBRARIES)
 
 	file(
 		GLOB_RECURSE _sources
-		${_path}/*.s
-		${_path}/*.c
-		${_path}/*.cpp
-		${_path}/*.cxx
+		${_path}/*.s ${_path}/*.c ${_path}/*.cpp
 	)
 
-	psn00bsdk_add_library(${_library} STATIC ${_sources})
+	# Build a separate version of the library for each supported target type
+	# and create a virtual target that links the appropriate version of the
+	# library.
+	add_library(${_library} INTERFACE)
+
+	foreach(_type _suffix IN ZIP_LISTS _types _suffixes)
+		set(_name ${_library}${_suffix})
+		list(APPEND _libraries ${_name})
+
+		psn00bsdk_add_library(${_name} STATIC ${_sources})
+		set_target_properties(${_name} PROPERTIES PSN00BSDK_TARGET_TYPE ${_type})
+		target_link_libraries(
+			${_library} INTERFACE
+			$<$<STREQUAL:$<UPPER_CASE:$<TARGET_PROPERTY:PSN00BSDK_TARGET_TYPE>>,${_type}>:${_name}>
+		)
+	endforeach()
 endforeach()
 
-psn00bsdk_target_incbin(psxgpu PRIVATE _gpu_debug_font psxgpu/dbugfont.tim)
-
-# Extract libgcc's contents and merge them into libc after building.
-# Unfortunately glob expressions won't work on Windows, so we have to manually
-# enumerate the contents of libgcc and save the list to a temporary file (as it
-# is too long to be passed directly on the command line). This is actually the
-# most reliable way I found to do this (I tried $<TARGET_OBJECTS> to no avail).
-add_custom_command(
-	TARGET  c POST_BUILD
-	COMMAND ${CMAKE_AR} t ${PSN00BSDK_LIBGCC} $<ANGLE-R>_libgcc.txt
-	COMMAND ${CMAKE_AR} x ${PSN00BSDK_LIBGCC}
-	COMMAND ${CMAKE_AR} q $<TARGET_FILE:c> \@_libgcc.txt
-	COMMAND ${CMAKE_AR} s $<TARGET_FILE:c>
-	#COMMAND ${CMAKE_AR} rsuU $<TARGET_FILE:c> *.o
-	COMMENT "Merging libgcc contents into SDK libc"
-)
+# Add binary assets to each version of the libraries.
+foreach(_suffix IN LISTS _suffixes)
+	psn00bsdk_target_incbin(
+		psxgpu${_suffix} PRIVATE _gpu_debug_font
+		psxgpu/dbugfont.tim
+	)
+endforeach()
 
 ## Installation
 
 install(
-	TARGETS     ${PSN00BSDK_LIBRARIES}
-	DESTINATION ${CMAKE_INSTALL_LIBDIR}/libpsn00b
+	TARGETS     psn00bsdk ${PSN00BSDK_LIBRARIES} ${_libraries}
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/libpsn00b/$<LOWER_CASE:$<CONFIG>>
 	EXPORT      libpsn00b
 )
 install(
@@ -95,9 +97,11 @@ install(
 )
 
 # Generate an import script, which will be used by the setup script to find the
-# libraries.
+# libraries. Note that CMake actually generates two separate import scripts
+# (one setting configuration-specific options), so this won't create conflicts
+# once the debug and release builds are merged into the same installation tree.
 install(
 	EXPORT      libpsn00b
-	DESTINATION ${CMAKE_INSTALL_LIBDIR}/libpsn00b/cmake
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/libpsn00b
 	#EXPORT_LINK_INTERFACE_LIBRARIES
 )

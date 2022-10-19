@@ -62,17 +62,17 @@ static const char *const PAD_TYPEIDS[] = {
 #define BGCOLOR_B  0
 
 typedef struct {
-	DISPENV  disp;
-	DRAWENV  draw;
-} DB;
+	DISPENV disp;
+	DRAWENV draw;
+} Framebuffer;
 
 typedef struct {
-	DB       db[2];
-	uint32_t db_active;
-} CONTEXT;
+	Framebuffer db[2];
+	int         db_active;
+} RenderContext;
 
-void init_context(CONTEXT *ctx) {
-	DB *db;
+void init_context(RenderContext *ctx) {
+	Framebuffer *db;
 
 	ResetGraph(0);
 	ctx->db_active = 0;
@@ -99,8 +99,8 @@ void init_context(CONTEXT *ctx) {
 	FntOpen(8, 16, 304, 208, 2, 512);
 }
 
-void display(CONTEXT *ctx) {
-	DB *db;
+void display(RenderContext *ctx) {
+	Framebuffer *db;
 
 	DrawSync(0);
 	VSync(0);
@@ -227,7 +227,7 @@ void poll_cb(uint32_t port, const volatile uint8_t *buff, size_t rx_len) {
 
 /* Main */
 
-static CONTEXT ctx;
+static RenderContext ctx;
 
 int main(int argc, const char* argv[]) {
 	init_context(&ctx);

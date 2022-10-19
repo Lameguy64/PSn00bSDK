@@ -1,7 +1,7 @@
 # PSn00bSDK example CMake script
 # (C) 2021 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 
 project(
 	system573
@@ -12,7 +12,7 @@ project(
 )
 
 file(GLOB _sources *.c *.s)
-psn00bsdk_add_executable(system573 STATIC ${_sources})
+psn00bsdk_add_executable(system573 GPREL ${_sources})
 psn00bsdk_add_cd_image(system573_iso system573 iso.xml DEPENDS system573)
 
 install(

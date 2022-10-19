@@ -17,7 +17,6 @@
 		<directory_tree>
 			<file name="SYSTEM.CNF"		type="data" source="${PROJECT_SOURCE_DIR}/system.cnf" />
 			<file name="CDBROWSE.EXE"	type="data" source="cdbrowse.exe" />
-			<file name="CDBROWSE.MAP"	type="data" source="cdbrowse.map" />
 
 			<dir name="DIRA">
 				<dir name="DIRAA">

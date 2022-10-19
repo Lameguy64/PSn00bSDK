@@ -4,13 +4,13 @@
  */
 
 #include <stdint.h>
-#include <stdio.h>
+#include <psxetc.h>
 #include <psxapi.h>
 #include <psxpress.h>
 #include <hwregs_c.h>
 
 #define DMA_CHUNK_LENGTH	32
-#define MDEC_SYNC_TIMEOUT	0x1000000
+#define MDEC_SYNC_TIMEOUT	0x100000
 
 /* Default IDCT matrix and quantization tables */
 
@@ -127,7 +127,7 @@ void DecDCTin(const uint32_t *data, int mode) {
 // the stream.
 void DecDCTinRaw(const uint32_t *data, size_t length) {
 	if ((length >= DMA_CHUNK_LENGTH) && (length % DMA_CHUNK_LENGTH)) {
-		printf("psxmdec: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
+		_sdk_log("psxpress: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
 		length += DMA_CHUNK_LENGTH - 1;
 	}
 
@@ -149,12 +149,18 @@ int DecDCTinSync(int mode) {
 			return 0;
 	}
 
-	printf("psxpress: DecDCTinSync() timeout\n");
+	_sdk_log("psxpress: DecDCTinSync() timeout\n");
+	_sdk_dump_log();
 	return -1;
 }
 
 void DecDCTout(uint32_t *data, size_t length) {
 	DecDCToutSync(0);
+
+	if ((length >= DMA_CHUNK_LENGTH) && (length % DMA_CHUNK_LENGTH)) {
+		_sdk_log("psxpress: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
+		length += DMA_CHUNK_LENGTH - 1;
+	}
 
 	DMA_MADR(1) = (uint32_t) data;
 	if (length < DMA_CHUNK_LENGTH)
@@ -174,6 +180,7 @@ int DecDCToutSync(int mode) {
 			return 0;
 	}
 
-	printf("psxpress: DecDCToutSync() timeout\n");
+	_sdk_log("psxpress: DecDCToutSync() timeout\n");
+	_sdk_dump_log();
 	return -1;
 }

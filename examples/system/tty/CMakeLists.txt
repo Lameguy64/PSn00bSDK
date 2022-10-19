@@ -1,7 +1,7 @@
 # PSn00bSDK example CMake script
 # (C) 2021 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 
 project(
 	tty
@@ -12,7 +12,7 @@ project(
 )
 
 file(GLOB _sources *.c)
-psn00bsdk_add_executable(tty STATIC ${_sources})
+psn00bsdk_add_executable(tty GPREL ${_sources})
 #psn00bsdk_add_cd_image(tty_iso tty iso.xml DEPENDS tty)
 
 install(FILES ${PROJECT_BINARY_DIR}/tty.exe TYPE BIN)

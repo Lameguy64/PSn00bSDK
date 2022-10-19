@@ -98,8 +98,8 @@ MATRIX light_mtx = {
 char pad_buff[2][34];
 
 /* Function declarations */
-void init();
-void display();
+void init(void);
+void display(void);
 
 
 /* Main function */
@@ -245,7 +245,7 @@ int main(int argc, const char *argv[]) {
 	
 }
 
-void init() {
+void init(void) {
 
 	/* Reset the GPU, also installs a VSync event handler */
 	ResetGraph( 0 );
@@ -300,7 +300,7 @@ void init() {
 	
 }
 
-void display() {
+void display(void) {
 	
 	/* Wait for GPU to finish drawing and vertical retrace */
 	DrawSync( 0 );

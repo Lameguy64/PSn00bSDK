@@ -24,7 +24,8 @@ Additional information may be found in the source code of each example.
 | [`io/pads`](./io/pads)                         | Demonstrates reading controllers via low-level access | EXE  |   3   |
 | [`io/system573`](./io/system573)               | Konami System 573 (PS1-based arcade board) example    | CD   |       |
 | [`lowlevel/cartrom`](./lowlevel/cartrom)       | ROM firmware for cheat devices written using GNU GAS  | ROM  |   4   |
-| [`mdec/mdecimage`](./mdec/mdecimage)           | Displays a (raw) MDEC format image using libpsxpress  | EXE  |       |
+| [`mdec/mdecimage`](./mdec/mdecimage)           | Displays a (raw) MDEC format image                    | EXE  |       |
+| [`mdec/strvideo`](./mdec/strvideo)             | Plays a .STR video file using the MDEC                | CD   |   1   |
 | [`sound/spustream`](./sound/spustream)         | Custom (non XA) CD-ROM audio streaming using the SPU  | CD   |       |
 | [`sound/vagsample`](./sound/vagsample)         | Demonstrates playing VAG sound files using the SPU    | EXE  |       |
 | [`system/childexec`](./system/childexec)       | Loading a child program and returning to parent       | EXE  |       |
@@ -35,9 +36,9 @@ Additional information may be found in the source code of each example.
 
 Notes:
 
-1. `cdrom/cdxa` does not come with an example XA audio file. In order to run
-   this example you'll have to provide your own file and build the CD image
-   manually.
+1. `cdrom/cdxa` and  `mdec/strvideo` do not come with example files. In order
+   to run these examples you'll have to provide your own files and build the CD
+   image manually.
 2. `demos/n00bdemo` suffers from flickering on real hardware, especially when
    masking/stencil buffering is used.
 3. `io/pads` seems to work on real hardware, but fails to automatically enable
@@ -48,7 +49,7 @@ Notes:
 
 ## Building the examples
 
-The instructions below assume that PSn00bSDK, CMake 3.20+ and a GCC toolchain
+The instructions below assume that PSn00bSDK, CMake 3.21+ and a GCC toolchain
 are already installed. Refer to the [installation guide](../doc/installation.md)
 for details.
 
@@ -84,4 +85,4 @@ are for rebuilding the examples *after* the SDK has been installed.
    CD images for each example.
 
 -----------------------------------------
-_Last updated on 2022-08-11 by spicyjpeg_
+_Last updated on 2022-10-16 by spicyjpeg_

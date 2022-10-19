@@ -488,20 +488,30 @@ void PutDrawEnvFast(DRAWENV *env);
 
 int GetODE(void);
 int VSync(int mode);
-int DrawSync(int mode);
-
 void *VSyncHaltFunction(void (*func)(void));
 void *VSyncCallback(void (*func)(void));
+
+int EnqueueDrawOp(
+	void		(*func)(uint32_t, uint32_t, uint32_t),
+	uint32_t	arg1,
+	uint32_t	arg2,
+	uint32_t	arg3
+);
+int DrawSync(int mode);
 void *DrawSyncCallback(void (*func)(void));
 
-void LoadImage(const RECT *rect, const uint32_t *data);
-void StoreImage(const RECT *rect, uint32_t *data);
+int LoadImage(const RECT *rect, const uint32_t *data);
+int StoreImage(const RECT *rect, uint32_t *data);
+int MoveImage(const RECT *rect, int x, int y);
+void LoadImage2(const RECT *rect, const uint32_t *data);
+void StoreImage2(const RECT *rect, uint32_t *data);
+void MoveImage2(const RECT *rect, int x, int y);
 
 void ClearOTagR(uint32_t *ot, size_t length);
 void ClearOTag(uint32_t *ot, size_t length);
-void DrawOTag(const uint32_t *ot);
+int DrawOTag(const uint32_t *ot);
+int DrawOTagEnv(const uint32_t *ot, DRAWENV *env);
 void DrawOTag2(const uint32_t *ot);
-void DrawOTagEnv(const uint32_t *ot, DRAWENV *env);
 void DrawPrim(const uint32_t *pri);
 
 void AddPrim(uint32_t *ot, const void *pri);

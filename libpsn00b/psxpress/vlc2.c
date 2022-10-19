@@ -141,7 +141,10 @@ int __attribute__((optimize(3))) DecDCTvlcContinue2(
 				// TODO: version 3 is currently not supported.
 				return -1;
 			} else {
-				value   = _get_bits_unsigned(10);
+				value = _get_bits_unsigned(10);
+				if (value == 0x1ff)
+					break;
+
 				*output = value | quant_scale;
 				_advance_window(10);
 			}

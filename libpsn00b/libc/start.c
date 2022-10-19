@@ -21,7 +21,7 @@ const char	**__argv;
 static const char	*_argv_buffer[ARGC_MAX];
 static char			_arg_string_buffer[132];
 
-static void _parse_kernel_args() {
+static void _parse_kernel_args(void) {
 	// Copy the argument string from kernel memory into a private buffer (which
 	// won't be cleared or deallocated) and trim it at the first newline.
 	memset(_arg_string_buffer, 0, 132);
@@ -48,7 +48,7 @@ static void _parse_kernel_args() {
 	}
 }
 
-/* Heap initialization */
+/* Main */
 
 // These are defined by the linker script. Note that these are *NOT* pointers,
 // they are virtual symbols whose location matches their value. The simplest
@@ -57,20 +57,6 @@ extern uint8_t __text_start[];
 extern uint8_t __bss_start[];
 extern uint8_t _end[];
 //extern uint8_t _gp[];
-
-// This function should not be called manually in most cases. It might be
-// useful though to change the stack size and/or reinitialize the heap on
-// systems that have more than 2 MB of RAM (e.g. emulators, devkits, PS1-based
-// arcade boards).
-void _mem_init(size_t ram_size, size_t stack_max_size) {
-	void   *exe_end = _end + 4;
-	size_t exe_size = (size_t) exe_end - (size_t) __text_start;
-	size_t ram_used = (0x10000 + exe_size + stack_max_size) & 0xfffffffc;
-
-	InitHeap(exe_end, ram_size - ram_used);
-}
-
-/* Main */
 
 extern void (*__CTOR_LIST__[])(void);
 extern void (*__DTOR_LIST__[])(void);
@@ -88,10 +74,9 @@ void _start_inner(int32_t override_argc, const char **override_argv) {
 	for (uint32_t *i = (uint32_t *) __bss_start; i < (uint32_t *) _end; i++)
 		*i = 0;
 
-	// Initialize the heap, assuming 2 MB of RAM and reserving 128 KB for the
-	// stack. Note that _mem_init() can be called again in main() to change
-	// these values.
-	_mem_init(0x200000, 0x20000);
+	// Initialize the heap and place it after the executable, assuming 2 MB of
+	// RAM. Note that InitHeap() can be called again in main().
+	InitHeap((void *) _end + 4, (void *) 0x801ffff8 - (void *) _end);
 
 	if (override_argv) {
 		__argc = override_argc;

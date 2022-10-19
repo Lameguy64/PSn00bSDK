@@ -8,13 +8,13 @@
 
 void _assert_abort(const char *file, int line, const char *expr);
 
-#ifdef DEBUG
+#ifdef NDEBUG
+#define assert(x)
+#else
 #define assert(expr) { \
 	if (!(expr)) \
 		_assert_abort(__FILE__, __LINE__, #expr); \
 }
-#else
-#define assert(x)
 #endif
 
 #endif

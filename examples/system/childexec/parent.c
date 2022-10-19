@@ -67,12 +67,12 @@ extern const uint32_t ball16c[];
 TIM_IMAGE tim;
 
 
-void run_child();
+void run_child(void);
 
 char pad_buff[2][34];
 
 
-void init() {
+void init(void) {
 	
 	int i;
 	
@@ -270,10 +270,7 @@ typedef struct {
 // Child program address
 extern char child_exe[];
 
-// Manually defined as its not defined in psxapi by default
-void SetDefaultExitFromException();
-
-void run_child() {
+void run_child(void) {
 	
 	// Arguments for the child program
 	char *args[] =
@@ -289,29 +286,23 @@ void run_child() {
 	// Copy child executable to its intended adddress
 	memcpy((void*)exe->param.t_addr, child_exe+2048, exe->param.t_size);
 	
-	// Enter critical section to prepare for program execution
-	EnterCriticalSection();
+	// Prepare for program execution and disable interrupts
+	//EnterCriticalSection();
+	StopCallback();
 
 	// Stop pads, enable auto acknowledge
 	StopPAD();
 	ChangeClearPAD(1);
 	ChangeClearRCnt(3, 1);
-	
-	// Set default exception handler just in case
-	//SetDefaultExitFromException();
-	
-	// Last three function calls could be relegated to
-	// a StopCallback() function in the future.
-	
+
 	// Execute child
 	printf("Child exec!\n");
 	Exec(&exe->param, 3, args);
 	
 	// Restore interrupts for this PS-EXE
-	EnterCriticalSection();
 	RestartCallback();
-	ExitCriticalSection();
-
+	//ExitCriticalSection();
+	
 	// Re-init and re-enable pads
 	InitPAD(pad_buff[0], 34, pad_buff[1], 34);
 	StartPAD();

@@ -53,44 +53,50 @@ static const struct JMP_BUF _isr_jmp_buf = {
 /* Internal IRQ and DMA handlers */
 
 static void _global_isr(void) {
-	uint16_t stat = IRQ_STAT, mask = IRQ_MASK;
+	uint16_t stat = IRQ_STAT & IRQ_MASK;
 
-	// Clear all IRQ flags in one shot. This is not the "proper" way to do it
-	// but it's much faster than clearing one flag at a time.
-	IRQ_STAT = ~mask;
+	for (; stat; stat = IRQ_STAT & IRQ_MASK) {
+		//for (int i = 0; i < NUM_IRQ_CHANNELS; i++) {
+		for (int i = 0, mask = 1; stat; i++, stat >>= 1, mask <<= 1) {
+			if (!(stat & 1))
+				continue;
 
-	//for (int i = 0; i < NUM_IRQ_CHANNELS; i++) {
-	for (int i = 0; stat; i++, stat >>= 1) {
-		if (!(stat & 1))
-			continue;
+			// Acknowledge the current IRQ. Note that clearing all IRQ flags in one
+			// shot would result in hard-to-debug race conditions (been there, done
+			// that).
+			IRQ_STAT = (uint16_t) (mask ^ 0xffff);
 
-		if (_irq_handlers[i])
-			_irq_handlers[i]();
+			if (_irq_handlers[i])
+				_irq_handlers[i]();
+		}
 	}
 
 	ReturnFromException();
 }
 
 static void _global_dma_handler(void) {
-	uint32_t stat = DMA_DICR;
+	uint32_t dicr = DMA_DICR;
+	uint32_t stat = (dicr >> 24) & 0x7f;
 
-	// Clear all DMA IRQ flags in one shot (note that flags are cleared by
-	// writing 1 to them rather than 0).
-	stat    &= 0x7fff0000;
-	DMA_DICR = stat;
-	stat   >>= 24;
+	for (; stat; dicr = DMA_DICR, stat = (dicr >> 24) & 0x7f) {
+		uint32_t base = dicr & 0x00ffffff;
 
-	//for (int i = 0; i < NUM_DMA_CHANNELS; i++) {
-		for (int i = 0; stat; i++, stat >>= 1) {
-		if (!(stat & 1))
-			continue;
+		//for (int i = 0; i < NUM_DMA_CHANNELS; i++) {
+		for (int i = 0, mask = (1 << 24); stat; i++, stat >>= 1, mask <<= 1) {
+			if (!(stat & 1))
+				continue;
 
-		if (_dma_handlers[i])
-			_dma_handlers[i]();
+			// Acknowledge the current DMA channel's IRQ. For whatever reason
+			// DMA IRQ flags are cleared by writing 1 to them rather than 0.
+			DMA_DICR = base | mask;
+
+			if (_dma_handlers[i])
+				_dma_handlers[i]();
+		}
 	}
 }
 
-/* Callback registration API */
+/* IRQ and DMA handler API */
 
 void *InterruptCallback(int irq, void (*func)(void)) {
 	if ((irq < 0) || (irq >= NUM_IRQ_CHANNELS))
@@ -127,12 +133,12 @@ void *DMACallback(int dma, void (*func)(void)) {
 	// the callback is being registered or removed. The main DMA IRQ dispatcher
 	// is also registered if this is the first DMA callback being configured,
 	// or disabled if it's the last one being removed.
-	if (func) {
+	if (!old_callback && func) {
 		DMA_DICR |= (0x10000 << dma) | (1 << 23);
 
 		if (!(_num_dma_handlers++))
 			InterruptCallback(3, &_global_dma_handler);
-	} else {
+	} else if (old_callback && !func) {
 		if (--_num_dma_handlers) {
 			DMA_DICR &= ~(0x10000 << dma);
 		} else {
@@ -158,7 +164,7 @@ int ResetCallback(void) {
 		return -1;
 
 	EnterCriticalSection();
-	_saved_irq_mask = 1 << 3; // Enable DMA IRQ by default
+	_saved_irq_mask = 0;
 	_saved_dma_dpcr = 0x03333333;
 	_saved_dma_dicr = 0;
 
@@ -166,10 +172,6 @@ int ResetCallback(void) {
 		_irq_handlers[i] = (void *) 0;
 	for (int i = 0; i < NUM_DMA_CHANNELS; i++)
 		_dma_handlers[i] = (void *) 0;
-
-	// Set up the DMA IRQ handler. This handler shall *not* be overridden using
-	// InterruptCallback().
-	_irq_handlers[3] = &_global_dma_handler;
 
 	_96_remove();
 	RestartCallback();

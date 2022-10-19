@@ -1,7 +1,7 @@
 # PSn00bSDK example CMake script
 # (C) 2021 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 
 project(
 	cartrom
@@ -17,9 +17,13 @@ file(GLOB _sources *.c *.s)
 # executable has to be created manually and converted into raw binary format
 # (for testing on emulators or flashing to a cheat cartridge).
 add_executable       (cartrom ${_sources})
-target_link_libraries(cartrom psn00bsdk_static_exe)
-set_target_properties(cartrom PROPERTIES PREFIX "" SUFFIX ".elf")
 target_link_options  (cartrom PRIVATE -T${PROJECT_SOURCE_DIR}/rom.ld)
+set_target_properties(
+	cartrom PROPERTIES
+	PREFIX ""
+	SUFFIX ".elf"
+	PSN00BSDK_TARGET_TYPE EXECUTABLE_NOGPREL
+)
 
 target_include_directories(cartrom PRIVATE ${PROJECT_SOURCE_DIR})
 

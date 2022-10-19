@@ -1,7 +1,7 @@
 # PSn00bSDK tools build script
 # (C) 2021 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 
 project(
 	PSn00bSDK-tools

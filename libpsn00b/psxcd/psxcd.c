@@ -1,6 +1,7 @@
 #include <stdint.h>
-#include <stdio.h>
 #include <psxgpu.h>
+#include <psxetc.h>
+#include <psxapi.h>
 #include "psxcd.h"
 
 #define READ_TIMEOUT	600		// 10 seconds for NTSC
@@ -25,8 +26,7 @@ void _cd_control(unsigned char com, const void *param, int plen);
 void _cd_wait_ack(void);
 void _cd_wait(void);
 
-int CdInit(void)
-{
+int CdInit(void) {
 	// Sets up CD-ROM hardware and low-level subsystem
 	_cd_init();
 	
@@ -37,14 +37,11 @@ int CdInit(void)
 	CdControl(CdlNop, 0, 0);
 	CdControl(CdlInit, 0, 0);
 	
-	if( CdSync(0, 0) != CdlDiskError )
-	{
+	if(CdSync(0, 0) != CdlDiskError) {
 		CdControl(CdlDemute, 0, 0);
-		printf("psxcd: Init Ok!\n");
-	}
-	else
-	{
-		printf("psxcd: Error initializing. Bad disc/drive or no disc inserted.\n");
+		_sdk_log("psxcd: setup done\n");
+	} else {
+		_sdk_log("psxcd: setup error, bad disc/drive or no disc inserted\n");
 	}
 	
 	return 1;
@@ -86,7 +83,7 @@ int CdControlB(unsigned char com, const void *param, unsigned char *result)
 int CdControlF(unsigned char com, const void *param)
 {
 	int param_len=0;
-	
+
 	// Command specific parameters
 	switch(com)
 	{
@@ -104,31 +101,26 @@ int CdControlF(unsigned char com, const void *param)
 			param_len = 2;
 			break;
 		case CdlSetmode:
-			param_len = 1;
-			break;
 		case CdlSetsession:
-			param_len = 1;
-			break;
 		case CdlTest:
-			param_len = 1;
-			break;
 		case CdlGetTD:
 			param_len = 1;
+			break;
+		case CdlReadN:
+		case CdlReadS:
+		case CdlSeekL:
+		case CdlSeekP:
+			if( param )
+			{
+				_cd_control(CdlSetloc, param, 3);
+				_cd_last_setloc = *((CdlLOC*)param);
+			}
+			break;
 	}
-	
-	// Issue Setloc if parameters are specified on CdlReadN and CdlReadS
-	if( ( com == CdlReadN ) || ( com == CdlReadS ) )
-	{
-		if( param )
-		{
-			_cd_control(CdlSetloc, param, 3);
-			_cd_last_setloc = *((CdlLOC*)param);
-		}
-	}
-	
+
 	// Issue CD command
 	_cd_control(com, param, param_len);
-	
+
 	return 1;
 }
 
@@ -288,24 +280,18 @@ int CdRead(int sectors, uint32_t *buf, int mode)
 	_cd_read_addr = buf;
 	
 	// Determine sector based on mode flags
-	if( mode & CdlModeSize0 )
-	{
-		_cd_read_sector_sz = 2328 / 4;
-	}
-	else if( mode & CdlModeSize1 )
-	{
+	if( mode & CdlModeSize )
 		_cd_read_sector_sz = 2340 / 4;
-	}
 	else
-	{
 		_cd_read_sector_sz = 2048 / 4;
-	}
 	
 	_cd_read_counter = VSync(-1);
 	
 	// Set read callback
+	EnterCriticalSection();
 	_cd_read_oldcb = CdReadyCallback(_CdReadReadyCallback);
-	
+	ExitCriticalSection();
+
 	// Set specified mode
 	CdControl(CdlSetmode, (uint8_t*)&mode, 0);
 	
@@ -319,7 +305,7 @@ static void CdDoRetry()
 {
 	int cb;
 	
-	printf( "CdRead: Retrying...\n" );
+	_sdk_log("psxcd: retrying read...\n");
 	
 	// Stop reading
 	CdControl(CdlPause, 0, 0);
@@ -331,9 +317,11 @@ static void CdDoRetry()
 	
 	// Reset timeout
 	_cd_read_counter = VSync(-1);
-	
+
+	EnterCriticalSection();
 	CdReadyCallback(_CdReadReadyCallback);
-	
+	ExitCriticalSection();
+
 	// Retry read
 	CdControl(CdlSetloc, (void*)&_cd_last_setloc, 0);
 	CdControl(CdlReadN, 0, (uint8_t*)_cd_read_result);

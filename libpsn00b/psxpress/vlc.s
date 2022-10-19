@@ -131,10 +131,12 @@ _vlc_skip_context_load:
 	#nop
 
 .Lprocess_dc_v2_coefficient: # if (!coeff_index && !is_v3)
-	# The DC coefficient in version 2 frames is not compressed.
-	srl   $v0, $t0, 22 # *output = (window >> (32 - 10)) | quant_scale
-	or    $v0, $t3
-	addiu $t7, 1 # coeff_index++
+	# The DC coefficient in version 2 frames is not compressed. Value 0x1ff is
+	# used to signal the end of the bitstream.
+	srl   $v0, $t0, 22 # prefix = (window >> (32 - 10))
+	li    $v1, 0x01ff
+	beq   $v0, $v1, .Lstop_processing # if (prefix == 0x1ff) break
+	or    $v0, $t3 # *output = prefix | quant_scale
 	sll   $t0, 10 # window <<= 10
 	addiu $t5, -10 # bit_offset -= 10
 	b     .Lwrite_value

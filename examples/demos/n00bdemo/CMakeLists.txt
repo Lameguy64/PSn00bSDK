@@ -1,7 +1,7 @@
 # PSn00bSDK example CMake script
 # (C) 2021 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 
 project(
 	n00bdemo
@@ -28,7 +28,7 @@ add_custom_command(
 )
 
 file(GLOB _sources *.s *.c)
-psn00bsdk_add_executable(n00bdemo STATIC ${_sources})
+psn00bsdk_add_executable(n00bdemo GPREL ${_sources})
 #psn00bsdk_add_cd_image(n00bdemo_iso n00bdemo iso.xml DEPENDS n00bdemo)
 
 target_include_directories(n00bdemo PRIVATE ${PROJECT_SOURCE_DIR})

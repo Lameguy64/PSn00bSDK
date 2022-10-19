@@ -1,7 +1,7 @@
 # PSn00bSDK example CMake script
 # (C) 2021 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 
 project(
 	dynlink
@@ -12,7 +12,7 @@ project(
 )
 
 file(GLOB _sources *.c)
-psn00bsdk_add_executable(dynlink_main DYNAMIC ${_sources})
+psn00bsdk_add_executable(dynlink_main NOGPREL ${_sources})
 psn00bsdk_add_library   (dynlink_cube  SHARED library/cube.c)
 psn00bsdk_add_library   (dynlink_balls SHARED library/balls.c)
 psn00bsdk_add_cd_image(

@@ -413,17 +413,11 @@ CdAutoPauseCallback:
 	lw		$v0, 0($v1)
 	
 	la		$v1, _cd_callback_int4
-	
-	jal		EnterCriticalSection
-	nop
-	
+
 	lw		$a0, 4($sp)
 	nop
 	sw		$a0, 0($v1)
-	
-	jal		ExitCriticalSection
-	nop
-	
+
 	lw		$ra, 0($sp)
 	addiu	$sp, 8
 	jr		$ra
@@ -443,17 +437,11 @@ CdReadyCallback:
 	
 	la		$v1, _cd_callback_int1_data
 	sw		$v0, 8($sp)
-	
-	jal		EnterCriticalSection
-	nop
-	
+
 	lw		$a0, 4($sp)
 	nop
 	sw		$a0, 0($v1)
-	
-	jal		ExitCriticalSection
-	nop
-	
+
 	lw		$ra, 0($sp)
 	lw		$v0, 8($sp)
 	jr		$ra
@@ -472,17 +460,11 @@ CdSyncCallback:
 	
 	la		$v1, _cd_sync_cb
 	sw		$v0, 8($sp)
-	
-	jal		EnterCriticalSection
-	nop
-	
+
 	lw		$a0, 4($sp)
 	nop
 	sw		$a0, 0($v1)
-	
-	jal		ExitCriticalSection
-	nop
-	
+
 	lw		$ra, 0($sp)
 	lw		$v0, 8($sp)
 	jr		$ra
@@ -490,13 +472,7 @@ CdSyncCallback:
 	
 
 .section .data
-	
-.global psxcd_credits
-.type psxcd_credits, @object
-psxgpu_credits:
-	.ascii "psxcd library programs by Lameguy64\n"
-	.asciiz "2020 PSn00bSDK Project / Meido-Tek Productions\n"
-	
+
 .comm	_cd_last_cmd, 1, 1
 .comm	_cd_last_mode, 1, 1
 .comm	_cd_ack_wait, 1, 1

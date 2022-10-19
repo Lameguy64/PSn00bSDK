@@ -4,7 +4,7 @@
  */
 
 #include <stdint.h>
-#include <stdio.h>
+#include <psxetc.h>
 #include <psxspu.h>
 #include <hwregs_c.h>
 
@@ -17,7 +17,7 @@
 static SPU_TransferMode	_transfer_mode = SPU_TRANSFER_BY_DMA;
 static uint16_t			_transfer_addr = WRITABLE_AREA_ADDR;
 
-/* SPU initialization */
+/* Private utilities */
 
 static void _wait_status(uint16_t mask, uint16_t value) {
 	for (int i = STATUS_TIMEOUT; i; i--) {
@@ -25,8 +25,37 @@ static void _wait_status(uint16_t mask, uint16_t value) {
 			return;
 	}
 
-	printf("psxspu: status register timeout (0x%04x)\n", SPU_STAT);
+	_sdk_log("psxspu: status register timeout (0x%04x)\n", SPU_STAT);
 }
+
+static void _dma_transfer(uint32_t *data, size_t length, int write) {
+	if (length % 4)
+		_sdk_log("psxspu: can't transfer a number of bytes that isn't multiple of 4\n");
+
+	length /= 4;
+	if ((length >= DMA_CHUNK_LENGTH) && (length % DMA_CHUNK_LENGTH)) {
+		_sdk_log("psxspu: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
+		length += DMA_CHUNK_LENGTH - 1;
+	}
+
+	SPU_CTRL &= 0xffcf; // Disable DMA request
+	_wait_status(0x0030, 0x0000);
+
+	// Enable DMA request for writing (2) or reading (3)
+	SPU_ADDR  = _transfer_addr;
+	SPU_CTRL |= write ? 0x0020 : 0x0030;
+	_wait_status(0x0400, 0x0000);
+
+	DMA_MADR(4) = (uint32_t) data;
+	if (length < DMA_CHUNK_LENGTH)
+		DMA_BCR(4) = 0x00010000 | length;
+	else
+		DMA_BCR(4) = DMA_CHUNK_LENGTH | ((length / DMA_CHUNK_LENGTH) << 16);
+
+	DMA_CHCR(4) = 0x01000200 | write;
+}
+
+/* Public API */
 
 void SpuInit(void) {
 	SPU_CTRL = 0x0000; // SPU disabled
@@ -75,41 +104,12 @@ void SpuInit(void) {
 	SPU_KEY_ON			= 0x00ffffff;
 	SPU_MASTER_VOL_L	= 0x3fff;
 	SPU_MASTER_VOL_R	= 0x3fff;
-	SPU_CD_VOL_L		= 0x3fff;
-	SPU_CD_VOL_R		= 0x3fff;
-}
-
-/* SPU RAM transfer API */
-
-static void _load_store_data(uint32_t *data, size_t length, int mode) {
-	if (length % 4)
-		printf("psxspu: can't transfer a number of bytes that isn't multiple of 4\n");
-
-	length /= 4;
-	if ((length >= DMA_CHUNK_LENGTH) && (length % DMA_CHUNK_LENGTH)) {
-		printf("psxspu: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
-		length += DMA_CHUNK_LENGTH - 1;
-	}
-
-	SPU_CTRL &= 0xffcf; // Disable DMA request
-	_wait_status(0x0030, 0x0000);
-
-	// Enable DMA request for writing (2) or reading (3)
-	SPU_ADDR  = _transfer_addr;
-	SPU_CTRL |= mode << 4;
-	_wait_status(0x0400, 0x0000);
-
-	DMA_MADR(4) = (uint32_t) data;
-	if (length < DMA_CHUNK_LENGTH)
-		DMA_BCR(4) = 0x00010000 | length;
-	else
-		DMA_BCR(4) = DMA_CHUNK_LENGTH | ((length / DMA_CHUNK_LENGTH) << 16);
-
-	DMA_CHCR(4) = 0x01000200 | ((mode & 1) ^ 1);
+	SPU_CD_VOL_L		= 0x7fff;
+	SPU_CD_VOL_R		= 0x7fff;
 }
 
 void SpuRead(uint32_t *data, size_t size) {
-	_load_store_data(data, size, 3);
+	_dma_transfer(data, size, 0);
 }
 
 void SpuWrite(const uint32_t *data, size_t size) {
@@ -132,7 +132,7 @@ void SpuWrite(const uint32_t *data, size_t size) {
 		return;
 	}
 
-	_load_store_data((uint32_t *) data, size, 2);
+	_dma_transfer((uint32_t *) data, size, 1);
 }
 
 SPU_TransferMode SpuSetTransferMode(SPU_TransferMode mode) {

@@ -36,7 +36,7 @@ and performance reasons.
 
 ## Notable features
 
-As of March 28, 2022
+As of October 11, 2022:
 
 * Extensive GPU support with lines, flat shaded or textured polygon and sprite
   primitives, high-speed DMA for VRAM transfers and ordering tables. All video
@@ -54,26 +54,24 @@ As of March 28, 2022
   HLE BIOS implementations and loader/menu type homebrew programs.
 
 * BIOS controller functions for polling controller input work as intended
-  thanks to proper handling of hardware interrupts. No crude direct I/O polling
-  of controllers in the main loop.
-  
-* Complete Serial I/O support with SIOCONS driver for tty stdin/stdout
-  console access. Hardware flow control supported.
+  thanks to proper handling of hardware interrupts. Optional limited support
+  for manual polling.
 
-* Full CD-ROM support using libpsxcd featuring data read, CD audio and XA audio
-  playback, built-in ISO9660 file system parser with no file count limit
-  (classic ISO9660 only, no Rock Ridge or Joliet extensions) and multi-session.
-  
-* Preliminary MDEC support implemented with libpsxpress (no VLC decoding yet).
-  Sample encoder included.
+* Complete Serial I/O support and console driver to redirect standard input and
+  output to the serial port. Hardware flow control supported.
 
-* Can target Konami System 573 arcade hardware with limited support
-  (see examples/io/system573/main.c for details)
+* Full CD-ROM support using `libpsxcd` featuring data reading, CD-DA and XA
+  audio playback, a built-in ISO9660 file system parser with no file count
+  limit and support for multi-session discs.
 
-* Experimental support for compiling separate sections of an executable into
-  shared library files (DLLs) and linking them dynamically at runtime, plus
-  support for function and variable introspection by loading a map file
-  generated at build time.
+* MDEC support, lossy image decompression and video playback using
+  `libpsxpress` (currently only bitstream versions 1 and 2 are supported).
+
+* Preliminary limited support for Konami System 573 arcade hardware.
+
+* Experimental support for dynamic linking at runtime, with support for
+  function and variable introspection by loading a map file generated at build
+  time.
 
 * Uses Sony SDK library syntax for familiarity to experienced programmers
   and makes porting existing homebrew projects to PSn00bSDK easier.
@@ -113,21 +111,21 @@ apply to PSn00bSDK.
 
 ## To-do List
 
-* psxspu: Plenty of work to be done. Hardware timer driven sound/music
-  system may need to be implemented (an equivalent to the Ss* series of
-  functions in libspu basically). Functions that make use of the SPU RAM
-  interrupt feature to play or capture streamed audio should also be added.
+* `libpsxspu`: Plenty of work to be done. Some kind of MIDI sequencer (similar
+  to the one present in the official SDK) should be added at some point, along
+  with a proper API for audio streaming.
 
-* psxcd: Implement a command queue mechanism for the CD-ROM?
+* `libpsxcd`: Implement a command queue mechanism for the CD-ROM.
 
-* libc: Improve the memory allocation framework with multiple allocators, GC
-  and maybe helpers to manage swapping between main RAM and VRAM/SPU RAM.
+* `libpsxpress`: Add support for version 3 and IKI frame bitstreams.
 
-* Further support for MDEC, and tooling to transcode videos to .STR files
-  (either reimplementing the container and compression format used by the Sony
-  SDK, or a custom format with better compression).
+* `libc`: Improve the memory allocation framework with multiple allocators,
+  replace the string functions with optimized implementations and maybe add
+  helpers to manage swapping between main RAM and VRAM/SPU RAM.
 
-* Pad and memory card libraries that don't use the BIOS routines.
+* Add a full controller and memory card API that does not depend on the BIOS
+  controller driver, and possibly a library for interfacing to IDE/ATAPI drives
+  to make development for arcade systems easier.
 
 
 ## Credits
@@ -138,8 +136,8 @@ Main developer/author/whatever:
 
 Contributors:
 
-* **spicyjpeg**: dynamic linker, CMake scripts, some docs and examples
-  (`system/dynlink`, `sound/spustream`, `io/pads`, `io/system573`).
+* **spicyjpeg**: dynamic linker, `libpsxpress`, CMake scripts, some docs and
+  examples.
 * **Silent**, **G4Vi**, **Chromaryu**: `mkpsxiso` and `dumpsxiso` (maintained
   as a [separate repo](https://github.com/Lameguy64/mkpsxiso)).
 

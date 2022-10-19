@@ -1,22 +1,25 @@
 {
-	"version": 2,
+	"version": 3,
 	"cmakeMinimumRequired": {
 		"major": 3,
-		"minor": 20,
+		"minor": 21,
 		"patch": 0
 	},
 	"configurePresets": [
 		{
-			"name":        "default",
-			"displayName": "Default configuration",
-			"description": "Use this preset to build the project using PSn00bSDK.",
-			"generator":   "Ninja",
-			"binaryDir":   "${sourceDir}/build",
+			"name":          "default",
+			"displayName":   "Default configuration",
+			"description":   "Use this preset to build the project using PSn00bSDK.",
+			"generator":     "Ninja",
+			"toolchainFile": "$env{PSN00BSDK_LIBS}/cmake/sdk.cmake",
+			"binaryDir":     "${sourceDir}/build",
 			"cacheVariables": {
-				"CMAKE_BUILD_TYPE":     "Debug",
-				"CMAKE_TOOLCHAIN_FILE": "$env{PSN00BSDK_LIBS}/cmake/sdk.cmake",
-				"PSN00BSDK_TC":         "",
-				"PSN00BSDK_TARGET":     "mipsel-none-elf"
+				"CMAKE_BUILD_TYPE": "Debug",
+				"PSN00BSDK_TC":     "",
+				"PSN00BSDK_TARGET": "mipsel-none-elf"
+			},
+			"warnings": {
+				"dev": false
 			}
 		}
 	]

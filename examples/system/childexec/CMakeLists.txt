@@ -1,7 +1,7 @@
 # PSn00bSDK example CMake script
 # (C) 2021 spicyjpeg - MPL licensed
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 
 project(
 	childexec
@@ -13,14 +13,14 @@ project(
 
 file(GLOB _sources *.c)
 file(GLOB _child_sources child/*.c)
-psn00bsdk_add_executable(parent STATIC ${_sources})
-psn00bsdk_add_executable(child STATIC ${_child_sources})
-#psn00bsdk_add_cd_image(childexec_iso childexec iso.xml DEPENDS parent)
+psn00bsdk_add_executable(childexec GPREL ${_sources})
+psn00bsdk_add_executable(childexec_child GPREL ${_child_sources})
+#psn00bsdk_add_cd_image(childexec_iso childexec iso.xml DEPENDS childexec)
 
-psn00bsdk_target_incbin(parent PRIVATE ball16c ball16c.tim)
+psn00bsdk_target_incbin(childexec PRIVATE ball16c ball16c.tim)
 psn00bsdk_target_incbin(
-	parent PRIVATE child_exe
-	${PROJECT_BINARY_DIR}/child.exe
+	childexec PRIVATE child_exe
+	${PROJECT_BINARY_DIR}/childexec_child.exe
 )
 
 # Relocate the child executable to a non-default address to prevent it from
@@ -28,9 +28,9 @@ psn00bsdk_target_incbin(
 # NOTE: child executables are not position-independent and can't be relocated
 # at runtime. If you need your code to be relocatable (e.g. to load it into a
 # dynamically-allocated buffer), consider using a DLL instead.
-target_link_options(child PRIVATE -Ttext=0x80030000)
+target_link_options(childexec_child PRIVATE -Ttext=0x80030000)
 
 # Make sure the child executable is built before the parent.
-add_dependencies(parent child)
+add_dependencies(childexec childexec_child)
 
-install(FILES ${PROJECT_BINARY_DIR}/parent.exe TYPE BIN)
+install(FILES ${PROJECT_BINARY_DIR}/childexec.exe TYPE BIN)

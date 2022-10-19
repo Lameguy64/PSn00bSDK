@@ -19,13 +19,12 @@ typedef struct {
 	DRAWENV  draw;
 	uint32_t ot[OT_LEN];
 	uint8_t  p[PACKET_LEN];
-} DB;
+} Framebuffer;
 
 typedef struct {
-	uint16_t xres, yres;
-	DB       db[2];
-	uint32_t db_active;
-	uint8_t	 *db_nextpri;
-} CONTEXT;
+	Framebuffer db[2];
+	int         db_active;
+	uint8_t	    *db_nextpri;
+} RenderContext;
 
 #endif

@@ -90,26 +90,26 @@ ListDev:
 	jr $t2
 	li $t1, 0x49
 
-.section .text.InitCard
-.global InitCard
-.type InitCard, @function
-InitCard:
+.section .text.InitCARD
+.global InitCARD
+.type InitCARD, @function
+InitCARD:
 	li $t2, 0xb0
 	jr $t2
 	li $t1, 0x4a
 
-.section .text.StartCard
-.global StartCard
-.type StartCard, @function
-StartCard:
+.section .text.StartCARD
+.global StartCARD
+.type StartCARD, @function
+StartCARD:
 	li $t2, 0xb0
 	jr $t2
 	li $t1, 0x4b
 
-.section .text.StopCard
-.global StopCard
-.type StopCard, @function
-StopCard:
+.section .text.StopCARD
+.global StopCARD
+.type StopCARD, @function
+StopCARD:
 	li $t2, 0xb0
 	jr $t2
 	li $t1, 0x4c

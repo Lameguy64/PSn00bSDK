@@ -362,19 +362,19 @@
 	{
 		"type": "b",
 		"id":   74,
-		"name": "InitCard",
+		"name": "InitCARD",
 		"file": "drivers.s"
 	},
 	{
 		"type": "b",
 		"id":   75,
-		"name": "StartCard",
+		"name": "StartCARD",
 		"file": "drivers.s"
 	},
 	{
 		"type": "b",
 		"id":   76,
-		"name": "StopCard",
+		"name": "StopCARD",
 		"file": "drivers.s"
 	},
 	{

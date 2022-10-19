@@ -5,7 +5,7 @@
 
 1. Install prerequisites. Currently CMake is the only external dependency; you
    can install it from [here](https://cmake.org/download) or using MSys2 or
-   your distro's package manager. Make sure you have at least CMake 3.20.
+   your distro's package manager. Make sure you have at least CMake 3.21.
 
 2. Head over to the releases page, download the latest release's ZIP for your
    operating system and extract its contents to a directory of your choice,
@@ -44,7 +44,7 @@ being built without support for ripping CD audio tracks to FLAC, however the
    - `git`
    - `build-essential`, `base-devel` or similar
    - `make` or `ninja-build`
-   - `cmake` (3.20+ is required, download it from
+   - `cmake` (3.21 or later is required, download it from
      [here](https://cmake.org/download) if your package manager only provides
      older versions)
 
@@ -185,4 +185,4 @@ The toolchain script defines a few CMake macros to create PS1 executables, DLLs
 and CD images. See the [reference](cmake_reference.md) for details.
 
 -----------------------------------------
-_Last updated on 2022-09-21 by spicyjpeg_
+_Last updated on 2022-10-11 by spicyjpeg_
