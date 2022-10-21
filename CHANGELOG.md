@@ -19,7 +19,7 @@ to ensure the changelog can be parsed correctly.
 
 -------------------------------------------------------------------------------
 
-## 2022-10-19: 0.21
+## 2022-10-21: 0.21
 
 spicyjpeg:
 
@@ -30,6 +30,10 @@ spicyjpeg:
   library's internal drawing queue instead of blocking. Added `EnqueueDrawOp()`
   for more advanced control of the drawing queue. The `getTPage()` macro now
   supports extended Y coordinates (512-1023) on systems with 2 MB of VRAM.
+
+- psxsio: Removed `_sio_control()` and replaced it with a completely new
+  asynchronous buffered serial port driver. Rewritten the serial TTY driver to
+  make use of the new API.
 
 ## 2022-10-16
 

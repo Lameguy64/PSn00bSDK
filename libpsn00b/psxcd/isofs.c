@@ -1,4 +1,5 @@
 
+#undef  SDK_LIBRARY_NAME
 #define SDK_LIBRARY_NAME "psxcd/iso"
 
 #include <stdint.h>

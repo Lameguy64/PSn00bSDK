@@ -9,6 +9,7 @@
 memset:
 	# If more than 16 bytes have to be written then take the "large" path,
 	# otherwise use the code below.
+	blez  $a2, .Lnull_count
 	addiu $t0, $a2, -16
 	bgtz  $t0, .Llarge_fill
 	move  $v0, $a0 # return_value = dest
@@ -40,6 +41,10 @@ memset:
 	sb    $a1, 0xe($a0)
 	jr    $ra
 	sb    $a1, 0xf($a0)
+
+.Lnull_count:
+	jr    $ra
+	move  $v0, $a0 # return_value = dest
 
 .Llarge_fill:
 	# Initialize fast filling by repeating the fill byte 4 times, so it can be

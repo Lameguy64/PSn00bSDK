@@ -23,6 +23,7 @@
  *   of entries
  */
 
+#undef  SDK_LIBRARY_NAME
 #define SDK_LIBRARY_NAME "psxetc/dl"
 
 #include <stdint.h>
@@ -234,7 +235,7 @@ int32_t DL_ParseSymbolMap(const char *ptr, size_t size) {
 			// insists on printing 64-bit addresses... wtf) and normalize the
 			// type letter to upper case, then check if the entry is valid and
 			// non-null.
-			void     *address = (void *) address64;
+			void     *address = (void *) ((uint32_t) address64);
 			char     _type    = toupper(type_string[0]);
 			uint32_t hash     = _elf_hash(name);
 			uint32_t hash_mod = hash % _symbol_map.nbucket;

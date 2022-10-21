@@ -9,6 +9,9 @@
 #ifndef __ASSERT_H
 #define __ASSERT_H
 
+void _assert_abort(const char *file, int line, const char *expr);
+void _sdk_log_inner(const char *fmt, ...);
+
 #ifdef NDEBUG
 
 #define assert(expr)
@@ -16,12 +19,10 @@
 
 #else
 
-void _assert_abort(const char *file, int line, const char *expr);
-void _sdk_log_inner(const char *fmt, ...);
-
 #define assert(expr) { \
 	if (!(expr)) _assert_abort(__FILE__, __LINE__, #expr); \
 }
+
 #ifdef SDK_LIBRARY_NAME
 #define _sdk_log(fmt, ...) _sdk_log_inner(SDK_LIBRARY_NAME ": " fmt, ##__VA_ARGS__)
 #else
