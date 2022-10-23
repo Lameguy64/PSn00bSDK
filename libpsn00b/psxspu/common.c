@@ -38,13 +38,16 @@ static void _dma_transfer(uint32_t *data, size_t length, int write) {
 		length += DMA_CHUNK_LENGTH - 1;
 	}
 
-	SPU_CTRL &= 0xffcf; // Disable DMA request
+	SPU_DMA_CTRL = 0x0004; // Reset transfer mode
+	SPU_CTRL    &= 0xffcf; // Disable DMA request
 	_wait_status(0x0030, 0x0000);
 
 	// Enable DMA request for writing (2) or reading (3)
+	uint16_t ctrl = write ? 0x0020 : 0x0030;
+
 	SPU_ADDR  = _transfer_addr;
-	SPU_CTRL |= write ? 0x0020 : 0x0030;
-	_wait_status(0x0400, 0x0000);
+	SPU_CTRL |= ctrl;
+	_wait_status(0x0430, ctrl);
 
 	DMA_MADR(4) = (uint32_t) data;
 	if (length < DMA_CHUNK_LENGTH)

@@ -27,7 +27,7 @@ typedef struct {
 static SIO_FlowControl _flow_control;
 static uint16_t _ctrl_reg_flag;
 
-static void (*_read_callback)(uint8_t) = (void *) 0;
+static int  (*_read_callback)(uint8_t) = (void *) 0;
 static void (*_old_sio_handler)(void)  = (void *) 0;
 
 static volatile RingBuffer _tx_buffer, _rx_buffer;
@@ -41,7 +41,15 @@ static void _sio_handler(void) {
 	// Handle any incoming bytes.
 	while (SIO_STAT & SR_RXRDY) {
 		uint8_t value  = SIO_TXRX;
-		int     length = _rx_buffer.length;
+
+		// Skip storing this byte into the RX buffer if the callback returns a
+		// non-zero value.
+		if (_read_callback) {
+			if (_read_callback(value))
+				continue;
+		}
+
+		int length = _rx_buffer.length;
 
 		if (length >= BUFFER_LENGTH) {
 			//_sdk_log("RX overrun, dropping bytes\n");
@@ -53,8 +61,6 @@ static void _sio_handler(void) {
 		_rx_buffer.length = length + 1;
 
 		_rx_buffer.data[tail] = value;
-		if (_read_callback)
-			_read_callback(value);
 	}
 
 	// Send the next byte in the buffer if the TX unit is ready. Note that
@@ -185,7 +191,7 @@ int SIO_ReadSync(int mode) {
 	return 0;
 }
 
-void *SIO_ReadCallback(void (*func)(uint8_t)) {
+void *SIO_ReadCallback(int (*func)(uint8_t)) {
 	EnterCriticalSection();
 
 	void *old_callback  = _read_callback;

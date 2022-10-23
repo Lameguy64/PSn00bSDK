@@ -145,15 +145,19 @@ int SIO_ReadSync(int mode);
 
 /**
  * @brief Registers a function to be called whenever a byte is received. The
- * received byte is appended to the RX buffer and passed as an argument to the
- * callback. The callback will run in the exception handler's context, so it
- * should be as fast as possible and not use any function that relies on
- * interrupts in order to work.
+ * received byte is passed as an argument to the callback, which shall then
+ * return a zero value to also store the byte in the RX buffer or a non-zero
+ * value to drop it. This can be used to e.g. filter or validate incoming data,
+ * or to bypass the library's RX buffer for custom buffering purposes.
+ *
+ * The callback will run in the exception handler's context, so it should be as
+ * fast as possible and shall not call any function that relies on interrupts
+ * being enabled.
  *
  * @param func
  * @return Previously set callback or NULL
  */
-void *SIO_ReadCallback(void (*func)(uint8_t));
+void *SIO_ReadCallback(int (*func)(uint8_t));
 
 /**
  * @brief Sends the given byte, or appends it to the TX buffer if the serial

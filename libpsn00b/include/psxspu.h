@@ -73,6 +73,20 @@ typedef struct _SpuCommonAttr {
 	SpuExtAttr	cd, ext;
 } SpuCommonAttr;
 
+/* Macros */
+
+#define getSPUAddr(addr)		((uint16_t) (((addr) + 7) / 8))
+#define getSPUSampleRate(rate)	((uint16_t) (((rate) * (1 << 12)) / 44100))
+
+#define getSPUADSR(ar, dr, sr, rr, sl) ( \
+	(sl) | \
+	((dr) <<  4) | \
+	((ar) <<  8) | \
+	((rr) << 16) | \
+	((sr) << 22) | \
+	(1    << 30) \
+)
+
 /* "Useless" macros for official SDK compatibility */
 
 #define SpuSetCommonMasterVolume(left, right) \
@@ -87,18 +101,18 @@ typedef struct _SpuCommonAttr {
 	((enable) ? (SPU_CTRL |= 0x0002) : (SPU_CTRL &= 0xfffd))
 
 #define SpuSetReverbAddr(addr) \
-	(SPU_REVERB_ADDR = ((addr) + 7) / 8)
+	(SPU_REVERB_ADDR = getSPUAddr(addr))
 #define SpuSetIRQAddr(addr) \
-	(SPU_IRQ_ADDR = ((addr) + 7) / 8)
+	(SPU_IRQ_ADDR = getSPUAddr(addr))
 
 #define SpuSetVoiceVolume(ch, left, right) \
 	(SPU_CH_VOL_L(ch) = (left), SPU_CH_VOL_R(ch) = (right))
 #define SpuSetVoicePitch(ch, pitch) \
 	(SPU_CH_FREQ(ch) = (pitch))
 #define SpuSetVoiceStartAddr(ch, addr) \
-	(SPU_CH_ADDR(ch) = ((addr) + 7) / 8)
+	(SPU_CH_ADDR(ch) = getSPUAddr(addr))
 #define SpuSetVoiceADSR(ch, ar, dr, sr, rr, sl) \
-	(SPU_CH_ADSR(ch) = ((sl)) | ((dr) << 4) | ((ar) << 8) | ((rr) << 16) | ((sr) << 22) | (1 << 30))
+	(SPU_CH_ADSR(ch) = getSPUADSR(ar, dr, sr, rr, sl))
 
 #define SpuSetKey(enable, voice_bit) \
 	((enable) ? (SPU_KEY_ON = (voice_bit)) : (SPU_KEY_OFF = (voice_bit)))

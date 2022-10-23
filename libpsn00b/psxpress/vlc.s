@@ -29,17 +29,17 @@
 .set VLC_Context_block_index,	20
 .set VLC_Context_coeff_index,	21
 
-.set DECDCTSMALLTAB_lut0,	0
-.set DECDCTSMALLTAB_lut2,	4
-.set DECDCTSMALLTAB_lut3,	36
-.set DECDCTSMALLTAB_lut4,	292
-.set DECDCTSMALLTAB_lut5,	308
-.set DECDCTSMALLTAB_lut7,	324
-.set DECDCTSMALLTAB_lut8,	356
-.set DECDCTSMALLTAB_lut9,	420
-.set DECDCTSMALLTAB_lut10,	484
-.set DECDCTSMALLTAB_lut11,	548
-.set DECDCTSMALLTAB_lut12,	612
+.set DECDCTTAB_lut0,	0
+.set DECDCTTAB_lut2,	4
+.set DECDCTTAB_lut3,	36
+.set DECDCTTAB_lut4,	292
+.set DECDCTTAB_lut5,	308
+.set DECDCTTAB_lut7,	324
+.set DECDCTTAB_lut8,	356
+.set DECDCTTAB_lut9,	420
+.set DECDCTTAB_lut10,	484
+.set DECDCTTAB_lut11,	548
+.set DECDCTTAB_lut12,	612
 
 .section .text.DecDCTvlcStart
 .global DecDCTvlcStart
@@ -115,7 +115,7 @@ _vlc_skip_context_load:
 	# Obtain the addresses of the lookup table and jump area in advance so that
 	# they don't have to be retrieved for each coefficient decoded.
 	lw    $t8, _vlc_huffman_table
-	la    $t9, .Lac_jump_area
+	la    $t9, .Lac_prefix_10
 
 	beqz  $a2, .Lstop_processing
 	addiu $a1, 4 # output = (uint16_t *) &output[1]
@@ -123,32 +123,32 @@ _vlc_skip_context_load:
 .Lprocess_next_code_loop: # while (max_size)
 	# This is the "hot" part of the decoder, executed for each code in the
 	# bitstream. The first step is to determine if the next code is a DC or AC
-	# coefficient. The GTE is also given the task of counting the number of
-	# leading zeroes/ones, which takes 2 more cycles.
+	# coefficient.
 	bnez  $t7, .Lprocess_ac_coefficient
-	mtc2  $t0, $30
+	addiu $t7, 1 # coeff_index++
 	bnez  $t4, .Lprocess_dc_v3_coefficient
-	#nop
+	li    $v1, 0x01ff
 
 .Lprocess_dc_v2_coefficient: # if (!coeff_index && !is_v3)
 	# The DC coefficient in version 2 frames is not compressed. Value 0x1ff is
 	# used to signal the end of the bitstream.
 	srl   $v0, $t0, 22 # prefix = (window >> (32 - 10))
-	li    $v1, 0x01ff
 	beq   $v0, $v1, .Lstop_processing # if (prefix == 0x1ff) break
 	or    $v0, $t3 # *output = prefix | quant_scale
 	sll   $t0, 10 # window <<= 10
-	addiu $t5, -10 # bit_offset -= 10
 	b     .Lwrite_value
-	addiu $t7, 1 # coeff_index++
+	addiu $t5, -10 # bit_offset -= 10
 
 .Lprocess_dc_v3_coefficient: # if (!coeff_index && is_v3)
 	# TODO: version 3 is currently not supported.
 	jr    $ra
 	li    $v0, -1
-	#b     .Lwrite_value
 
 .Lprocess_ac_coefficient: # if (coeff_index)
+	# Start counting the number of leading zeroes/ones using the GTE. This
+	# takes 2 more cycles.
+	mtc2  $t0, $30
+
 	# Check whether the prefix code is one of the shorter, more common ones.
 	srl   $v0, $t0, 30
 	li    $v1, 3
@@ -157,33 +157,34 @@ _vlc_skip_context_load:
 	beq   $v0, $v1, .Lac_prefix_10
 	li    $v1, 1
 	beq   $v0, $v1, .Lac_prefix_01
-	#srl   $v0, $t0, 29
-	#beq   $v0, $v1, .Lac_prefix_001
-	#nop
+	nop
 
 	# If the code is longer, retrieve the number of leading zeroes from the GTE
 	# and use it as an index into the jump area. Each block in the area is 8
 	# instructions long and handles decoding a specific prefix.
 	mfc2  $v0, $31
-	nop
-	andi  $v0, 15 # jump_addr = &ac_jump_area[(prefix % 16) * 8 * sizeof(u32)]
-	sll   $v0, 5
+	li    $v1, 11
+	bgt   $v0, $v1, .Lreturn_error # if (prefix > 11) return -1
+	sll   $v0, 5 # jump_addr = &ac_jump_area[prefix * 8 * sizeof(u32)]
 	addu  $v0, $t9
 	jr    $v0
 	nop
+
+.Lreturn_error:
+	jr    $ra
+	li    $v0, -1
 
 .Lac_prefix_11:
 	# Prefix 11 is followed by a single bit.
 	srl   $v0, $t0, 28 # index = ((window >> (32 - 2 - 1)) & 1) * sizeof(u16)
 	andi  $v0, 2
 	addu  $v0, $t8 # value = table->lut0[index]
-	lhu   $v0, DECDCTSMALLTAB_lut0($v0)
+	lhu   $v0, DECDCTTAB_lut0($v0)
 	sll   $t0, 3 # window <<= 3
-	addiu $t5, -3 # bit_offset -= 3
 	b     .Lwrite_value
-	addiu $t7, 1 # coeff_index++
+	addiu $t5, -3 # bit_offset -= 3
+	#.word 0
 
-.Lac_jump_area:
 .Lac_prefix_10:
 	# Prefix 10 marks the end of a block.
 	li    $v0, 0xfe00 # value = 0xfe00
@@ -202,11 +203,10 @@ _vlc_skip_context_load:
 	srl   $v0, $t0, 25 # index = ((window >> (32 - 2 - 3)) & 7) * sizeof(u32)
 	andi  $v0, 28
 	addu  $v0, $t8 # value = table->lut2[index]
-	lw    $v0, DECDCTSMALLTAB_lut2($v0)
-	addiu $t7, 1 # coeff_index++
+	lw    $v0, DECDCTTAB_lut2($v0)
 	b     .Lupdate_window_and_write
 	srl   $v1, $v0, 16 # length = value >> 16
-	.word 0
+	.word 0, 0
 
 .Lac_prefix_001:
 	# Prefix 001 can be followed by a 6-bit lookup index starting with 00, or a
@@ -214,136 +214,106 @@ _vlc_skip_context_load:
 	srl   $v0, $t0, 21 # index = ((window >> (32 - 3 - 6)) & 63) * sizeof(u32)
 	andi  $v0, 252
 	addu  $v0, $t8 # value = table->lut3[index]
-	lw    $v0, DECDCTSMALLTAB_lut3($v0)
-	addiu $t7, 1 # coeff_index++
+	lw    $v0, DECDCTTAB_lut3($v0)
 	b     .Lupdate_window_and_write
 	srl   $v1, $v0, 16 # length = value >> 16
-	.word 0
+	.word 0, 0
 
 .Lac_prefix_0001:
 	# Prefix 0001 is followed by a 3-bit lookup index.
 	srl   $v0, $t0, 24 # index = ((window >> (32 - 4 - 3)) & 7) * sizeof(u16)
 	andi  $v0, 14
 	addu  $v0, $t8 # value = table->lut4[index]
-	lhu   $v0, DECDCTSMALLTAB_lut4($v0)
+	lhu   $v0, DECDCTTAB_lut4($v0)
 	sll   $t0, 7 # window <<= 4 + 3
-	addiu $t5, -7 # bit_offset -= 4 + 3
 	b     .Lwrite_value
-	addiu $t7, 1 # coeff_index++
+	addiu $t5, -7 # bit_offset -= 4 + 3
+	.word 0
 
 .Lac_prefix_00001:
 	# Prefix 00001 is followed by a 3-bit lookup index.
 	srl   $v0, $t0, 23 # index = ((window >> (32 - 5 - 3)) & 7) * sizeof(u16)
 	andi  $v0, 14
 	addu  $v0, $t8 # value = table->lut5[index]
-	lhu   $v0, DECDCTSMALLTAB_lut5($v0)
+	lhu   $v0, DECDCTTAB_lut5($v0)
 	sll   $t0, 8 # window <<= 5 + 3
-	addiu $t5, -8 # bit_offset -= 5 + 3
 	b     .Lwrite_value
-	addiu $t7, 1 # coeff_index++
+	addiu $t5, -8 # bit_offset -= 5 + 3
+	.word 0
 
 .Lac_prefix_000001:
 	# Prefix 000001 is an escape code followed by a full 16-bit MDEC value.
 	srl   $v0, $t0, 10 # value = window >> (32 - 6 - 16)
 	sll   $t0, 22 # window <<= 6 + 16
-	addiu $t5, -22 # bit_offset -= 6 + 16
 	b     .Lwrite_value
-	addiu $t7, 1 # coeff_index++
-	.word 0, 0, 0
+	addiu $t5, -22 # bit_offset -= 6 + 16
+	.word 0, 0, 0, 0
 
 .Lac_prefix_0000001:
 	# Prefix 0000001 is followed by a 4-bit lookup index.
 	srl   $v0, $t0, 20 # index = ((window >> (32 - 7 - 4)) & 15) * sizeof(u16)
 	andi  $v0, 30
 	addu  $v0, $t8 # value = table->lut7[index]
-	lhu   $v0, DECDCTSMALLTAB_lut7($v0)
+	lhu   $v0, DECDCTTAB_lut7($v0)
 	sll   $t0, 11 # window <<= 7 + 4
-	addiu $t5, -11 # bit_offset -= 7 + 4
 	b     .Lwrite_value
-	addiu $t7, 1 # coeff_index++
+	addiu $t5, -11 # bit_offset -= 7 + 4
+	.word 0
 
 .Lac_prefix_00000001:
 	# Prefix 00000001 is followed by a 5-bit lookup index.
 	srl   $v0, $t0, 18 # index = ((window >> (32 - 8 - 5)) & 31) * sizeof(u16)
 	andi  $v0, 62
 	addu  $v0, $t8 # value = table->lut8[index]
-	lhu   $v0, DECDCTSMALLTAB_lut8($v0)
+	lhu   $v0, DECDCTTAB_lut8($v0)
 	sll   $t0, 13 # window <<= 8 + 5
-	addiu $t5, -13 # bit_offset -= 8 + 5
 	b     .Lwrite_value
-	addiu $t7, 1 # coeff_index++
+	addiu $t5, -13 # bit_offset -= 8 + 5
+	.word 0
 
 .Lac_prefix_000000001:
 	# Prefix 000000001 is followed by a 5-bit lookup index.
 	srl   $v0, $t0, 17 # index = ((window >> (32 - 9 - 5)) & 31) * sizeof(u16)
 	andi  $v0, 62
 	addu  $v0, $t8 # value = table->lut9[index]
-	lhu   $v0, DECDCTSMALLTAB_lut9($v0)
+	lhu   $v0, DECDCTTAB_lut9($v0)
 	sll   $t0, 14 # window <<= 9 + 5
-	addiu $t5, -14 # bit_offset -= 9 + 5
 	b     .Lwrite_value
-	addiu $t7, 1 # coeff_index++
+	addiu $t5, -14 # bit_offset -= 9 + 5
+	.word 0
 
 .Lac_prefix_0000000001:
 	# Prefix 0000000001 is followed by a 5-bit lookup index.
 	srl   $v0, $t0, 16 # index = ((window >> (32 - 10 - 5)) & 31) * sizeof(u16)
 	andi  $v0, 62
 	addu  $v0, $t8 # value = table->lut10[index]
-	lhu   $v0, DECDCTSMALLTAB_lut10($v0)
+	lhu   $v0, DECDCTTAB_lut10($v0)
 	sll   $t0, 15 # window <<= 10 + 5
-	addiu $t5, -15 # bit_offset -= 10 + 5
 	b     .Lwrite_value
-	addiu $t7, 1 # coeff_index++
+	addiu $t5, -15 # bit_offset -= 10 + 5
+	.word 0
 
 .Lac_prefix_00000000001:
 	# Prefix 00000000001 is followed by a 5-bit lookup index.
 	srl   $v0, $t0, 15 # index = ((window >> (32 - 11 - 5)) & 31) * sizeof(u16)
 	andi  $v0, 62
 	addu  $v0, $t8 # value = table->lut11[index]
-	lhu   $v0, DECDCTSMALLTAB_lut11($v0)
+	lhu   $v0, DECDCTTAB_lut11($v0)
 	sll   $t0, 16 # window <<= 11 + 5
-	addiu $t5, -16 # bit_offset -= 11 + 5
 	b     .Lwrite_value
-	addiu $t7, 1 # coeff_index++
+	addiu $t5, -16 # bit_offset -= 11 + 5
+	.word 0
 
 .Lac_prefix_000000000001:
 	# Prefix 000000000001 is followed by a 5-bit lookup index.
 	srl   $v0, $t0, 14 # index = ((window >> (32 - 12 - 5)) & 31) * sizeof(u16)
 	andi  $v0, 62
 	addu  $v0, $t8 # value = table->lut12[index]
-	lhu   $v0, DECDCTSMALLTAB_lut12($v0)
+	lhu   $v0, DECDCTTAB_lut12($v0)
 	sll   $t0, 17 # window <<= 12 + 5
-	addiu $t5, -17 # bit_offset -= 12 + 5
 	b     .Lwrite_value
-	addiu $t7, 1 # coeff_index++
-
-	# Prefix 0000000000001 is not valid.
-	beqz  $t0, .Lstop_processing
-	nop
-	jr    $ra
-	li    $v0, -1
-	.word 0, 0, 0, 0
-
-	# Prefix 00000000000001 is not valid.
-	beqz  $t0, .Lstop_processing
-	nop
-	jr    $ra
-	li    $v0, -1
-	.word 0, 0, 0, 0
-
-	# Prefix 000000000000001 is not valid.
-	beqz  $t0, .Lstop_processing
-	nop
-	jr    $ra
-	li    $v0, -1
-	.word 0, 0, 0, 0
-
-	# Prefix 0000000000000001 is not valid.
-	beqz  $t0, .Lstop_processing
-	nop
-	jr    $ra
-	li    $v0, -1
-	#.word 0, 0, 0, 0
+	addiu $t5, -17 # bit_offset -= 12 + 5
+	.word 0
 
 .Lupdate_window_and_write:
 	sllv  $t0, $t0, $v1 # window <<= length

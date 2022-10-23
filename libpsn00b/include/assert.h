@@ -9,8 +9,9 @@
 #ifndef __ASSERT_H
 #define __ASSERT_H
 
+#include <stdio.h>
+
 void _assert_abort(const char *file, int line, const char *expr);
-void _sdk_log_inner(const char *fmt, ...);
 
 #ifdef NDEBUG
 
@@ -24,9 +25,9 @@ void _sdk_log_inner(const char *fmt, ...);
 }
 
 #ifdef SDK_LIBRARY_NAME
-#define _sdk_log(fmt, ...) _sdk_log_inner(SDK_LIBRARY_NAME ": " fmt, ##__VA_ARGS__)
+#define _sdk_log(fmt, ...) printf(SDK_LIBRARY_NAME ": " fmt, ##__VA_ARGS__)
 #else
-#define _sdk_log(fmt, ...) _sdk_log_inner(fmt, ##__VA_ARGS__)
+#define _sdk_log(fmt, ...) printf(fmt, ##__VA_ARGS__)
 #endif
 
 #endif
