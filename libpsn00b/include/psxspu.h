@@ -111,11 +111,19 @@ typedef struct _SpuCommonAttr {
 	(SPU_CH_FREQ(ch) = (pitch))
 #define SpuSetVoiceStartAddr(ch, addr) \
 	(SPU_CH_ADDR(ch) = getSPUAddr(addr))
-#define SpuSetVoiceADSR(ch, ar, dr, sr, rr, sl) \
-	(SPU_CH_ADSR(ch) = getSPUADSR(ar, dr, sr, rr, sl))
+#define SpuSetVoiceADSR(ch, ar, dr, sr, rr, sl) ( \
+	SPU_CH_ADSR1(ch) = (sl) | ((dr) << 4) | ((ar) << 8), \
+	SPU_CH_ADSR2(ch) = (rr) | ((sr) << 6) | (1 << 14) \
+)
 
 #define SpuSetKey(enable, voice_bit) \
-	((enable) ? (SPU_KEY_ON = (voice_bit)) : (SPU_KEY_OFF = (voice_bit)))
+	((enable) ? ( \
+		SPU_KEY_ON1 = (uint16_t) (voice_bit), \
+		SPU_KEY_ON2 = (uint16_t) ((voice_bit) >> 16) \
+	) : ( \
+		SPU_KEY_OFF1 = (uint16_t) (voice_bit), \
+		SPU_KEY_OFF2 = (uint16_t) ((voice_bit) >> 16) \
+	))
 
 /* Public API */
 

@@ -19,6 +19,20 @@ to ensure the changelog can be parsed correctly.
 
 -------------------------------------------------------------------------------
 
+# 2022-10-27
+
+spicyjpeg:
+
+- psxspu: Fixed bugs in `SpuInit()` and in `SpuWrite()` when using manual
+  transfer mode (`SPU_TRANSFER_BY_IO`). Added `SpuWritePartly()`.
+
+- psxetc: Added `IRQ_Channel` and `DMA_Channel` enums.
+
+- examples: Refactored and bugfixed all sound examples. Renamed the old
+  `spustream` example to `cdstream` and added a new `spustream` example
+  demonstrating SPU audio streaming from main RAM. Both streaming examples now
+  make use of the interleaved .VAG file format.
+
 ## 2022-10-21: 0.21
 
 spicyjpeg:

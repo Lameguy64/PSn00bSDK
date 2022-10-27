@@ -105,10 +105,14 @@ void SpuInit(void) {
 	SPU_MASTER_VOL_R	= 0;
 	SPU_REVERB_VOL_L	= 0;
 	SPU_REVERB_VOL_R	= 0;
-	SPU_KEY_OFF			= 0x00ffffff;
-	SPU_FM_MODE			= 0;
-	SPU_NOISE_MODE		= 0;
-	SPU_REVERB_ON		= 0;
+	SPU_KEY_OFF1		= 0xffff;
+	SPU_KEY_OFF2		= 0x00ff;
+	SPU_FM_MODE1		= 0;
+	SPU_FM_MODE2		= 0;
+	SPU_NOISE_MODE1		= 0;
+	SPU_NOISE_MODE2		= 0;
+	SPU_REVERB_ON1		= 0;
+	SPU_REVERB_ON2		= 0;
 	SPU_REVERB_ADDR		= 0xfffe;
 	SPU_CD_VOL_L		= 0;
 	SPU_CD_VOL_R		= 0;
@@ -140,7 +144,8 @@ void SpuInit(void) {
 
 	// Sony's implementation leaves everything muted, however it makes sense to
 	// turn up at least the master and CD audio volume by default.
-	SPU_KEY_ON			= 0x00ffffff;
+	SPU_KEY_ON1			= 0xffff;
+	SPU_KEY_ON2			= 0x00ff;
 	SPU_MASTER_VOL_L	= 0x3fff;
 	SPU_MASTER_VOL_R	= 0x3fff;
 	SPU_CD_VOL_L		= 0x7fff;
