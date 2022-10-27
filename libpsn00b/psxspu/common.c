@@ -8,6 +8,8 @@
 #include <psxspu.h>
 #include <hwregs_c.h>
 
+#define _min(x, y) (((x) < (y)) ? (x) : (y))
+
 #define WRITABLE_AREA_ADDR	0x200
 #define DMA_CHUNK_LENGTH	16
 #define STATUS_TIMEOUT		0x100000
@@ -28,7 +30,7 @@ static void _wait_status(uint16_t mask, uint16_t value) {
 	_sdk_log("status register timeout (0x%04x)\n", SPU_STAT);
 }
 
-static void _dma_transfer(uint32_t *data, size_t length, int write) {
+static size_t _dma_transfer(uint32_t *data, size_t length, int write) {
 	if (length % 4)
 		_sdk_log("can't transfer a number of bytes that isn't multiple of 4\n");
 
@@ -38,8 +40,7 @@ static void _dma_transfer(uint32_t *data, size_t length, int write) {
 		length += DMA_CHUNK_LENGTH - 1;
 	}
 
-	SPU_DMA_CTRL = 0x0004; // Reset transfer mode
-	SPU_CTRL    &= 0xffcf; // Disable DMA request
+	SPU_CTRL &= 0xffcf; // Disable DMA request
 	_wait_status(0x0030, 0x0000);
 
 	// Enable DMA request for writing (2) or reading (3)
@@ -47,7 +48,7 @@ static void _dma_transfer(uint32_t *data, size_t length, int write) {
 
 	SPU_ADDR  = _transfer_addr;
 	SPU_CTRL |= ctrl;
-	_wait_status(0x0430, ctrl);
+	_wait_status(0x0030, ctrl);
 
 	DMA_MADR(4) = (uint32_t) data;
 	if (length < DMA_CHUNK_LENGTH)
@@ -56,6 +57,42 @@ static void _dma_transfer(uint32_t *data, size_t length, int write) {
 		DMA_BCR(4) = DMA_CHUNK_LENGTH | ((length / DMA_CHUNK_LENGTH) << 16);
 
 	DMA_CHCR(4) = 0x01000200 | write;
+	return length;
+}
+
+static size_t _manual_write(const uint16_t *data, size_t length) {
+	if (length % 2)
+		_sdk_log("can't transfer a number of bytes that isn't multiple of 2\n");
+
+	length /= 2;
+
+	SPU_CTRL &= 0xffcf; // Disable DMA request
+	_wait_status(0x0030, 0x0000);
+
+	// Manual transfers have to be done by filling up the SPU's transfer buffer
+	// and then letting the SPU empty it one 64-byte chunk at a time.
+	uint16_t addr = _transfer_addr;
+
+	while (length) {
+		size_t chunk = _min(DMA_CHUNK_LENGTH * 2, length);
+		length      -= chunk;
+
+		SPU_ADDR = addr;
+		addr    += chunk / 4;
+
+		for (; chunk; chunk--)
+			SPU_DATA = *(data++);
+
+		SPU_CTRL |= 0x0010; // Manual transfer mode
+		_wait_status(0x0030, 0x0010);
+		_wait_status(0x0400, 0x0000);
+
+		// This additional delay is required according to nocash docs.
+		for (int i = 0; i < 1000; i++)
+			__asm__ volatile("");
+	}
+
+	return length;
 }
 
 /* Public API */
@@ -81,17 +118,16 @@ void SpuInit(void) {
 	DMA_DPCR   |= 0x000b0000; // Enable DMA4
 	DMA_CHCR(4) = 0x00000201; // Stop DMA4
 
-	SPU_CTRL = 0xc011; // Enable SPU, DAC, CD audio, set manual transfer mode
-	_wait_status(0x001f, 0x0011);
+	SPU_DMA_CTRL = 0x0004; // Reset transfer mode
+	SPU_CTRL     = 0xc001; // Enable SPU, DAC, CD audio, disable DMA request
+	_wait_status(0x003f, 0x0001);
 
-	// Upload a dummy ADPCM block to the first 16 bytes of SPU RAM. This may be
-	// freely used or overwritten.
-	SPU_ADDR = WRITABLE_AREA_ADDR;
-	_wait_status(0x0400, 0x0000);
+	// Upload a dummy looping ADPCM block to the first 16 bytes of SPU RAM.
+	// This may be freely used or overwritten.
+	uint32_t block[4] = { 0x0500, 0, 0, 0 };
 
-	SPU_DATA = 0x0500;
-	for (int i = 7; i; i--)
-		SPU_DATA = 0x0000;
+	_transfer_addr = WRITABLE_AREA_ADDR;
+	_manual_write((const uint16_t *) block, 16);
 
 	// "Play" the dummy block on all channels. This will reset the start
 	// address and ADSR envelope status of each channel.
@@ -111,31 +147,26 @@ void SpuInit(void) {
 	SPU_CD_VOL_R		= 0x7fff;
 }
 
-void SpuRead(uint32_t *data, size_t size) {
-	_dma_transfer(data, size, 0);
+size_t SpuRead(uint32_t *data, size_t size) {
+	return _dma_transfer(data, size, 0) * 4;
 }
 
-void SpuWrite(const uint32_t *data, size_t size) {
+size_t SpuWrite(const uint32_t *data, size_t size) {
 	if (_transfer_addr < WRITABLE_AREA_ADDR)
-		return;
+		return 0;
 
 	// I/O transfer mode is not that useful, but whatever.
-	if (_transfer_mode) {
-		SPU_ADDR = _transfer_addr;
-		SPU_CTRL = (SPU_CTRL & 0xffcf) | 0x0010; // Manual transfer mode
-		_wait_status(0x0400, 0x0000);
+	if (_transfer_mode)
+		return _manual_write((const uint16_t *) data, size) * 2;
+	else
+		return _dma_transfer((uint32_t *) data, size, 1) * 4;
+}
 
-		for (int i = size; i; i -= 4) {
-			uint32_t value = *(data++);
+size_t SpuWritePartly(const uint32_t *data, size_t size) {
+	size_t _size = SpuWrite(data, size);
 
-			SPU_DATA = (uint16_t) value;
-			SPU_DATA = (uint16_t) (value >> 16);
-		}
-
-		return;
-	}
-
-	_dma_transfer((uint32_t *) data, size, 1);
+	_transfer_addr += (_size + 1) / 2;
+	return _size;
 }
 
 SPU_TransferMode SpuSetTransferMode(SPU_TransferMode mode) {

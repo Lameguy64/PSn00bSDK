@@ -208,7 +208,7 @@ CdlLOC *CdIntToPos(int i, CdlLOC *p) {
 	
 }
 
-int CdPosToInt(CdlLOC *p)
+int CdPosToInt(const CdlLOC *p)
 {	
 	return ((75*(btoi(p->minute)*60))+(75*btoi(p->second))+btoi(p->sector))-150;
 }

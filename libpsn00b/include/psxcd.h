@@ -136,7 +136,7 @@ extern "C" {
 int CdInit(void);
 
 CdlLOC* CdIntToPos(int i, CdlLOC *p);
-int CdPosToInt(CdlLOC *p);
+int CdPosToInt(const CdlLOC *p);
 int CdGetToc(CdlLOC *toc);
 
 int CdControl(uint8_t com, const void *param, uint8_t *result);
@@ -159,7 +159,7 @@ uint32_t CdReadCallback(CdlCB func);
 int CdStatus(void);
 int CdMode(void);
 
-int CdMix(CdlATV *vol);
+int CdMix(const CdlATV *vol);
 
 /* ORIGINAL CODE */
 CdlDIR* CdOpenDir(const char* path);

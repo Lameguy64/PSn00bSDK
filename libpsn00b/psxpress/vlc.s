@@ -145,17 +145,16 @@ _vlc_skip_context_load:
 	li    $v0, -1
 
 .Lprocess_ac_coefficient: # if (coeff_index)
-	# Start counting the number of leading zeroes/ones using the GTE. This
-	# takes 2 more cycles.
-	mtc2  $t0, $30
-
-	# Check whether the prefix code is one of the shorter, more common ones.
+	# Check whether the prefix code is one of the shorter, more common ones,
+	# and start counting the number of leading zeroes/ones using the GTE (which
+	# takes 2 more cycles).
 	srl   $v0, $t0, 30
 	li    $v1, 3
 	beq   $v0, $v1, .Lac_prefix_11
 	li    $v1, 2
 	beq   $v0, $v1, .Lac_prefix_10
 	li    $v1, 1
+	mtc2  $t0, $30
 	beq   $v0, $v1, .Lac_prefix_01
 	nop
 
