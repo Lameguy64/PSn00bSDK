@@ -19,8 +19,8 @@
  * As the loop point doesn't necessarily have to be within the chunk itself, it
  * can be used to "queue" another chunk to be played immediately after the
  * current one. This allows for double buffering: two chunks are always kept in
- * SPU RAM and one is overwritten with while the other is playing. Chunks are
- * laid out in SPU RAM as follows:
+ * SPU RAM and one is overwritten with a new chunk while the other is playing.
+ * Chunks are laid out in SPU RAM as follows:
  *
  *           ________________________________________________
  *          /               __________________               \

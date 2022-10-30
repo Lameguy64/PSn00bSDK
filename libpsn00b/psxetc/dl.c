@@ -1,6 +1,6 @@
 /*
  * PSn00bSDK dynamic linker
- * (C) 2021 spicyjpeg - MPL licensed
+ * (C) 2021-2022 spicyjpeg - MPL licensed
  *
  * The bulk of this code is MIPS-specific but not PS1-specific, so the whole
  * dynamic linker could be ported to other MIPS platforms that do not have one
@@ -27,21 +27,16 @@
 #define SDK_LIBRARY_NAME "psxetc/dl"
 
 #include <stdint.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include <assert.h>
 #include <elf.h>
 #include <dlfcn.h>
 #include <string.h>
 #include <psxapi.h>
-
-/* Compile options */
-
-// Comment before building to disable functions that rely on BIOS file APIs,
-// i.e. DL_LoadSymbolMapFromFile() and DL_LoadDLLFromFile().
-// FIXME: those seem to be broken currently, and shouldn't be used anyway
-//#define USE_FILE_API
 
 /* Private types */
 
@@ -51,17 +46,15 @@ typedef struct {
 } MapEntry;
 
 typedef struct {
-	uint32_t nbucket;
-	uint32_t nchain;
+	int nbucket, nchain, index;
 
 	MapEntry *entries;
 	uint32_t *bucket;
 	uint32_t *chain;
 } SymbolMap;
 
-/* Data */
+/* Internal globals */
 
-static DL_Error  _error_code = RTLD_E_NONE;
 static SymbolMap _symbol_map;
 
 // Accessed by _dl_resolve_helper, stores the pointer to the current resolver
@@ -70,11 +63,6 @@ void *(*_dl_resolve_callback)(DLL *, const char *) = 0;
 
 /* Private utilities */
 
-#define _ERROR(code, ret) { \
-	_error_code = code; \
-	return ret; \
-}
-
 void _dl_resolve_wrapper(void);
 
 // Called by _dl_resolve_wrapper() (which is in turn called by GCC stubs) to
@@ -82,29 +70,28 @@ void _dl_resolve_wrapper(void);
 void *_dl_resolve_helper(DLL *dll, uint32_t index) {
 	Elf32_Sym  *sym   = &(dll->symtab[index]);
 	const char *_name = &(dll->strtab[sym->st_name]);
-	void       *address;
+	void       *addr;
 
 	if (_dl_resolve_callback)
-		address = _dl_resolve_callback(dll, _name);
+		addr = _dl_resolve_callback(dll, _name);
 	else
-		address = DL_GetSymbolByName(_name);
+		addr = DL_GetMapSymbol(_name);
 
-	if (!address) {
-		_sdk_log("FATAL! can't resolve %s, locking up\n", _name);
-		while (1)
-			__asm__ volatile("nop");
+	if (!addr) {
+		_sdk_log("FATAL! can't resolve %s, aborting\n", _name);
+		abort();
 	}
 
 	// Patch the GOT entry to "cache" the resolved address. This can probably
 	// be implemented in a faster way, but this thing is already too complex.
-	for (uint32_t i = 0; i < dll->got_length; i++) {
+	for (int i = 0; i < dll->got_length; i++) {
 		if (dll->got[2 + i] == (uint32_t) sym->st_value) {
-			dll->got[2 + i] = (uint32_t) address;
+			dll->got[2 + i] = (uint32_t) addr;
 			break;
 		}
 	}
 
-	return address;
+	return addr;
 }
 
 // Implementation of the weird obscure hashing function used in the ELF .hash
@@ -127,120 +114,109 @@ static uint32_t _elf_hash(const char *str) {
 	return value;
 }
 
-#ifdef USE_FILE_API
-static uint8_t *_dl_load_file(const char *filename, size_t *size_output) {
-	int32_t fd = open(filename, 1);
-	if (fd < 0) {
-		_sdk_log("can't open %s, error = %d\n", filename, fd);
-		_ERROR(RTLD_E_FILE_OPEN, 0);
+/* Symbol map loading/introspection API */
+
+int DL_InitSymbolMap(int num_entries) {
+	if (_symbol_map.entries)
+		DL_UnloadSymbolMap();
+
+	// TODO: find a way to calculate the optimal number of hash table "buckets"
+	// in order to minimize hash table size
+	_symbol_map.nbucket = num_entries;
+	_symbol_map.nchain  = num_entries;
+	_symbol_map.index   = 0;
+	_sdk_log(
+		"allocating nbucket = %d, nchain = %d\n",
+		_symbol_map.nbucket, num_entries
+	);
+
+	_symbol_map.entries = malloc(sizeof(MapEntry) * num_entries);
+	_symbol_map.bucket  = malloc(sizeof(uint32_t) * num_entries);
+	_symbol_map.chain   = malloc(sizeof(uint32_t) * num_entries);
+
+	if (!_symbol_map.entries || !_symbol_map.bucket || !_symbol_map.chain) {
+		_sdk_log("unable to allocate symbol map table\n");
+		return -1;
 	}
 
-	// Extract file size from the file's associated control block.
-	// https://problemkaputt.de/psx-spx.htm#biosmemorymap
-	FCB    *fcb = (FCB *) *((FCB **) 0x80000140);
-	size_t size = fcb[fd].filesize;
+	memset(_symbol_map.bucket, 0xff, sizeof(uint32_t) * num_entries);
+	memset(_symbol_map.chain,  0xff, sizeof(uint32_t) * num_entries);
 
-	uint8_t *buffer = malloc(size);
-	if (!buffer) {
-		_sdk_log("unable to allocate %d bytes for %s\n", size, filename);
-		_ERROR(RTLD_E_FILE_ALLOC, 0);
-	}
-
-	//_sdk_log("loading %s (%d bytes)..", filename, size);
-
-	for (uint32_t offset = 0; offset < size; ) {
-		int32_t length = read(fd, &(buffer[offset]), 0x800);
-
-		if (length <= 0) {
-			close(fd);
-			free(buffer);
-
-			_sdk_log("failed, error = %d\n", length);
-			_ERROR(RTLD_E_FILE_READ, 0);
-		}
-
-		//_sdk_log(".");
-		offset += length;
-	}
-
-	close(fd);
-	_sdk_log(" done\n");
-
-	if (size_output)
-		*size_output = size;
-	return buffer;
+	return 0;
 }
-#endif
 
-/* Symbol map loading/parsing API */
+void DL_UnloadSymbolMap(void) {
+	if (!_symbol_map.entries)
+		return;
 
-int32_t DL_ParseSymbolMap(const char *ptr, size_t size) {
-	DL_UnloadSymbolMap();
+	free(_symbol_map.entries);
+	free(_symbol_map.bucket);
+	free(_symbol_map.chain);
+
+	_symbol_map.entries = 0;
+	_symbol_map.bucket  = 0;
+	_symbol_map.chain   = 0;
+}
+
+void DL_AddMapSymbol(const char *name, void *ptr) {
+	uint32_t hash  = _elf_hash(name);
+	int      index = _symbol_map.index;
+	_symbol_map.index = index + 1;
+
+	MapEntry *entry = &(_symbol_map.entries[index]);
+	entry->hash = hash;
+	entry->ptr  = ptr;
+
+	// Append a reference to the entry to the hash table's chain.
+	uint32_t *hash_entry = &(_symbol_map.bucket[hash % _symbol_map.nbucket]);
+	while (*hash_entry != 0xffffffff)
+		hash_entry = &(_symbol_map.chain[*hash_entry]);
+
+	*hash_entry = index;
+}
+
+int DL_ParseSymbolMap(const char *ptr, size_t size) {
+	int entries = 0;
 
 	// Perform a quick scan over the entire map text and count the number of
 	// newlines. This allows us to (over)estimate the number of entries and
-	// allocate a sufficiently large hash/entry table.
-	uint32_t entries = 0;
-	for (uint32_t pos = 0; pos < size; pos++) {
+	// allocate a sufficiently large hash table.
+	for (int pos = 0; pos < size; pos++) {
 		if (ptr[pos] == '\n')
 			entries++;
 	}
 
-	// TODO: find a way to calculate the optimal number of hash table "buckets"
-	// in order to minimize hash table size
-	_symbol_map.nbucket = entries;
-	_symbol_map.nchain  = entries;
-	_sdk_log(
-		"allocating nbucket = %d, nchain = %d\n",
-		_symbol_map.nbucket,
-		entries
-	);
+	int err = DL_InitSymbolMap(entries);
+	if (err)
+		return err;
 
-	// Allocate an entry table to store parsed symbols in, and an associated
-	// hash table (same format as .hash section, with 8-byte header).
-	_symbol_map.entries = malloc(sizeof(MapEntry) * entries);
-	_symbol_map.bucket  = malloc(sizeof(uint32_t) * _symbol_map.nbucket);
-	_symbol_map.chain   = malloc(sizeof(uint32_t) * entries);
+	// Go again through the symbol map and fill in the hash table by calling
+	// DL_AddMapSymbol() for each valid entry.
+	entries = 0;
 
-	if (!_symbol_map.entries || !_symbol_map.bucket || !_symbol_map.chain) {
-		_sdk_log("unable to allocate symbol map table\n");
-		_ERROR(RTLD_E_MAP_ALLOC, -1);
-	}
-
-	for (uint32_t i = 0; i < _symbol_map.nbucket; i++)
-		_symbol_map.bucket[i] = 0xffffffff;
-	for (uint32_t i = 0; i < entries; i++)
-		_symbol_map.chain[i]  = 0xffffffff;
-
-	// Go again through the symbol map and fill in the hash table.
-	uint32_t index = 0;
-	for (uint32_t pos = 0; (pos < size) && ptr[pos]; pos++) {
-		char     name[64];
-		char     type_string[2];
-		uint64_t address64;
+	for (int pos = 0; (pos < size) && ptr[pos]; pos++) {
+		uint64_t full_addr;
+		char     name[64], type_string[4];
 		size_t   _size;
 
 		// e.g. "main T ffffffff80000000 100 ...\n"
-		int32_t parsed = sscanf(
+		int parsed = sscanf(
 			&(ptr[pos]),
 			"%63s %1s %Lx %x",
 			name,
 			type_string,
-			&address64,
+			&full_addr,
 			&_size // Optional, unused (yet)
 		);
 
 		if (parsed >= 3) {
 			// Drop the upper 32 bits of the address (for some reason MIPS nm
-			// insists on printing 64-bit addresses... wtf) and normalize the
-			// type letter to upper case, then check if the entry is valid and
-			// non-null.
-			void     *address = (void *) ((uint32_t) address64);
-			char     _type    = toupper(type_string[0]);
-			uint32_t hash     = _elf_hash(name);
-			uint32_t hash_mod = hash % _symbol_map.nbucket;
+			// insists on printing 64-bit addresses... wtf) and check if the
+			// entry is valid and non-null.
+			void *addr = (void *) ((uint32_t) full_addr);
+			char _type = toupper(type_string[0]);
 
-			if (address && (
+			if (addr && (
 				(_type == 'T') || // .text
 				(_type == 'R') || // .rodata
 				(_type == 'D') || // .data
@@ -248,21 +224,11 @@ int32_t DL_ParseSymbolMap(const char *ptr, size_t size) {
 			)) {
 				//_sdk_log(
 					//"map sym: %08x,%08x [%c %s]\n",
-					//address, _size, _type, name
+					//addr, _size, _type, name
 				//);
 
-				MapEntry *entry = &(_symbol_map.entries[index]);
-				entry->hash     = hash;
-				entry->ptr      = address;
-
-				// Append a reference to the entry to the hash table's chain
-				// for the current hash_mod. I can't explain this properly.
-				uint32_t *hash_entry = &(_symbol_map.bucket[hash_mod]);
-				while (*hash_entry != 0xffffffff)
-					hash_entry = &(_symbol_map.chain[*hash_entry]);
-
-				*hash_entry = index;
-				index++;
+				DL_AddMapSymbol(name, addr);
+				entries++;
 			}
 		}
 
@@ -273,55 +239,27 @@ int32_t DL_ParseSymbolMap(const char *ptr, size_t size) {
 	}
 
 	_sdk_log("parsed %d symbols\n", entries);
-	if (!entries)
-		_ERROR(RTLD_E_NO_SYMBOLS, -1);
-
 	return entries;
 }
 
-#ifdef USE_FILE_API
-int32_t DL_LoadSymbolMapFromFile(const char *filename) {
-	size_t size;
-	char   *ptr = _dl_load_file(filename, &size);
-	if (!ptr)
-		return -1;
-
-	int32_t entries = DL_ParseSymbolMap(ptr, size);
-	free(ptr);
-
-	return entries;
-}
-#endif
-
-void DL_UnloadSymbolMap(void) {
-	if (!_symbol_map.entries)
-		return;
-
-	free(_symbol_map.entries);
-	free(_symbol_map.bucket);
-	free(_symbol_map.chain);
-	_symbol_map.entries = 0;
-}
-
-void *DL_GetSymbolByName(const char *name) {
+void *DL_GetMapSymbol(const char *name) {
 	if (!_symbol_map.entries) {
-		_sdk_log("attempted lookup with no map loaded\n");
-		_ERROR(RTLD_E_NO_MAP, 0);
+		_sdk_log("DL_GetMapSymbol() with no map loaded\n");
+		return 0;
 	}
-
-	// https://docs.oracle.com/cd/E23824_01/html/819-0690/chapter6-48031.html
-	uint32_t hash     = _elf_hash(name);
-	uint32_t hash_mod = hash % _symbol_map.nbucket;
 
 	// Go through the hash table's chain until the symbol hash matches the one
 	// calculated.
-	for (uint32_t i = _symbol_map.bucket[hash_mod]; i != 0xffffffff;) {
+	// https://docs.oracle.com/cd/E23824_01/html/819-0690/chapter6-48031.html
+	uint32_t hash = _elf_hash(name);
+
+	for (int i = _symbol_map.bucket[hash % _symbol_map.nbucket]; i != 0xffffffff;) {
 		if (i >= _symbol_map.nchain) {
 			_sdk_log(
-				"GetSymbolByName() index out of bounds (%d >= %d)\n",
+				"DL_GetMapSymbol() index out of bounds (%d >= %d)\n",
 				i, _symbol_map.nchain
 			);
-			_ERROR(RTLD_E_HASH_LOOKUP, 0);
+			return 0;
 		}
 
 		MapEntry *entry = &(_symbol_map.entries[i]);
@@ -335,27 +273,24 @@ void *DL_GetSymbolByName(const char *name) {
 	}
 
 	_sdk_log("map lookup [%s not found]\n", name);
-	_ERROR(RTLD_E_MAP_SYMBOL, 0);
+	return 0;
 }
 
-void DL_SetResolveCallback(void *(*callback)(DLL *, const char *)) {
+void *DL_SetResolveCallback(void *(*callback)(DLL *, const char *)) {
+	void *old_callback   = _dl_resolve_callback;
 	_dl_resolve_callback = callback;
+
+	return old_callback;
 }
 
 /* Library loading and linking API */
 
-DLL *DL_CreateDLL(void *ptr, size_t size, DL_ResolveMode mode) {
-	if (!ptr)
-		_ERROR(RTLD_E_DLL_NULL, 0);
-
-	DLL *dll = malloc(sizeof(DLL));
-	if (!dll) {
-		_sdk_log("unable to allocate DLL struct\n");
-		_ERROR(RTLD_E_DLL_ALLOC, 0);
-	}
+DLL *DL_CreateDLL(DLL *dll, void *ptr, size_t size, DL_ResolveMode mode) {
+	if (!dll || !ptr)
+		return 0;
 
 	dll->ptr        = ptr;
-	dll->malloc_ptr = (mode & RTLD_FREE_ON_DESTROY) ? ptr : 0;
+	dll->malloc_ptr = (mode & DL_FREE_ON_DESTROY) ? ptr : 0;
 	dll->size       = size;
 	_sdk_log("initializing DLL at %08x\n", ptr);
 
@@ -371,47 +306,30 @@ DLL *DL_CreateDLL(void *ptr, size_t size, DL_ResolveMode mode) {
 		switch (dyn->d_tag) {
 			// Offset of .got section
 			case DT_PLTGOT:
-				//_sdk_log("[PLTGOT]\n");
-
 				dll->got = (void *) (ptr + dyn->d_un.d_val);
 				break;
 
 			// Offset of .hash section
 			case DT_HASH:
-				//_sdk_log("[HASH]\n");
-
 				dll->hash = (void *) (ptr + dyn->d_un.d_val);
 				break;
 
 			// Offset of .dynstr (NOT .strtab) section
 			case DT_STRTAB:
-				//_sdk_log("[STRTAB]\n");
-
 				dll->strtab = (void *) (ptr + dyn->d_un.d_val);
 				break;
 
 			// Offset of .dynsym (NOT .symtab) section
 			case DT_SYMTAB:
-				//_sdk_log("[SYMTAB]\n");
-
 				dll->symtab = (void *) (ptr + dyn->d_un.d_val);
 				break;
 
-			// Length of .dynstr section
-			//case DT_STRSZ:
-				//_sdk_log("[STRSZ]\n");
-				//break;
-
 			// Length of each .dynsym entry
 			case DT_SYMENT:
-				//_sdk_log("[SYMENT]\n");
-
 				// Only 16-byte symbol table entries are supported.
 				if (dyn->d_un.d_val != sizeof(Elf32_Sym)) {
-					free(dll);
-
 					_sdk_log("invalid DLL symtab entry size %d\n", dyn->d_un.d_val);
-					_ERROR(RTLD_E_DLL_FORMAT, 0);
+					return 0;
 				}
 				break;
 
@@ -421,73 +339,44 @@ DLL *DL_CreateDLL(void *ptr, size_t size, DL_ResolveMode mode) {
 
 				// Versions other than 1 are unsupported (do they even exist?).
 				if (dyn->d_un.d_val != 1) {
-					free(dll);
-
 					_sdk_log("invalid DLL version %d\n", dyn->d_un.d_val);
-					_ERROR(RTLD_E_DLL_FORMAT, 0);
+					return 0;
 				}
 				break;
 
 			// DLL/ABI flags
 			case DT_MIPS_FLAGS:
-				//_sdk_log("[MIPS_FLAGS]\n");
-
 				// Shortcut pointers (whatever they are) are not supported.
 				if (dyn->d_un.d_val & RHF_QUICKSTART) {
-					free(dll);
-
 					_sdk_log("invalid DLL flags\n");
-					_ERROR(RTLD_E_DLL_FORMAT, 0);
+					return 0;
 				}
 				break;
 
 			// Number of local (not to resolve) GOT entries
 			case DT_MIPS_LOCAL_GOTNO:
-				//_sdk_log("[MIPS_LOCAL_GOTNO]\n");
-
 				local_got_len = dyn->d_un.d_val;
 				break;
 
 			// Base address DLL was compiled for
 			case DT_MIPS_BASE_ADDRESS:
-				//_sdk_log("[MIPS_BASE_ADDRESS]\n");
-
 				// Base addresses other than zero are not supported. It would
 				// be easy enough to support them, but why?
 				if (dyn->d_un.d_val) {
-					free(dll);
-
 					_sdk_log("invalid DLL base address %08x\n", dyn->d_un.d_val);
-					_ERROR(RTLD_E_DLL_FORMAT, 0);
+					return 0;
 				}
 				break;
 
 			// Number of symbol table entries
 			case DT_MIPS_SYMTABNO:
-				//_sdk_log("[MIPS_SYMTABNO]\n");
-
 				dll->symbol_count = dyn->d_un.d_val;
 				break;
 
-			// Index of first unresolved symbol table entry
-			//case DT_MIPS_UNREFEXTNO:
-				//_sdk_log("[MIPS_UNREFEXTNO]\n");
-				//break;
-
 			// Index of first symbol table entry which has a matching GOT entry
 			case DT_MIPS_GOTSYM:
-				//_sdk_log("[MIPS_GOTSYM]\n");
-
 				first_got_sym = dyn->d_un.d_val;
 				break;
-
-			// Number of pages the GOT is split into (does not apply to PS1)
-			//case DT_MIPS_HIPAGENO:
-				//_sdk_log("[MIPS_HIPAGENO]\n");
-				//break;
-
-			//default:
-				//_sdk_log("[ignored]\n");
 		}
 	}
 
@@ -513,14 +402,14 @@ DLL *DL_CreateDLL(void *ptr, size_t size, DL_ResolveMode mode) {
 	dll->got[0] = (uint32_t) &_dl_resolve_wrapper;
 	dll->got[1] = (uint32_t) dll;
 
-	for (uint32_t i = 0; i < dll->got_length; i++)
+	for (int i = 0; i < dll->got_length; i++)
 		dll->got[2 + i] += (uint32_t) ptr;
 
 	// Fix addresses in the symbol table.
 	// TODO: clean this shit up
 	uint32_t got_offset = first_got_sym;
 
-	for (uint32_t i = 0; i < dll->symbol_count; i++) {
+	for (int i = 0; i < dll->symbol_count; i++) {
 		Elf32_Sym  *sym   = &(dll->symtab[i]);
 		const char *_name = &(dll->strtab[sym->st_name]);
 
@@ -533,12 +422,12 @@ DLL *DL_CreateDLL(void *ptr, size_t size, DL_ResolveMode mode) {
 			//sym->st_value, sym->st_size, _name
 		//);
 
-		// If RTLD_NOW was passed, resolve GOT entries ahead of time by
+		// If DL_NOW was passed, resolve GOT entries ahead of time by
 		// cross-referencing them with the symbol table.
-		if (!(mode & RTLD_NOW))
+		if (!(mode & DL_NOW))
 			continue;
 
-		for (uint32_t j = got_offset; j < dll->got_length; j++) {
+		for (int j = got_offset; j < dll->got_length; j++) {
 			if (dll->got[2 + j] != (uint32_t) sym->st_value)
 				continue;
 
@@ -553,10 +442,8 @@ DLL *DL_CreateDLL(void *ptr, size_t size, DL_ResolveMode mode) {
 			)) {
 				dll->got[2 + j] = (uint32_t) _dl_resolve_callback(dll, _name);
 
-				if (!dll->got[2 + j]) {
-					free(dll);
-					_ERROR(RTLD_E_MAP_SYMBOL, 0);
-				}
+				if (!dll->got[2 + j])
+					return 0;
 			}
 
 			break;
@@ -573,7 +460,7 @@ DLL *DL_CreateDLL(void *ptr, size_t size, DL_ResolveMode mode) {
 	// DLL itself.
 	const uint32_t *ctor_list = DL_GetDLLSymbol(dll, "__CTOR_LIST__");
 	if (ctor_list) {
-		for (uint32_t i = ((uint32_t) ctor_list[0]); i >= 1; i--) {
+		for (int i = ((int) ctor_list[0]); i >= 1; i--) {
 			void (*ctor)(void) = (void (*)(void)) ctor_list[i];
 			DL_PRE_CALL(ctor);
 			ctor();
@@ -583,64 +470,47 @@ DLL *DL_CreateDLL(void *ptr, size_t size, DL_ResolveMode mode) {
 	return dll;
 }
 
-#ifdef USE_FILE_API
-DLL *DL_LoadDLLFromFile(const char *filename, DL_ResolveMode mode) {
-	size_t size;
-	char   *ptr = _dl_load_file(filename, &size);
-	if (!ptr)
-		return 0;
-
-	DLL *dll = DL_CreateDLL(ptr, size, mode | RTLD_FREE_ON_DESTROY);
-	if (!dll)
-		free(ptr);
-
-	return dll;
-}
-#endif
-
 void DL_DestroyDLL(DLL *dll) {
-	if (dll == RTLD_DEFAULT)
+	if (!dll)
 		return;
 
 	if (dll->ptr) {
 		// Call the DLL's global destructors.
 		const uint32_t *dtor_list = DL_GetDLLSymbol(dll, "__DTOR_LIST__");
 		if (dtor_list) {
-			for (uint32_t i = 0; i < ((uint32_t) dtor_list[0]); i++) {
+			for (int i = 0; i < ((int) dtor_list[0]); i++) {
 				void (*dtor)(void) = (void (*)(void)) dtor_list[i + 1];
 				DL_PRE_CALL(dtor);
 				dtor();
 			}
 		}
+
+		dll->ptr = 0;
 	}
 
-	// If the DLL is associated to a buffer allocated by DL_LoadDLLFromFile(),
-	// free that buffer.
-	if (dll->malloc_ptr)
+	// If the DLL is associated to a buffer, free that buffer.
+	if (dll->malloc_ptr) {
 		free(dll->malloc_ptr);
-
-	free(dll);
+		dll->malloc_ptr = 0;
+	}
 }
 
 void *DL_GetDLLSymbol(const DLL *dll, const char *name) {
-	if (dll == RTLD_DEFAULT)
-		return DL_GetSymbolByName(name);
-		//return _dl_resolve_callback(RTLD_DEFAULT, name);
+	if (!dll)
+		return DL_GetMapSymbol(name);
+		//return _dl_resolve_callback(0, name);
 
-	// https://docs.oracle.com/cd/E23824_01/html/819-0690/chapter6-48031.html
 	uint32_t       nbucket = dll->hash[0];
 	uint32_t       nchain  = dll->hash[1];
 	const uint32_t *bucket = &(dll->hash[2]);
 	const uint32_t *chain  = &(dll->hash[2 + nbucket]);
 
-	uint32_t hash_mod = _elf_hash(name) % nbucket;
-
 	// Go through the hash table's chain until the symbol name matches the one
 	// provided.
-	for (uint32_t i = bucket[hash_mod]; i != 0xffffffff;) {
+	for (int i = bucket[_elf_hash(name) % nbucket]; i != 0xffffffff;) {
 		if (i >= nchain) {
 			_sdk_log("DL_GetDLLSymbol() index out of bounds (%d >= %d)\n", i, nchain);
-			_ERROR(RTLD_E_HASH_LOOKUP, 0);
+			return 0;
 		}
 
 		Elf32_Sym  *sym   = &(dll->symtab[i]);
@@ -655,12 +525,5 @@ void *DL_GetDLLSymbol(const DLL *dll, const char *name) {
 	}
 
 	_sdk_log("DLL lookup [%s not found]\n", name);
-	_ERROR(RTLD_E_DLL_SYMBOL, 0);
-}
-
-DL_Error DL_GetLastError(void) {
-	DL_Error last = _error_code;
-	_error_code   = RTLD_E_NONE;
-
-	return last;
+	return 0;
 }

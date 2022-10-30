@@ -7,8 +7,8 @@
  * symbol map file, which is generated at compile time by GCC's nm command and
  * included into the CD image. The symbol map lists all functions/variables in
  * the executable and their type, address and size. Currently only searching
- * for a symbol's address by its name (DL_GetSymbolByName()) is supported,
- * however this may be expanded in the future.
+ * for a symbol's address by its name (DL_GetMapSymbol()) is supported, however
+ * this may be expanded in the future.
  *
  * Being able to introspect local symbols at runtime, in turn, allows us to use
  * another set of APIs to load, link and execute code from an external file
@@ -140,18 +140,18 @@ void display(RenderContext *ctx) {
 
 /* Symbol overriding example */
 
-static volatile uint32_t resolve_counter = 0;
+static volatile int resolve_counter = 0;
 
 // This function will override printf(), i.e. DLLs will use this instead of the
 // "real" printf() present in the executable, thanks to the custom resolver
-// defined below. We'll use this to redirect the DLL's output to the debug text
-// window.
+// defined below. We'll use this to redirect the DLL's output to be shown on
+// screen.
 int dll_printf(const char *format, ...) {
 	va_list args;
 	va_start(args, format);
 
-	char    buffer[256];
-	int32_t return_value = vsprintf(buffer, format, args);
+	char buffer[256];
+	int  return_value = vsprintf(buffer, format, args);
 	va_end(args);
 
 	FntPrint(-1, "DLL:  %s", buffer);
@@ -163,7 +163,7 @@ int dll_printf(const char *format, ...) {
 // This function will be called by the linker for each undefined symbol
 // (function or variable) in the DLL, and should return the address of the
 // symbol so the dynamic linker can patch it in. The default resolver tries to
-// find them in the currently loaded symbol map using DL_GetSymbolByName().
+// find them in the currently loaded symbol map using DL_GetMapSymbol().
 void *custom_resolver(DLL *dll, const char *name) {
 	if (!strcmp(name, "printf")) {
 		printf("Resolving printf() -> dll_printf() (#%d)\n", resolve_counter++);
@@ -173,7 +173,7 @@ void *custom_resolver(DLL *dll, const char *name) {
 	printf("Resolving %s() (#%d)\n", name, resolve_counter++);
 
 	// Custom resolvers should always fall back to the default behavior.
-	return DL_GetSymbolByName(name);
+	return DL_GetMapSymbol(name);
 }
 
 /* Global variables and structs */
@@ -187,7 +187,7 @@ typedef struct {
 	void (*render)(RenderContext *, uint16_t buttons);
 } DLL_API;
 
-static DLL     *dll = 0;
+static DLL dll;
 static DLL_API dll_api;
 
 static RenderContext ctx;
@@ -225,20 +225,18 @@ size_t load_file(const char *filename, void **ptr) {
 }
 
 void load_dll(const char *filename) {
-	// As we're passing RTLD_FREE_ON_DESTROY to DL_CreateDLL(), calling
+	// As we're passing DL_FREE_ON_DESTROY to DL_CreateDLL(), calling
 	// DL_DestroyDLL() will also deallocate the buffer the DLL was loaded into.
-	if (dll)
-		DL_DestroyDLL(dll);
+	DL_DestroyDLL(&dll);
 
 	void   *ptr;
 	size_t len = load_file(filename, &ptr);
 
-	dll = DL_CreateDLL(ptr, len, RTLD_LAZY | RTLD_FREE_ON_DESTROY);
-	if (!dll)
-		SHOW_ERROR("FAILED TO PARSE %s\nERROR=%d\n", filename, (int32_t) DL_GetLastError());
+	if (!DL_CreateDLL(&dll, ptr, len, DL_LAZY | DL_FREE_ON_DESTROY))
+		SHOW_ERROR("FAILED TO PARSE %s\n", filename);
 
-	dll_api.init   = DL_GetDLLSymbol(dll, "init");
-	dll_api.render = DL_GetDLLSymbol(dll, "render");
+	dll_api.init   = DL_GetDLLSymbol(&dll, "init");
+	dll_api.render = DL_GetDLLSymbol(&dll, "render");
 
 	printf("DLL init() @ %08x, render() @ %08x\n", dll_api.init, dll_api.render);
 
@@ -266,14 +264,14 @@ int main(int argc, const char* argv[]) {
 	size_t len = load_file("\\MAIN.MAP;1", &ptr);
 
 	if (!DL_ParseSymbolMap(ptr, len))
-		SHOW_ERROR("FAILED TO PARSE SYMBOL MAP\nERROR=%d\n", (int32_t) DL_GetLastError());
+		SHOW_ERROR("FAILED TO PARSE SYMBOL MAP\n");
 
 	free(ptr);
 
 	// Try to obtain a reference to a local function.
-	void (*_display)() = DL_GetSymbolByName("display");
+	void (*_display)() = DL_GetMapSymbol("display");
 	if (!_display)
-		SHOW_ERROR("FAILED TO LOOK UP LOCAL FUNCTION\nERROR=%d\n", (int32_t) DL_GetLastError());
+		SHOW_ERROR("FAILED TO LOOK UP LOCAL FUNCTION\n");
 
 	printf("Symbol map test, display() @ %08x\n", _display);
 
@@ -295,7 +293,7 @@ int main(int argc, const char* argv[]) {
 		DL_PRE_CALL(dll_api.render);
 		dll_api.render(&ctx, last_buttons);
 
-		FntPrint(-1, "MAIN: DLL ADDR=%08x SIZE=%d\n", dll->ptr, dll->size);
+		FntPrint(-1, "MAIN: DLL ADDR=%08x SIZE=%d\n", dll.ptr, dll.size);
 		FntPrint(-1, "MAIN: %d FUNCTIONS RESOLVED\n", resolve_counter);
 		FntPrint(-1, "[START] LOAD NEXT DLL\n");
 		FntFlush(-1);
@@ -320,7 +318,7 @@ int main(int argc, const char* argv[]) {
 		last_buttons = pad->btn;
 	}
 
-	//DL_DestroyDLL(dll);
+	//DL_DestroyDLL(&dll);
 	//DL_UnloadSymbolMap();
 	return 0;
 }
