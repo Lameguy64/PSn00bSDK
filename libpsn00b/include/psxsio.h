@@ -3,12 +3,27 @@
  * (C) 2019-2022 Lameguy64, spicyjpeg - MPL licensed
  */
 
+/**
+ * @file psxsio.h
+ * @brief Serial port library header
+ *
+ * @details This library provides a custom API to access the PS1's serial port.
+ * Sending and receiving data is done fully asynchronously using a pair of
+ * 128-byte FIFOs kept in main RAM, with optional hardware flow control. More
+ * advanced use cases such as custom callbacks for each byte received are also
+ * supported.
+ *
+ * A BIOS TTY driver to redirect stdin/stdout (including BIOS messages as well
+ * as PSn00bSDK's own debug logging) to the serial port is also provided for
+ * debugging purposes.
+ */
+
 #ifndef __PSXSIO_H
 #define __PSXSIO_H
 
 #include <stdint.h>
 
-/* Register definitions (used internally) */
+/* Enum and register definitions */
 
 typedef enum _SIO_StatusRegFlag {
 	SR_TXRDY	= 1 << 0,
@@ -67,7 +82,9 @@ extern "C" {
 #endif
 
 /**
- * @brief Resets the serial port, initializes the library's internal ring
+ * @brief Initializes the serial port driver.
+ *
+ * @details Resets the serial port, initializes the library's internal ring
  * buffers and installs a serial IRQ handler. The given mode value (normally
  * MR_CHLEN_8|MR_SB_01 for 8 data bits, 1 stop bit and no parity) is copied to
  * the SIO_MODE register. Flow control is disabled by default (see
@@ -79,18 +96,28 @@ extern "C" {
  *
  * @param baud Baud rate in bits per second
  * @param mode Binary OR of SIO_ModeRegFlag enum members
+ *
+ * @see SIO_Quit()
  */
 void SIO_Init(int baud, uint16_t mode);
 
 /**
- * @brief Resets the serial port and removes the IRQ callback added by
- * SIO_Init(), restoring any previously installed handler.
+ * @brief Uninstalls the serial port driver.
+ *
+ * @details Resets the serial port and removes the IRQ callback added by
+ * SIO_Init(), restoring any previously installed handler if any. If SIO_Init()
+ * was previously invoked, calling SIO_Quit() before accessing serial port
+ * registers manually is highly recommended.
+ *
+ * @see SIO_Init()
  */
 void SIO_Quit(void);
 
 /**
- * @brief Changes the serial port's flow control mode. The following modes are
- * available:
+ * @brief Sets the flow control mode.
+ *
+ * @details Changes the serial port's flow control mode. The following modes
+ * are available:
  *
  * - SIO_FC_NONE (default): do not assert RTS or DTR automatically and ignore
  *   DSR. Note that the hardware will still wait for CTS to be asserted before
@@ -106,7 +133,9 @@ void SIO_Quit(void);
 void SIO_SetFlowControl(SIO_FlowControl mode);
 
 /**
- * @brief Reads a byte from the RX buffer. If the buffer is empty, blocks
+ * @brief Reads a byte from the RX buffer (blocking).
+ *
+ * @details Reads a byte from the RX buffer. If the buffer is empty, blocks
  * indefinitely until a byte is received.
  *
  * WARNING: this function shall not be used in a critical section or IRQ
@@ -115,21 +144,29 @@ void SIO_SetFlowControl(SIO_FlowControl mode);
  * or SIO_ReadSync(1) and implementing a timeout instead.
  *
  * @return Received byte
+ *
+ * @see SIO_ReadByte2(), SIO_ReadSync()
  */
 int SIO_ReadByte(void);
 
 /**
- * @brief Non-blocking variant of SIO_ReadByte(). Reads a byte from the RX
+ * @brief Reads a byte from the RX buffer (non-blocking).
+ *
+ * @details Non-blocking variant of SIO_ReadByte(). Reads a byte from the RX
  * buffer or returns -1 if the buffer is empty. Unlike SIO_ReadByte() this
  * function is safe to use in a critical section (although no data will be
  * received while interrupts are disabled).
  *
  * @return Received byte, -1 if no data is available
+ *
+ * @see SIO_ReadByte()
  */
 int SIO_ReadByte2(void);
 
 /**
- * @brief Waits for at least one byte to be available in the RX buffer (if
+ * @brief Waits for a byte to be received or returns the RX buffer's length.
+ *
+ * @details Waits for at least one byte to be available in the RX buffer (if
  * mode = 0) or returns the length of the RX buffer (if mode = 1).
  *
  * WARNING: this function shall not be used in a critical section or IRQ
@@ -144,7 +181,9 @@ int SIO_ReadByte2(void);
 int SIO_ReadSync(int mode);
 
 /**
- * @brief Registers a function to be called whenever a byte is received. The
+ * @brief Sets a callback for received bytes.
+ *
+ * @details Registers a function to be called whenever a byte is received. The
  * received byte is passed as an argument to the callback, which shall then
  * return a zero value to also store the byte in the RX buffer or a non-zero
  * value to drop it. This can be used to e.g. filter or validate incoming data,
@@ -160,7 +199,9 @@ int SIO_ReadSync(int mode);
 void *SIO_ReadCallback(int (*func)(uint8_t));
 
 /**
- * @brief Sends the given byte, or appends it to the TX buffer if the serial
+ * @brief Writes a byte to the TX buffer (blocking).
+ *
+ * @details Sends the given byte, or appends it to the TX buffer if the serial
  * port is busy. If the buffer is full, blocks until the byte can be stored in
  * the buffer (with a timeout).
  *
@@ -169,11 +210,15 @@ void *SIO_ReadCallback(int (*func)(uint8_t));
  *
  * @param value
  * @return Number of TX bytes previously pending, -1 in case of a timeout
+ *
+ * @see SIO_WriteByte2(), SIO_WriteSync()
  */
 int SIO_WriteByte(uint8_t value);
 
 /**
- * @brief Non-blocking variant of SIO_WriteByte(). Sends the given byte, or
+ * @brief Writes a byte to the TX buffer (non-blocking).
+ *
+ * @details Non-blocking variant of SIO_WriteByte(). Sends the given byte, or
  * appends it to the TX buffer if the serial port is busy. If the buffer is
  * full, returns -1 without actually sending the byte. Unlike SIO_WriteByte()
  * this function is safe to use in a critical section (although no data will be
@@ -181,12 +226,16 @@ int SIO_WriteByte(uint8_t value);
  *
  * @param value
  * @return Number of TX bytes previously pending, -1 in case of failure
+ *
+ * @see SIO_WriteByte()
  */
 int SIO_WriteByte2(uint8_t value);
 
 /**
- * @brief Waits for all bytes pending in the TX buffer to be sent (if mode = 0)
- * or returns the length of the TX buffer (if mode = 1).
+ * @brief Waits for all bytes to be sent or returns the TX buffer's length.
+ *
+ * @details Waits for all bytes pending in the TX buffer to be sent (if
+ * mode = 0) or returns the length of the TX buffer (if mode = 1).
  *
  * WARNING: this function shall not be used in a critical section or IRQ
  * callback as no data is sent or received while interrupts are disabled.
@@ -197,10 +246,11 @@ int SIO_WriteByte2(uint8_t value);
 int SIO_WriteSync(int mode);
 
 /**
- * @brief Installs a BIOS file driver to redirect TTY stdin/stdout (including
- * BIOS messages as well as PSn00bSDK's own debug logging) to the serial port.
- * Uses SIO_Init() internally. The port is configured for 8 data bits, 1 stop
- * bit and no parity.
+ * @brief Installs the serial port TTY driver.
+ *
+ * @details Installs a BIOS file driver to redirect TTY stdin/stdout to the
+ * serial port. Uses SIO_Init() internally. The port is configured for 8 data
+ * bits, 1 stop bit and no parity.
  *
  * This function shall only be used for debugging purposes. Picking a high baud
  * rate is recommended as all TTY writes are blocking and bypass the TX buffer.
@@ -210,13 +260,20 @@ int SIO_WriteSync(int mode);
  * built-in TTY functionality of these loaders.
  *
  * @param baud Baud rate in bits per second
+ *
+ * @see DelSIO()
  */
 void AddSIO(int baud);
 
 /**
- * @brief Uninstalls the BIOS driver installed by AddSIO() and attempts to
- * restore a "dummy" TTY driver. Calling this function is not recommended as
- * any further TTY usage may crash the system.
+ * @brief Removes the serial port TTY driver.
+ *
+ * @details Uninstalls the BIOS driver installed by AddSIO() and attempts to
+ * restore the default "dummy" TTY driver. Uses SIO_Quit() internally. Calling
+ * this function is not recommended as any further TTY usage may crash the
+ * system.
+ *
+ * @see AddSIO()
  */
 void DelSIO(void);
 

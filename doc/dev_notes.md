@@ -135,13 +135,19 @@ _- spicyjpeg_
   4. If no valid response is received, assume no controller is connected and
      reset the port's digital-only flag.
 
-- I haven't worked on `psxspu` but, for those willing to write some code, this
-  is the formula to calculate SPU pitch values for playing musical notes (`^`
-  is the power operator, not xor):
+- The SPU *really* doesn't like 32-bit register writes. It is connected to the
+  CPU through a 16-bit bus; 32-bit writes are automatically split into two
+  transactions, however the SPU has a tendency to miss one of them (perhaps due
+  to the bus controller issuing them too quickly). This might be why nocash
+  docs claim that writing to the SPU is unstable when in actual fact 16-bit
+  writes seem to be perfectly stable.
+
+- This is the formula to calculate SPU pitch values for playing musical notes
+  (`^` is the power operator, not xor):
 
   ```
   frequency = (ref / 32) * (2 ^ ((note - 9) / 12))
-  spu_pitch = frequency / 44100 * 4096
+  spu_pitch = (frequency * 4096) / 44100
 
   ref  = frequency the sample should be played at to play a middle A (MIDI note 69)
   note = MIDI note number (usually 0-127, 60 is middle C)
@@ -280,4 +286,4 @@ _- spicyjpeg_
   space.
 
 -----------------------------------------
-_Last updated on 2022-03-25 by lameguy64_
+_Last updated on 2022-10-30 by spicyjpeg_

@@ -3,9 +3,17 @@
  * (C) 2019 Lameguy64
  * (C) 2021-2022 Soapy (tweaked by spicyjpeg)
  *
- * This header is basically identical to Nugget's inline_n.h. All GTE commands
- * can be used right away without having to run DMPSX or any other tool on
- * object files.
+ * This header is basically identical to Nugget's inline_n.h.
+ */
+
+/**
+ * @file inline_c.h
+ * @brief Inline GTE macro header
+ *
+ * @details This header provides a set of macros for making use of GTE commands
+ * and registers from C or C++ code. Unlike the official SDK, all commands can
+ * be used right away without having to run any other post-processing tool on
+ * compiled object files.
  */
 
 #ifndef _INLINE_C_H
@@ -13,7 +21,11 @@
 
 /* GTE load macros */
 
-/* Load a SVECTOR (passed as a pointer) to GTE V0
+/**
+ * @brief Loads a single SVECTOR to GTE vector register V0
+ *
+ * @details Loads values from an SVECTOR struct to GTE data registers C2_VXY0
+ * and C2_VZ0.
  */
 #define gte_ldv0( r0 ) __asm__ volatile ( \
 	"lwc2	$0, 0( %0 );"	\
@@ -22,7 +34,11 @@
 	: "r"( r0 )				\
 	: "$t0" )
 
-/* Load a SVECTOR (passed as a pointer) to GTE V1
+/**
+ * @brief Loads a single SVECTOR to GTE vector register V1
+ *
+ * @details Loads values from an SVECTOR struct to GTE data registers C2_VXY1
+ * and C2_VZ1.
  */
 #define gte_ldv1( r0 ) __asm__ volatile ( \
 	"lwc2	$2, 0( %0 );"	\
@@ -31,7 +47,11 @@
 	: "r"( r0 )				\
 	: "$t0" )
 
-/* Load a SVECTOR (passed as a pointer) to GTE V2
+/**
+ * @brief Loads a single SVECTOR to GTE vector register V2
+ *
+ * @details Loads values from an SVECTOR struct to GTE data registers C2_VXY2
+ * and C2_VZ2.
  */
 #define gte_ldv2( r0 ) __asm__ volatile ( \
 	"lwc2	$4, 0( %0 );"	\
@@ -40,7 +60,11 @@
 	: "r"( r0 )				\
 	: "$t0" )
 
-/* Load three SVECTORs (passed as a pointer) to the GTE at once
+/**
+ * @brief Load three SVECTORs to GTE vector registers at once
+ *
+ * @details Loads values from three SVECTOR structs to GTE data registers
+ * C2_VXY0 and C2_VZ0, C2_VXY1 and C2_VZ1,  C2_VXY2 and C2_VZ2 at once. 
  */
 #define gte_ldv3( r0, r1, r2 ) __asm__ volatile ( \
 	"lwc2	$0, 0( %0 );"	\
@@ -88,6 +112,14 @@
 	:						\
 	: "r"( r0 ) )
 
+/**
+ * @brief Load a CVECTOR to GTE register C2_RGBC
+ *
+ * @details Loads a CVECTOR value to GTE data register C2_RGBC. The primitive
+ * code (the last byte of a CVECTOR) is passed to the color FIFO registers when
+ * performing lighting compute operations, so it can be stored to the RGBC
+ * field of a primitive directly without any additional operation required.
+ */
 #define gte_ldrgb( r0 ) __asm__ volatile ( \
 	"lwc2	$6 , 0( %0 );"	\
 	:						\
@@ -224,6 +256,12 @@
 	: "r"( r0 )				\
 	: "$12", "$13", "$14" )
 
+/**
+ * @brief Loads values to GTE registers C2_IR1-3
+ *
+ * @details Loads three 32-bit values to GTE data registers C2_IR1, C2_IR2 and
+ * C2_IR3.
+ */
 #define gte_ldopv2( r0 ) __asm__ volatile ( \
 	"lwc2	$11, 8( %0 );"	\
 	"lwc2	$9 , 0( %0 );"	\
@@ -253,6 +291,14 @@
 	:						\
 	: "r"( r0 ), "r"( r1 ), "r"( r2 ) )
 
+/**
+ * @brief Sets an RGB color value to the GTE
+ *
+ * @details Sets the specified RGB value to GTE control registers C2_RBK,
+ * C2_GBK and C2_BBK. This specifies the color value to use when a normal faces
+ * away from the direction of the light source. This can be considered as the
+ * ambient light color.
+ */
 #define gte_SetBackColor( r0, r1, r2 ) __asm__ volatile ( \
 	"sll	$t0, %0, 4;"	\
 	"sll	$t1, %1, 4;"	\
@@ -282,6 +328,13 @@
 	: "r"( r0 ), "r"( r1 ), "r"( r2 )	\
 	: "$12", "$13", "$14" )
 
+/**
+ * @brief Sets the GTE screen offset
+ *
+ * @details Sets the values of the GTE screen offset which is applied to 2D
+ * projected coordinates when performing perspective transformation. The values
+ * are set to GTE control registers C2_OFX and C2_OFY.
+ */
 #define gte_SetGeomOffset( r0, r1 ) __asm__ volatile ( \
 	"sll	$t0, %0, 16;"	\
 	"sll	$t1, %1, 16;"	\
@@ -291,6 +344,13 @@
 	: "r"( r0 ), "r"( r1 )	\
 	: "$t0", "$t1" )
 
+/**
+ * @brief Sets the distance of the projection plane
+ *
+ * @details Sets the specified value to GTE control register C2_H which
+ * determines the projection plane distance, otherwise known as the field of
+ * view.
+ */
 #define gte_SetGeomScreen( r0 ) __asm__ volatile ( \
 	"ctc2	%0, $26;"		\
 	:						\
@@ -305,6 +365,12 @@
 	: "r"( r0 )				\
 	: "$12", "$13" )
 
+/**
+ * @brief Sets a 3x3 rotation matrix portion from a MATRIX to the GTE
+ *
+ * @details Sets the 3x3 rotation matrix coordinates from a MATRIX struct to
+ * GTE control registers C2_R11R12, C2_R13R21, C2_R22R23, C2_R31R32 and C2_R33.
+ */
 #define gte_SetRotMatrix( r0 ) __asm__ volatile ( \
 	"lw		$t0, 0( %0 );"	\
 	"lw		$t1, 4( %0 );"	\
@@ -329,6 +395,17 @@
 	: "r"( r0 )				\
 	: "$12", "$13" )
 
+/**
+ * @brief Sets a 3x3 lighting matrix from a MATRIX to the GTE
+ *
+ * @details Sets the 3x3 lighting matrix coordinates from a MATRIX struct to
+ * GTE control registers C2_L11L12, C2_L13L21, C2_L22L23, C2_L31L32 and C2_L33.
+ *
+ * The lighting matrix is essentially a triplet of three light direction
+ * vectors. L11, L12 and L13 represents the X, Y and Z coordinates of light
+ * source 0 for example. Coordinates must be normalized to ensure correct
+ * results.
+ */
 #define gte_SetLightMatrix( r0 ) __asm__ volatile ( \
 	"lw		$t0, 0( %0 );"	\
 	"lw		$t1, 4( %0 );"	\
@@ -353,6 +430,17 @@
 	: "r"( r0 )				\
 	: "$12", "$13" )
 
+/**
+ * @brief Sets a 3x3 color matrix from a MATRIX to the GTE
+ *
+ * @details Sets the 3x3 color matrix values from a MATRIX struct to GTE
+ * control registers C2_LR1LR2, C2_LR3LG1, C2_LG2LG3, C2_LB1LB2 and C2_LB3.
+ *
+ * The light color matrix is essentially a triplet of three RGB colors for each
+ * of the three light sources. LR1, LG1 and LB1 represents the R, G and B color
+ * values for light source 0 for example. Values are of range 0 to 4095, higher
+ * values will be saturated.
+ */
 #define gte_SetColorMatrix( r0 ) __asm__ volatile ( \
 	"lw		$t0, 0( %0 );"	\
 	"lw		$t1, 4( %0 );"	\
@@ -368,6 +456,12 @@
 	: "r"( r0 )				\
 	: "$t2" )
 
+/**
+ * @brief Sets the translation portion of a MATRIX to the GTE
+ *
+ * @details Sets the translation coordinates from a MATRIX struct to GTE
+ * control registers C2_TRX, C2_TRY and C2_TRZ respectively.
+ */
 #define gte_SetTransMatrix( r0 ) __asm__ volatile ( \
 	"lw		$t0, 20( %0 );"	\
 	"lw		$t1, 24( %0 );"	\
@@ -1044,11 +1138,39 @@
 
 /* GTE operation macros */
 
+/**
+ * @brief Rotate, Translate and Perspective Single (15 cycles)
+ *
+ * @details Performs rotation, translation and perspective calculation of a
+ * single vertex. Divide overflows are simply saturated allowing for crude Z
+ * clipping. Check C2_FLAG to determine which overflow error has occurred
+ * during calculation.
+ *
+ * The following equation is performed when executing this GTE command:
+ *
+ *     IR1 = MAC1 = (TRX*4096 + R11*VX0 + R12*VY0 + R13*VZ0) / 4096
+ *     IR2 = MAC2 = (TRY*4096 + R21*VX0 + R22*VY0 + R23*VZ0) / 4096
+ *     IR3 = MAC3 = (TRZ*4096 + R31*VX0 + R32*VY0 + R33*VZ0) / 4096
+ *     SZ3 = MAC3
+ *
+ *     MAC0 = (((H*131072/SZ3)+1)/2) * IR1 + OFX, SX2 = MAC0 / 65536
+ *     MAC0 = (((H*131072/SZ3)+1)/2) * IR2 + OFY, SY2 = MAC0 / 65536
+ *     MAC0 = (((H*131072/SZ3)+1)/2) * DQA + DQB, IR0 = MAC0 / 4096
+ */
 #define gte_rtps() __asm__ volatile ( \
 	"nop;"					\
 	"nop;"					\
 	"cop2 0x0180001;" )
 
+/**
+ * @brief Rotate, Translate and Perspective Triple (23 cycles)
+ *
+ * @details Performs rotation, translation and perspective calculation of three
+ * vertices at once. The equation performed is the same as gte_rtps() only
+ * repeated three times for each vertex. The result of the first vertex is
+ * stored in GTE data register C2_SXY0, the second vector in C2_SXY1 then
+ * C2_SXY2.
+ */
 #define gte_rtpt() __asm__ volatile ( \
 	"nop;"					\
 	"nop;"					\
@@ -1325,16 +1447,53 @@
 	"nop;"					\
 	"cop2 0x0138041C;" )
 
+/**
+ * @brief Normal clipping (8 cycles)
+ *
+ * @details Computes the sign of three screen coordinates (C2_SXY0-3) used for
+ * backface culling. If the value of C2_MAC0 is negative, the coordinates are
+ * inverted and thus the triangle is back facing.
+ *
+ * The following equation is performed when executing this GTE command:
+ *
+ *     MAC0 = SX0*SY1 + SX1*SY2 + SX2*SY0 - SX0*SY2 - SX1*SY0 - SX2*SY1
+ */
 #define gte_nclip() __asm__ volatile ( \
 	"nop;"					\
 	"nop;"					\
 	"cop2 0x01400006;" )
 
+/**
+ * @brief Average screen Z result (5 cycles)
+ *
+ * @details Averages the values of GTE registers C2_SZ1, C2_SZ2 and C2_SZ3,
+ * multiplies it by C2_ZSF3 and divides the result by 0x1000 before storing to
+ * C2_OTZ. Used to compute the ordering table depth level for a three-vertex
+ * primitive.
+ *
+ * The following equation is performed when executing this GTE command:
+ *
+ *     MAC0 = ZSF3 * (SZ1+SZ2+SZ3)
+ *     OTZ  = MAC0 / 4096
+ */
 #define gte_avsz3() __asm__ volatile ( \
 	"nop;"					\
 	"nop;"					\
 	"cop2 0x0158002D;" )
 
+/**
+ * @brief Average screen Z result (6 cycles)
+ *
+ * @details Averages the values of GTE registers C2_SZ1, C2_SZ2, C2_SZ3 and
+ * C2_SZ4, multiplies it by C2_ZSF4 and divides the result by 0x1000 before
+ * storing to C2_OTZ. Used to compute the ordering table depth level for a
+ * four-vertex primitive.
+ *
+ * The following equation is performed when executing this GTE command:
+ *
+ *     MAC0 = ZSF4 * (SZ1+SZ2+SZ3+SZ4)
+ *     OTZ  = MAC0 / 4096
+ */
 #define gte_avsz4() __asm__ volatile ( \
 	"nop;"					\
 	"nop;"					\

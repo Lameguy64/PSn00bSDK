@@ -37,16 +37,9 @@ fixed.
   due to the SPU status register being emulated incorrectly. They work as
   expected on other emulators as well as on real hardware.
 
-`psxetc`:
-
-- `DL_LoadSymbolMapFromFile()`, `DL_LoadDLLFromFile()` and `dlopen()` have been
-  disabled due to bugs in the BIOS file APIs. The dynamic linker can still be
-  used by loading DLL binaries into RAM manually and calling `DL_CreateDLL()`
-  on them (see the `system/dynlink` example).
-
 ## Examples
 
 See [README.md in the examples directory](../examples/README.md#examples-summary).
 
 -----------------------------------------
-_Last updated on 2022-10-13 by spicyjpeg_
+_Last updated on 2022-10-30 by spicyjpeg_
