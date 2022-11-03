@@ -19,7 +19,37 @@ to ensure the changelog can be parsed correctly.
 
 -------------------------------------------------------------------------------
 
-## 2022-10-16: 0.21
+# 2022-10-27
+
+spicyjpeg:
+
+- psxspu: Fixed bugs in `SpuInit()` and in `SpuWrite()` when using manual
+  transfer mode (`SPU_TRANSFER_BY_IO`). Added `SpuWritePartly()`.
+
+- psxetc: Added `IRQ_Channel` and `DMA_Channel` enums.
+
+- examples: Refactored and bugfixed all sound examples. Renamed the old
+  `spustream` example to `cdstream` and added a new `spustream` example
+  demonstrating SPU audio streaming from main RAM. Both streaming examples now
+  make use of the interleaved .VAG file format.
+
+## 2022-10-21: 0.21
+
+spicyjpeg:
+
+- libpsn00b: Cleaned up the internal logging system.
+
+- psxgpu: Added `MoveImage()` as well as `MoveImage2()`, `LoadImage2()` and
+  `StoreImage2()`. `LoadImage()` and `StoreImage()` now make use of the
+  library's internal drawing queue instead of blocking. Added `EnqueueDrawOp()`
+  for more advanced control of the drawing queue. The `getTPage()` macro now
+  supports extended Y coordinates (512-1023) on systems with 2 MB of VRAM.
+
+- psxsio: Removed `_sio_control()` and replaced it with a completely new
+  asynchronous buffered serial port driver. Rewritten the serial TTY driver to
+  make use of the new API.
+
+## 2022-10-16
 
 spicyjpeg:
 

@@ -31,17 +31,19 @@ extern "C" {
 extern int			__argc;
 extern const char	**__argv;
 
+void abort(void);
+
 int rand(void);
-void srand(unsigned long seed);
+void srand(int seed);
 
 int abs(int j);
 long labs(long i);
-long long strtoll(const char *nptr, char **endptr, int base);
-long strtol(const char *nptr, char **endptr, int base);
-long double strtold(const char *nptr, char **endptr);
 
-double strtod(const char *nptr, char **endptr);
+long strtol(const char *nptr, char **endptr, int base);
+long long strtoll(const char *nptr, char **endptr, int base);
 float strtof(const char *nptr, char **endptr);
+double strtod(const char *nptr, char **endptr);
+long double strtold(const char *nptr, char **endptr);
 
 void InitHeap(void *addr, size_t size);
 void *sbrk(ptrdiff_t incr);

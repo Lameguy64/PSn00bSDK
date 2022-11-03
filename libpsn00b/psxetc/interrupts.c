@@ -98,7 +98,7 @@ static void _global_dma_handler(void) {
 
 /* IRQ and DMA handler API */
 
-void *InterruptCallback(int irq, void (*func)(void)) {
+void *InterruptCallback(IRQ_Channel irq, void (*func)(void)) {
 	if ((irq < 0) || (irq >= NUM_IRQ_CHANNELS))
 		return 0;
 
@@ -115,14 +115,14 @@ void *InterruptCallback(int irq, void (*func)(void)) {
 	return old_callback;
 }
 
-void *GetInterruptCallback(int irq) {
+void *GetInterruptCallback(IRQ_Channel irq) {
 	if ((irq < 0) || (irq >= NUM_IRQ_CHANNELS))
 		return 0;
 
 	return _irq_handlers[irq];
 }
 
-void *DMACallback(int dma, void (*func)(void)) {
+void *DMACallback(DMA_Channel dma, void (*func)(void)) {
 	if ((dma < 0) || (dma >= NUM_DMA_CHANNELS))
 		return 0;
 
@@ -150,7 +150,7 @@ void *DMACallback(int dma, void (*func)(void)) {
 	return old_callback;
 }
 
-void *GetDMACallback(int dma) {
+void *GetDMACallback(DMA_Channel dma) {
 	if ((dma < 0) || (dma >= NUM_DMA_CHANNELS))
 		return 0;
 

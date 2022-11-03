@@ -4,7 +4,7 @@
  */
 
 #include <stdint.h>
-#include <psxetc.h>
+#include <assert.h>
 #include <psxgpu.h>
 #include <hwregs_c.h>
 
@@ -15,11 +15,11 @@
 static void _dma_transfer(const RECT *rect, uint32_t *data, int write) {
 	size_t length = rect->w * rect->h;
 	if (length % 2)
-		_sdk_log("psxgpu: can't transfer an odd number of pixels\n");
+		_sdk_log("can't transfer an odd number of pixels\n");
 
 	length /= 2;
 	if ((length >= DMA_CHUNK_LENGTH) && (length % DMA_CHUNK_LENGTH)) {
-		_sdk_log("psxgpu: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
+		_sdk_log("transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
 		length += DMA_CHUNK_LENGTH - 1;
 	}
 

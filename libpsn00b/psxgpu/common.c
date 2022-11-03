@@ -4,6 +4,7 @@
  */
 
 #include <stdint.h>
+#include <assert.h>
 #include <psxetc.h>
 #include <psxapi.h>
 #include <psxgpu.h>
@@ -37,6 +38,9 @@ static volatile uint16_t   _last_hblank;
 
 /* Private interrupt handlers */
 
+#define _ENTER_CRITICAL()	uint16_t mask = IRQ_MASK; IRQ_MASK = 0;
+#define _EXIT_CRITICAL()	IRQ_MASK = mask;
+
 static void _vblank_handler(void) {
 	_vblank_counter++;
 
@@ -50,9 +54,10 @@ static void _gpu_dma_handler(void) {
 		__asm__ volatile("");
 
 	if (--_queue_length) {
-		volatile QueueEntry *entry = &_draw_queue[_queue_head++];
-		_queue_head %= QUEUE_LENGTH;
+		int head    = _queue_head;
+		_queue_head = (head + 1) % QUEUE_LENGTH;
 
+		volatile QueueEntry *entry = &_draw_queue[head];
 		entry->func(entry->arg1, entry->arg2, entry->arg3);
 	} else {
 		GPU_GP1 = 0x04000000; // Disable DMA request
@@ -75,7 +80,7 @@ void ResetGraph(int mode) {
 		_gpu_video_mode = (GPU_GP1 >> 20) & 1;
 		ExitCriticalSection();
 
-		_sdk_log("psxgpu: setup done, default mode is %s\n", _gpu_video_mode ? "PAL" : "NTSC");
+		_sdk_log("setup done, default mode is %s\n", _gpu_video_mode ? "PAL" : "NTSC");
 	}
 
 	if (mode == 3) {
@@ -113,8 +118,7 @@ static void _default_vsync_halt(void) {
 			return;
 	}
 
-	_sdk_log("psxgpu: VSync() timeout\n");
-	_sdk_dump_log();
+	_sdk_log("VSync() timeout\n");
 	ChangeClearPAD(0);
 	ChangeClearRCnt(3, 0);
 }
@@ -130,7 +134,6 @@ int VSync(int mode) {
 
 	// Wait for at least one vertical blank event to occur.
 	do {
-		_sdk_dump_log();
 		_vsync_halt_func();
 
 		// If interlaced mode is enabled, wait until the GPU starts displaying
@@ -146,19 +149,22 @@ int VSync(int mode) {
 }
 
 void *VSyncHaltFunction(void (*func)(void)) {
+	//_ENTER_CRITICAL();
+
 	void *old_callback  = _vsync_halt_func;
 	_vsync_halt_func    = func;
 
+	//_EXIT_CRITICAL();
 	return old_callback;
 }
 
 void *VSyncCallback(void (*func)(void)) {
-	EnterCriticalSection();
+	_ENTER_CRITICAL();
 
 	void *old_callback  = _vsync_callback;
 	_vsync_callback     = func;
 
-	ExitCriticalSection();
+	_EXIT_CRITICAL();
 	return old_callback;
 }
 
@@ -177,37 +183,36 @@ int EnqueueDrawOp(
 	// to checking if DMA is busy; disabling them afterwards would create a
 	// race condition where the DMA transfer could end while interrupts are
 	// being disabled. Interrupts are disabled through the IRQ_MASK register
-	// rather than by calling EnterCriticalSection() for performance reasons.
-	uint16_t mask = IRQ_MASK;
-	IRQ_MASK      = 0;
+	// rather than via syscalls for performance reasons.
+	_ENTER_CRITICAL();
+	int length = _queue_length;
 
-	if (_queue_length) {
-		if (_queue_length >= QUEUE_LENGTH) {
-			IRQ_MASK = mask;
-			_sdk_log("psxgpu: draw queue overflow, dropping commands\n");
-			return -1;
-		}
+	if (!length) {
+		_queue_length = 1;
+		_EXIT_CRITICAL();
 
-		int length    = _queue_length;
-		_queue_length = length + 1;
+		func(arg1, arg2, arg3);
+		return 0;
+	}
+	if (length >= QUEUE_LENGTH) {
+		_EXIT_CRITICAL();
 
-		volatile QueueEntry *entry = &_draw_queue[_queue_tail++];
-		_queue_tail %= QUEUE_LENGTH;
-
-		entry->func = func;
-		entry->arg1 = arg1;
-		entry->arg2 = arg2;
-		entry->arg3 = arg3;
-
-		IRQ_MASK = mask;
-		return length;
+		_sdk_log("draw queue overflow, dropping commands\n");
+		return -1;
 	}
 
-	_queue_length = 1;
+	int tail      = _queue_tail;
+	_queue_tail   = (tail + 1) % QUEUE_LENGTH;
+	_queue_length = length + 1;
 
-	IRQ_MASK = mask;
-	func(arg1, arg2, arg3);
-	return 0;
+	volatile QueueEntry *entry = &_draw_queue[tail];
+	entry->func = func;
+	entry->arg1 = arg1;
+	entry->arg2 = arg2;
+	entry->arg3 = arg3;
+
+	_EXIT_CRITICAL();
+	return length;
 }
 
 int DrawSync(int mode) {
@@ -230,20 +235,19 @@ int DrawSync(int mode) {
 		while (!(GPU_GP1 & (1 << 26)))
 			__asm__ volatile("");
 	} else {
-		_sdk_log("psxgpu: DrawSync() timeout\n");
-		_sdk_dump_log();
+		_sdk_log("DrawSync() timeout\n");
 	}
 
 	return _queue_length;
 }
 
 void *DrawSyncCallback(void (*func)(void)) {
-	EnterCriticalSection();
+	_ENTER_CRITICAL();
 
 	void *old_callback = _drawsync_callback;
 	_drawsync_callback = func;
 
-	ExitCriticalSection();
+	_EXIT_CRITICAL();
 	return old_callback;
 }
 

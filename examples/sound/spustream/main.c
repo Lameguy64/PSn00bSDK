@@ -1,111 +1,60 @@
 /*
- * PSn00bSDK SPU audio streaming example
- * (C) 2021 spicyjpeg - MPL licensed
+ * PSn00bSDK SPU .VAG streaming example
+ * (C) 2022 spicyjpeg - MPL licensed
  *
- * This example demonstrates how to play a large multi-channel audio file
- * "manually" by streaming it through the SPU, without having to rely on the CD
- * drive's ability to play audio tracks or XA files.
+ * This example shows how to play arbitrarily long sounds, which normally would
+ * not fit into SPU RAM in their entirety, by streaming them to the SPU from
+ * main RAM. In this example audio data is streamed from an in-memory file,
+ * however the code can easily be modified to stream from the CD instead (see
+ * the cdstream example).
  *
- * The way this works is by splitting the audio file into a series of ~1 second
- * "chunks", each of which in turn is an array of concatenated buffers holding
- * SPU ADPCM data (one for each channel, so a stereo stream would have 2
- * buffers per chunk). All buffers in a chunk are played simultaneously using
- * multiple SPU channels; each buffer has the loop flag set at the end, so each
- * channel will jump to its loop address (SPU_CH_LOOP_ADDR(n)) once the chunk
- * is played.
+ * The way SPU streaming works is by splitting the audio data into a series of
+ * small "chunks", each of which in turn is an array of concatenated buffers
+ * holding SPU ADPCM data (one for each channel, so a stereo stream would have
+ * 2 buffers per chunk). All buffers in a chunk are played simultaneously using
+ * multiple SPU channels; each buffer has the loop flag set at the end, so the
+ * SPU will jump to the loop point set in the SPU_CH_LOOP_ADDR registers after
+ * the chunk is played.
  *
- * Since the loop point doesn't necessarily have to be within the chunk itself,
- * we can abuse it to "queue" another set of buffers to be played immediately
- * after the currently playing chunk. This allows us to fetch a chunk from the
- * CD, upload it to SPU RAM (2048 bytes at a time to avoid having to keep
- * another large buffer in main RAM) and queue it for playback while a
- * previously buffered chunk is playing in the background. SPU RAM always holds
- * two chunks, one of which is played while the other one is buffered. This is
- * the layout used in this example:
+ * As the loop point doesn't necessarily have to be within the chunk itself, it
+ * can be used to "queue" another chunk to be played immediately after the
+ * current one. This allows for double buffering: two chunks are always kept in
+ * SPU RAM and one is overwritten with a new chunk while the other is playing.
+ * Chunks are laid out in SPU RAM as follows:
  *
- *          /================================================\
- *          |              /==================\              |
- *          v Loop point   |                  v Loop point   |
+ *           ________________________________________________
+ *          /               __________________               \
+ *          |              /                  \              |
+ *          v Loop point   | Loop flag        v Loop point   | Loop flag
  * +-------+----------------+----------------+----------------+----------------+
  * | Dummy | Left buffer 0  | Right buffer 0 | Left buffer 1  | Right buffer 1 |
  * +-------+----------------+----------------+----------------+----------------+
  *          \____________Chunk 0____________/ \____________Chunk 1____________/
  *
- * It's pretty much the same thing as GPU double buffering (aka page flipping),
- * just with chunks instead of framebuffers.
+ * In order to keep streaming continuously we need to know when each chunk
+ * actually starts playing. The SPU can be configured to trigger an interrupt
+ * whenever a specific address in SPU RAM is read by a channel, so we can just
+ * point it to the beginning of the buffered chunk's first buffer and wait
+ * until the IRQ is fired before loading the next chunk.
  *
- * We need to know when the chunk we've buffered actually starts playing in
- * order to start buffering the next one. The SPU can be configured to trigger
- * an interrupt whenever a specific address in SPU RAM is read by a channel, so
- * we can just point it to the beginning of the buffered chunk's first buffer.
- * The interrupt callback will then kick off CD reading and adjust the loop/IRQ
- * addresses to the ones of the chunk that is going to be buffered next.
- *
- * Chunks are read from a STREAM.BIN file which is just a series of sector
- * aligned chunks, arranged as follows:
- *
- *  +--Sector--+--Sector--+--Sector--+--Sector--+--Sector--+--Sector--+----
- *  | +--------------------------+--------------------------+         |
- *  | | Left channel data        | Right channel data       | Padding | ...
- *  | +--------------------------+--------------------------+         |
- *  +----------+----------+----------+----------+----------+----------+----
- *    \________________________Chunk________________________/
- *
- * A Python script is included to generate STREAM.BIN from one or more SPU
- * ADPCM (.VAG) files, one for each channel (the .VAG format only supports
- * mono).
- *
- * Of course SPU streaming isn't the only way to play music, as the CD drive
- * can play CD-DA tracks and XA files natively with zero CPU overhead. However
- * streaming has a number of advantages over CD audio or XA:
- *
- * - Any sample rate up to 44.1 kHz can be used. The sample rate can also be
- *   changed on-the-fly to play the stream at different speeds and pitches (as
- *   long as the CD drive can keep up of course), or even interpolated for
- *   effects like tape stops or DJ scratches.
- * - Manual streaming is not limited to mono or stereo but can be expanded to
- *   as many channels as needed, only limited by the amount of SPU RAM required
- *   for chunks and CD bandwidth. Having more than 2 channels can be useful for
- *   e.g. crossfading between tracks (not possible with XA) or controlling
- *   volume and panning of each individual instrument.
- * - Depending on how streaming/interleaving is implemented it is possible to
- *   have 500-1000ms idle periods during which the CD drive isn't buffering the
- *   stream, that can be used to read small amounts of other data without ever
- *   interrupting playback. This is different from XA-style interleaving as the
- *   drive is free to seek to *any* region of the disc during these periods
- *   (it must seek back to the stream's next chunk afterwards though).
- * - Thanks to the idle periods it is possible to seek back to the beginning of
- *   the stream and preload the first chunk before the end is reached, allowing
- *   the track to be looped seamlessly without having to resort to tricks like
- *   filler samples.
- * - Unlike XA, SPU streaming can be used on some PS1-based arcade boards such
- *   as the Konami System 573. These systems usually use IDE/SCSI CD drives or
- *   flash memory, neither of which supports XA playback.
+ * Chunks are read from a special type of .VAG file which has been interleaved
+ * ahead-of-time and already contains the loop flags required to make streaming
+ * work. A Python script is provided to generate such file from one or more
+ * mono .VAG files.
  */
 
 #include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stddef.h>
 #include <psxetc.h>
 #include <psxapi.h>
 #include <psxgpu.h>
 #include <psxpad.h>
 #include <psxspu.h>
-#include <psxcd.h>
 #include <hwregs_c.h>
 
-// To maximize STREAM.BIN packing efficiency and get rid of padding between
-// chunks, buffer size should be a multiple of sector size (2048 bytes). Buffer
-// size can be increased to get more idle time between CD reads, however it is
-// usually best to keep it to 1-2 seconds as SPU RAM is only 512 KB.
-#define SAMPLE_RATE		0x1000	// 44100 Hz
-#define BUFFER_SIZE		0x6800	// (0x6800 / 16 * 28) / 44100 = 1.05 seconds
+extern const uint8_t stream_data[];
 
-#define NUM_CHANNELS	2
-#define CHANNEL_MASK	0x03
-
-#define SPU_RAM_ADDR(x)	((uint16_t) (((uint32_t) (x)) >> 3))
+#define NUM_CHANNELS 2
 
 /* Display/GPU context utilities */
 
@@ -167,159 +116,137 @@ void display(RenderContext *ctx) {
 	SetDispMask(1);
 }
 
-/* Stream interrupt handlers */
-
-// The first 4 KB of SPU RAM are reserved for capture buffers, so we have to
-// place stream buffers after those. A dummy sample is additionally placed by
-// default by the SPU library at 0x1000; it is going to be used here to keep
-// unused SPU channels busy, preventing them from accidentally triggering the
-// SPU RAM interrupt and throwing off the timing (all channels are always
-// reading sample data, even when "stopped").
-// https://problemkaputt.de/psx-spx.htm#spuinterrupt
-#define DUMMY_BLOCK_ADDR	0x1000
-#define BUFFER_START_ADDR	0x1010
-#define CHUNK_SIZE			(BUFFER_SIZE * NUM_CHANNELS)
+/* .VAG header structure */
 
 typedef struct {
-	int lba, length;
+	uint32_t magic;			// 0x69474156 ("VAGi") for interleaved files
+	uint32_t version;
+	uint32_t interleave;	// Little-endian, size of each channel buffer
+	uint32_t size;			// Big-endian, in bytes
+	uint32_t sample_rate;	// Big-endian, in Hertz
+	uint32_t _reserved[3];
+	char     name[16];
+} VAG_Header;
 
-	volatile int pos;
-	volatile int spu_addr, spu_pos;
-	volatile int db_active;
+#define SWAP_ENDIAN(x) ( \
+	(((uint32_t) (x) & 0x000000ff) << 24) | \
+	(((uint32_t) (x) & 0x0000ff00) <<  8) | \
+	(((uint32_t) (x) & 0x00ff0000) >>  8) | \
+	(((uint32_t) (x) & 0xff000000) >> 24) \
+)
+
+/* Interrupt callbacks */
+
+// The first 4 KB of SPU RAM are reserved for capture buffers and psxspu
+// additionally uploads a dummy sample (16 bytes) at 0x1000 by default, so the
+// chunks must be placed after those. The dummy sample is going to be used to
+// keep unused SPU channels busy, preventing them from accidentally triggering
+// the SPU IRQ and throwing off the timing (all channels are always reading
+// from SPU RAM, even when "stopped").
+// https://problemkaputt.de/psx-spx.htm#spuinterrupt
+#define DUMMY_BLOCK_ADDR  0x1000
+#define BUFFER_START_ADDR 0x1010
+
+typedef enum {
+	STATE_IDLE,
+	STATE_BUFFERING
+} StreamState;
+
+typedef struct {
+	const uint8_t *data;
+	int buffer_size, num_chunks, sample_rate;
+
+	volatile int    next_chunk, spu_addr;
+	volatile int8_t db_active, state;
 } StreamContext;
 
 static StreamContext str_ctx;
 
-// This buffer is used by cd_event_handler() as a temporary area for sectors
-// read from the CD and uploaded to SPU RAM. Due to DMA limitations it can't be
-// allocated on the stack (especially not in the interrupt callbacks' stack,
-// whose size is very limited).
-static uint32_t sector_buffer[512];
-
 void spu_irq_handler(void) {
 	// Acknowledge the interrupt to ensure it can be triggered again. The only
 	// way to do this is actually to disable the interrupt entirely; we'll
-	// enable it again once the buffer is ready.
+	// enable it again once the chunk is ready.
 	SPU_CTRL &= 0xffbf;
 
+	int chunk_size = str_ctx.buffer_size * NUM_CHANNELS;
+	int chunk      = (str_ctx.next_chunk + 1) % (uint32_t) str_ctx.num_chunks;
+
 	str_ctx.db_active ^= 1;
-	str_ctx.spu_pos    = 0;
+	str_ctx.state      = STATE_BUFFERING;
+	str_ctx.next_chunk = chunk;
 
-	// Align the sector counter to the size of a chunk (to prevent glitches
-	// after seeking) and reset it if it exceeds the stream's length.
-	str_ctx.pos %= str_ctx.length;
-	str_ctx.pos -= str_ctx.pos % ((CHUNK_SIZE + 2047) / 2048);
-
-	// Configure to SPU to trigger an IRQ once the buffer that is going to be
+	// Configure to SPU to trigger an IRQ once the chunk that is going to be
 	// filled now starts playing (so the next buffer can be loaded) and
 	// override both channels' loop addresses to make them "jump" to the new
-	// buffer rather than actually looping when they encounter the loop flag at
-	// the end of the currently playing buffer.
-	str_ctx.spu_addr = BUFFER_START_ADDR + CHUNK_SIZE * str_ctx.db_active;
-	SPU_IRQ_ADDR     = SPU_RAM_ADDR(str_ctx.spu_addr);
+	// buffers, rather than actually looping when they encounter the loop flag
+	// at the end of the currently playing buffers.
+	int addr = BUFFER_START_ADDR + (str_ctx.db_active ? chunk_size : 0);
+	str_ctx.spu_addr = addr;
 
+	SPU_IRQ_ADDR = getSPUAddr(addr);
 	for (int i = 0; i < NUM_CHANNELS; i++)
-		SPU_CH_LOOP_ADDR(i) = SPU_RAM_ADDR(str_ctx.spu_addr + BUFFER_SIZE * i);
+		SPU_CH_LOOP_ADDR(i) = getSPUAddr(addr + str_ctx.buffer_size * i);
 
-	// Start loading the next chunk. cd_event_handler() will be called
-	// repeatedly for each sector until the entire chunk is read.
-	CdlLOC pos;
-	CdIntToPos(str_ctx.lba + str_ctx.pos, &pos);
-	CdControlF(CdlReadN, &pos);
+	// Start uploading the next chunk to the SPU.
+	SpuSetTransferStartAddr(addr);
+	SpuWrite((const uint32_t *) &str_ctx.data[chunk * chunk_size], chunk_size);
 }
 
-void cd_event_handler(int event, uint8_t *payload) {
-	// Ignore all events other than a sector being ready.
-	// TODO: read errors should be handled properly
-	if (event != CdlDataReady)
-		return;
+void spu_dma_handler(void) {
+	// Re-enable the SPU IRQ once the new chunk has been fully uploaded.
+	SPU_CTRL |= 0x0040;
 
-	// Fetch the sector that has been read from the drive.
-	CdGetSector(sector_buffer, 512);
-	str_ctx.pos++;
-
-	// Set loop flags to make sure the buffer will loop (actually jump to the
-	// other buffer, as we're overriding loop addresses) at the end.
-	// NOTE: this isn't actually necessary here as the stream converter script
-	// already sets these flags in the file.
-	/*for (int i = 0; i < NUM_CHANNELS; i++) {
-		if (
-			str_ctx.spu_pos >= (BUFFER_SIZE * i - 2048) &&
-			str_ctx.spu_pos <  (BUFFER_SIZE * i)
-		)
-			sector_buffer[(BUFFER_SIZE * i - str_ctx.spu_pos) - 15] = 0x03;
-	}*/
-
-	// Copy the sector to SPU RAM, appending it to the buffer that is not
-	// playing currently. As the left and right buffers are adjacent, we can
-	// just treat the chunk as a single blob of data and copy it as-is; we only
-	// have to trim the padding at the end (if any) to avoid overwriting other
-	// data in SPU RAM.
-	size_t length = CHUNK_SIZE - str_ctx.spu_pos;
-	if (length > 2048)
-		length = 2048;
-
-	SpuSetTransferStartAddr(str_ctx.spu_addr + str_ctx.spu_pos);
-	SpuWrite(sector_buffer, length);
-	str_ctx.spu_pos += length;
-
-	// If the buffer has been filled completely, stop reading and re-enable the
-	// SPU IRQ.
-	if (str_ctx.spu_pos >= CHUNK_SIZE) {
-		CdControlF(CdlPause, 0);
-		SPU_CTRL |= 0x0040;
-	}
+	str_ctx.state = STATE_IDLE;
 }
 
-/* Stream helpers */
+/* Helper functions */
 
 // This isn't actually required for this example, however it is necessary if
 // you want to allocate the stream buffers into a region of SPU RAM that was
 // previously used (to make sure the IRQ isn't going to be triggered by any
 // inactive channels).
 void reset_spu_channels(void) {
-	SPU_KEY_OFF = 0x00ffffff;
+	SpuSetKey(0, 0x00ffffff);
 
 	for (int i = 0; i < 24; i++) {
-		SPU_CH_ADDR(i) = SPU_RAM_ADDR(DUMMY_BLOCK_ADDR);
+		SPU_CH_ADDR(i) = getSPUAddr(DUMMY_BLOCK_ADDR);
 		SPU_CH_FREQ(i) = 0x1000;
 	}
 
-	SPU_KEY_ON = 0x00ffffff;
+	SpuSetKey(1, 0x00ffffff);
 }
 
-void init_stream(CdlFILE *file) {
+void init_stream(const VAG_Header *vag) {
 	EnterCriticalSection();
-	InterruptCallback(9, &spu_irq_handler);
-	CdReadyCallback(&cd_event_handler);
+	InterruptCallback(IRQ_SPU, &spu_irq_handler);
+	DMACallback(DMA_SPU, &spu_dma_handler);
 	ExitCriticalSection();
 
-	// Configure the CD drive to read 2048-byte sectors at 2x speed.
-	uint8_t mode = CdlModeSpeed;
-	CdControl(CdlSetmode, (const uint8_t *) &mode, 0);
+	int buf_size = vag->interleave;
 
-	// Set the initial LBA of the stream file, which is going to be incremented
-	// as the stream is played.
-	str_ctx.lba    = CdPosToInt(&(file->pos));
-	str_ctx.length = file->size / 2048;
-	str_ctx.pos    = 0;
+	str_ctx.data        = &((const uint8_t *) vag)[2048];
+	str_ctx.buffer_size = buf_size;
+	str_ctx.num_chunks  = (SWAP_ENDIAN(vag->size) + buf_size - 1) / buf_size;
+	str_ctx.sample_rate = SWAP_ENDIAN(vag->sample_rate);
 
-	// Ensure at least one chunk is in SPU RAM by invoking the SPU IRQ handler
+	str_ctx.db_active  =  1;
+	str_ctx.next_chunk = -1;
+
+	// Ensure at least one chunk is in SPU RAM by invoking the IRQ handler
 	// manually and blocking until the chunk has loaded.
-	str_ctx.db_active = 1;
 	spu_irq_handler();
-
-	while (str_ctx.spu_pos < CHUNK_SIZE)
+	while (str_ctx.state != STATE_IDLE)
 		__asm__ volatile("");
 }
 
 void start_stream(void) {
-	uint32_t addr = BUFFER_START_ADDR + CHUNK_SIZE * str_ctx.db_active;
+	int bits = 0x00ffffff >> (24 - NUM_CHANNELS);
 
 	for (int i = 0; i < NUM_CHANNELS; i++) {
-		SPU_CH_ADDR(i) = SPU_RAM_ADDR(addr + BUFFER_SIZE * i);
-		SPU_CH_FREQ(i) = SAMPLE_RATE;
-		SPU_CH_ADSR(i) = 0x1fee80ff;
+		SPU_CH_ADDR(i)  = getSPUAddr(str_ctx.spu_addr + str_ctx.buffer_size * i);
+		SPU_CH_FREQ(i)  = getSPUSampleRate(str_ctx.sample_rate);
+		SPU_CH_ADSR1(i) = 0x80ff;
+		SPU_CH_ADSR2(i) = 0x1fee;
 	}
 
 	// Unmute the channels and route them for stereo output. You'll want to
@@ -330,35 +257,31 @@ void start_stream(void) {
 	SPU_CH_VOL_L(1) = 0x0000;
 	SPU_CH_VOL_R(1) = 0x3fff;
 
-	SPU_KEY_ON = CHANNEL_MASK;
 	spu_irq_handler();
+	SpuSetKey(1, bits);
 }
 
 // This is basically a variant of reset_spu_channels() that only resets the
 // channels used to play the stream, to (again) prevent them from triggering
 // the SPU IRQ while the stream is paused.
 void stop_stream(void) {
-	SPU_KEY_OFF = CHANNEL_MASK;
+	int bits = 0x00ffffff >> (24 - NUM_CHANNELS);
+
+	SpuSetKey(0, bits);
 
 	for (int i = 0; i < NUM_CHANNELS; i++)
-		SPU_CH_ADDR(i) = SPU_RAM_ADDR(DUMMY_BLOCK_ADDR);
+		SPU_CH_ADDR(i) = getSPUAddr(DUMMY_BLOCK_ADDR);
 
-	SPU_KEY_ON = CHANNEL_MASK;
+	SpuSetKey(1, bits);
 }
 
 /* Main */
 
 static RenderContext ctx;
 
-#define SHOW_STATUS(...) { FntPrint(-1, __VA_ARGS__); FntFlush(-1); display(&ctx); }
-#define SHOW_ERROR(...)  { SHOW_STATUS(__VA_ARGS__); while (1) __asm__("nop"); }
-
 int main(int argc, const char* argv[]) {
 	init_context(&ctx);
-
-	SHOW_STATUS("INITIALIZING\n");
 	SpuInit();
-	CdInit();
 	reset_spu_channels();
 
 	// Set up controller polling.
@@ -367,34 +290,19 @@ int main(int argc, const char* argv[]) {
 	StartPAD();
 	ChangeClearPAD(0);
 
-	SHOW_STATUS("OPENING STREAM FILE\n");
-
-	CdlFILE file;
-	if (!CdSearchFile(&file, "\\STREAM.BIN"))
-		SHOW_ERROR("FAILED TO FIND STREAM.BIN\n");
-
-	SHOW_STATUS("BUFFERING STREAM\n");
-	init_stream(&file);
+	init_stream((const VAG_Header *) stream_data);
 	start_stream();
 
-	int paused = 0;
+	int paused = 0, sample_rate = getSPUSampleRate(str_ctx.sample_rate);
 
-	uint16_t sample_rate  = SAMPLE_RATE;
 	uint16_t last_buttons = 0xffff;
 
 	while (1) {
 		FntPrint(-1, "PLAYING SPU STREAM\n\n");
+		FntPrint(-1, "BUFFER: %d\n", str_ctx.db_active);
+		FntPrint(-1, "STATUS: %s\n\n", str_ctx.state ? "BUFFERING" : "IDLE");
 
-		FntPrint(-1, "BUFFER: %d\nSTATUS: ", str_ctx.db_active);
-		if (str_ctx.spu_pos >= CHUNK_SIZE)
-			FntPrint(-1, "IDLE\n\n");
-		else if (str_ctx.spu_pos)
-			FntPrint(-1, "BUFFERING\n\n");
-		else
-			FntPrint(-1, "SEEKING\n\n");
-
-		FntPrint(-1, "POSITION: %5d/%5d\n",  str_ctx.pos, str_ctx.length);
-		FntPrint(-1, "BUFFERED: %5d/%5d\n",  str_ctx.spu_pos, CHUNK_SIZE);
+		FntPrint(-1, "POSITION: %d/%d\n",  str_ctx.next_chunk, str_ctx.num_chunks);
 		FntPrint(-1, "SMP RATE: %5d HZ\n\n", (sample_rate * 44100) >> 12);
 
 		FntPrint(-1, "[START]      %s\n", paused ? "RESUME" : "PAUSE");
@@ -411,7 +319,11 @@ int main(int argc, const char* argv[]) {
 		PADTYPE *pad = (PADTYPE *) pad_buff[0];
 		if (pad->stat)
 			continue;
-		if ((pad->type != 4) && (pad->type != 5) && (pad->type != 7))
+		if (
+			(pad->type != PAD_ID_DIGITAL) &&
+			(pad->type != PAD_ID_ANALOG_STICK) &&
+			(pad->type != PAD_ID_ANALOG)
+		)
 			continue;
 
 		if ((last_buttons & PAD_START) && !(pad->btn & PAD_START)) {
@@ -422,21 +334,19 @@ int main(int argc, const char* argv[]) {
 				start_stream();
 		}
 
-		// Seeking by an arbitrary number of sectors isn't a problem as
-		// spu_irq_handler() always realigns the counter.
 		if (!(pad->btn & PAD_LEFT))
-			str_ctx.pos -= 16;
+			str_ctx.next_chunk--;
 		if (!(pad->btn & PAD_RIGHT))
-			str_ctx.pos += 16;
+			str_ctx.next_chunk++;
 		if ((last_buttons & PAD_CIRCLE) && !(pad->btn & PAD_CIRCLE))
-			str_ctx.pos = 0;
+			str_ctx.next_chunk = -1;
 
 		if (!(pad->btn & PAD_DOWN) && (sample_rate > 0x400))
 			sample_rate -= 0x40;
 		if (!(pad->btn & PAD_UP) && (sample_rate < 0x2000))
 			sample_rate += 0x40;
 		if ((last_buttons & PAD_CROSS) && !(pad->btn & PAD_CROSS))
-			sample_rate = SAMPLE_RATE;
+			sample_rate = getSPUSampleRate(str_ctx.sample_rate);
 
 		// Only set the sample rate registers if necessary.
 		if (pad->btn != 0xffff) {

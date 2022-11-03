@@ -38,8 +38,9 @@ memset:
 	sb    $a1, 0xc($a0)
 	sb    $a1, 0xd($a0)
 	sb    $a1, 0xe($a0)
-	jr    $ra
 	sb    $a1, 0xf($a0)
+	jr    $ra
+	nop
 
 .Llarge_fill:
 	# Initialize fast filling by repeating the fill byte 4 times, so it can be

@@ -26,8 +26,9 @@ Additional information may be found in the source code of each example.
 | [`lowlevel/cartrom`](./lowlevel/cartrom)       | ROM firmware for cheat devices written using GNU GAS  | ROM  |   4   |
 | [`mdec/mdecimage`](./mdec/mdecimage)           | Displays a (raw) MDEC format image                    | EXE  |       |
 | [`mdec/strvideo`](./mdec/strvideo)             | Plays a .STR video file using the MDEC                | CD   |   1   |
-| [`sound/spustream`](./sound/spustream)         | Custom (non XA) CD-ROM audio streaming using the SPU  | CD   |       |
-| [`sound/vagsample`](./sound/vagsample)         | Demonstrates playing VAG sound files using the SPU    | EXE  |       |
+| [`sound/cdstream`](./sound/cdstream)           | Streams an interleaved .VAG file from the CD-ROM      | CD   |       |
+| [`sound/spustream`](./sound/spustream)         | Streams an interleaved .VAG file from main RAM        | EXE  |       |
+| [`sound/vagsample`](./sound/vagsample)         | Loads and plays .VAG sound files using the SPU        | EXE  |       |
 | [`system/childexec`](./system/childexec)       | Loading a child program and returning to parent       | EXE  |       |
 | [`system/console`](./system/console)           | TTY based text console that interrupts gameplay       | EXE  |       |
 | [`system/dynlink`](./system/dynlink)           | Demonstrates dynamically linked libraries             | CD   |       |
@@ -85,4 +86,4 @@ are for rebuilding the examples *after* the SDK has been installed.
    CD images for each example.
 
 -----------------------------------------
-_Last updated on 2022-10-16 by spicyjpeg_
+_Last updated on 2022-10-27 by spicyjpeg_

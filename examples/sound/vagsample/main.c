@@ -1,280 +1,215 @@
-/* 
- * LibPSn00b Example Programs
+/*
+ * PSn00bSDK SPU .VAG playback example
+ * (C) 2021-2022 Lameguy64, spicyjpeg - MPL licensed
  *
- * VAG Playback Example
- * 2019-2021 Meido-Tek Productions / PSn00bSDK Project
+ * This example demonstrates basic usage of the SPU. Two mono audio samples (in
+ * the standard PS1 .VAG format) are uploaded from main memory to SPU RAM and
+ * played on one of the 24 channels by manipulating the SPU's registers. The
+ * .VAG header is parsed to obtain the sample rate and data size, while the
+ * actual audio data does not need any processing as it is already encoded in
+ * the ADPCM format expected by the SPU.
  *
- * This example program demonstrates the basic use of the SPU; uploading sound
- * clips to SPU RAM and playing it back on one of 24 SPU voices (and possibly
- * leave you with ears ringing from the cacophony).
+ * Note that PSn00bSDK does not yet provide any tool for SPU ADPCM encoding, so
+ * you will have to use an external program to convert your samples to .VAG.
  *
- * The PS1 SPU only supports playing back of specially encoded ADPCM samples
- * natively and can play them at sample rates of up to 44.1KHz, so sound files
- * will have to be converted to 'VAG' format before it can be used on the PS1.
- * While it is possible to play plain PCM samples on the SPU, this requires
- * some special trickery that involves abusing the echo buffer and is not
- * supported by the (half-baked) SPU library of PSn00bSDK.
- *
- * Additionally, the SPU can only play ADPCM samples from its own local memory
- * called the SPU RAM, so sound samples will have to be uploaded to SPU RAM
- * before it can be played by the SPU.
- *
- * The included sound clips are by HighTreason610 (0proyt) and
- * Lameguy64 (threedeeffeggzz) respectively.
- *
- * Example by Lameguy64
- *
- *
- * Changelog:
- *
- *	  October 6, 2021 - Initial version
- *
+ * The included sound clips are by HighTreason610 (proyt.vag) and Lameguy64
+ * (3dfx.vag) respectively.
  */
- 
-#include <stdio.h>
+
 #include <stdint.h>
-#include <psxetc.h>
-#include <psxgte.h>
 #include <psxgpu.h>
-#include <psxpad.h>
 #include <psxapi.h>
+#include <psxpad.h>
 #include <psxspu.h>
 #include <hwregs_c.h>
 
-extern const unsigned char	proyt[];
-extern const int			proyt_size;
-extern const unsigned char	tdfx[];
-extern const int			tdfx_size;
+extern const uint8_t proyt[];
+extern const uint8_t tdfx[];
 
-// Define display/draw environments for double buffering
-DISPENV disp[2];
-DRAWENV draw[2];
-int db;
+/* Display/GPU context utilities */
 
-unsigned char pad_buff[2][34];
+#define SCREEN_XRES 320
+#define SCREEN_YRES 240
 
-// SPU addresses of the uploaded sound clips
-int proyt_addr;
-int tdfx_addr;
+#define BGCOLOR_R 48
+#define BGCOLOR_G 24
+#define BGCOLOR_B  0
 
-// Init function
-void init(void)
-{
-	int addr_temp;
-	
-	// This not only resets the GPU but it also installs the library's
-	// ISR subsystem to the kernel
+typedef struct {
+	DISPENV disp;
+	DRAWENV draw;
+} Framebuffer;
+
+typedef struct {
+	Framebuffer db[2];
+	int         db_active;
+} RenderContext;
+
+void init_context(RenderContext *ctx) {
+	Framebuffer *db;
+
 	ResetGraph(0);
-	
-	// Define display environments, first on top and second on bottom
-	SetDefDispEnv(&disp[0], 0, 0, 320, 240);
-	SetDefDispEnv(&disp[1], 0, 240, 320, 240);
-	
-	// Define drawing environments, first on bottom and second on top
-	SetDefDrawEnv(&draw[0], 0, 240, 320, 240);
-	SetDefDrawEnv(&draw[1], 0, 0, 320, 240);
-	
-	// Set and enable clear color
-	setRGB0(&draw[0], 0, 96, 0);
-	setRGB0(&draw[1], 0, 96, 0);
-	draw[0].isbg = 1;
-	draw[1].isbg = 1;
-	
-	// Clear double buffer counter
-	db = 0;
-	
-	// Apply the GPU environments
-	PutDispEnv(&disp[db]);
-	PutDrawEnv(&draw[db]);
-	
-	// Load test font
+	ctx->db_active = 0;
+
+	db = &(ctx->db[0]);
+	SetDefDispEnv(&(db->disp),           0, 0, SCREEN_XRES, SCREEN_YRES);
+	SetDefDrawEnv(&(db->draw), SCREEN_XRES, 0, SCREEN_XRES, SCREEN_YRES);
+	setRGB0(&(db->draw), BGCOLOR_R, BGCOLOR_G, BGCOLOR_B);
+	db->draw.isbg = 1;
+	db->draw.dtd  = 1;
+
+	db = &(ctx->db[1]);
+	SetDefDispEnv(&(db->disp), SCREEN_XRES, 0, SCREEN_XRES, SCREEN_YRES);
+	SetDefDrawEnv(&(db->draw),           0, 0, SCREEN_XRES, SCREEN_YRES);
+	setRGB0(&(db->draw), BGCOLOR_R, BGCOLOR_G, BGCOLOR_B);
+	db->draw.isbg = 1;
+	db->draw.dtd  = 1;
+
+	PutDrawEnv(&(db->draw));
+	//PutDispEnv(&(db->disp));
+
+	// Create a text stream at the top of the screen.
 	FntLoad(960, 0);
-	
-	// Open up a test font text stream of 100 characters
-	FntOpen(0, 8, 320, 224, 0, 100);
-	
-	// Initialize the SPU
-	SpuInit();
-	
-	// Set SPU transfer mode to DMA (only mode currently supported)
+	FntOpen(8, 16, 304, 208, 2, 512);
+}
+
+void display(RenderContext *ctx) {
+	Framebuffer *db;
+
+	DrawSync(0);
+	VSync(0);
+	ctx->db_active ^= 1;
+
+	db = &(ctx->db[ctx->db_active]);
+	PutDrawEnv(&(db->draw));
+	PutDispEnv(&(db->disp));
+	SetDispMask(1);
+}
+
+/* .VAG header structure */
+
+typedef struct {
+	uint32_t magic;			// 0x70474156 ("VAGp") for mono files
+	uint32_t version;
+	uint32_t interleave;	// Unused in mono files
+	uint32_t size;			// Big-endian, in bytes
+	uint32_t sample_rate;	// Big-endian, in Hertz
+	uint32_t _reserved[3];
+	char     name[16];
+} VAG_Header;
+
+#define SWAP_ENDIAN(x) ( \
+	(((uint32_t) (x) & 0x000000ff) << 24) | \
+	(((uint32_t) (x) & 0x0000ff00) <<  8) | \
+	(((uint32_t) (x) & 0x00ff0000) >>  8) | \
+	(((uint32_t) (x) & 0xff000000) >> 24) \
+)
+
+/* Helper functions */
+
+// The first 4 KB of SPU RAM are reserved for capture buffers and psxspu
+// additionally uploads a dummy sample (16 bytes) at 0x1000 by default, so the
+// samples must be placed after those.
+#define ALLOC_START_ADDR 0x1010
+
+static int next_channel     = 0;
+static int next_sample_addr = ALLOC_START_ADDR;
+
+int upload_sample(const void *data, int size) {
+	// Round the size up to the nearest multiple of 64, as SPU DMA transfers
+	// are done in 64-byte blocks.
+	int _addr = next_sample_addr;
+	int _size = (size + 63) & 0xffffffc0;
+
 	SpuSetTransferMode(SPU_TRANSFER_BY_DMA);
-	
-	// Set SPU transfer address (start address for sample upload)
-	addr_temp = 0x1000;
-	SpuSetTransferStartAddr(addr_temp);
-	
-	// Upload first sound clip and wait for transfer to finish
-	SpuWrite((const uint32_t *) &proyt[48], proyt_size-48);
+	SpuSetTransferStartAddr(_addr);
+
+	SpuWrite((const uint32_t *) data, _size);
 	SpuIsTransferCompleted(SPU_TRANSFER_WAIT);
-	
-	// Obtain the address of the sound and advance address for the next one
-	// Samples are addressed in 8-byte units, so it'll have to be divided by 8
-	proyt_addr = addr_temp/8;
-	addr_temp += proyt_size-48;
-	
-	printf("proyt.vag\t= %02x\n", proyt_addr);
-	
-	// Upload second sound clip
-	SpuSetTransferStartAddr(addr_temp);
-	SpuWrite((const uint32_t *) &tdfx[48], tdfx_size-48);
-	SpuIsTransferCompleted(SPU_TRANSFER_WAIT);
-	
-	// Obtain the address of the second sound clip
-	tdfx_addr = addr_temp/8;
-	addr_temp += tdfx_size-48;
-	
-	printf("3dfx.vag\t= %02x\n", tdfx_addr);
-	
-	// Begin pad polling
-	InitPAD( pad_buff[0], 34, pad_buff[1], 34 );
+
+	next_sample_addr = _addr + _size;
+	return _addr;
+}
+
+void play_sample(int addr, int sample_rate) {
+	int ch = next_channel;
+
+	// Make sure the channel is stopped.
+	SpuSetKey(0, 1 << ch);
+
+	// Set the channel's sample rate and start address. Note that the SPU
+	// expects the sample rate to be in 4.12 fixed point format (with
+	// 1.0 = 44100 Hz) and the address in 8-byte units; psxspu.h provides the
+	// getSPUSampleRate() and getSPUAddr() macros to convert values to these
+	// units.
+	SPU_CH_FREQ(ch) = getSPUSampleRate(sample_rate);
+	SPU_CH_ADDR(ch) = getSPUAddr(addr);
+
+	// Set the channel's volume and ADSR parameters (0x80ff and 0x1fee are
+	// dummy values that disable the ADSR envelope entirely).
+	SPU_CH_VOL_L(ch) = 0x3fff;
+	SPU_CH_VOL_R(ch) = 0x3fff;
+	SPU_CH_ADSR1(ch) = 0x80ff;
+	SPU_CH_ADSR2(ch) = 0x1fee;
+
+	// Start the channel.
+	SpuSetKey(1, 1 << ch);
+
+	next_channel = (ch + 1) % 24;
+}
+
+/* Main */
+
+static RenderContext ctx;
+
+int main(int argc, const char* argv[]) {
+	init_context(&ctx);
+	SpuInit();
+
+	// Upload the samples to the SPU and parse their headers.
+	VAG_Header *proyt_vag = (VAG_Header *) proyt;
+	VAG_Header *tdfx_vag  = (VAG_Header *) tdfx;
+
+	int proyt_addr = upload_sample(&proyt_vag[1], SWAP_ENDIAN(proyt_vag->size));
+	int tdfx_addr  = upload_sample(&tdfx_vag[1],  SWAP_ENDIAN(tdfx_vag->size));
+	int proyt_sr   = SWAP_ENDIAN(proyt_vag->sample_rate);
+	int tdfx_sr    = SWAP_ENDIAN(tdfx_vag->sample_rate);
+
+	// Set up controller polling.
+	uint8_t pad_buff[2][34];
+	InitPAD(pad_buff[0], 34, pad_buff[1], 34);
 	StartPAD();
 	ChangeClearPAD(0);
-} /* init */
 
-// Display function
-void display(void)
-{
-	// Flip buffer index
-	db = !db;
-	
-	// Wait for all drawing to complete
-	DrawSync(0);
-	
-	// Wait for vertical sync to cap the logic to 60fps (or 50 in PAL mode)
-	// and prevent screen tearing
-	VSync(0);
+	uint16_t last_buttons = 0xffff;
 
-	// Switch pages	
-	PutDispEnv(&disp[db]);
-	PutDrawEnv(&draw[db]);
-	
-	// Enable display output, ResetGraph() disables it by default
-	SetDispMask(1);
-	
-} /* main */
+	while (1) {
+		FntPrint(-1, "SPU SAMPLE PLAYBACK DEMO\n\n");
+		FntPrint(-1, "[X] PLAY FIRST SAMPLE\n");
+		FntPrint(-1, "[O] PLAY SECOND SAMPLE\n");
 
-// Main function, program entrypoint
-int main(int argc, const char *argv[])
-{
-	int counter,nextchan;
-	int cross_pressed;
-	int circle_pressed;
-	PADTYPE *pad;
-
-	// Init stuff	
-	init();
-
-	// Main loop
-	counter = 0;
-	nextchan = 0;
-	cross_pressed = 0;
-	circle_pressed = 0;
-
-	while(1)
-	{
-		pad = (PADTYPE*)&pad_buff[0][0];
-		
-		if( pad->stat == 0 )
-		{	
-			// For digital pad, dual-analog and dual-shock
-			if( ( pad->type == 0x4 ) || ( pad->type == 0x5 ) || ( pad->type == 0x7 ) )
-			{
-				// Plays the first sound
-				if( !(pad->btn&PAD_CROSS) )
-				{
-					if( !cross_pressed )
-					{
-						// Voice frequency 
-						// (800h = 22.05KHz)
-						SPU_CH_FREQ(nextchan) = 0x800;
-						// Voice start playback address
-						// (transfer address / 8)
-						SPU_CH_ADDR(nextchan) = proyt_addr;
-						// Voice loop address
-						// (transfer address / 8)
-						SPU_CH_LOOP_ADDR(nextchan) = proyt_addr;
-						// Voice volume and envelope
-						SPU_CH_VOL_L(nextchan) = 0x3fff;
-						SPU_CH_VOL_R(nextchan) = 0x3fff;
-						SPU_CH_ADSR(nextchan) = 0x1fee80ff;
-
-						// Set voice to key-off to allow restart
-						SPU_KEY_OFF = 1 << nextchan;
-						// Set voice to key-on
-						SPU_KEY_ON = 1 << nextchan;
-
-						// Advance to next voice
-						nextchan++;
-						if( nextchan > 23 )
-							nextchan = 0;
-						
-						cross_pressed = 1;
-					}
-				}
-				else
-				{
-					cross_pressed = 0;
-				}
-				
-				// Plays the second sound
-				if( !(pad->btn&PAD_CIRCLE) )
-				{
-					if( !circle_pressed )
-					{
-						// Voice frequency 
-						// (1000h = 44.1KHz)
-						SPU_CH_FREQ(nextchan) = 0x1000;
-						// Voice start playback address
-						// (transfer address / 8)
-						SPU_CH_ADDR(nextchan) = tdfx_addr;
-						// Voice loop address
-						// (transfer address / 8)
-						SPU_CH_LOOP_ADDR(nextchan) = tdfx_addr;
-						// Voice volume and envelope
-						SPU_CH_VOL_L(nextchan) = 0x3fff;
-						SPU_CH_VOL_R(nextchan) = 0x3fff;
-						SPU_CH_ADSR(nextchan) = 0x1fee80ff;
-
-						// Set voice to key-off to allow restart
-						SPU_KEY_OFF = 1 << nextchan;
-						// Set voice to key-on
-						SPU_KEY_ON = 1 << nextchan;
-
-						// Advance to next voice
-						nextchan++;
-						if( nextchan > 23 )
-							nextchan = 0;
-
-						circle_pressed = 1;
-					}
-				}
-				else
-				{
-					circle_pressed = 0;
-				}
-			}
-		}
-		else
-		{
-			cross_pressed = 0;
-			circle_pressed = 0;
-		}
-	
-		// Print the obligatory hello world and counter to show that the
-		// program isn't locking up to the last created text stream
-		FntPrint(-1, "VAG SAMPLE - PRESS X OR O TO PLAY\n");
-		FntPrint(-1, "COUNTER=%d\n", counter);
-		
-		// Draw the last created text stream
 		FntFlush(-1);
-		
-		// Update display
-		display();
-		
-		// Increment the counter
-		counter++;
+		display(&ctx);
+
+		// Check if a compatible controller is connected and handle button
+		// presses.
+		PADTYPE *pad = (PADTYPE *) pad_buff[0];
+		if (pad->stat)
+			continue;
+		if (
+			(pad->type != PAD_ID_DIGITAL) &&
+			(pad->type != PAD_ID_ANALOG_STICK) &&
+			(pad->type != PAD_ID_ANALOG)
+		)
+			continue;
+
+		if ((last_buttons & PAD_CROSS) && !(pad->btn & PAD_CROSS))
+			play_sample(proyt_addr, proyt_sr);
+		if ((last_buttons & PAD_CIRCLE) && !(pad->btn & PAD_CIRCLE))
+			play_sample(tdfx_addr, tdfx_sr);
+
+		last_buttons = pad->btn;
 	}
-	
+
 	return 0;
-	
-} /* main */
+}

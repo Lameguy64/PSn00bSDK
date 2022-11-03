@@ -1,19 +1,26 @@
+/*
+ * PSn00bSDK assert macro and internal logging
+ * (C) 2022 spicyjpeg - MPL licensed
+ */
 
-#include <psxetc.h>
+#undef SDK_LIBRARY_NAME
 
-/* Standard abort */
-
-void abort(void) {
-	_sdk_log("abort()\n");
-
-	for (;;)
-		__asm__ volatile("");
-}
+#include <assert.h>
+#include <psxapi.h>
 
 /* Internal function used by assert() macro */
 
 void _assert_abort(const char *file, int line, const char *expr) {
 	_sdk_log("%s:%d: assert(%s)\n", file, line, expr);
+
+	for (;;)
+		__asm__ volatile("");
+}
+
+/* Standard abort */
+
+void abort(void) {
+	_sdk_log("abort()\n");
 
 	for (;;)
 		__asm__ volatile("");

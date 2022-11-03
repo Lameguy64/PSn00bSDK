@@ -4,7 +4,7 @@
  */
 
 #include <stdint.h>
-#include <psxetc.h>
+#include <assert.h>
 #include <psxapi.h>
 #include <psxpress.h>
 #include <hwregs_c.h>
@@ -127,7 +127,7 @@ void DecDCTin(const uint32_t *data, int mode) {
 // the stream.
 void DecDCTinRaw(const uint32_t *data, size_t length) {
 	if ((length >= DMA_CHUNK_LENGTH) && (length % DMA_CHUNK_LENGTH)) {
-		_sdk_log("psxpress: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
+		_sdk_log("transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
 		length += DMA_CHUNK_LENGTH - 1;
 	}
 
@@ -149,8 +149,7 @@ int DecDCTinSync(int mode) {
 			return 0;
 	}
 
-	_sdk_log("psxpress: DecDCTinSync() timeout\n");
-	_sdk_dump_log();
+	_sdk_log("DecDCTinSync() timeout\n");
 	return -1;
 }
 
@@ -158,7 +157,7 @@ void DecDCTout(uint32_t *data, size_t length) {
 	DecDCToutSync(0);
 
 	if ((length >= DMA_CHUNK_LENGTH) && (length % DMA_CHUNK_LENGTH)) {
-		_sdk_log("psxpress: transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
+		_sdk_log("transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
 		length += DMA_CHUNK_LENGTH - 1;
 	}
 
@@ -180,7 +179,6 @@ int DecDCToutSync(int mode) {
 			return 0;
 	}
 
-	_sdk_log("psxpress: DecDCToutSync() timeout\n");
-	_sdk_dump_log();
+	_sdk_log("DecDCToutSync() timeout\n");
 	return -1;
 }

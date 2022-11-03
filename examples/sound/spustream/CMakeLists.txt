@@ -5,20 +5,16 @@ cmake_minimum_required(VERSION 3.21)
 
 project(
 	spustream
-	LANGUAGES    C
+	LANGUAGES    C ASM
 	VERSION      1.0.0
-	DESCRIPTION  "PSn00bSDK SPU custom streaming example"
+	DESCRIPTION  "PSn00bSDK SPU audio streaming example"
 	HOMEPAGE_URL "http://lameguy64.net/?page=psn00bsdk"
 )
 
-# TODO: add rules to actually generate a valid STREAM.BIN file
 file(GLOB _sources *.c)
 psn00bsdk_add_executable(spustream GPREL ${_sources})
-psn00bsdk_add_cd_image(spustream_iso spustream iso.xml DEPENDS spustream)
+#psn00bsdk_add_cd_image(spustream_iso spustream iso.xml DEPENDS spustream)
 
-install(
-	FILES
-		${PROJECT_BINARY_DIR}/spustream.bin
-		${PROJECT_BINARY_DIR}/spustream.cue
-	TYPE BIN
-)
+psn00bsdk_target_incbin(spustream PRIVATE stream_data stream.vag)
+
+install(FILES ${PROJECT_BINARY_DIR}/spustream.exe TYPE BIN)

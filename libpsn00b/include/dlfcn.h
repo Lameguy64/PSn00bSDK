@@ -7,38 +7,31 @@
 #define __DLFCN_H 
 
 #include <stdint.h>
+#include <stddef.h>
 #include <elf.h>
 
-/* Helper macro for setting $t9 before calling a function */
+/* Macros */
 
-#define DL_PRE_CALL(func) { \
-	__asm__ volatile("move $t9, %0;" :: "r"(func) : "$t9"); \
-}
+/**
+ * @brief Prepares for a DLL function call.
+ *
+ * @details Sets the $t9 register to the specified value (which should be a
+ * pointer to a DLL function obtained using DL_GetDLLSymbol()). This must be
+ * done prior to calling a DLL function from the main executable to ensure the
+ * DLL can correctly invoke the symbol resolver if necessary.
+ *
+ * This macro is not required when calling a DLL function from another DLL, as
+ * GCC will generate code to set $t9 appropriately.
+ */
+#define DL_PRE_CALL(func) \
+	__asm__ volatile("move $t9, %0;" :: "r"(func) : "$t9");
 
-/* Types */
-
-#define RTLD_DEFAULT ((DLL *) 0)
-
-typedef enum _DL_Error {
-	RTLD_E_NONE			=  0, // No error
-	RTLD_E_FILE_OPEN	=  1, // Unable to find or open file
-	RTLD_E_FILE_ALLOC	=  2, // Unable to allocate buffer to load file into
-	RTLD_E_FILE_READ	=  3, // Failed to read file
-	RTLD_E_NO_MAP		=  4, // No symbol map has been loaded yet
-	RTLD_E_MAP_ALLOC	=  5, // Unable to allocate symbol map structures
-	RTLD_E_NO_SYMBOLS	=  6, // No symbols found in symbol map
-	RTLD_E_DLL_NULL		=  7, // Unable to initialize DLL from null pointer
-	RTLD_E_DLL_ALLOC	=  8, // Unable to allocate DLL metadata structures
-	RTLD_E_DLL_FORMAT	=  9, // Unsupported DLL type or format
-	RTLD_E_MAP_SYMBOL	= 10, // Symbol not found in symbol map
-	RTLD_E_DLL_SYMBOL	= 11, // Symbol not found in DLL
-	RTLD_E_HASH_LOOKUP	= 12  // Hash table lookup failed due to internal error
-} DL_Error;
+/* Structure and enum definitions */
 
 typedef enum _DL_ResolveMode {
-	RTLD_LAZY				= 1, // Resolve functions when they are first called (default)
-	RTLD_NOW				= 2, // Resolve all symbols immediately on load
-	RTLD_FREE_ON_DESTROY	= 4  // Automatically free DLL buffer when closing DLL
+	DL_LAZY				= 1, // Resolve functions when they are first called (default)
+	DL_NOW				= 2, // Resolve all symbols immediately on load
+	DL_FREE_ON_DESTROY	= 4  // Automatically free DLL buffer when closing DLL
 } DL_ResolveMode;
 
 // Members of this struct should not be accessed directly in most cases, but
@@ -55,150 +48,170 @@ typedef struct _DLL {
 	uint16_t		got_length;
 } DLL;
 
-/* API */
+/* Public API */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * @brief Reads the symbol table from the provided string buffer (which may or
- * may not be null-terminated), parses it and stores the parsed entries into a
- * private hash table; the buffer won't be further referenced and can be safely
- * deallocated after parsing. Returns the number of entries successfully parsed
- * or -1 if an error occurred.
+ * @brief Creates an empty symbol map in memory.
  *
- * This function expects the string buffer to contain one more lines, each of
- * which must follow this format:
+ * @details Initializes the internal symbol hash table to contain at most the
+ * given number of symbols. Once this function is called, symbols can be
+ * registered using DL_AddMapSymbol() and then looked up using
+ * DL_GetMapSymbol(). The default DLL resolver will search the hash table for
+ * external symbols required by DLLs.
  *
- *   <SYMBOL_NAME> <T|R|D|B> <HEX_ADDRESS> <HEX_SIZE> [DEBUG_INFO...]
+ * This function is normally not required when loading a map file through
+ * DL_ParseSymbolMap(), but it can be used alongside DL_AddMapSymbol() to
+ * implement a custom symbol map parser.
  *
- * The "nm" tool included in the GCC toolchain can be used to generate a map
- * file in the appropriate format after building the executable, by using this
- * command:
+ * @param num_entries
+ * @return 0 or -1 in case of error
  *
- *   mipsel-none-elf-nm -f posix -l -n executable.elf >executable.map
- *
- * @param ptr
- * @param size
- * @return -1 or number of entries parsed
+ * @see DL_AddMapSymbol(), DL_GetMapSymbol()
  */
-int32_t DL_ParseSymbolMap(const char *ptr, size_t size);
+int DL_InitSymbolMap(int num_entries);
 
 /**
- * @brief File wrapper around DL_ParseSymbolMap(). Allocates a temporary buffer
- * then loads the specified map file into it (using BIOS APIs) and calls
- * DL_ParseSymbolMap() to parse it. The buffer is deallocated immediately after
- * parsing.
+ * @brief Destroys the currently loaded symbol map.
  *
- * @param filename Must always contain device name, e.g. "cdrom:MODULE.DLL;1"
- * @return -1 or number of entries parsed
- */
-//int32_t DL_LoadSymbolMapFromFile(const char *filename);
-
-/**
- * @brief Frees internal buffers containing the currently loaded symbol map.
- * This is automatically done before loading a new symbol map so there is no
- * need to call this function in most cases, however it can still be useful to
- * free up space on the heap once the symbol map is no longer needed.
+ * @details Frees the internal hash table allocated by DL_InitSymbolMap() or
+ * DL_ParseSymbolMap(), containing the currently loaded symbol map. Freeing the
+ * table manually before loading a new symbol map is normally unnecessary as it
+ * is done automatically, however this function can be useful to recover heap
+ * space once the map is no longer needed.
  */
 void DL_UnloadSymbolMap(void);
 
 /**
- * @brief Queries the currently loaded symbol map for the symbol with the given
- * name and returns a pointer to it, which can then be used to directly access
- * the symbol. If the symbol can't be found, null is returned instead.
+ * @brief Adds a symbol to the currently loaded symbol map.
+ *
+ * @details Registers a new symbol (function or variable) with the given name
+ * and address, and adds it to the internal hash table. The symbol can then be
+ * looked up using DL_GetMapSymbol(). The default DLL resolver will search the
+ * hash table for external symbols required by DLLs.
+ *
+ * This function shall only be called after DL_InitSymbolMap() or
+ * DL_ParseSymbolMap() is called.
  *
  * @param name
- * @return NULL or pointer to symbol (any type)
+ * @param ptr
+ *
+ * @see DL_GetMapSymbol()
  */
-void *DL_GetSymbolByName(const char *name);
+void DL_AddMapSymbol(const char *name, void *ptr);
 
 /**
- * @brief Sets a custom function to be called for resolving symbols in DLLs.
+ * @brief Creates a symbol map in memory from a map file in text format.
+ *
+ * @details Initializes the internal symbol hash table, then parses entries
+ * from the provided string buffer (which may or may not be null-terminated)
+ * and adds each one to the table. The string buffer won't be further
+ * referenced and can be safely deallocated after parsing. Returns the number 
+ * of entries successfully parsed.
+ *
+ * The string buffer shall contain one or more lines, each of which must follow
+ * this format:
+ *
+ *     <SYMBOL_NAME> <T|R|D|B> <HEX_ADDRESS> <HEX_SIZE> [...]
+ *
+ * The "nm" tool included in the GCC toolchain can be used to generate a map
+ * file in the appropriate format after building the executable:
+ *
+ *     mipsel-none-elf-nm -f posix -l -n executable.elf >executable.map
+ *
+ * @param ptr
+ * @param size
+ * @return Number of entries parsed, -1 in case of failure
+ *
+ * @see DL_UnloadSymbolMap(), DL_GetMapSymbol()
+ */
+int DL_ParseSymbolMap(const char *ptr, size_t size);
+
+/**
+ * @brief Gets a pointer to a symbol in the currently loaded map by its name.
+ *
+ * @details Queries the currently loaded symbol map for the symbol with the
+ * given name and returns a pointer to it, which can then be used to directly
+ * access the symbol. If the symbol can't be found, a null pointer is returned.
+ *
+ * @param name
+ * @return NULL or pointer to symbol
+ */
+void *DL_GetMapSymbol(const char *name);
+
+/**
+ * @brief Sets a custom handler for resolving symbols in DLLs.
+ *
+ * @details Sets a custom function to be called for resolving symbols in DLLs.
  * The function will be given a pointer to the current DLL and the unresolved
  * symbol's name, and should return the address of the symbol in the executable
  * (the dynamic linker will lock up if it returns null). Passing null instead
- * of a function resets the default behavior of calling DL_GetSymbolByName() to
+ * of a function resets the default behavior of calling DL_GetMapSymbol() to
  * find the symbol in the currently loaded symbol map.
- * 
+ *
  * @param callback NULL or pointer to callback function
+ * @return Previously set callback or NULL
  */
-void DL_SetResolveCallback(void *(*callback)(DLL *, const char *));
+void *DL_SetResolveCallback(void *(*callback)(DLL *, const char *));
 
 /**
- * @brief Initializes a buffer holding the contents of a dynamically-loaded
+ * @brief Initializes a DLL structure.
+ *
+ * @details Initializes a buffer holding the contents of a dynamically-loaded
  * library file (compiled with the dll.ld linker script and converted to a raw
- * binary) *in-place*. A new DLL struct is allocated to store metadata but,
+ * binary) *in-place*. Metadata is written to the provided DLL struct but,
  * unlike DL_ParseSymbolMap(), the DLL's actual code, data and tables are
  * referenced directly from the provided buffer. The buffer must not be moved
  * or deallocated, at least not before calling DL_DestroyDLL() on the DLL
  * struct returned by this function.
  *
  * The third argument specifies when symbols in the DLL should be resolved.
- * Setting it to RTLD_LAZY defers resolution of undefined functions to when
- * they are first called, while RTLD_NOW forces all symbols to be resolved
- * immediately. If a custom resolver has been set via DL_SetResolveCallback(),
- * it will be called for each symbol to resolve.
+ * Setting it to DL_LAZY defers resolution of undefined functions to when they
+ * are first called, while DL_NOW forces all symbols to be resolved
+ * immediately. Either mode can be OR'd with DL_FREE_ON_DESTROY to
+ * automatically deallocate the provided buffer when DL_DestroyDLL() is called.
  *
+ * If a custom resolver has been set via DL_SetResolveCallback(), it will be
+ * called for each symbol to resolve.
+ *
+ * @param dll
  * @param ptr
  * @param size
- * @param mode RTLD_LAZY or RTLD_NOW
- * @return NULL or pointer to a new DLL struct
- */
-DLL *DL_CreateDLL(void *ptr, size_t size, DL_ResolveMode mode);
-
-/**
- * @brief File wrapper around dlinit(). Allocates a new buffer, loads the
- * specified file into it (using BIOS APIs) and calls dlinit() on that. When
- * calling dlclose() on a DLL loaded from a file, the file buffer is
- * automatically destroyed.
+ * @param mode DL_LAZY or DL_NOW, optionally with DL_FREE_ON_DESTROY
+ * @return Pointer to DLL structure or NULL in case of failure
  *
- * @param filename Must always contain device name, e.g. "cdrom:MODULE.DLL;1"
- * @param mode RTLD_LAZY or RTLD_NOW + optionally RTLD_FREE_ON_DESTROY
- * @return NULL or pointer to a new DLL struct
+ * @see DL_DestroyDLL(), DL_GetDLLSymbol()
  */
-//DLL *DL_LoadDLLFromFile(const char *filename, DL_ResolveMode mode);
+DLL *DL_CreateDLL(DLL *dll, void *ptr, size_t size, DL_ResolveMode mode);
 
 /**
- * @brief Destroys a loaded DLL by calling its global destructors and freeing
- * the buffer it's loaded in. Any pointer passed to DL_DestroyDLL() should no
- * longer be used after the call. If the DLL was initialized in-place using
- * DL_CreateDLL(), DL_DestroyDLL() will only free the buffer initially passed
- * to DL_CreateDLL() if RTLD_FREE_ON_DESTROY was used.
+ * @brief Destroys a DLL structure.
+ *
+ * @details Destroys a loaded DLL by calling its global destructors. If the DLL
+ * was initialized with the DL_FREE_ON_DESTROY flag, the buffer associated with
+ * the DLL is also deallocated. Note that the DLL structure itself is *not*
+ * deallocated.
  *
  * @param dll
  */
 void DL_DestroyDLL(DLL *dll);
 
 /**
- * @brief Returns a pointer to the DLL symbol with the given name, or null if
- * it can't be found. If null or RTLD_DEFAULT is passed as first argument, the
- * executable itself is searched instead using the symbol map (behaving the
- * same as DL_GetSymbolByName()).
+ * @brief Gets a pointer to a symbol in a DLL by its name.
  *
- * @param dll DLL struct or RTLD_DEFAULT
+ * @details Returns a pointer to the DLL symbol with the given name, or null if
+ * it can't be found. If a null pointer is passed as first argument, the
+ * executable itself is searched instead using the symbol map (behaving
+ * identically to DL_GetMapSymbol()).
+ *
+ * @param dll Pointer to DLL structure or NULL
  * @param name
  * @return NULL or pointer to symbol (any type)
  */
 void *DL_GetDLLSymbol(const DLL *dll, const char *name);
-
-/**
- * @brief Returns a code describing the last error that occurred, or DL_E_NONE
- * if no error has occurred since the last call to dlerror() (i.e. calling this
- * also resets the internal error flags).
- *
- * @return NULL or member of DL_Error enum
- */
-DL_Error DL_GetLastError(void);
-
-/* POSIX "compatibility" macros */
-
-#define dlinit(ptr, size, mode)	DL_CreateDLL(ptr, size, mode)
-//#define dlopen(filename, mode)	DL_LoadDLLFromFile(filename, mode)
-#define dlsym(dll, name)		DL_GetDLLSymbol(dll, name)
-#define dlclose(dll)			DL_DestroyDLL(dll)
-#define dlerror()				DL_GetLastError()
 
 #ifdef __cplusplus
 }

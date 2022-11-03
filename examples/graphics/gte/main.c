@@ -100,9 +100,9 @@ INDEX cube_indices[] = {
 /* source color when using gte_nccs(). 4096 is 1.0 in this matrix */
 /* A column of zeroes disables the light source. */
 MATRIX color_mtx = {
-	ONE / 2, 0, 0,	/* Red   */
-	ONE / 2, 0, 0,	/* Green */
-	ONE / 2, 0, 0	/* Blue  */
+	ONE * 3/4, 0, 0,	/* Red   */
+	ONE * 3/4, 0, 0,	/* Green */
+	ONE * 3/4, 0, 0	/* Blue  */
 };
 
 /* Light matrix */

@@ -48,6 +48,8 @@ foreach(_library IN LISTS PSN00BSDK_LIBRARIES)
 			${_library} INTERFACE
 			$<$<STREQUAL:$<UPPER_CASE:$<TARGET_PROPERTY:PSN00BSDK_TARGET_TYPE>>,${_type}>:${_name}>
 		)
+
+		target_compile_definitions(${_name} PRIVATE SDK_LIBRARY_NAME="${_library}")
 	endforeach()
 endforeach()
 
@@ -102,6 +104,6 @@ install(
 # once the debug and release builds are merged into the same installation tree.
 install(
 	EXPORT      libpsn00b
-	DESTINATION ${CMAKE_INSTALL_LIBDIR}/libpsn00b
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/libpsn00b/cmake
 	#EXPORT_LINK_INTERFACE_LIBRARIES
 )
