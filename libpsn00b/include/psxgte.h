@@ -75,7 +75,7 @@ int isin(int a);
  */
 int icos(int a);
 
- /**
+/**
  * @brief Gets sine of angle (fixed-point, high precision version)
  *
  * @details Returns the sine of angle a.
@@ -85,7 +85,7 @@ int icos(int a);
  */
 int hisin(int a);
 
- /**
+/**
  * @brief Gets cosine of angle (fixed-point, high precision version)
  *
  * @details Returns the cosine of angle a.
