@@ -56,7 +56,7 @@ extern "C" {
 #endif
 
 /**
- * @brief Gets sine of angle (fixed-point, high precision version)
+ * @brief Gets sine of angle (fixed-point)
  *
  * @details Returns the sine of angle a.
  *
@@ -66,7 +66,7 @@ extern "C" {
 int isin(int a);
 
 /**
- * @brief Gets cosine of angle (fixed-point, high precision version)
+ * @brief Gets cosine of angle (fixed-point)
  *
  * @details Returns the cosine of angle a.
  *
@@ -75,22 +75,22 @@ int isin(int a);
  */
 int icos(int a);
 
-/**
- * @brief Gets sine of angle (fixed-point)
+ /**
+ * @brief Gets sine of angle (fixed-point, high precision version)
  *
  * @details Returns the sine of angle a.
  *
- * @param a Angle in fixed-point format (131072 = 360 degrees)
+ * @param a Angle in fixed-point format (4194304 = 360 degrees)
  * @return Sine value in 20.12 fixed-point format (4096 = 1.0).
  */
 int hisin(int a);
 
-/**
- * @brief Gets cosine of angle (fixed-point)
+ /**
+ * @brief Gets cosine of angle (fixed-point, high precision version)
  *
  * @details Returns the cosine of angle a.
  *
- * @param a Angle in fixed-point format (131072 = 360 degrees)
+ * @param a Angle in fixed-point format (4194304 = 360 degrees)
  * @return Cosine value in 20.12 fixed-point format (4096 = 1.0).
  */
 int hicos(int a);
