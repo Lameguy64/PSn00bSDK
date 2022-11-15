@@ -137,13 +137,13 @@ void *DMACallback(DMA_Channel dma, void (*func)(void)) {
 		DMA_DICR |= (0x10000 << dma) | (1 << 23);
 
 		if (!(_num_dma_handlers++))
-			InterruptCallback(3, &_global_dma_handler);
+			InterruptCallback(IRQ_DMA, &_global_dma_handler);
 	} else if (old_callback && !func) {
 		if (--_num_dma_handlers) {
 			DMA_DICR &= ~(0x10000 << dma);
 		} else {
 			DMA_DICR = 0;
-			InterruptCallback(3, 0);
+			InterruptCallback(IRQ_DMA, 0);
 		}
 	}
 

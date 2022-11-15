@@ -63,7 +63,7 @@ int DrawOTagEnv(const uint32_t *ot, DRAWENV *env) {
 	prim->code[2] |= ((env->clip.y + env->ofs[1]) & 0x7ff) << 11;
 
 	// Texture page (reset active page and set dither/mask bits)
-	prim->code[3]  = 0xe1000000;
+	prim->code[3]  = 0xe1000000 | env->tpage;
 	prim->code[3] |= (env->dtd & 1) << 9;
 	prim->code[3] |= (env->dfe & 1) << 10;
 

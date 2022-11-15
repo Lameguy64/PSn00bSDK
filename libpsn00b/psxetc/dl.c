@@ -450,9 +450,9 @@ DLL *DL_CreateDLL(DLL *dll, void *ptr, size_t size, DL_ResolveMode mode) {
 		}
 	}
 
-	EnterCriticalSection();
+	FastEnterCriticalSection();
 	FlushCache();
-	ExitCriticalSection();
+	FastExitCriticalSection();
 
 	// Call the DLL's global constructors. This is the same thing we'd do in
 	// _start() for regular executables, but we have to do it outside of the

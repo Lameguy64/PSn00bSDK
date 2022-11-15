@@ -1,43 +1,44 @@
 .set noreorder
 
+.include "hwregs_a.inc"
 .include "gtereg.inc"
 
 .section .text.InitGeom
 .global InitGeom
 .type InitGeom, @function
 InitGeom:
-	addiu	$sp, -4
-	sw		$ra, 0($sp)
-
-	jal		EnterCriticalSection
+	# Disable interrupts and make sure the GTE is enabled in COP0.
+	lui   $v0, IOBASE
+	lhu   $v1, IRQ_MASK($v0)
 	nop
+	sh    $0,  IRQ_MASK($v0)
 
-	mfc0	$v0, $12				# Get SR
-	lui		$v1, 0x4000				# Set bit to enable cop2
-	or		$v0, $v1
-	mtc0	$v0, $12				# Set new SR
-
-	jal		ExitCriticalSection
+	mfc0  $a0, $12
+	lui   $a1, 0x4000
+	or    $a1, $a0
+	mtc0  $a1, $12
 	nop
+	#nop
 
-	ctc2	$0 , $24				# Reset GTE offset
-	ctc2	$0 , $25
+	# Re-enable interrupts, then load default values into some GTE registers.
+	sh    $v1, IRQ_MASK($v0)
 
-	li		$v0, 320				# Set default projection plane
-	ctc2	$v0, $26
-
-	li		$v0, 0x155				# Set ZSF3 and ZSF4 defaults
-	ctc2	$v0, $29
-	li		$v0, 0x100
-	ctc2	$v0, $30
-
-	li		$v0, 0xef9e				# DQA and DQB defaults
-	lui		$v1, 0x0140
-	ctc2	$v0, C2_DQA
-	ctc2	$v1, C2_DQB
-
-	lw		$ra, 0($sp)
-	addiu	$sp, 4
-	jr		$ra
+	ctc2  $0, C2_OFX
 	nop
+	ctc2  $0, C2_OFY
 
+	li    $a0, 320
+	ctc2  $a0, C2_H
+
+	li    $a0, 0x155
+	ctc2  $a0, C2_ZSF3
+	li    $a0, 0x100
+	ctc2  $a0, C2_ZSF4
+
+	li    $a0, 0xef9e
+	ctc2  $a0, C2_DQA
+	lui   $a0, 0x0140
+	ctc2  $a0, C2_DQB
+
+	jr    $ra
+	nop

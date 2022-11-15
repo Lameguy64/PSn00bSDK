@@ -84,7 +84,7 @@ static const DECDCTENV _default_mdec_env = {
 /* Public API */
 
 void DecDCTReset(int mode) {
-	EnterCriticalSection();
+	FastEnterCriticalSection();
 
 	DMA_DPCR   |= 0x000000bb; // Enable DMA0 and DMA1
 	DMA_CHCR(0) = 0x00000201; // Stop DMA0
@@ -92,7 +92,7 @@ void DecDCTReset(int mode) {
 	MDEC1       = 0x80000000; // Reset MDEC
 	MDEC1       = 0x60000000; // Enable DMA in/out requests
 
-	ExitCriticalSection();
+	FastExitCriticalSection();
 	if (!mode)
 		DecDCTPutEnv(0, 0);
 }

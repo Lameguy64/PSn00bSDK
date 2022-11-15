@@ -525,10 +525,10 @@ void *DrawSyncCallback(void (*func)(void));
 
 int LoadImage(const RECT *rect, const uint32_t *data);
 int StoreImage(const RECT *rect, uint32_t *data);
-int MoveImage(const RECT *rect, int x, int y);
+//int MoveImage(const RECT *rect, int x, int y);
 void LoadImage2(const RECT *rect, const uint32_t *data);
 void StoreImage2(const RECT *rect, uint32_t *data);
-void MoveImage2(const RECT *rect, int x, int y);
+//void MoveImage2(const RECT *rect, int x, int y);
 
 void ClearOTagR(uint32_t *ot, size_t length);
 void ClearOTag(uint32_t *ot, size_t length);

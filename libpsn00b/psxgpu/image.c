@@ -1,6 +1,10 @@
 /*
  * PSn00bSDK GPU library (image and VRAM transfer functions)
  * (C) 2022 spicyjpeg - MPL licensed
+ *
+ * TODO: MoveImage() is currently commented out as it won't trigger a DMA IRQ,
+ * making it unusable as a draw queue command. A way around this (perhaps using
+ * the GPU IRQ?) shall be found.
  */
 
 #include <stdint.h>
@@ -58,9 +62,9 @@ int StoreImage(const RECT *rect, uint32_t *data) {
 	);
 }
 
-int MoveImage(const RECT *rect, int x, int y) {
+/*int MoveImage(const RECT *rect, int x, int y) {
 	return EnqueueDrawOp((void *) &MoveImage2, (uint32_t) rect, x, y);
-}
+}*/
 
 void LoadImage2(const RECT *rect, const uint32_t *data) {
 	_dma_transfer(rect, (uint32_t *) data, 1);
@@ -70,14 +74,14 @@ void StoreImage2(const RECT *rect, uint32_t *data) {
 	_dma_transfer(rect, data, 0);
 }
 
-void MoveImage2(const RECT *rect, int x, int y) {
+/*void MoveImage2(const RECT *rect, int x, int y) {
 	GPU_GP0 = 0x80000000;
 	//GPU_GP0 = rect->x | (rect->y << 16);
 	GPU_GP0 = *((const uint32_t *) &(rect->x));
 	GPU_GP0 = (x & 0xffff) | (y << 16);
 	//GPU_GP0 = rect->w | (rect->h << 16);
 	GPU_GP0 = *((const uint32_t *) &(rect->w));
-}
+}*/
 
 /* .TIM image parsers */
 

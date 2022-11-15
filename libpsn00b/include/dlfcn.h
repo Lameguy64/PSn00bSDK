@@ -24,7 +24,7 @@
  * GCC will generate code to set $t9 appropriately.
  */
 #define DL_PRE_CALL(func) \
-	__asm__ volatile("move $t9, %0;" :: "r"(func) : "$t9");
+	__asm__ volatile("move $t9, %0;" :: "r"(func) : "$t9")
 
 /* Structure and enum definitions */
 

@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <hwregs_c.h>
 
 /* Definitions */
 
@@ -143,6 +144,43 @@ typedef struct {
 	int			_reserved;
 } INT_RP;
 
+/* Fast interrupt disabling macros */
+
+// Clearing the IRQ_MASK register is faster than manipulating cop0r12, even
+// though it requires declaring a "hidden" local variable to save its state to;
+// it's also resilient to race conditions as there's no read-modify-write
+// operation during which an interrupt can occur. Note that interrupt flags in
+// the IRQ_STAT register will get set even if the respective enable bits in
+// IRQ_MASK are cleared, so doing this will properly defer IRQs rather than
+// dropping them.
+#define FastEnterCriticalSection() \
+	uint16_t __saved_irq_mask = IRQ_MASK; (IRQ_MASK = 0)
+#define FastExitCriticalSection() \
+	(IRQ_MASK = __saved_irq_mask)
+
+/*#define FastEnterCriticalSection() { \
+	uint32_t r0, r1; \
+	__asm__ volatile( \
+		"mfc0 %0, $12;" \
+		"li   %1, -1026;" \
+		"and  %1, %0;" \
+		"mtc0 %1, $12;" \
+		"nop;" \
+		: "=r"(r0), "=r"(r1) :: \
+	); \
+}
+#define FastExitCriticalSection() { \
+	uint32_t r0; \
+	__asm__ volatile( \
+		"mfc0 %0, $12;" \
+		"nop;" \
+		"ori  %0, 0x0401;" \
+		"mtc0 %0, $12;" \
+		"nop;" \
+		: "=r"(r0) :: \
+	); \
+}*/
+
 /* API */
 
 #ifdef __cplusplus
@@ -179,9 +217,9 @@ int DelDev(const char *name);
 void ListDev(void);
 void AddDummyTty(void);
 
-void EnterCriticalSection(void);
+int EnterCriticalSection(void);
 void ExitCriticalSection(void);
-void SwEnterCriticalSection(void);
+int SwEnterCriticalSection(void);
 void SwExitCriticalSection(void);
 
 void _InitCd(void);

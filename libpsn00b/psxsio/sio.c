@@ -34,9 +34,6 @@ static volatile RingBuffer _tx_buffer, _rx_buffer;
 
 /* Private interrupt handler */
 
-#define _ENTER_CRITICAL()	uint16_t mask = IRQ_MASK; IRQ_MASK = 0;
-#define _EXIT_CRITICAL()	IRQ_MASK = mask;
-
 static void _sio_handler(void) {
 	// Handle any incoming bytes.
 	while (SIO_STAT & SR_RXRDY) {
@@ -92,7 +89,7 @@ static void _sio_handler(void) {
 
 void SIO_Init(int baud, uint16_t mode) {
 	EnterCriticalSection();
-	_old_sio_handler = InterruptCallback(8, &_sio_handler);
+	_old_sio_handler = InterruptCallback(IRQ_SIO1, &_sio_handler);
 
 	SIO_CTRL = CR_ERRRST;
 	SIO_MODE = (mode & 0xfffc) | MR_BR_16;
@@ -114,7 +111,7 @@ void SIO_Init(int baud, uint16_t mode) {
 
 void SIO_Quit(void) {
 	EnterCriticalSection();
-	InterruptCallback(8, _old_sio_handler);
+	InterruptCallback(IRQ_SIO1, _old_sio_handler);
 
 	SIO_CTRL = CR_ERRRST;
 
@@ -122,7 +119,7 @@ void SIO_Quit(void) {
 }
 
 void SIO_SetFlowControl(SIO_FlowControl mode) {
-	_ENTER_CRITICAL();
+	FastEnterCriticalSection();
 
 	switch (mode) {
 		case SIO_FC_NONE:
@@ -147,7 +144,7 @@ void SIO_SetFlowControl(SIO_FlowControl mode) {
 			break;*/
 	}
 
-	_EXIT_CRITICAL();
+	FastExitCriticalSection();
 }
 
 /* Reading API */
@@ -167,13 +164,13 @@ int SIO_ReadByte2(void) {
 	if (!_rx_buffer.length)
 		return -1;
 
-	_ENTER_CRITICAL();
+	FastEnterCriticalSection();
 
 	int head        = _rx_buffer.head;
 	_rx_buffer.head = (head + 1) % BUFFER_LENGTH;
 	_rx_buffer.length--;
 
-	_EXIT_CRITICAL();
+	FastExitCriticalSection();
 	return _rx_buffer.data[head];
 }
 
@@ -192,12 +189,12 @@ int SIO_ReadSync(int mode) {
 }
 
 void *SIO_ReadCallback(int (*func)(uint8_t)) {
-	EnterCriticalSection();
+	FastEnterCriticalSection();
 
 	void *old_callback  = _read_callback;
 	_read_callback      = func;
 
-	ExitCriticalSection();
+	FastExitCriticalSection();
 }
 
 /* Writing API */
@@ -219,18 +216,18 @@ int SIO_WriteByte2(uint8_t value) {
 	// condition where the transfer could end while interrupts are being
 	// disabled. Interrupts are disabled through the IRQ_MASK register rather
 	// than via syscalls for performance reasons.
-	_ENTER_CRITICAL();
+	FastEnterCriticalSection();
 
 	if (SIO_STAT & (SR_TXRDY | SR_TXU)) {
 		SIO_TXRX = value;
-		_EXIT_CRITICAL();
+		FastExitCriticalSection();
 		return 0;
 	}
 
 	int length = _tx_buffer.length;
 
 	if (length >= BUFFER_LENGTH) {
-		_EXIT_CRITICAL();
+		FastExitCriticalSection();
 
 		//_sdk_log("TX overrun, dropping bytes\n");
 		return -1;
@@ -243,7 +240,7 @@ int SIO_WriteByte2(uint8_t value) {
 	_tx_buffer.data[tail] = value;
 	SIO_CTRL |= CR_TXIEN;
 
-	_EXIT_CRITICAL();
+	FastExitCriticalSection();
 	return length;
 }
 
