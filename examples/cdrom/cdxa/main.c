@@ -189,7 +189,7 @@ char padbuff[2][34];
 char xa_sector_buff[2048];
 
 /* Callback for detecting end of channel (hooked by CdReadyCallback) */
-void xa_callback(int intr, unsigned char *result)
+void xa_callback(CdlIntrResult intr, unsigned char *result)
 {
 	SECTOR_HEAD *sec;
 	

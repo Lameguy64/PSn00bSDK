@@ -173,6 +173,7 @@ int ResetCallback(void) {
 	for (int i = 0; i < NUM_DMA_CHANNELS; i++)
 		_dma_handlers[i] = (void *) 0;
 
+	COM_DELAY_CFG = 0x00001325;
 	_96_remove();
 	RestartCallback();
 	return 0;
