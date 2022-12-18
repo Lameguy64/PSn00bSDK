@@ -3,18 +3,6 @@
 
 #include <stdarg.h>
 
-#ifndef NULL
-#define NULL 0
-#endif
-
-#ifndef true
-#define true 1
-#endif
-
-#ifndef false
-#define false 0
-#endif
-
 // BIOS seek modes
 #ifndef SEEK_SET
 #define SEEK_SET	0
@@ -24,11 +12,6 @@
 #endif
 #ifndef SEEK_END
 #define SEEK_END	2		/* warning: reportedly buggy */
-#endif
-
-#ifndef _SIZE_T
-#define _SIZE_T
-typedef unsigned int size_t;
 #endif
 
 #ifdef __cplusplus

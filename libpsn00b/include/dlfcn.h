@@ -37,15 +37,14 @@ typedef enum _DL_ResolveMode {
 // Members of this struct should not be accessed directly in most cases, but
 // they are intentionally exposed for easier expandability.
 typedef struct _DLL {
-	void			*ptr;
-	void			*malloc_ptr;
+	void			*ptr, *malloc_ptr;
 	size_t			size;
 	const uint32_t	*hash;
 	uint32_t		*got;
 	Elf32_Sym		*symtab;
 	const char		*strtab;
-	uint16_t		symbol_count;
-	uint16_t		got_length;
+	uint16_t		symbol_count, first_got_symbol;
+	uint16_t		got_local_count, got_extern_count;
 } DLL;
 
 /* Public API */
