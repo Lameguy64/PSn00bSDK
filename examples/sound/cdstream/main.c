@@ -308,8 +308,8 @@ void start_stream(void) {
 	for (int i = 0; i < NUM_CHANNELS; i++) {
 		SPU_CH_ADDR(i)  = getSPUAddr(str_ctx.spu_addr + str_ctx.buffer_size * i);
 		SPU_CH_FREQ(i)  = getSPUSampleRate(str_ctx.sample_rate);
-		SPU_CH_ADSR1(i) = 0x80ff;
-		SPU_CH_ADSR2(i) = 0x1fee;
+		SPU_CH_ADSR1(i) = 0x00ff;
+		SPU_CH_ADSR2(i) = 0x0000;
 	}
 
 	// Unmute the channels and route them for stereo output. You'll want to

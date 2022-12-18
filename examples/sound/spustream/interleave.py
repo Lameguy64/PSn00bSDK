@@ -8,7 +8,7 @@ from struct    import Struct
 from itertools import zip_longest
 from argparse  import ArgumentParser, FileType
 
-VAG_HEADER  = Struct("> 4s I 4s 2I 12x 16s")
+VAG_HEADER  = Struct("> 4s 4I 10x H 16s")
 VAG_MAGIC   = b"VAGp"
 VAGI_MAGIC  = b"VAGi"
 VAG_VERSION = 0x20
@@ -16,6 +16,9 @@ BUFFER_SIZE = 0x1000
 CHUNK_ALIGN = 0x800
 
 ## Helpers
+
+def swap_endian(value, size):
+	return int.from_bytes(value.to_bytes(size, "big"), "little")
 
 def align(data, size):
 	chunks = (len(data) + size - 1) // size
@@ -40,7 +43,7 @@ class VAGReader:
 			magic, _, _,
 			self.size,
 			self.sample_rate,
-			self.name
+			_, _
 		) = VAG_HEADER.unpack(header)
 
 		if magic == VAGI_MAGIC:
@@ -116,9 +119,6 @@ def main():
 	size        = input_files[0].size
 	sample_rate = input_files[0].sample_rate
 
-	if (not args.raw) and (len(input_files) != 2):
-		warn(RuntimeWarning("interleaved .VAG only supports stereo (2 input files)"))
-
 	for vag in input_files[1:]:
 		if vag.size != size:
 			warn(RuntimeWarning(f"{vag.file.name} has a different file size"))
@@ -135,9 +135,10 @@ def main():
 			header = VAG_HEADER.pack(
 				VAGI_MAGIC,
 				VAG_VERSION,
-				args.buffer_size.to_bytes(4, "little"),
+				swap_endian(args.buffer_size, 4),
 				size,
 				sample_rate,
+				swap_endian(len(input_files), 2),
 				os.path.basename(_file.name).encode()[0:16]
 			)
 
