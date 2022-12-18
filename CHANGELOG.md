@@ -19,6 +19,37 @@ to ensure the changelog can be parsed correctly.
 
 -------------------------------------------------------------------------------
 
+# 2022-12-18: 0.22
+
+spicyjpeg:
+
+- libc: Fixed `assert()` macro and removed redundant type definitions. Added
+  GTE-accelerated leading zero count intrinsics (`__builtin_clz()`).
+
+- psxcd: Rewritten some parts of the library in pure C. Added `CdCommand()` and
+  `CdCommandF()` for advanced usage of the CD-ROM, as well as `CdReadRetry()`,
+  `CdReadBreak()` and `CdGetRegion()`.
+
+- psxgpu: `PutDrawEnv()` and `DrawOTagEnv()` now properly apply the texture
+  page and window attributes in the `DRAWENV` structure. RECTs passed to
+  `LoadImage()` and `StoreImage()` are now copied into a private buffer. Added
+  `setColor*()` macros.
+
+- psxspu: Fixed setting of bus wait states when using `SpuRead()`.
+
+- psxetc: Fixed several critical bugs in the dynamic linker. GOT relocation and
+  linking of variables and objects are now handled properly.
+
+- psxapi: Added `FastEnterCriticalSection()` and `FastExitCriticalSection()`
+  inline macros for quick enabling and disabling of interrupts.
+
+- Renamed some registers in `hwregs_c.h`, `hwregs_a.inc` and updated examples
+  accordingly.
+
+- All projects are now compiled with `-Og` in debug mode and `-O2` in release
+  mode by default. CD images created using `psn00bsdk_add_cd_image()` are now
+  only rebuilt if necessary (i.e. if any of their dependencies change).
+
 # 2022-10-27
 
 spicyjpeg:

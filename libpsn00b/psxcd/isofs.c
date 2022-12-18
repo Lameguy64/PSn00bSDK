@@ -11,6 +11,7 @@
 #include <psxcd.h>
 #include "isofs.h"
 
+#define CD_READ_ATTEMPTS	3
 #define DEFAULT_PATH_SEP	'\\'
 #define IS_PATH_SEP(ch)		(((ch) == '/') || ((ch) == '\\'))
 
@@ -21,7 +22,7 @@ typedef struct _CdlDIR_INT
 	uint8_t		*_dir;
 } CdlDIR_INT;
 
-extern int _cd_media_changed;
+extern volatile int _cd_media_changed;
 
 
 static int		_cd_iso_last_dir_lba;
@@ -77,7 +78,7 @@ static int _CdReadIsoDescriptor(int session_offs)
 	_sdk_log("Read sectors.\n");
 
 	// Read volume descriptor
-	CdRead(1, (uint32_t*)_cd_iso_descriptor_buff, CdlModeSpeed);
+	CdReadRetry(1, (uint32_t*)_cd_iso_descriptor_buff, CdlModeSpeed, CD_READ_ATTEMPTS);
 	
 	if( CdReadSync(0, 0) )
 	{
@@ -115,7 +116,7 @@ static int _CdReadIsoDescriptor(int session_offs)
 	// Read path table
 	CdIntToPos(descriptor->pathTable1Offs, &loc);
 	CdControl(CdlSetloc, (uint8_t*)&loc, 0);
-	CdRead(i>>11, (uint32_t*)_cd_iso_pathtable_buff, CdlModeSpeed);
+	CdReadRetry(i>>11, (uint32_t*)_cd_iso_pathtable_buff, CdlModeSpeed, CD_READ_ATTEMPTS);
 	if( CdReadSync(0, 0) )
 	{
 		_sdk_log("Error reading ISO path table.\n");
@@ -163,7 +164,7 @@ static int _CdReadIsoDirectory(int lba)
 	
 	// Read first sector of directory record
 	_cd_iso_directory_buff = (uint8_t*)malloc(2048);
-	CdRead(1, (uint32_t*)_cd_iso_directory_buff, CdlModeSpeed);
+	CdReadRetry(1, (uint32_t*)_cd_iso_directory_buff, CdlModeSpeed, CD_READ_ATTEMPTS);
 	if( CdReadSync(0, 0) )
 	{
 		_sdk_log("Error reading initial directory record.\n");
@@ -194,7 +195,7 @@ static int _CdReadIsoDirectory(int lba)
 
 		_sdk_log("Allocated %d bytes for directory record.\n", i);
 
-		CdRead(i>>11, (uint32_t*)_cd_iso_directory_buff, CdlModeSpeed);
+		CdReadRetry(i>>11, (uint32_t*)_cd_iso_directory_buff, CdlModeSpeed, CD_READ_ATTEMPTS);
 		if( CdReadSync(0, 0) )
 		{
 			_sdk_log("Error reading remaining directory record.\n");
@@ -485,13 +486,13 @@ CdlFILE *CdSearchFile(CdlFILE *fp, const char *filename)
 	}
 	else
 	{
-		_sdk_log("Longest path: %s|\n", rbuff);
+		_sdk_log("Longest path: %s\n", rbuff);
 	}
 #endif
 	
 	if( get_pathname(search_path, filename) )
 	{
-		_sdk_log("Search path = %s|\n", search_path);
+		_sdk_log("Search path = %s\n", search_path);
 	}
 	
 	// Search the pathtable for a matching path
@@ -499,7 +500,7 @@ CdlFILE *CdSearchFile(CdlFILE *fp, const char *filename)
 	for(i=1; i<num_dirs; i++)
 	{
 		rbuff = resolve_pathtable_path(i, tpath_rbuff+127);
-		_sdk_log("Found = %s|\n", rbuff);
+		_sdk_log("Found = %s\n", rbuff);
 
 		if( rbuff )
 		{
@@ -580,7 +581,7 @@ CdlDIR *CdOpenDir(const char* path)
 	for( i=1; i<num_dirs; i++ )
 	{
 		rbuff = resolve_pathtable_path( i, tpath_rbuff+127 );
-		_sdk_log( "Found = %s|\n", rbuff );
+		_sdk_log( "Found = %s\n", rbuff );
 
 		if( rbuff )
 		{
@@ -666,11 +667,9 @@ int CdReadDir(CdlDIR *dir, CdlFILE* file)
 	
 	file->size = dir_entry->entrySize.lsb;
 
-	_sdk_log("dir_entry->entryLength = %d, ", dir_entry->entryLength);
-
 	d_dir->_pos += dir_entry->entryLength;
 
-	_sdk_log("d_dir->_pos = %d\n", d_dir->_pos);
+	_sdk_log("dir_entry->entryLength = %d, d_dir->_pos = %d\n", dir_entry->entryLength, d_dir->_pos);
 
 	// Check if padding is reached (end of record sector)
 	if( d_dir->_dir[d_dir->_pos] == 0 )
@@ -697,33 +696,28 @@ int CdIsoError()
 	return _cd_iso_error;
 }
 
-int CdGetVolumeLabel(char* label)
+int CdGetVolumeLabel(char *label)
 {
-	int i;
+	int i, length = 31;
 	ISO_DESCRIPTOR* descriptor;
-	
+
 	if( _CdReadIsoDescriptor(0) )
-	{
 		return -1;
-	}
-	
+
 	descriptor = (ISO_DESCRIPTOR*)_cd_iso_descriptor_buff;
-	
-	i = 0;
-	for( i=0; (descriptor->volumeID[i]!=0x20)&&(i<32); i++ )
-	{
-		label[i] = descriptor->volumeID[i];
-	}
-	
-	label[i] = 0x00;
-	
-	return 0;
+
+	while (descriptor->volumeID[length] == 0x20)
+		length--;
+
+	length++;
+	memcpy(label, descriptor->volumeID, length);
+	label[length] = 0x00;
+
+	return length;
 }
 
 
 // Session load routine
-
-void _cd_control(unsigned char com, unsigned char *param, int plen);
 
 static volatile unsigned int _ready_oldcb;
 
@@ -733,7 +727,7 @@ static volatile int _ses_scancomplete;
 //static volatile char _ses_scan_resultbuff[8];
 static volatile char *_ses_scanbuff;
 
-static void _scan_callback(int status, unsigned char *result)
+static void _scan_callback(CdlIntrResult status, unsigned char *result)
 {
 	if( status == CdlDataReady )
 	{
@@ -743,7 +737,7 @@ static void _scan_callback(int status, unsigned char *result)
 		{
 			if( strncmp((const char*)_ses_scanbuff+1, "CD001", 5) == 0 )
 			{
-				_cd_control(CdlPause, 0, 0);
+				CdControlF(CdlPause, 0);
 				_ses_scancomplete = 1;
 				_ses_scanfound = 1;
 				return;
@@ -752,7 +746,7 @@ static void _scan_callback(int status, unsigned char *result)
 		_ses_scancount++;
 		if( _ses_scancount >= 512 )
 		{
-			_cd_control(CdlPause, 0, 0);
+			CdControlF(CdlPause, 0);
 			_ses_scancomplete = 1;
 			return;
 		}
@@ -760,7 +754,7 @@ static void _scan_callback(int status, unsigned char *result)
 	
 	if( status == CdlDiskError )
 	{
-		_cd_control(CdlPause, 0, 0);
+		CdControlF(CdlPause, 0);
 		_ses_scancomplete = 1;
 	}
 }
@@ -768,7 +762,7 @@ static void _scan_callback(int status, unsigned char *result)
 int CdLoadSession(int session)
 {
 	CdlLOC *loc;
-	unsigned int ready_oldcb;
+	CdlCB ready_oldcb;
 	char scanbuff[2048];
 	char resultbuff[16];
 	int i;
@@ -791,9 +785,7 @@ int CdLoadSession(int session)
 	}
 	
 	// Set search routine callback
-	EnterCriticalSection();
 	ready_oldcb = CdReadyCallback(_scan_callback);
-	ExitCriticalSection();
 
 	_ses_scanfound = 0;
 	_ses_scancount = 0;
@@ -810,26 +802,20 @@ int CdLoadSession(int session)
 	// Wait until scan complete
 	while(!_ses_scancomplete);
 
-	EnterCriticalSection();
 	CdReadyCallback((void*)_ready_oldcb);
-	ExitCriticalSection();
 
 	if( !_ses_scanfound )
 	{
 		_sdk_log("CdLoadSession(): Did not find volume descriptor.\n");
 
 		_cd_iso_error = CdlIsoInvalidFs;
-		EnterCriticalSection();
 		CdReadyCallback((CdlCB)ready_oldcb);
-		ExitCriticalSection();
 
 		return -1;
 	}
 	
 	// Restore old callback if any
-	EnterCriticalSection();
 	CdReadyCallback((CdlCB)ready_oldcb);
-	ExitCriticalSection();
 
 	// Wait until CD-ROM has completely stopped reading, to get a consistent
 	// fix of the CD-ROM pickup's current location

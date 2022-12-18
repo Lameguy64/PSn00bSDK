@@ -11,7 +11,15 @@
 
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void _assert_abort(const char *file, int line, const char *expr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef NDEBUG
 
@@ -20,9 +28,8 @@ void _assert_abort(const char *file, int line, const char *expr);
 
 #else
 
-#define assert(expr) { \
-	if (!(expr)) _assert_abort(__FILE__, __LINE__, #expr); \
-}
+#define assert(expr) \
+	((expr) ? ((void) 0) : _assert_abort(__FILE__, __LINE__, #expr))
 
 #ifdef SDK_LIBRARY_NAME
 #define _sdk_log(fmt, ...) printf(SDK_LIBRARY_NAME ": " fmt, ##__VA_ARGS__)

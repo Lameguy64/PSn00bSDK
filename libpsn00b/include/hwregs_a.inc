@@ -3,7 +3,9 @@
 
 ## Constants
 
-.set IOBASE,			0x1f80
+.set IOBASE,			0xbf80
+.set EXP1BASE,			0xbf00
+
 .set F_CPU,				33868800
 .set F_GPU,				53222400
 
@@ -61,34 +63,32 @@
 .set SPU_CURRENT_VOL_L,	0x1db8
 .set SPU_CURRENT_VOL_R,	0x1dba
 
-.set SPU_VOICE_VOL_L,	0x00
-.set SPU_VOICE_VOL_R,	0x02
-.set SPU_VOICE_FREQ,	0x04
-.set SPU_VOICE_ADDR,	0x06
-.set SPU_VOICE_ADSR1,	0x08
-.set SPU_VOICE_ADSR2,	0x0a
-.set SPU_VOICE_LOOP,	0x0e
+.set SPU_CH_VOL_L,		0x00
+.set SPU_CH_VOL_R,		0x02
+.set SPU_CH_FREQ,		0x04
+.set SPU_CH_ADDR,		0x06
+.set SPU_CH_ADSR1,		0x08
+.set SPU_CH_ADSR2,		0x0a
+.set SPU_CH_LOOP_ADDR,	0x0e
 
 ## MDEC
 
 .set MDEC0,				0x1820
 .set MDEC1,				0x1824
 
-## SPI controller port
+## SPI and serial interfaces
 
-.set JOY_TXRX,			0x1040
-.set JOY_STAT,			0x1044
-.set JOY_MODE,			0x1048
-.set JOY_CTRL,			0x104a
-.set JOY_BAUD,			0x104e
+.set SIO0_DATA,			0x1040
+.set SIO0_STAT,			0x1044
+.set SIO0_MODE,			0x1048
+.set SIO0_CTRL,			0x104a
+.set SIO0_BAUD,			0x104e
 
-## Serial port
-
-.set SIO_TXRX,			0x1050
-.set SIO_STAT,			0x1054
-.set SIO_MODE,			0x1058
-.set SIO_CTRL,			0x105a
-.set SIO_BAUD,			0x105e
+.set SIO1_DATA,			0x1050
+.set SIO1_STAT,			0x1054
+.set SIO1_MODE,			0x1058
+.set SIO1_CTRL,			0x105a
+.set SIO1_BAUD,			0x105e
 
 ## IRQ controller
 
@@ -142,15 +142,15 @@
 .set TIMER2_CTRL,		0x1124
 .set TIMER2_RELOAD,		0x1128
 
-## Memory control
+## Memory/bus control
 
-.set EXP1_ADDR,			0x1000
-.set EXP2_ADDR,			0x1004
-.set EXP1_DELAY_SIZE,	0x1008
-.set EXP3_DELAY_SIZE,	0x100c
-.set BIOS_DELAY_SIZE,	0x1010
-.set SPU_DELAY_SIZE,	0x1014
-.set CD_DELAY_SIZE,		0x1018
-.set EXP2_DELAY_SIZE,	0x101c
-.set COM_DELAY_CFG,		0x1020
-.set RAM_SIZE_CFG,		0x1060
+.set BUS_EXP1_ADDR,		0x1000
+.set BUS_EXP2_ADDR,		0x1004
+.set BUS_EXP1_CFG,		0x1008
+.set BUS_EXP3_CFG,		0x100c
+.set BUS_BIOS_CFG,		0x1010
+.set BUS_SPU_CFG,		0x1014
+.set BUS_CD_CFG,		0x1018
+.set BUS_EXP2_CFG,		0x101c
+.set BUS_COM_DELAY,		0x1020
+.set BUS_RAM_SIZE,		0x1060

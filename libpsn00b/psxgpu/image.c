@@ -1,6 +1,10 @@
 /*
  * PSn00bSDK GPU library (image and VRAM transfer functions)
  * (C) 2022 spicyjpeg - MPL licensed
+ *
+ * TODO: MoveImage() is currently commented out as it won't trigger a DMA IRQ,
+ * making it unusable as a draw queue command. A way around this (perhaps using
+ * the GPU IRQ?) shall be found.
  */
 
 #include <stdint.h>
@@ -8,7 +12,17 @@
 #include <psxgpu.h>
 #include <hwregs_c.h>
 
-#define DMA_CHUNK_LENGTH 8
+#define QUEUE_LENGTH		16
+#define DMA_CHUNK_LENGTH	8
+
+/* Internal globals */
+
+// LoadImage() and StoreImage() run asynchronously but may be called with a
+// pointer to a RECT struct in the stack, which might no longer be valid by the
+// time the transfer is actually started. This buffer is used to store a copy
+// of all RECTs passed to LoadImage()/StoreImage() as a workaround.
+static RECT _saved_rects[QUEUE_LENGTH];
+static int  _next_saved_rect = 0;
 
 /* Private utilities */
 
@@ -47,19 +61,31 @@ static void _dma_transfer(const RECT *rect, uint32_t *data, int write) {
 /* VRAM transfer API */
 
 int LoadImage(const RECT *rect, const uint32_t *data) {
+	int index = _next_saved_rect;
+
+	_saved_rects[index] = *rect;
+	_next_saved_rect    = (index + 1) % QUEUE_LENGTH;
+
 	return EnqueueDrawOp(
-		(void *) &_dma_transfer, (uint32_t) rect, (uint32_t) data, 1
+		(void *)   &_dma_transfer,
+		(uint32_t) &_saved_rects[index],
+		(uint32_t) data,
+		1
 	);
 }
 
 int StoreImage(const RECT *rect, uint32_t *data) {
-	return EnqueueDrawOp(
-		(void *) &_dma_transfer, (uint32_t) rect, (uint32_t) data, 0
-	);
-}
+	int index = _next_saved_rect;
 
-int MoveImage(const RECT *rect, int x, int y) {
-	return EnqueueDrawOp((void *) &MoveImage2, (uint32_t) rect, x, y);
+	_saved_rects[index] = *rect;
+	_next_saved_rect    = (index + 1) % QUEUE_LENGTH;
+
+	return EnqueueDrawOp(
+		(void *)   &_dma_transfer,
+		(uint32_t) &_saved_rects[index],
+		(uint32_t) data,
+		0
+	);
 }
 
 void LoadImage2(const RECT *rect, const uint32_t *data) {
@@ -70,14 +96,14 @@ void StoreImage2(const RECT *rect, uint32_t *data) {
 	_dma_transfer(rect, data, 0);
 }
 
-void MoveImage2(const RECT *rect, int x, int y) {
+/*void MoveImage2(const RECT *rect, int x, int y) {
 	GPU_GP0 = 0x80000000;
 	//GPU_GP0 = rect->x | (rect->y << 16);
 	GPU_GP0 = *((const uint32_t *) &(rect->x));
 	GPU_GP0 = (x & 0xffff) | (y << 16);
 	//GPU_GP0 = rect->w | (rect->h << 16);
 	GPU_GP0 = *((const uint32_t *) &(rect->w));
-}
+}*/
 
 /* .TIM image parsers */
 

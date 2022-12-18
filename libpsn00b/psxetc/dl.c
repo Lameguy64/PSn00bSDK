@@ -82,14 +82,9 @@ void *_dl_resolve_helper(DLL *dll, uint32_t index) {
 		abort();
 	}
 
-	// Patch the GOT entry to "cache" the resolved address. This can probably
-	// be implemented in a faster way, but this thing is already too complex.
-	for (int i = 0; i < dll->got_length; i++) {
-		if (dll->got[2 + i] == (uint32_t) sym->st_value) {
-			dll->got[2 + i] = (uint32_t) addr;
-			break;
-		}
-	}
+	// Patch the GOT entry to "cache" the resolved address.
+	int _index = index - dll->first_got_symbol;
+	dll->got[dll->got_local_count + _index] = (uint32_t) addr;
 
 	return addr;
 }
@@ -125,10 +120,7 @@ int DL_InitSymbolMap(int num_entries) {
 	_symbol_map.nbucket = num_entries;
 	_symbol_map.nchain  = num_entries;
 	_symbol_map.index   = 0;
-	_sdk_log(
-		"allocating nbucket = %d, nchain = %d\n",
-		_symbol_map.nbucket, num_entries
-	);
+	_sdk_log("nbucket = %d, nchain = %d\n", _symbol_map.nbucket, num_entries);
 
 	_symbol_map.entries = malloc(sizeof(MapEntry) * num_entries);
 	_symbol_map.bucket  = malloc(sizeof(uint32_t) * num_entries);
@@ -222,10 +214,7 @@ int DL_ParseSymbolMap(const char *ptr, size_t size) {
 				(_type == 'D') || // .data
 				(_type == 'B')    // .bss
 			)) {
-				//_sdk_log(
-					//"map sym: %08x,%08x [%c %s]\n",
-					//addr, _size, _type, name
-				//);
+				//_sdk_log("%08x, %08x [%c %s]\n", addr, _size, _type, name);
 
 				DL_AddMapSymbol(name, addr);
 				entries++;
@@ -253,7 +242,7 @@ void *DL_GetMapSymbol(const char *name) {
 	// https://docs.oracle.com/cd/E23824_01/html/819-0690/chapter6-48031.html
 	uint32_t hash = _elf_hash(name);
 
-	for (int i = _symbol_map.bucket[hash % _symbol_map.nbucket]; i != 0xffffffff;) {
+	for (int i = _symbol_map.bucket[hash % _symbol_map.nbucket]; i >= 0;) {
 		if (i >= _symbol_map.nchain) {
 			_sdk_log(
 				"DL_GetMapSymbol() index out of bounds (%d >= %d)\n",
@@ -295,33 +284,33 @@ DLL *DL_CreateDLL(DLL *dll, void *ptr, size_t size, DL_ResolveMode mode) {
 	_sdk_log("initializing DLL at %08x\n", ptr);
 
 	// Interpret the key-value pairs in the .dynamic section to obtain info
-	// about all the other sections. The pairs are null-terminated, which makes
-	// parsing trivial.
-	uint32_t local_got_len = 0;
-	uint32_t first_got_sym = 0;
-
+	// about all the other sections. The pairs are null-terminated.
 	for (Elf32_Dyn *dyn = (Elf32_Dyn *) ptr; dyn->d_tag; dyn++) {
-		//_sdk_log(".dynamic %08x=%08x ", dyn->d_tag, dyn->d_un.d_val);
+		//_sdk_log("tag %08x = %08x\n", dyn->d_tag, dyn->d_un.d_val);
 
 		switch (dyn->d_tag) {
 			// Offset of .got section
 			case DT_PLTGOT:
-				dll->got = (void *) (ptr + dyn->d_un.d_val);
+				dll->got = (uint32_t *)
+					&((uint8_t *) ptr)[dyn->d_un.d_val];
 				break;
 
 			// Offset of .hash section
 			case DT_HASH:
-				dll->hash = (void *) (ptr + dyn->d_un.d_val);
+				dll->hash = (const uint32_t *)
+					&((uint8_t *) ptr)[dyn->d_un.d_val];
 				break;
 
 			// Offset of .dynstr (NOT .strtab) section
 			case DT_STRTAB:
-				dll->strtab = (void *) (ptr + dyn->d_un.d_val);
+				dll->strtab = (const char *)
+					&((uint8_t *) ptr)[dyn->d_un.d_val];
 				break;
 
 			// Offset of .dynsym (NOT .symtab) section
 			case DT_SYMTAB:
-				dll->symtab = (void *) (ptr + dyn->d_un.d_val);
+				dll->symtab = (Elf32_Sym *)
+					&((uint8_t *) ptr)[dyn->d_un.d_val];
 				break;
 
 			// Length of each .dynsym entry
@@ -335,9 +324,7 @@ DLL *DL_CreateDLL(DLL *dll, void *ptr, size_t size, DL_ResolveMode mode) {
 
 			// MIPS ABI (?) version
 			case DT_MIPS_RLD_VERSION:
-				//_sdk_log("[MIPS_RLD_VERSION]\n");
-
-				// Versions other than 1 are unsupported (do they even exist?).
+				// Versions other than 1 are unsupported.
 				if (dyn->d_un.d_val != 1) {
 					_sdk_log("invalid DLL version %d\n", dyn->d_un.d_val);
 					return 0;
@@ -346,7 +333,7 @@ DLL *DL_CreateDLL(DLL *dll, void *ptr, size_t size, DL_ResolveMode mode) {
 
 			// DLL/ABI flags
 			case DT_MIPS_FLAGS:
-				// Shortcut pointers (whatever they are) are not supported.
+				// Shortcut pointers are not supported.
 				if (dyn->d_un.d_val & RHF_QUICKSTART) {
 					_sdk_log("invalid DLL flags\n");
 					return 0;
@@ -355,7 +342,7 @@ DLL *DL_CreateDLL(DLL *dll, void *ptr, size_t size, DL_ResolveMode mode) {
 
 			// Number of local (not to resolve) GOT entries
 			case DT_MIPS_LOCAL_GOTNO:
-				local_got_len = dyn->d_un.d_val;
+				dll->got_local_count = dyn->d_un.d_val;
 				break;
 
 			// Base address DLL was compiled for
@@ -375,78 +362,56 @@ DLL *DL_CreateDLL(DLL *dll, void *ptr, size_t size, DL_ResolveMode mode) {
 
 			// Index of first symbol table entry which has a matching GOT entry
 			case DT_MIPS_GOTSYM:
-				first_got_sym = dyn->d_un.d_val;
+				dll->first_got_symbol = dyn->d_un.d_val;
 				break;
 		}
 	}
 
-	// Calculate the number of GOT entries (and symbols, if MIPS_SYMTABNO was
-	// not found in the .dynamic section).
-	//dll->symbol_count = \
-		((uint32_t) dll->hash - (uint32_t) dll->symtab) / sizeof(Elf32_Sym);
-	//dll->got_length = \
-		((uint32_t) ptr + size - (uint32_t) dll->got) / sizeof(uint32_t) - 2;
-
-	dll->got_length = local_got_len + (dll->symbol_count - first_got_sym) - 2;
+	dll->got_extern_count = dll->symbol_count - dll->first_got_symbol;
 	_sdk_log(
-		"%d symbols, %d GOT entries\n",
-		dll->symbol_count, dll->got_length
+		"%d symbols, %d GOT locals, %d GOT externs\n",
+		dll->symbol_count, dll->got_local_count - 2, dll->got_extern_count
 	);
 
-	// Relocate the DLL by adding its base address to all pointers in the GOT
-	// except the first two, which are reserved. The first entry in particular
-	// is a pointer to the lazy resolver, called by auto-generated stubs when a
-	// function is first used. got[1] is normally unused, but here we'll set it
-	// to the DLL's metadata struct so we can look that up when resolving
-	// functions (see _dl_resolve_wrapper()).
+	// Relocate the DLL by adding its base address to all pointers in the local
+	// section of the GOT except the first two, which are reserved. The first
+	// entry in particular is a pointer to the lazy resolver, called by
+	// auto-generated stubs when a function is first used. got[1] is normally
+	// unused, but here we'll set it to the DLL's metadata struct so we can
+	// look that up when resolving functions (see _dl_resolve_wrapper()).
 	dll->got[0] = (uint32_t) &_dl_resolve_wrapper;
 	dll->got[1] = (uint32_t) dll;
 
-	for (int i = 0; i < dll->got_length; i++)
-		dll->got[2 + i] += (uint32_t) ptr;
+	for (int i = 2; i < dll->got_local_count; i++)
+		dll->got[i] += (uint32_t) ptr;
 
-	// Fix addresses in the symbol table.
-	// TODO: clean this shit up
-	uint32_t got_offset = first_got_sym;
+	// Relocate all pointers in the symbol table and populate the global
+	// section of the GOT.
+	uint32_t *_got = &(dll->got[dll->got_local_count - dll->first_got_symbol]);
 
 	for (int i = 0; i < dll->symbol_count; i++) {
 		Elf32_Sym  *sym   = &(dll->symtab[i]);
 		const char *_name = &(dll->strtab[sym->st_name]);
 
-		if (!sym->st_value)
-			continue;
-
 		sym->st_value += (uint32_t) ptr;
-		//_sdk_log(
-			//"DLL sym: %08x,%08x [%s]\n",
-			//sym->st_value, sym->st_size, _name
-		//);
+		//_sdk_log("%08x, %08x [%s]\n", sym->st_value, sym->st_size, _name);
 
-		// If DL_NOW was passed, resolve GOT entries ahead of time by
-		// cross-referencing them with the symbol table.
-		if (!(mode & DL_NOW))
+		if (i < dll->first_got_symbol)
 			continue;
 
-		for (int j = got_offset; j < dll->got_length; j++) {
-			if (dll->got[2 + j] != (uint32_t) sym->st_value)
-				continue;
+		// Resolve the GOT entry if the symbol is an imported variable (or a
+		// function in non-lazy mode), otherwise relocate the GOT pointer.
+		if (
+			!(sym->st_shndx) &&
+			((ELF32_ST_TYPE(sym->st_info) != STT_FUNC) || (mode & DL_NOW))
+		) {
+			void *sym_ptr = _dl_resolve_callback(dll, _name);
+			if (!sym_ptr)
+				return 0;
 
-			got_offset = j;
-
-			// If the symbol is undefined (st_shndx = 0) and is either a
-			// variable or a function, resolve it immediately.
-			// TODO: linking of external variables needs more testing
-			if (!(sym->st_shndx) && (
-				ELF32_ST_TYPE(sym->st_info) == STT_OBJECT ||
-				ELF32_ST_TYPE(sym->st_info) == STT_FUNC
-			)) {
-				dll->got[2 + j] = (uint32_t) _dl_resolve_callback(dll, _name);
-
-				if (!dll->got[2 + j])
-					return 0;
-			}
-
-			break;
+			_got[i] = (uint32_t) sym_ptr;
+		} else {
+			_got[i] += (uint32_t) ptr;
 		}
 	}
 
@@ -461,7 +426,8 @@ DLL *DL_CreateDLL(DLL *dll, void *ptr, size_t size, DL_ResolveMode mode) {
 	const uint32_t *ctor_list = DL_GetDLLSymbol(dll, "__CTOR_LIST__");
 	if (ctor_list) {
 		for (int i = ((int) ctor_list[0]); i >= 1; i--) {
-			void (*ctor)(void) = (void (*)(void)) ctor_list[i];
+			void (*ctor)(void) = (void (*)(void))
+				((uint8_t *) ptr + ctor_list[i + 1]);
 			DL_PRE_CALL(ctor);
 			ctor();
 		}
@@ -479,7 +445,8 @@ void DL_DestroyDLL(DLL *dll) {
 		const uint32_t *dtor_list = DL_GetDLLSymbol(dll, "__DTOR_LIST__");
 		if (dtor_list) {
 			for (int i = 0; i < ((int) dtor_list[0]); i++) {
-				void (*dtor)(void) = (void (*)(void)) dtor_list[i + 1];
+				void (*dtor)(void) = (void (*)(void))
+					((uint8_t *) dll->ptr + dtor_list[i + 1]);
 				DL_PRE_CALL(dtor);
 				dtor();
 			}
@@ -507,7 +474,7 @@ void *DL_GetDLLSymbol(const DLL *dll, const char *name) {
 
 	// Go through the hash table's chain until the symbol name matches the one
 	// provided.
-	for (int i = bucket[_elf_hash(name) % nbucket]; i != 0xffffffff;) {
+	for (int i = bucket[_elf_hash(name) % nbucket]; i >= 0;) {
 		if (i >= nchain) {
 			_sdk_log("DL_GetDLLSymbol() index out of bounds (%d >= %d)\n", i, nchain);
 			return 0;

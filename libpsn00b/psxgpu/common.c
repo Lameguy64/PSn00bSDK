@@ -38,9 +38,6 @@ static volatile uint16_t   _last_hblank;
 
 /* Private interrupt handlers */
 
-#define _ENTER_CRITICAL()	uint16_t mask = IRQ_MASK; IRQ_MASK = 0;
-#define _EXIT_CRITICAL()	IRQ_MASK = mask;
-
 static void _vblank_handler(void) {
 	_vblank_counter++;
 
@@ -74,8 +71,8 @@ void ResetGraph(int mode) {
 	// the first time.
 	if (!ResetCallback()) {
 		EnterCriticalSection();
-		InterruptCallback(0, &_vblank_handler);
-		DMACallback(2, &_gpu_dma_handler);
+		InterruptCallback(IRQ_VBLANK, &_vblank_handler);
+		DMACallback(DMA_GPU, &_gpu_dma_handler);
 
 		_gpu_video_mode = (GPU_GP1 >> 20) & 1;
 		ExitCriticalSection();
@@ -149,22 +146,22 @@ int VSync(int mode) {
 }
 
 void *VSyncHaltFunction(void (*func)(void)) {
-	//_ENTER_CRITICAL();
+	//FastEnterCriticalSection();
 
 	void *old_callback  = _vsync_halt_func;
 	_vsync_halt_func    = func;
 
-	//_EXIT_CRITICAL();
+	//FastExitCriticalSection();
 	return old_callback;
 }
 
 void *VSyncCallback(void (*func)(void)) {
-	_ENTER_CRITICAL();
+	FastEnterCriticalSection();
 
 	void *old_callback  = _vsync_callback;
 	_vsync_callback     = func;
 
-	_EXIT_CRITICAL();
+	FastExitCriticalSection();
 	return old_callback;
 }
 
@@ -184,18 +181,18 @@ int EnqueueDrawOp(
 	// race condition where the DMA transfer could end while interrupts are
 	// being disabled. Interrupts are disabled through the IRQ_MASK register
 	// rather than via syscalls for performance reasons.
-	_ENTER_CRITICAL();
+	FastEnterCriticalSection();
 	int length = _queue_length;
 
 	if (!length) {
 		_queue_length = 1;
-		_EXIT_CRITICAL();
+		FastExitCriticalSection();
 
 		func(arg1, arg2, arg3);
 		return 0;
 	}
 	if (length >= QUEUE_LENGTH) {
-		_EXIT_CRITICAL();
+		FastExitCriticalSection();
 
 		_sdk_log("draw queue overflow, dropping commands\n");
 		return -1;
@@ -211,7 +208,7 @@ int EnqueueDrawOp(
 	entry->arg2 = arg2;
 	entry->arg3 = arg3;
 
-	_EXIT_CRITICAL();
+	FastExitCriticalSection();
 	return length;
 }
 
@@ -242,12 +239,12 @@ int DrawSync(int mode) {
 }
 
 void *DrawSyncCallback(void (*func)(void)) {
-	_ENTER_CRITICAL();
+	FastEnterCriticalSection();
 
 	void *old_callback = _drawsync_callback;
 	_drawsync_callback = func;
 
-	_EXIT_CRITICAL();
+	FastExitCriticalSection();
 	return old_callback;
 }
 
@@ -258,8 +255,8 @@ void ClearOTagR(uint32_t *ot, size_t length) {
 	DMA_BCR(6)  = length & 0xffff;
 	DMA_CHCR(6) = 0x11000002;
 
-	//while (DMA_CHCR(6) & (1 << 24))
-		//__asm__ volatile("");
+	while (DMA_CHCR(6) & (1 << 24))
+		__asm__ volatile("");
 }
 
 void ClearOTag(uint32_t *ot, size_t length) {

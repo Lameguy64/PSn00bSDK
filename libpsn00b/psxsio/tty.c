@@ -32,10 +32,10 @@ static int _sio_inout(FCB *fcb, int cmd) {
 
 		case 2: // write
 			for (int i = 0; i < fcb->trns_len; i++) {
-				while (!(SIO_STAT & (SR_TXRDY | SR_TXU)))
+				while (!(SIO_STAT(1) & (SR_TXRDY | SR_TXU)))
 					__asm__ volatile("");
 
-				SIO_TXRX = *(ptr++);
+				SIO_DATA(1) = *(ptr++);
 			}
 
 			return fcb->trns_len;

@@ -93,8 +93,8 @@ static void _spi_next_req(void) {
 static void _spi_poll_irq_handler(void) {
 	// Fetch the last response byte, which wasn't followed by a pulse on /ACK,
 	// from the RX FIFO.
-	if (JOY_STAT & 0x0002)
-		_context.rx_buff[_context.rx_len - 1] = (uint8_t) JOY_TXRX;
+	if (SIO_STAT(0) & 0x0002)
+		_context.rx_buff[_context.rx_len - 1] = (uint8_t) SIO_DATA(0);
 
 	if (_context.callback)
 		_context.callback(_context.port, _context.rx_buff, _context.rx_len);
@@ -109,49 +109,49 @@ static void _spi_poll_irq_handler(void) {
 	// enabling the /ACK IRQ. In order to communicate with controllers, /CS has
 	// to be driven low again for about 20 us before sending the first byte.
 	// TODO: these delays can be probably tweaked for better performance
-	JOY_CTRL = 0x0010;
+	SIO_CTRL(0) = 0x0010;
 	for (uint32_t i = 0; i < 1000; i++)
 		__asm__ volatile("");
 
-	JOY_CTRL = 0x1003 | (_context.port << 13);
+	SIO_CTRL(0) = 0x1003 | (_context.port << 13);
 	for (uint32_t i = 0; i < 2000; i++)
 		__asm__ volatile("");
 
 	// Send the first byte indicating which device to address. If the matching
 	// device is connected, it will reply by triggering the /ACK IRQ.
-	JOY_TXRX = _context.tx_buff[0];
+	SIO_DATA(0) = _context.tx_buff[0];
 }
 
 static void _spi_ack_irq_handler(void) {
 	// Wait until /ACK is pulled up by the controller before sending the next
 	// byte. According to nocash docs, this has to be done before resetting the
 	// IRQ.
-	while (JOY_STAT & 0x0080)
+	while (SIO_STAT(0) & 0x0080)
 		__asm__ volatile("");
 
 	// Keep /CS pulled low and acknowledge the IRQ (bit 4) to ensure it can be
 	// triggered again.
-	JOY_CTRL = 0x1013 | (_context.port << 13);
+	SIO_CTRL(0) = 0x1013 | (_context.port << 13);
 
 	if (!_context.rx_len) {
 		// We just sent the first address byte. Obviously the response we
 		// received was read from an open bus, so the SPI port's internal FIFO
 		// must be flushed (by performing dummy reads) to ensure we are only
 		// going to read valid data from now on.
-		JOY_TXRX;
+		SIO_DATA(0);
 
 	} else if (_context.rx_len <= SPI_BUFF_LEN) {
 		// If this is not the first byte, put it in the RX buffer.
-		_context.rx_buff[_context.rx_len - 1] = (uint8_t) JOY_TXRX;
+		_context.rx_buff[_context.rx_len - 1] = (uint8_t) SIO_DATA(0);
 	}
 
 	// Send the next byte, or a null byte if there is no more data to send and
 	// we're just reading a response.
 	_context.rx_len++;
 	if (_context.rx_len < _context.tx_len)
-		JOY_TXRX = (uint32_t) _context.tx_buff[_context.rx_len];
+		SIO_DATA(0) = (uint32_t) _context.tx_buff[_context.rx_len];
 	else
-		JOY_TXRX = 0x00;
+		SIO_DATA(0) = 0x00;
 }
 
 /* Public API */
@@ -198,9 +198,9 @@ void SPI_Init(SPI_Callback callback) {
 	InterruptCallback(7, &_spi_ack_irq_handler);
 	ExitCriticalSection();
 
-	JOY_CTRL = 0x0040; // Reset all registers
-	JOY_MODE = 0x000d; // 1x multiplier, 8 data bits, no parity
-	JOY_BAUD = 0x0088; // 250000 bps
+	SIO_CTRL(0) = 0x0040; // Reset all registers
+	SIO_MODE(0) = 0x000d; // 1x multiplier, 8 data bits, no parity
+	SIO_BAUD(0) = 0x0088; // 250000 bps
 
 	SPI_SetPollRate(250);
 	_current_req = 0;

@@ -101,16 +101,16 @@ endif()
 ## Variables common to all package types
 
 if(NOT DEFINED CPACK_GENERATOR)
-	if(WIN32)
-		set(CPACK_GENERATOR ZIP NSIS)
-	elseif(APPLE)
+	#if(WIN32)
+		#set(CPACK_GENERATOR ZIP NSIS)
+	#elseif(APPLE)
 		# TODO: add a macOS installer and related options
-		set(CPACK_GENERATOR ZIP)
+		#set(CPACK_GENERATOR ZIP)
 	#elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 		#set(CPACK_GENERATOR ZIP DEB RPM)
-	else()
+	#else()
 		set(CPACK_GENERATOR ZIP)
-	endif()
+	#endif()
 endif()
 
 set(CPACK_VERBATIM_VARIABLES        ON)

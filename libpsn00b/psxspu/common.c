@@ -14,6 +14,10 @@
 #define DMA_CHUNK_LENGTH	16
 #define STATUS_TIMEOUT		0x100000
 
+static const uint32_t _dummy_block[4] = {
+	0x00000500, 0x00000000, 0x00000000, 0x00000000
+};
+
 /* Internal globals */
 
 static SPU_TransferMode	_transfer_mode = SPU_TRANSFER_BY_DMA;
@@ -39,6 +43,11 @@ static size_t _dma_transfer(uint32_t *data, size_t length, int write) {
 		_sdk_log("transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
 		length += DMA_CHUNK_LENGTH - 1;
 	}
+
+	// Increase bus delay for DMA reads
+	BUS_SPU_CFG &= ~(0xf << 24);
+	if (!write)
+		BUS_SPU_CFG = 2 << 24;
 
 	SPU_CTRL &= 0xffcf; // Disable DMA request
 	_wait_status(0x0030, 0x0000);
@@ -98,6 +107,8 @@ static size_t _manual_write(const uint16_t *data, size_t length) {
 /* Public API */
 
 void SpuInit(void) {
+	BUS_SPU_CFG = 0x200931e1;
+
 	SPU_CTRL = 0x0000; // SPU disabled
 	_wait_status(0x001f, 0x0000);
 
@@ -128,10 +139,8 @@ void SpuInit(void) {
 
 	// Upload a dummy looping ADPCM block to the first 16 bytes of SPU RAM.
 	// This may be freely used or overwritten.
-	uint32_t block[4] = { 0x0500, 0, 0, 0 };
-
 	_transfer_addr = WRITABLE_AREA_ADDR;
-	_manual_write((const uint16_t *) block, 16);
+	_manual_write((const uint16_t *) _dummy_block, 16);
 
 	// "Play" the dummy block on all channels. This will reset the start
 	// address and ADSR envelope status of each channel.
@@ -183,7 +192,7 @@ uint32_t SpuSetTransferStartAddr(uint32_t addr) {
 	if (addr > 0x7ffff)
 		return 0;
 
-	_transfer_addr = (addr + 7) / 8;
+	_transfer_addr = getSPUAddr(addr);
 	return addr;
 }
 

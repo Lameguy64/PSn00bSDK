@@ -31,10 +31,8 @@
  * pipeline must also run in lockstep with each other to prevent frame
  * corruption, hence several functions and flag variables are used to stall the
  * main loop until a frame is available for decoding and the MDEC is ready.
- * Playback is stopped when a sector with the end-of-file flag set in the XA
- * subheader (added at the end of the file by most .STR encoders) is
- * encountered; in order to access the subheader, this example requests 2340
- * bytes of data for each sector (rather than the usual 2048) from the drive.
+ * Playback is stopped once the .STR header is no longer present in sectors
+ * read.
  *
  * Note that PSn00bSDK's bitstream decoding API only supports version 1 and 2
  * bitstreams currently, so make sure your .STR files are encoded as v2 and not
@@ -42,6 +40,7 @@
  */
 
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <psxetc.h>
 #include <psxapi.h>
@@ -85,15 +84,15 @@ void init_context(RenderContext *ctx) {
 	SetDefDispEnv(&(db->disp), 0,           0, SCREEN_XRES, SCREEN_YRES);
 	SetDefDrawEnv(&(db->draw), 0, SCREEN_YRES, SCREEN_XRES, SCREEN_YRES);
 	setRGB0(&(db->draw), BGCOLOR_R, BGCOLOR_G, BGCOLOR_B);
-	db->draw.isbg    = 1;
-	db->draw.dtd     = 1;
+	db->draw.isbg = 1;
+	db->draw.dtd  = 1;
 
 	db = &(ctx->db[1]);
 	SetDefDispEnv(&(db->disp), 0, SCREEN_YRES, SCREEN_XRES, SCREEN_YRES);
 	SetDefDrawEnv(&(db->draw), 0,           0, SCREEN_XRES, SCREEN_YRES);
 	setRGB0(&(db->draw), BGCOLOR_R, BGCOLOR_G, BGCOLOR_B);
-	db->draw.isbg    = 1;
-	db->draw.dtd     = 1;
+	db->draw.isbg = 1;
+	db->draw.dtd  = 1;
 
 	PutDrawEnv(&(db->draw));
 	//PutDispEnv(&(db->disp));
@@ -145,22 +144,6 @@ typedef struct {
 	uint32_t _reserved;
 } STR_Header;
 
-// https://problemkaputt.de/psx-spx.htm#cdromxasubheaderfilechannelinterleave
-typedef struct {
-	uint8_t file, channel;
-	uint8_t submode, coding_info;
-} XA_Header;
-
-// https://problemkaputt.de/psx-spx.htm#cdromsectorencoding
-typedef struct {
-	CdlLOC     pos;
-	XA_Header  xa_header[2];
-	STR_Header str_header;
-	uint8_t    data[2016];
-	uint32_t   edc;
-	uint8_t    ecc[276];
-} STR_Sector;
-
 typedef struct {
 	uint16_t width, height;
 	uint32_t bs_data[0x2000];	// Bitstream data read from the disc
@@ -186,57 +169,52 @@ StreamContext str_ctx;
 // read from the CD. Due to DMA limitations it can't be allocated on the stack
 // (especially not in the interrupt callbacks' stack, whose size is very
 // limited).
-STR_Sector sector_buffer;
+STR_Header sector_header;
 
 void cd_sector_handler(void) {
-	// Fetch the .STR header of the sector that has been read and check if the
-	// end-of-file bit is set in the XA header.
-	CdGetSector(&sector_buffer, sizeof(STR_Sector) / 4);
+	StreamBuffer *frame = &str_ctx.frames[str_ctx.cur_frame];
 
-	if (
-		(sector_buffer.xa_header[0].submode & (1 << 7)) ||
-		(sector_buffer.xa_header[1].submode & (1 << 7))
-	) {
-		CdControlF(CdlPause, 0);
+	// Fetch the .STR header of the sector that has been read and make sure it
+	// is valid. If not, assume the file has ended and set frame_ready as a
+	// signal for the main loop to stop playback.
+	CdGetSector(&sector_header, sizeof(STR_Header) / 4);
+
+	if (sector_header.magic != 0x0160) {
 		str_ctx.frame_ready = -1;
 		return;
 	}
 
-	STR_Header   *header = &sector_buffer.str_header;
-	StreamBuffer *frame  = &str_ctx.frames[str_ctx.cur_frame];
-
 	// Ignore any non-MDEC sectors that might be present in the stream.
-	if (header->type != 0x8001)
+	if (sector_header.type != 0x8001)
 		return;
 
 	// If this sector is actually part of a new frame, validate the sectors
 	// that have been read so far and flip the bitstream data buffers.
-	if (header->frame_id != str_ctx.frame_id) {
+	if (sector_header.frame_id != str_ctx.frame_id) {
 		// Do not set the ready flag if any sector has been missed.
 		if (str_ctx.sector_count)
 			str_ctx.dropped_frames++;
 		else
 			str_ctx.frame_ready = 1;
 
-		str_ctx.frame_id     = header->frame_id;
-		str_ctx.sector_count = header->sector_count;
+		str_ctx.frame_id     = sector_header.frame_id;
+		str_ctx.sector_count = sector_header.sector_count;
 		str_ctx.cur_frame   ^= 1;
 
 		frame = &str_ctx.frames[str_ctx.cur_frame];
 
 		// Initialize the next frame. Dimensions must be rounded up to the
 		// nearest multiple of 16 as the MDEC operates on 16x16 pixel blocks.
-		frame->width  = (header->width  + 15) & 0xfff0;
-		frame->height = (header->height + 15) & 0xfff0;
+		frame->width  = (sector_header.width  + 15) & 0xfff0;
+		frame->height = (sector_header.height + 15) & 0xfff0;
 	}
 
 	// Append the payload contained in this sector to the current buffer.
-	memcpy(
-		&(frame->bs_data[2016 / 4 * header->sector_id]),
-		sector_buffer.data,
-		2016
-	);
 	str_ctx.sector_count--;
+	CdGetSector(
+		&(frame->bs_data[2016 / 4 * sector_header.sector_id]),
+		2016 / 4
+	);
 }
 
 void mdec_dma_handler(void) {
@@ -262,7 +240,7 @@ void mdec_dma_handler(void) {
 		);
 }
 
-void cd_event_handler(int event, uint8_t *payload) {
+void cd_event_handler(CdlIntrResult event, uint8_t *payload) {
 	// Ignore all events other than a sector being ready.
 	if (event != CdlDataReady)
 		return;
@@ -292,9 +270,8 @@ void init_stream(void) {
 	DecDCTvlcSize(0x8000);
 	DecDCTvlcCopyTable((DECDCTTAB *) 0x1f800000);
 
-	str_ctx.dropped_frames = 0;
-	str_ctx.cur_frame      = 0;
-	str_ctx.cur_slice      = 0;
+	str_ctx.cur_frame = 0;
+	str_ctx.cur_slice = 0;
 }
 
 StreamBuffer *get_next_frame(void) {
@@ -310,14 +287,15 @@ StreamBuffer *get_next_frame(void) {
 
 void start_stream(CdlFILE *file) {
 	str_ctx.frame_id       = -1;
+	str_ctx.dropped_frames =  0;
 	str_ctx.sector_pending =  0;
 	str_ctx.frame_ready    =  0;
 
 	CdSync(0, 0);
 
-	// Configure the CD drive to read 2340-byte sectors at 2x speed and to
-	// play any XA-ADPCM sectors that might be interleaved with the video data.
-	uint8_t mode = CdlModeSize | CdlModeRT | CdlModeSpeed;
+	// Configure the CD drive to read at 2x speed and to play any XA-ADPCM
+	// sectors that might be interleaved with the video data.
+	uint8_t mode = CdlModeRT | CdlModeSpeed;
 	CdControl(CdlSetmode, (const uint8_t *) &mode, 0);
 
 	// Start reading in real-time mode (i.e. without retrying in case of read
@@ -369,6 +347,9 @@ int main(int argc, const char* argv[]) {
 		// ended, restart playback from the beginning.
 		StreamBuffer *frame = get_next_frame();
 		if (!frame) {
+			printf("End of file, looping...\n");
+			CdControlB(CdlPause, 0, 0);
+
 			start_stream(&file);
 			continue;
 		}
@@ -423,7 +404,7 @@ int main(int argc, const char* argv[]) {
 		int  x_offset = (fb_clip->w - frame->width)  / 2;
 		int  y_offset = (fb_clip->h - frame->height) / 2;
 
-		str_ctx.slice_pos.x = VRAM_X_COORD(fb_clip->x + x_offset);
+		str_ctx.slice_pos.x = fb_clip->x + VRAM_X_COORD(x_offset);
 		str_ctx.slice_pos.y = fb_clip->y + y_offset;
 		str_ctx.slice_pos.w = BLOCK_SIZE;
 		str_ctx.slice_pos.h = frame->height;

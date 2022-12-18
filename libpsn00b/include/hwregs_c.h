@@ -8,15 +8,20 @@
 
 #include <stdint.h>
 
-#define _MMIO8(addr)		*((volatile uint8_t *) (addr))
-#define _MMIO16(addr)		*((volatile uint16_t *) (addr))
-#define _MMIO32(addr)		*((volatile uint32_t *) (addr))
+#define _ADDR8(addr)		((volatile uint8_t *) (addr))
+#define _ADDR16(addr)		((volatile uint16_t *) (addr))
+#define _ADDR32(addr)		((volatile uint32_t *) (addr))
+#define _MMIO8(addr)		(*_ADDR8(addr))
+#define _MMIO16(addr)		(*_ADDR16(addr))
+#define _MMIO32(addr)		(*_ADDR32(addr))
 
 /* Constants */
 
 #define IOBASE				0xbf800000
-#define F_CPU				33868800UL
-#define F_GPU				53222400UL
+#define EXP1BASE			0xbf000000
+
+#define F_CPU				33868800L
+#define F_GPU				53222400L
 
 /* GPU */
 
@@ -82,24 +87,16 @@
 #define MDEC0				_MMIO32(IOBASE | 0x1820)
 #define MDEC1				_MMIO32(IOBASE | 0x1824)
 
-/* SPI controller port */
+/* SPI and serial interfaces */
 
-// IMPORTANT: even though JOY_TXRX is a 32-bit register, it should only be
+// IMPORTANT: even though SIO_DATA is a 32-bit register, it should only be
 // accessed as 8-bit. Reading it as 16 or 32-bit works fine on real hardware,
 // but leads to problems in some emulators.
-#define JOY_TXRX			_MMIO8 (IOBASE | 0x1040)
-#define JOY_STAT			_MMIO16(IOBASE | 0x1044)
-#define JOY_MODE			_MMIO16(IOBASE | 0x1048)
-#define JOY_CTRL			_MMIO16(IOBASE | 0x104a)
-#define JOY_BAUD			_MMIO16(IOBASE | 0x104e)
-
-/* Serial port */
-
-#define SIO_TXRX			_MMIO8 (IOBASE | 0x1050)
-#define SIO_STAT			_MMIO16(IOBASE | 0x1054)
-#define SIO_MODE			_MMIO16(IOBASE | 0x1058)
-#define SIO_CTRL			_MMIO16(IOBASE | 0x105a)
-#define SIO_BAUD			_MMIO16(IOBASE | 0x105e)
+#define SIO_DATA(N)			_MMIO8 (IOBASE | 0x1040 + 16 * (N))
+#define SIO_STAT(N)			_MMIO16(IOBASE | 0x1044 + 16 * (N))
+#define SIO_MODE(N)			_MMIO16(IOBASE | 0x1048 + 16 * (N))
+#define SIO_CTRL(N)			_MMIO16(IOBASE | 0x104a + 16 * (N))
+#define SIO_BAUD(N)			_MMIO16(IOBASE | 0x104e + 16 * (N))
 
 /* IRQ controller */
 
@@ -121,17 +118,17 @@
 #define TIMER_CTRL(N)		_MMIO32(IOBASE | 0x1104 + 16 * (N))
 #define TIMER_RELOAD(N)		_MMIO32(IOBASE | 0x1108 + 16 * (N))
 
-/* Memory control */
+/* Memory/bus control */
 
-#define EXP1_ADDR			_MMIO32(IOBASE | 0x1000)
-#define EXP2_ADDR			_MMIO32(IOBASE | 0x1004)
-#define EXP1_DELAY_SIZE		_MMIO32(IOBASE | 0x1008)
-#define EXP3_DELAY_SIZE		_MMIO32(IOBASE | 0x100c)
-#define BIOS_DELAY_SIZE		_MMIO32(IOBASE | 0x1010)
-#define SPU_DELAY_SIZE		_MMIO32(IOBASE | 0x1014)
-#define CD_DELAY_SIZE		_MMIO32(IOBASE | 0x1018)
-#define EXP2_DELAY_SIZE		_MMIO32(IOBASE | 0x101c)
-#define COM_DELAY_CFG		_MMIO32(IOBASE | 0x1020)
-#define RAM_SIZE_CFG		_MMIO32(IOBASE | 0x1060)
+#define BUS_EXP1_ADDR		_MMIO32(IOBASE | 0x1000)
+#define BUS_EXP2_ADDR		_MMIO32(IOBASE | 0x1004)
+#define BUS_EXP1_CFG		_MMIO32(IOBASE | 0x1008)
+#define BUS_EXP3_CFG		_MMIO32(IOBASE | 0x100c)
+#define BUS_BIOS_CFG		_MMIO32(IOBASE | 0x1010)
+#define BUS_SPU_CFG			_MMIO32(IOBASE | 0x1014)
+#define BUS_CD_CFG			_MMIO32(IOBASE | 0x1018)
+#define BUS_EXP2_CFG		_MMIO32(IOBASE | 0x101c)
+#define BUS_COM_DELAY		_MMIO32(IOBASE | 0x1020)
+#define BUS_RAM_SIZE		_MMIO32(IOBASE | 0x1060)
 
 #endif

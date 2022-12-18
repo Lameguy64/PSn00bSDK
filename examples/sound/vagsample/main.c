@@ -149,8 +149,8 @@ void play_sample(int addr, int sample_rate) {
 	// dummy values that disable the ADSR envelope entirely).
 	SPU_CH_VOL_L(ch) = 0x3fff;
 	SPU_CH_VOL_R(ch) = 0x3fff;
-	SPU_CH_ADSR1(ch) = 0x80ff;
-	SPU_CH_ADSR2(ch) = 0x1fee;
+	SPU_CH_ADSR1(ch) = 0x00ff;
+	SPU_CH_ADSR2(ch) = 0x0000;
 
 	// Start the channel.
 	SpuSetKey(1, 1 << ch);

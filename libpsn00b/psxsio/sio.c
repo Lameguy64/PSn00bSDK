@@ -34,13 +34,10 @@ static volatile RingBuffer _tx_buffer, _rx_buffer;
 
 /* Private interrupt handler */
 
-#define _ENTER_CRITICAL()	uint16_t mask = IRQ_MASK; IRQ_MASK = 0;
-#define _EXIT_CRITICAL()	IRQ_MASK = mask;
-
 static void _sio_handler(void) {
 	// Handle any incoming bytes.
-	while (SIO_STAT & SR_RXRDY) {
-		uint8_t value  = SIO_TXRX;
+	while (SIO_STAT(1) & SR_RXRDY) {
+		uint8_t value  = SIO_DATA(1);
 
 		// Skip storing this byte into the RX buffer if the callback returns a
 		// non-zero value.
@@ -66,7 +63,7 @@ static void _sio_handler(void) {
 	// Send the next byte in the buffer if the TX unit is ready. Note that
 	// checking for CTS is unnecessary as the serial port is already hardwired
 	// to do so.
-	if (SIO_STAT & (SR_TXRDY | SR_TXU)) {
+	if (SIO_STAT(1) & (SR_TXRDY | SR_TXU)) {
 		int length = _tx_buffer.length;
 
 		if (length) {
@@ -74,30 +71,30 @@ static void _sio_handler(void) {
 			_tx_buffer.head   = (head + 1) % BUFFER_LENGTH;
 			_tx_buffer.length = length - 1;
 
-			SIO_CTRL |= CR_TXIEN;
-			SIO_TXRX  = _tx_buffer.data[head];
+			SIO_CTRL(1) |= CR_TXIEN;
+			SIO_DATA(1)  = _tx_buffer.data[head];
 		} else {
-			SIO_CTRL &= CR_TXIEN ^ 0xffff; 
+			SIO_CTRL(1) &= CR_TXIEN ^ 0xffff; 
 		}
 	}
 
 	// Acknowledge the IRQ and update flow control signals.
 	if (_rx_buffer.length < BUFFER_LENGTH)
-		SIO_CTRL = CR_INTRST | (SIO_CTRL | _ctrl_reg_flag);
+		SIO_CTRL(1) = CR_INTRST | (SIO_CTRL(1) | _ctrl_reg_flag);
 	else
-		SIO_CTRL = CR_INTRST | (SIO_CTRL & (_ctrl_reg_flag ^ 0xffff));
+		SIO_CTRL(1) = CR_INTRST | (SIO_CTRL(1) & (_ctrl_reg_flag ^ 0xffff));
 }
 
 /* Serial port initialization API */
 
 void SIO_Init(int baud, uint16_t mode) {
 	EnterCriticalSection();
-	_old_sio_handler = InterruptCallback(8, &_sio_handler);
+	_old_sio_handler = InterruptCallback(IRQ_SIO1, &_sio_handler);
 
-	SIO_CTRL = CR_ERRRST;
-	SIO_MODE = (mode & 0xfffc) | MR_BR_16;
-	SIO_BAUD = (uint16_t) ((int) 0x1fa400 / baud);
-	SIO_CTRL = CR_TXEN | CR_RXEN | CR_RXIEN;
+	SIO_CTRL(1) = CR_ERRRST;
+	SIO_MODE(1) = (mode & 0xfffc) | MR_BR_16;
+	SIO_BAUD(1) = (uint16_t) ((int) 0x1fa400 / baud);
+	SIO_CTRL(1) = CR_TXEN | CR_RXEN | CR_RXIEN;
 
 	_tx_buffer.head   = 0;
 	_tx_buffer.tail   = 0;
@@ -114,40 +111,40 @@ void SIO_Init(int baud, uint16_t mode) {
 
 void SIO_Quit(void) {
 	EnterCriticalSection();
-	InterruptCallback(8, _old_sio_handler);
+	InterruptCallback(IRQ_SIO1, _old_sio_handler);
 
-	SIO_CTRL = CR_ERRRST;
+	SIO_CTRL(1) = CR_ERRRST;
 
 	ExitCriticalSection();
 }
 
 void SIO_SetFlowControl(SIO_FlowControl mode) {
-	_ENTER_CRITICAL();
+	FastEnterCriticalSection();
 
 	switch (mode) {
 		case SIO_FC_NONE:
 			_flow_control  = SIO_FC_NONE;
 			_ctrl_reg_flag = 0;
 
-			SIO_CTRL &= 0xffff ^ CR_DSRIEN;
+			SIO_CTRL(1) &= 0xffff ^ CR_DSRIEN;
 			break;
 
 		case SIO_FC_RTS_CTS:
 			_flow_control  = SIO_FC_RTS_CTS;
 			_ctrl_reg_flag = CR_RTS;
 
-			SIO_CTRL &= 0xffff ^ CR_DSRIEN;
+			SIO_CTRL(1) &= 0xffff ^ CR_DSRIEN;
 			break;
 
 		/*case SIO_FC_DTR_DSR:
 			_flow_control  = SIO_FC_DTR_DSR;
 			_ctrl_reg_flag = CR_DTR;
 
-			SIO_CTRL |= CR_DSRIEN;
+			SIO_CTRL(1) |= CR_DSRIEN;
 			break;*/
 	}
 
-	_EXIT_CRITICAL();
+	FastExitCriticalSection();
 }
 
 /* Reading API */
@@ -167,13 +164,13 @@ int SIO_ReadByte2(void) {
 	if (!_rx_buffer.length)
 		return -1;
 
-	_ENTER_CRITICAL();
+	FastEnterCriticalSection();
 
 	int head        = _rx_buffer.head;
 	_rx_buffer.head = (head + 1) % BUFFER_LENGTH;
 	_rx_buffer.length--;
 
-	_EXIT_CRITICAL();
+	FastExitCriticalSection();
 	return _rx_buffer.data[head];
 }
 
@@ -192,12 +189,12 @@ int SIO_ReadSync(int mode) {
 }
 
 void *SIO_ReadCallback(int (*func)(uint8_t)) {
-	EnterCriticalSection();
+	FastEnterCriticalSection();
 
 	void *old_callback  = _read_callback;
 	_read_callback      = func;
 
-	ExitCriticalSection();
+	FastExitCriticalSection();
 }
 
 /* Writing API */
@@ -219,18 +216,18 @@ int SIO_WriteByte2(uint8_t value) {
 	// condition where the transfer could end while interrupts are being
 	// disabled. Interrupts are disabled through the IRQ_MASK register rather
 	// than via syscalls for performance reasons.
-	_ENTER_CRITICAL();
+	FastEnterCriticalSection();
 
-	if (SIO_STAT & (SR_TXRDY | SR_TXU)) {
-		SIO_TXRX = value;
-		_EXIT_CRITICAL();
+	if (SIO_STAT(1) & (SR_TXRDY | SR_TXU)) {
+		SIO_DATA(1) = value;
+		FastExitCriticalSection();
 		return 0;
 	}
 
 	int length = _tx_buffer.length;
 
 	if (length >= BUFFER_LENGTH) {
-		_EXIT_CRITICAL();
+		FastExitCriticalSection();
 
 		//_sdk_log("TX overrun, dropping bytes\n");
 		return -1;
@@ -241,9 +238,9 @@ int SIO_WriteByte2(uint8_t value) {
 	_tx_buffer.length = length + 1;
 
 	_tx_buffer.data[tail] = value;
-	SIO_CTRL |= CR_TXIEN;
+	SIO_CTRL(1) |= CR_TXIEN;
 
-	_EXIT_CRITICAL();
+	FastExitCriticalSection();
 	return length;
 }
 
@@ -259,7 +256,7 @@ int SIO_WriteSync(int mode) {
 
 	if (!_tx_buffer.length) {
 		// Wait for the TX unit to finish sending the last byte.
-		while (!(SIO_STAT & (SR_TXRDY | SR_TXU)))
+		while (!(SIO_STAT(1) & (SR_TXRDY | SR_TXU)))
 			__asm__ volatile("");
 	} else {
 		//_sdk_log("SIO_WriteSync() timeout\n");

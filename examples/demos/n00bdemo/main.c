@@ -76,7 +76,7 @@ volatile int timer_counter = 0, frame_counter = 0, frame_rate = 0;
 void sort_overlay(int showlotl);
 void lightdemo();
 
-#define K573_WATCHDOG	*((volatile unsigned short *) 0x1f5c0000)
+#define K573_WATCHDOG	*((volatile unsigned short *) 0xbf5c0000)
 #define K573_EXP1_CFG	0x24173f47
 
 void timerTick() {
@@ -101,8 +101,8 @@ void timerSetup() {
 	EnterCriticalSection();
 
 #ifdef SYSTEM_573_SUPPORT
-	EXP1_ADDR		= 0x1f000000;
-	EXP1_DELAY_SIZE	= K573_EXP1_CFG;
+	BUS_EXP1_ADDR	= 0x1f000000;
+	BUS_EXP1_CFG	= K573_EXP1_CFG;
 #endif
 
 	TIMER_CTRL(2)	= 0x0258;				// CLK/8 input, IRQ on reload
