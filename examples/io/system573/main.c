@@ -66,12 +66,7 @@
 
 #include "k573io.h"
 
-const char *const IO_BOARD_TYPES[] = {
-	"ANALOG",
-	"DIGITAL"
-};
-
-#define btoi(x) ((((x) >> 4) & 0xf) * 10 + ((x) & 0xf))
+#define _btoi(x) ((((x) >> 4) & 0xf) * 10 + ((x) & 0xf))
 
 /* Display/GPU context utilities */
 
@@ -137,30 +132,18 @@ void display(RenderContext *ctx) {
 
 static RenderContext ctx;
 
-#define SHOW_STATUS(...) { FntPrint(-1, __VA_ARGS__); FntFlush(-1); display(&ctx); }
-#define SHOW_ERROR(...)  { SHOW_STATUS(__VA_ARGS__); while (1) __asm__("nop"); }
-
 int main(int argc, const char* argv[]) {
 	init_context(&ctx);
 	K573_Init();
 
 	const char *const version = (const char *const) GetSystemInfo(0x02);
-	//if (strncmp(version, "Konami OS", 9))
-		//SHOW_ERROR("ERROR: NOT RUNNING ON A SYSTEM 573!\n\n[%s]\n", version);
 
 	uint32_t counter       = 0;
 	uint32_t inputs        = K573_GetJAMMAInputs();
 	uint32_t last_inputs   = 0xff;
 	uint32_t current_light = 0;
 
-	// DIP switch 1 is used to determine if an analog or digital I/O board is
-	// installed.
-	K573_IOBoardType io_type = (inputs & JAMMA_DIP1)
-		? IO_TYPE_ANALOG
-		: IO_TYPE_DIGITAL;
-
-	K573_SetBoardType(io_type);
-	K573_SetLights(1);
+	K573_SetAnalogLights(1);
 
 	while (1) {
 		inputs = K573_GetJAMMAInputs();
@@ -168,16 +151,14 @@ int main(int argc, const char* argv[]) {
 		FntPrint(-1, "COUNTER=%d\n", counter++);
 
 		FntPrint(-1, "\nJAMMA INPUTS:\n");
-		FntPrint(-1, " IN2  =%016@\n",  inputs & 0xffff);
-		FntPrint(-1, " IN3_L=%04@\n",  (inputs >> 16) & 0x0f);
-		FntPrint(-1, " IN3_H=%04@\n",  (inputs >> 20) & 0x0f);
-		FntPrint(-1, " IN1_H=%05@\n",  (inputs >> 24) & 0x1f);
+		FntPrint(-1, " MAIN=%016@\n",  inputs & 0xffff);
+		FntPrint(-1, " EXT1=%04@\n",  (inputs >> 16) & 0x0f);
+		FntPrint(-1, " EXT2=%04@\n",  (inputs >> 20) & 0x0f);
+		FntPrint(-1, " COIN=%05@\n",  (inputs >> 24) & 0x1f);
 
-		FntPrint(-1, "\nCABINET LIGHTS:\n");
-		FntPrint(-1, " BOARD=%s\n", IO_BOARD_TYPES[io_type]);
-		FntPrint(-1, " LIGHT=%d\n", current_light);
-		FntPrint(-1, "\n [DIP SW1] CHANGE BOARD TYPE\n");
-		FntPrint(-1, "\n [TEST SW] CHANGE ACTIVE LIGHT\n");
+		FntPrint(-1, "\nANALOG IO LIGHT TEST:\n");
+		FntPrint(-1, " LAMP=%d\n", current_light);
+		FntPrint(-1, " PRESS [TEST] TO CHANGE LAMP\n");
 
 		// Request the current date/time from the RTC and display it.
 		K573_RTC[RTC_REG_CTRL] |= 0x40;
@@ -185,18 +166,17 @@ int main(int argc, const char* argv[]) {
 		FntPrint(
 			-1,
 			" %02d-%02d-%02d %02d:%02d:%02d\n",
-			btoi(K573_RTC[RTC_REG_YEAR]),
-			btoi(K573_RTC[RTC_REG_MONTH]),
-			btoi(K573_RTC[RTC_REG_DAY_OF_MONTH] & 0x3f),
-			btoi(K573_RTC[RTC_REG_HOURS]),
-			btoi(K573_RTC[RTC_REG_MINUTES]),
-			btoi(K573_RTC[RTC_REG_SECONDS] & 0x7f)
+			_btoi(K573_RTC[RTC_REG_YEAR]),
+			_btoi(K573_RTC[RTC_REG_MONTH]),
+			_btoi(K573_RTC[RTC_REG_DAY_OF_MONTH] & 0x3f),
+			_btoi(K573_RTC[RTC_REG_HOURS]),
+			_btoi(K573_RTC[RTC_REG_MINUTES]),
+			_btoi(K573_RTC[RTC_REG_SECONDS] & 0x7f)
 		);
 
 		FntPrint(-1, "\nSYSTEM:\n");
 		FntPrint(-1, " KERNEL=%s\n",   version);
 		FntPrint(-1, " DIP SW=%03@\n", inputs >> 29);
-		FntPrint(-1, " PCMCIA=%02@\n", (inputs >> 26) & 0x3);
 
 		FntFlush(-1);
 		display(&ctx);
@@ -208,26 +188,16 @@ int main(int argc, const char* argv[]) {
 		// Change the currently active light if the test button on the 573's
 		// front panel is pressed. DDR non-light outputs are skipped.
 		if (!(last_inputs & JAMMA_TEST) && (inputs & JAMMA_TEST)) {
-			current_light++;
-			if (
-				(current_light ==  4) || // DDR_LIGHT_P1_MUX_DATA
-				(current_light ==  7) || // DDR_LIGHT_P1_MUX_CLK
-				(current_light == 12) || // DDR_LIGHT_P2_MUX_DATA
-				(current_light == 15)    // DDR_LIGHT_P2_MUX_CLK
-			) current_light++;
+			do {
+				current_light = (current_light + 1) % 28;
+			} while (
+				(current_light ==  4) || // LIGHT_DDR_P1_IO_DATA
+				(current_light ==  5) || // LIGHT_DDR_P1_IO_CLK
+				(current_light == 12) || // LIGHT_DDR_P2_IO_DATA
+				(current_light == 13)    // LIGHT_DDR_P2_IO_CLK
+			);
 
-			current_light %= 32;
-			K573_SetLights(1 << current_light);
-		}
-
-		// if DIP switch 1 is toggled, change the I/O board type.
-		if ((last_inputs & JAMMA_DIP1) != (inputs & JAMMA_DIP1)) {
-			io_type = (inputs & JAMMA_DIP1)
-				? IO_TYPE_ANALOG
-				: IO_TYPE_DIGITAL;
-
-			K573_SetBoardType(io_type);
-			K573_SetLights(1 << current_light);
+			K573_SetAnalogLights(1 << current_light);
 		}
 
 		last_inputs = inputs;

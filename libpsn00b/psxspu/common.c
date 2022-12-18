@@ -45,9 +45,9 @@ static size_t _dma_transfer(uint32_t *data, size_t length, int write) {
 	}
 
 	// Increase bus delay for DMA reads
-	SPU_DELAY_SIZE &= 0xf0ffffff;
+	BUS_SPU_CFG &= ~(0xf << 24);
 	if (!write)
-		SPU_DELAY_SIZE = 2 << 24;
+		BUS_SPU_CFG = 2 << 24;
 
 	SPU_CTRL &= 0xffcf; // Disable DMA request
 	_wait_status(0x0030, 0x0000);
@@ -107,7 +107,7 @@ static size_t _manual_write(const uint16_t *data, size_t length) {
 /* Public API */
 
 void SpuInit(void) {
-	SPU_DELAY_SIZE = 0x200931e1;
+	BUS_SPU_CFG = 0x200931e1;
 
 	SPU_CTRL = 0x0000; // SPU disabled
 	_wait_status(0x001f, 0x0000);

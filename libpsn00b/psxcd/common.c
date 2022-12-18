@@ -206,7 +206,7 @@ int CdInit(void) {
 	InterruptCallback(IRQ_CD, &_cd_irq_handler);
 	ExitCriticalSection();
 
-	CD_DELAY_SIZE = 0x00020943;
+	BUS_CD_CFG = 0x00020943;
 
 	CD_REG(0) = 1;
 	CD_REG(3) = 0x1f; // Acknowledge all IRQs
