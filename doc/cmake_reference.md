@@ -172,33 +172,31 @@ psn00bsdk_add_cd_image(
 ```
 
 Creates a new virtual target that will build a CD image using `mkpsxiso`. The
-CD image will always be considered out-of-date and built, even if none of its
-dependencies or any other files have been modified.
+CD image will be added to the top-level target and rebuilt automatically if any
+of its dependencies have been modified since the last build.
 
-The first argument is the name of the target to create; next up is the name of
-the generated image file (`<image name>.bin` + `<image name>.cue`). The third
-argument is the path to the XML file (relative to the source directory) passed
-to `mkpsxiso`.
+The first argument is the name of the target to create and associate with the
+CD image. This target does not actually build the image but depends on it,
+ensuring CMake will build it if necessary. Note that the target, along with any
+other targets depending on it, are always considered out-of-date by CMake
+*even if the CD image is actually up-to-date*.
+
+The second argument specifies the name of the generated image files
+(`<image name>.bin` + `<image name>.cue`) and is followed to the path to the
+XML file (relative to the source directory) to be passed to `mkpsxiso`. Note
+that the `image_name` and `cue_sheet` fields specified in the `<iso_project>`
+root tag (see `mkpsxiso` documentation) are ignored and overridden by the image
+name provided.
 
 The XML file is "configured" by CMake, i.e. any `${var}` or `@var@` expressions
-are replaced with the values of the respective variables. In particular
-`${CD_IMAGE_NAME}` is replaced with the second argument passed to
-`psn00bsdk_add_cd_image()`; the file must properly set the output file names
-like this:
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<iso_project
-  image_name="${CD_IMAGE_NAME}.bin"
-  cue_sheet="${CD_IMAGE_NAME}.cue"
->
-  <!-- ... -->
-</iso_project>
-```
+are replaced with the values of the respective CMake variables. Paths to source
+files are interpreted as relative to the build directory. In order to include a
+file from the source directory, `${PROJECT_SOURCE_DIR}` shall be prepended to
+the path specified in the XML file (e.g. `${PROJECT_SOURCE_DIR}/system.cnf`).
 
 Any additional argument is passed through to the underlying call to
-`add_custom_target()`, so most of the options supported by
-`add_custom_target()` (including `DEPENDS`) are also supported here.
+`add_custom_command()`, so most of the options supported by
+`add_custom_command()` (including `DEPENDS`) are also supported here.
 
 ### `psn00bsdk_target_incbin`
 
@@ -396,4 +394,4 @@ CMake's `add_custom_command()` and `add_custom_target()` to convert models and
 generate LZP archives as part of the build pipeline.
 
 -----------------------------------------
-_Last updated on 2022-10-11 by spicyjpeg_
+_Last updated on 2022-12-18 by spicyjpeg_

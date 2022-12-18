@@ -37,9 +37,14 @@ fixed.
   due to the SPU status register being emulated incorrectly. They work as
   expected on other emulators as well as on real hardware.
 
+`psxcd`:
+
+- The library seems to get into an unpredictable state when removing discs on
+  pcsx-redux (and possibly real hardware?).
+
 ## Examples
 
 See [README.md in the examples directory](../examples/README.md#examples-summary).
 
 -----------------------------------------
-_Last updated on 2022-10-30 by spicyjpeg_
+_Last updated on 2022-12-18 by spicyjpeg_

@@ -14,7 +14,6 @@ target_compile_options(
 		# Options common to all target types
 		-g
 		-Wa,--strip-local-absolute
-		-O2
 		-ffreestanding
 		-fno-builtin
 		-nostdlib
@@ -29,7 +28,6 @@ target_compile_options(
 		-mabi=32
 		-mno-mt
 		-mno-llsc
-		-mdivide-breaks
 	$<$<COMPILE_LANGUAGE:CXX>:
 		# Options common to all target types (C++)
 		-fno-exceptions
@@ -37,6 +35,14 @@ target_compile_options(
 		-fno-unwind-tables
 		-fno-threadsafe-statics
 		-fno-use-cxa-atexit
+	>
+	$<IF:$<CONFIG:Debug>,
+		# Options for debug builds
+		-Og
+		-mdivide-breaks
+	,
+		# Options for release builds
+		-O2
 	>
 	$<$<STREQUAL:$<UPPER_CASE:$<TARGET_PROPERTY:PSN00BSDK_TARGET_TYPE>>,EXECUTABLE_GPREL>:
 		# Options for executables with $gp-relative addressing
@@ -86,5 +92,9 @@ target_link_options(
 target_compile_definitions(
 	psn00bsdk INTERFACE
 		PSN00BSDK=1
-		$<$<CONFIG:Release>:NDEBUG=1>
+	$<IF:$<CONFIG:Debug>,
+		#NDEBUG=0
+	,
+		NDEBUG=1
+	>
 )

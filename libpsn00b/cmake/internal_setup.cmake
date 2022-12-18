@@ -173,6 +173,7 @@ function(psn00bsdk_add_executable name type)
 			#$<${_repl},${PSN00BSDK_SYMBOL_MAP_SUFFIX}>
 			${CMAKE_CURRENT_BINARY_DIR}/${name}${PSN00BSDK_EXECUTABLE_SUFFIX}
 			${CMAKE_CURRENT_BINARY_DIR}/${name}${PSN00BSDK_SYMBOL_MAP_SUFFIX}
+		#VERBATIM
 	)
 endfunction()
 
@@ -200,6 +201,7 @@ function(psn00bsdk_add_library name type)
 				$<SHELL_PATH:${CMAKE_CURRENT_BINARY_DIR}/${name}${PSN00BSDK_SHARED_LIBRARY_SUFFIX}>
 			#BYPRODUCTS $<${_repl},${PSN00BSDK_SHARED_LIBRARY_SUFFIX}>
 			BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/${name}${PSN00BSDK_SHARED_LIBRARY_SUFFIX}
+			VERBATIM
 		)
 	else()
 		message(FATAL_ERROR "Invalid library type: ${type} (must be STATIC, OBJECT, SHARED or MODULE)")
@@ -209,8 +211,8 @@ endfunction()
 ## Linking helpers
 
 function(psn00bsdk_target_incbin_a name type symbol_name size_name path section align)
-	string(MAKE_C_IDENTIFIER ${symbol_name} _id)
-	string(MAKE_C_IDENTIFIER ${size_name}   _size)
+	string(MAKE_C_IDENTIFIER "${symbol_name}" _id)
+	string(MAKE_C_IDENTIFIER "${size_name}"   _size)
 	cmake_path(ABSOLUTE_PATH path OUTPUT_VARIABLE _path)
 
 	string(SHA1 _hash "${name} ${_id}")
@@ -223,11 +225,12 @@ function(psn00bsdk_target_incbin_a name type symbol_name size_name path section 
 		CONFIGURE
 		OUTPUT  ${_asm_file}
 		CONTENT [[
-.section ${section}
+.section ${section}.${_id}, "aw"
 .balign ${align}
 
 .global ${_id}
 .type ${_id}, @object
+.size ${_id}, (${_id}_end - ${_id})
 ${_id}:
 	.incbin "${_path}"
 
@@ -235,34 +238,32 @@ ${_id}:
 ${_id}_end:
 
 .balign ${align}
+
+.section ${section}.${_size}, "aw"
 .balign 4
 
 .global ${_size}
 .type ${_size}, @object
+.size ${_size}, 4
 ${_size}:
 	.int (${_id}_end - ${_id})
-
-.size ${_id}, (${_id}_end - ${_id})
-.size ${_size}, 4
 ]]
 		ESCAPE_QUOTES
 		NEWLINE_STYLE LF
 	)
 
 	target_sources(${name} ${type} ${_asm_file})
-	set_source_files_properties(${_asm_file} PROPERTIES OBJECT_DEPENDS ${_path})
+	set_source_files_properties(${_asm_file} PROPERTIES OBJECT_DEPENDS "${_path}")
 endfunction()
 
 function(psn00bsdk_target_incbin name type symbol_name path)
-	string(MAKE_C_IDENTIFIER ${symbol_name} _id)
-
 	psn00bsdk_target_incbin_a(
 		${name}
 		${type}
-		${_id}
-		${_id}_size
-		${path}
-		.data.${_id}
+		"${symbol_name}"
+		"${symbol_name}_size"
+		"${path}"
+		.data
 		4
 	)
 endfunction()
@@ -280,14 +281,22 @@ function(psn00bsdk_add_cd_image name image_name config_file)
 	cmake_path(HASH config_file _hash)
 
 	set(CD_IMAGE_NAME  ${image_name})
-	set(CD_CONFIG_FILE cd_image_${_hash}.xml)
-	configure_file(${config_file} ${CD_CONFIG_FILE})
+	set(CD_CONFIG_FILE ${CMAKE_CURRENT_BINARY_DIR}/cd_image_${_hash}.xml)
+	configure_file("${config_file}" ${CD_CONFIG_FILE})
 
+	add_custom_command(
+		OUTPUT ${CD_IMAGE_NAME}.bin ${CD_IMAGE_NAME}.cue
+		COMMAND
+			${MKPSXISO} -y
+			-o ${CD_IMAGE_NAME}.bin -c ${CD_IMAGE_NAME}.cue ${CD_CONFIG_FILE}
+		COMMENT "Building CD image ${CD_IMAGE_NAME}"
+		VERBATIM
+		${ARGN}
+	)
 	add_custom_target(
 		${name} ALL
-		COMMAND    ${MKPSXISO} -y ${CD_CONFIG_FILE}
-		BYPRODUCTS ${image_name}.bin ${image_name}.cue
-		COMMENT    "Building CD image ${image_name}"
-		${ARGN}
+		DEPENDS
+			${CMAKE_CURRENT_BINARY_DIR}/${CD_IMAGE_NAME}.bin
+			${CMAKE_CURRENT_BINARY_DIR}/${CD_IMAGE_NAME}.cue
 	)
 endfunction()
