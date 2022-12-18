@@ -242,7 +242,7 @@ void *DL_GetMapSymbol(const char *name) {
 	// https://docs.oracle.com/cd/E23824_01/html/819-0690/chapter6-48031.html
 	uint32_t hash = _elf_hash(name);
 
-	for (int i = _symbol_map.bucket[hash % _symbol_map.nbucket]; i > 0;) {
+	for (int i = _symbol_map.bucket[hash % _symbol_map.nbucket]; i >= 0;) {
 		if (i >= _symbol_map.nchain) {
 			_sdk_log(
 				"DL_GetMapSymbol() index out of bounds (%d >= %d)\n",
@@ -426,7 +426,8 @@ DLL *DL_CreateDLL(DLL *dll, void *ptr, size_t size, DL_ResolveMode mode) {
 	const uint32_t *ctor_list = DL_GetDLLSymbol(dll, "__CTOR_LIST__");
 	if (ctor_list) {
 		for (int i = ((int) ctor_list[0]); i >= 1; i--) {
-			void (*ctor)(void) = (void (*)(void)) ctor_list[i];
+			void (*ctor)(void) = (void (*)(void))
+				((uint8_t *) ptr + ctor_list[i + 1]);
 			DL_PRE_CALL(ctor);
 			ctor();
 		}
@@ -444,7 +445,8 @@ void DL_DestroyDLL(DLL *dll) {
 		const uint32_t *dtor_list = DL_GetDLLSymbol(dll, "__DTOR_LIST__");
 		if (dtor_list) {
 			for (int i = 0; i < ((int) dtor_list[0]); i++) {
-				void (*dtor)(void) = (void (*)(void)) dtor_list[i + 1];
+				void (*dtor)(void) = (void (*)(void))
+					((uint8_t *) dll->ptr + dtor_list[i + 1]);
 				DL_PRE_CALL(dtor);
 				dtor();
 			}
@@ -472,7 +474,7 @@ void *DL_GetDLLSymbol(const DLL *dll, const char *name) {
 
 	// Go through the hash table's chain until the symbol name matches the one
 	// provided.
-	for (int i = bucket[_elf_hash(name) % nbucket]; i > 0;) {
+	for (int i = bucket[_elf_hash(name) % nbucket]; i >= 0;) {
 		if (i >= nchain) {
 			_sdk_log("DL_GetDLLSymbol() index out of bounds (%d >= %d)\n", i, nchain);
 			return 0;

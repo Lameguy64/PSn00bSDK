@@ -39,6 +39,11 @@ typedef enum _GPU_VideoMode {
 #define setTPage(p, tp, abr, x, y)	((p)->tpage = getTPage(tp, abr, x, y))
 #define setClut(p, x, y)			((p)->clut = getClut(x, y))
 
+#define setColor0(p, rgb) (((P_COLOR *) &((p)->r0))->color = (rgb))
+#define setColor1(p, rgb) (((P_COLOR *) &((p)->r1))->color = (rgb))
+#define setColor2(p, rgb) (((P_COLOR *) &((p)->r2))->color = (rgb))
+#define setColor3(p, rgb) (((P_COLOR *) &((p)->r3))->color = (rgb))
+
 #define setRGB0(p, r, g, b) ((p)->r0 = (r), (p)->g0 = (g), (p)->b0 = (b))
 #define setRGB1(p, r, g, b) ((p)->r1 = (r), (p)->g1 = (g), (p)->b1 = (b))
 #define setRGB2(p, r, g, b) ((p)->r2 = (r), (p)->g2 = (g), (p)->b2 = (b))
@@ -198,8 +203,14 @@ typedef enum _GPU_VideoMode {
 typedef struct _P_TAG {
 	uint32_t	addr:24;
 	uint32_t	len:8;
-	uint8_t		r, g, b, code;
+	uint32_t	color:24;
+	uint32_t	code:8;
 } P_TAG;
+
+typedef struct _P_COLOR {
+	uint32_t	color:24;
+	uint32_t	pad:8;
+} P_COLOR;
 
 typedef struct _POLY_F3 {
 	uint32_t	tag;
@@ -402,7 +413,7 @@ typedef struct _SPRT_FIXED SPRT_16;
 
 typedef struct _DR_ENV {
 	uint32_t tag;
-	uint32_t code[15];
+	uint32_t code[8];
 } DR_ENV;
 
 typedef struct _DR_AREA {

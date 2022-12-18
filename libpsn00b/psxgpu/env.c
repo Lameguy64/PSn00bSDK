@@ -11,6 +11,28 @@
 
 extern GPU_VideoMode _gpu_video_mode;
 
+/* Private utilities */
+
+// Converts a texture window size value (a power of two in 8-128 range) into a
+// bit mask by setting the leading zeroes of the value:
+//     0 = 0b00000000 -> 0b00000
+//     8 = 0b00001000 -> 0b11111
+//    16 = 0b00010000 -> 0b11110
+//    32 = 0b00100000 -> 0b11100
+//    64 = 0b01000000 -> 0b11000
+//   128 = 0b10000000 -> 0b10000
+// The GPU uses the mask to process texture coordinates as follows:
+//   x &= ~(mask << 3)
+//   x |= (offset << 3) & (mask << 3)
+static inline uint32_t _get_window_mask(int size) {
+	uint32_t mask = size >> 3;
+
+	mask |= mask << 1;
+	mask |= mask << 2;
+	mask |= mask << 4;
+	return mask & 0x1f;
+}
+
 /* Drawing API */
 
 DRAWENV *SetDefDrawEnv(DRAWENV *env, int x, int y, int w, int h) {
@@ -24,8 +46,8 @@ DRAWENV *SetDefDrawEnv(DRAWENV *env, int x, int y, int w, int h) {
 
 	env->tw.x = 0;
 	env->tw.y = 0;
-	env->tw.w = 0;
-	env->tw.h = 0;
+	env->tw.w = 256;
+	env->tw.h = 256;
 
 	env->tpage = 0x0a;
 	env->dtd   = 1;
@@ -41,49 +63,52 @@ int DrawOTagEnv(const uint32_t *ot, DRAWENV *env) {
 	DR_ENV *prim = &(env->dr_env);
 
 	// All commands are grouped into a single display list packet for
-	// performance reasons (keep in mind that the GPU doesn't care about this
-	// as the display list is parsed by the DMA unit in the CPU and only the
-	// payload is sent to the GPU).
+	// performance reasons (the GPU does not care about the grouping as the
+	// display list is parsed by the DMA unit in the CPU).
 	setaddr(prim, ot);
-	setlen(prim, 4);
-
-	// Set drawing area top left
-	prim->code[0]  = 0xe3000000;
-	prim->code[0] |=  env->clip.x & 0x3ff;
-	prim->code[0] |= (env->clip.y & 0x3ff) << 10;
-
-	// Set drawing area bottom right
-	prim->code[1]  = 0xe4000000;
-	prim->code[1] |=  (env->clip.x + (env->clip.w - 1)) & 0x3ff;
-	prim->code[1] |= ((env->clip.y + (env->clip.h - 1)) & 0x3ff) << 10;
-
-	// Set drawing offset
-	prim->code[2]  = 0xe5000000;
-	prim->code[2] |=  (env->clip.x + env->ofs[0]) & 0x7ff;
-	prim->code[2] |= ((env->clip.y + env->ofs[1]) & 0x7ff) << 11;
+	setlen(prim, 5);
 
 	// Texture page (reset active page and set dither/mask bits)
-	prim->code[3]  = 0xe1000000 | env->tpage;
-	prim->code[3] |= (env->dtd & 1) << 9;
-	prim->code[3] |= (env->dfe & 1) << 10;
+	prim->code[0]  = 0xe1000000 | env->tpage;
+	prim->code[0] |= (env->dtd & 1) << 9;
+	prim->code[0] |= (env->dfe & 1) << 10;
+
+	// Texture window
+	prim->code[1]  = 0xe2000000;
+	prim->code[1] |= _get_window_mask(env->tw.w);
+	prim->code[1] |= _get_window_mask(env->tw.h) << 5;
+	prim->code[1] |= (env->tw.x & 0xf8) << 7;  // ((tw.x / 8) & 0x1f) << 10
+	prim->code[1] |= (env->tw.y & 0xf8) << 12; // ((tw.y / 8) & 0x1f) << 15
+
+	// Set drawing area top left
+	prim->code[2]  = 0xe3000000;
+	prim->code[2] |=  env->clip.x & 0x3ff;
+	prim->code[2] |= (env->clip.y & 0x3ff) << 10;
+
+	// Set drawing area bottom right
+	prim->code[3]  = 0xe4000000;
+	prim->code[3] |=  (env->clip.x + (env->clip.w - 1)) & 0x3ff;
+	prim->code[3] |= ((env->clip.y + (env->clip.h - 1)) & 0x3ff) << 10;
+
+	// Set drawing offset
+	prim->code[4]  = 0xe5000000;
+	prim->code[4] |=  (env->clip.x + env->ofs[0]) & 0x7ff;
+	prim->code[4] |= ((env->clip.y + env->ofs[1]) & 0x7ff) << 11;
 
 	if (env->isbg) {
-		setlen(prim, 7);
+		setlen(prim, 8);
 
 		// Rectangle fill
 		// FIXME: reportedly this command doesn't accept height values >511...
-		prim->code[4]  = 0x02000000;
-		//prim->code[4] |= env->r0 | (env->g0 << 8) | (env->b0 << 16);
-		prim->code[4] |= *((const uint32_t *) &(env->isbg)) >> 8;
-		//prim->code[5]  = env->clip.x;
-		//prim->code[5] |= env->clip.y << 16;
-		prim->code[5]  = *((const uint32_t *) &(env->clip.x));
-		prim->code[6]  = env->clip.w;
-		prim->code[6] |= _min(env->clip.h, 0x1ff) << 16;
+		prim->code[5]  = 0x02000000;
+		//prim->code[5] |= env->r0 | (env->g0 << 8) | (env->b0 << 16);
+		//prim->code[6]  = env->clip.x;
+		//prim->code[6] |= env->clip.y << 16;
+		prim->code[5] |= *((const uint32_t *) &(env->isbg)) >> 8;
+		prim->code[6]  = *((const uint32_t *) &(env->clip.x));
+		prim->code[7]  = env->clip.w;
+		prim->code[7] |= _min(env->clip.h, 0x1ff) << 16;
 	}
-
-	//while (!(GPU_GP1 & (1 << 26)))
-		//__asm__ volatile("");
 
 	return EnqueueDrawOp((void *) &DrawOTag2, (uint32_t) prim, 0, 0);
 }
@@ -96,12 +121,10 @@ void PutDrawEnv(DRAWENV *env) {
 // useful if the DRAWENV structure is never modified (which is the case most of
 // the time).
 void PutDrawEnvFast(DRAWENV *env) {
-	if (!(env->dr_env.tag)) {
+	if (!(env->dr_env.tag))
 		DrawOTagEnv((const uint32_t *) 0x00ffffff, env);
-		return;
-	}
-
-	DrawOTag((const uint32_t *) &(env->dr_env));
+	else
+		DrawOTag((const uint32_t *) &(env->dr_env));
 }
 
 /* Display API */
@@ -132,7 +155,7 @@ void PutDispEnv(const DISPENV *env) {
 	mode |= (env->isinter & 1) << 5;
 	mode |= (env->reverse & 1) << 7;
 
-	if (env->disp.h >= 256)
+	if (env->disp.h > 256)
 		mode |= 1 << 2;
 
 	// Calculate the horizontal display range values. The original code was

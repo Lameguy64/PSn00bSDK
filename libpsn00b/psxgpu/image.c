@@ -12,7 +12,17 @@
 #include <psxgpu.h>
 #include <hwregs_c.h>
 
-#define DMA_CHUNK_LENGTH 8
+#define QUEUE_LENGTH		16
+#define DMA_CHUNK_LENGTH	8
+
+/* Internal globals */
+
+// LoadImage() and StoreImage() run asynchronously but may be called with a
+// pointer to a RECT struct in the stack, which might no longer be valid by the
+// time the transfer is actually started. This buffer is used to store a copy
+// of all RECTs passed to LoadImage()/StoreImage() as a workaround.
+static RECT _saved_rects[QUEUE_LENGTH];
+static int  _next_saved_rect = 0;
 
 /* Private utilities */
 
@@ -51,20 +61,32 @@ static void _dma_transfer(const RECT *rect, uint32_t *data, int write) {
 /* VRAM transfer API */
 
 int LoadImage(const RECT *rect, const uint32_t *data) {
+	int index = _next_saved_rect;
+
+	_saved_rects[index] = *rect;
+	_next_saved_rect    = (index + 1) % QUEUE_LENGTH;
+
 	return EnqueueDrawOp(
-		(void *) &_dma_transfer, (uint32_t) rect, (uint32_t) data, 1
+		(void *)   &_dma_transfer,
+		(uint32_t) &_saved_rects[index],
+		(uint32_t) data,
+		1
 	);
 }
 
 int StoreImage(const RECT *rect, uint32_t *data) {
+	int index = _next_saved_rect;
+
+	_saved_rects[index] = *rect;
+	_next_saved_rect    = (index + 1) % QUEUE_LENGTH;
+
 	return EnqueueDrawOp(
-		(void *) &_dma_transfer, (uint32_t) rect, (uint32_t) data, 0
+		(void *)   &_dma_transfer,
+		(uint32_t) &_saved_rects[index],
+		(uint32_t) data,
+		0
 	);
 }
-
-/*int MoveImage(const RECT *rect, int x, int y) {
-	return EnqueueDrawOp((void *) &MoveImage2, (uint32_t) rect, x, y);
-}*/
 
 void LoadImage2(const RECT *rect, const uint32_t *data) {
 	_dma_transfer(rect, (uint32_t *) data, 1);

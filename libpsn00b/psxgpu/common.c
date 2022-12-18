@@ -255,8 +255,8 @@ void ClearOTagR(uint32_t *ot, size_t length) {
 	DMA_BCR(6)  = length & 0xffff;
 	DMA_CHCR(6) = 0x11000002;
 
-	//while (DMA_CHCR(6) & (1 << 24))
-		//__asm__ volatile("");
+	while (DMA_CHCR(6) & (1 << 24))
+		__asm__ volatile("");
 }
 
 void ClearOTag(uint32_t *ot, size_t length) {
