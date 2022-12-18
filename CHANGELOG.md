@@ -19,7 +19,7 @@ to ensure the changelog can be parsed correctly.
 
 -------------------------------------------------------------------------------
 
-# 2022-12-18: 0.22
+## 2022-12-18: 0.22
 
 spicyjpeg:
 
@@ -50,7 +50,7 @@ spicyjpeg:
   mode by default. CD images created using `psn00bsdk_add_cd_image()` are now
   only rebuilt if necessary (i.e. if any of their dependencies change).
 
-# 2022-10-27
+## 2022-10-27
 
 spicyjpeg:
 

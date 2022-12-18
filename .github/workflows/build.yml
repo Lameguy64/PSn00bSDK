@@ -128,12 +128,6 @@ jobs:
         name: psn00bsdk-windows
         path: build/packages/*.zip
 
-    - name: Upload build artifacts (NSIS)
-      uses: actions/upload-artifact@v2
-      with:
-        name: psn00bsdk-windows-installer
-        path: build/packages/*.exe
-
   build-sdk-linux:
     name:    Build PSn00bSDK on Linux
     runs-on: ubuntu-latest
@@ -213,10 +207,9 @@ jobs:
       if:   ${{ github.ref_type == 'tag' }}
       uses: softprops/action-gh-release@v1
       with:
-        fail_on_unmatched_files: true
-        body_path:               release.md
+        #fail_on_unmatched_files: true
+        body_path: release.md
         files: |
           *.zip
           psn00bsdk-windows/*
-          psn00bsdk-windows-installer/*
           psn00bsdk-linux/*
