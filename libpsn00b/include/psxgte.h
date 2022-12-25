@@ -186,8 +186,8 @@ MATRIX *HiRotMatrix(VECTOR *r, MATRIX *m);
  * @details Simply sets the translation vector of MATRIX m. To perform
  * accumulative translation operations, see CompMatrixLV().
  *
- * @param m Translation vector (input)
- * @param r Matrix (output)
+ * @param m Matrix (output)
+ * @param r Translation vector (input)
  * @return Pointer to m.
  *
  * @see RotMatrix(), CompMatrixLV()
