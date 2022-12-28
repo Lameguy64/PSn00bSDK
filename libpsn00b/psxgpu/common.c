@@ -46,7 +46,7 @@ static void _vblank_handler(void) {
 }
 
 static void _gpu_dma_handler(void) {
-	//while (!(GPU_GP1 & (1 << 26)) || (DMA_CHCR(2) & (1 << 24)))
+	//while (!(GPU_GP1 & (1 << 26)) || (DMA_CHCR(DMA_GPU) & (1 << 24)))
 	while (!(GPU_GP1 & (1 << 26)))
 		__asm__ volatile("");
 
@@ -85,9 +85,10 @@ void ResetGraph(int mode) {
 		return;
 	}
 
-	DMA_DPCR   |= 0x0b000b00; // Enable DMA2 and DMA6
-	DMA_CHCR(2) = 0x00000201; // Stop DMA2
-	DMA_CHCR(6) = 0x00000200; // Stop DMA6
+	SetDMAPriority(DMA_GPU, 3);
+	SetDMAPriority(DMA_OTC, 3);
+	DMA_CHCR(DMA_GPU) = 0x00000201; // Stop DMA
+	DMA_CHCR(DMA_OTC) = 0x00000200; // Stop DMA
 
 	if (mode == 1) {
 		GPU_GP1 = 0x01000000; // Reset command buffer
@@ -225,7 +226,7 @@ int DrawSync(int mode) {
 	if (!_queue_length) {
 		// Wait for any DMA transfer to finish if DMA is enabled.
 		if (GPU_GP1 & (3 << 29)) {
-			while (!(GPU_GP1 & (1 << 28)) || (DMA_CHCR(2) & (1 << 24)))
+			while (!(GPU_GP1 & (1 << 28)) || (DMA_CHCR(DMA_GPU) & (1 << 24)))
 				__asm__ volatile("");
 		}
 
@@ -251,11 +252,11 @@ void *DrawSyncCallback(void (*func)(void)) {
 /* OT and primitive drawing API */
 
 void ClearOTagR(uint32_t *ot, size_t length) {
-	DMA_MADR(6) = (uint32_t) &ot[length - 1];
-	DMA_BCR(6)  = length & 0xffff;
-	DMA_CHCR(6) = 0x11000002;
+	DMA_MADR(DMA_OTC) = (uint32_t) &ot[length - 1];
+	DMA_BCR(DMA_OTC)  = length & 0xffff;
+	DMA_CHCR(DMA_OTC) = 0x11000002;
 
-	while (DMA_CHCR(6) & (1 << 24))
+	while (DMA_CHCR(DMA_OTC) & (1 << 24))
 		__asm__ volatile("");
 }
 
@@ -283,13 +284,14 @@ void DrawPrim(const uint32_t *pri) {
 	// NOTE: if length >= DMA_CHUNK_LENGTH then it also has to be a multiple of
 	// DMA_CHUNK_LENGTH, otherwise the DMA channel will get stuck waiting for
 	// more data indefinitely.
-	DMA_MADR(2) = (uint32_t) &pri[1];
+	DMA_MADR(DMA_GPU) = (uint32_t) &pri[1];
 	if (length < DMA_CHUNK_LENGTH)
-		DMA_BCR(2) = 0x00010000 | length;
+		DMA_BCR(DMA_GPU) = 0x00010000 | length;
 	else
-		DMA_BCR(2) = DMA_CHUNK_LENGTH | ((length / DMA_CHUNK_LENGTH) << 16);
+		DMA_BCR(DMA_GPU) = DMA_CHUNK_LENGTH |
+			((length / DMA_CHUNK_LENGTH) << 16);
 
-	DMA_CHCR(2) = 0x01000201;
+	DMA_CHCR(DMA_GPU) = 0x01000201;
 }
 
 int DrawOTag(const uint32_t *ot) {
@@ -299,12 +301,12 @@ int DrawOTag(const uint32_t *ot) {
 void DrawOTag2(const uint32_t *ot) {
 	GPU_GP1 = 0x04000002;
 
-	while (!(GPU_GP1 & (1 << 26)) || (DMA_CHCR(2) & (1 << 24)))
+	while (!(GPU_GP1 & (1 << 26)) || (DMA_CHCR(DMA_GPU) & (1 << 24)))
 		__asm__ volatile("");
 
-	DMA_MADR(2) = (uint32_t) ot;
-	DMA_BCR(2)  = 0;
-	DMA_CHCR(2) = 0x01000401;
+	DMA_MADR(DMA_GPU) = (uint32_t) ot;
+	DMA_BCR(DMA_GPU)  = 0;
+	DMA_CHCR(DMA_GPU) = 0x01000401;
 }
 
 /* Misc. functions */

@@ -9,6 +9,7 @@
 
 #include <stdint.h>
 #include <assert.h>
+#include <psxetc.h>
 #include <psxgpu.h>
 #include <hwregs_c.h>
 
@@ -49,13 +50,14 @@ static void _dma_transfer(const RECT *rect, uint32_t *data, int write) {
 	// Enable DMA request, route to GP0 (2) or from GPU_READ (3)
 	GPU_GP1 = 0x04000002 | (write ^ 1);
 
-	DMA_MADR(2) = (uint32_t) data;
+	DMA_MADR(DMA_GPU) = (uint32_t) data;
 	if (length < DMA_CHUNK_LENGTH)
-		DMA_BCR(2) = 0x00010000 | length;
+		DMA_BCR(DMA_GPU) = 0x00010000 | length;
 	else
-		DMA_BCR(2) = DMA_CHUNK_LENGTH | ((length / DMA_CHUNK_LENGTH) << 16);
+		DMA_BCR(DMA_GPU) = DMA_CHUNK_LENGTH |
+			((length / DMA_CHUNK_LENGTH) << 16);
 
-	DMA_CHCR(2) = 0x01000200 | write;
+	DMA_CHCR(DMA_GPU) = 0x01000200 | write;
 }
 
 /* VRAM transfer API */

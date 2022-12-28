@@ -156,19 +156,50 @@ void *DMACallback(DMA_Channel dma, void (*func)(void));
 void *GetDMACallback(DMA_Channel dma);
 
 /**
- * @brief Initializes the interrupt dispatcher.
+ * @brief Enables, disables or sets the priority of a DMA channel.
+ *
+ * @details Enables the specified DMA channel and configures its priority (if
+ * priority >= 0) or disables it (if priority = -1). The priority value must be
+ * in 0-7 range, with 0 being the highest priority and 7 the lowest.
+ *
+ * All channels are disabled upon calling ResetCallback(); most libraries will
+ * re-enable them as needed. By default the priority is set to 3 for all
+ * channels.
+ *
+ * @param dma
+ * @param priority Priority in 0-7 range or -1 to disable the channel
+ * @return Previously set priority in 0-7 range, -1 if the channel was disabled
+ */
+int SetDMAPriority(DMA_Channel dma, int priority);
+
+/**
+ * @brief Gets the priority of a DMA channel.
+ *
+ * @details Returns the currently set priority value for the specified DMA
+ * channel in 0-7 range, with 0 being the highest priority and 7 the lowest.
+ * Returns -1 if the channel is not enabled.
+ *
+ * @param dma
+ * @return Priority in 0-7 range, -1 if the channel is disabled
+ *
+ * @see SetDMAPriority()
+ */
+int GetDMAPriority(DMA_Channel dma);
+
+/**
+ * @brief Initializes the interrupt dispatcher and DMA controller.
  *
  * @details Sets up the interrupt handling system, hooks the BIOS to dispatch
- * interrupts to the library and clears all registered callbacks. This function
- * must be called once at the beginning of the program, prior to registering
- * any IRQ or DMA callbacks.
+ * interrupts to the library, clears all registered callbacks and disables all
+ * DMA channels. This function must be called once at the beginning of the
+ * program, prior to registering any IRQ or DMA callbacks.
  *
  * ResetCallback() is called by psxgpu's ResetGraph(), so invoking it manually
  * is usually not required. Calling ResetCallback() after ResetGraph() will
  * actually result in improper initialization, as ResetGraph() registers
  * several callbacks used internally by psxgpu.
  *
- * @return 0 or -1 if the was already initialized
+ * @return 0 or -1 if the dispatcher was already initialized
  */
 int ResetCallback(void);
 

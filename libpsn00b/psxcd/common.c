@@ -208,6 +208,9 @@ int CdInit(void) {
 
 	BUS_CD_CFG = 0x00020943;
 
+	SetDMAPriority(DMA_CD, 3);
+	DMA_CHCR(DMA_CD) = 0x00000000; // Stop DMA
+
 	CD_REG(0) = 1;
 	CD_REG(3) = 0x1f; // Acknowledge all IRQs
 	CD_REG(2) = 0x1f; // Enable all IRQs
@@ -216,9 +219,6 @@ int CdInit(void) {
 
 	CdlATV mix = { 0x80, 0x00, 0x80, 0x00 };
 	CdMix(&mix);
-
-	DMA_DPCR        |= 0x0000b000; // Enable DMA3
-	DMA_CHCR(DMA_CD) = 0x00000000; // Stop DMA3
 
 	_last_mode    = 0;
 	_ack_pending  = 0;

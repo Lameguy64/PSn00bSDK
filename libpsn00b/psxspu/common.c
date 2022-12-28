@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 #include <assert.h>
+#include <psxetc.h>
 #include <psxspu.h>
 #include <hwregs_c.h>
 
@@ -59,13 +60,14 @@ static size_t _dma_transfer(uint32_t *data, size_t length, int write) {
 	SPU_CTRL |= ctrl;
 	_wait_status(0x0030, ctrl);
 
-	DMA_MADR(4) = (uint32_t) data;
+	DMA_MADR(DMA_SPU) = (uint32_t) data;
 	if (length < DMA_CHUNK_LENGTH)
-		DMA_BCR(4) = 0x00010000 | length;
+		DMA_BCR(DMA_SPU) = 0x00010000 | length;
 	else
-		DMA_BCR(4) = DMA_CHUNK_LENGTH | ((length / DMA_CHUNK_LENGTH) << 16);
+		DMA_BCR(DMA_SPU) = DMA_CHUNK_LENGTH |
+			((length / DMA_CHUNK_LENGTH) << 16);
 
-	DMA_CHCR(4) = 0x01000200 | write;
+	DMA_CHCR(DMA_SPU) = 0x01000200 | write;
 	return length;
 }
 
@@ -130,8 +132,8 @@ void SpuInit(void) {
 	SPU_EXT_VOL_L		= 0;
 	SPU_EXT_VOL_R		= 0;
 
-	DMA_DPCR   |= 0x000b0000; // Enable DMA4
-	DMA_CHCR(4) = 0x00000201; // Stop DMA4
+	SetDMAPriority(DMA_SPU, 3);
+	DMA_CHCR(DMA_SPU) = 0x00000201; // Stop DMA
 
 	SPU_DMA_CTRL = 0x0004; // Reset transfer mode
 	SPU_CTRL     = 0xc001; // Enable SPU, DAC, CD audio, disable DMA request

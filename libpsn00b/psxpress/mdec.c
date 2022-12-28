@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 #include <assert.h>
+#include <psxetc.h>
 #include <psxapi.h>
 #include <psxpress.h>
 #include <hwregs_c.h>
@@ -86,11 +87,13 @@ static const DECDCTENV _default_mdec_env = {
 void DecDCTReset(int mode) {
 	FastEnterCriticalSection();
 
-	DMA_DPCR   |= 0x000000bb; // Enable DMA0 and DMA1
-	DMA_CHCR(0) = 0x00000201; // Stop DMA0
-	DMA_CHCR(1) = 0x00000200; // Stop DMA1
-	MDEC1       = 0x80000000; // Reset MDEC
-	MDEC1       = 0x60000000; // Enable DMA in/out requests
+	SetDMAPriority(DMA_MDEC_IN,  3);
+	SetDMAPriority(DMA_MDEC_OUT, 3);
+	DMA_CHCR(DMA_MDEC_IN)  = 0x00000201; // Stop DMA
+	DMA_CHCR(DMA_MDEC_OUT) = 0x00000200; // Stop DMA
+
+	MDEC1 = 0x80000000; // Reset MDEC
+	MDEC1 = 0x60000000; // Enable DMA in/out requests
 
 	FastExitCriticalSection();
 	if (!mode)
@@ -131,13 +134,14 @@ void DecDCTinRaw(const uint32_t *data, size_t length) {
 		length += DMA_CHUNK_LENGTH - 1;
 	}
 
-	DMA_MADR(0) = (uint32_t) data;
+	DMA_MADR(DMA_MDEC_IN) = (uint32_t) data;
 	if (length < DMA_CHUNK_LENGTH)
-		DMA_BCR(0) = 0x00010000 | length;
+		DMA_BCR(DMA_MDEC_IN) = 0x00010000 | length;
 	else
-		DMA_BCR(0) = DMA_CHUNK_LENGTH | ((length / DMA_CHUNK_LENGTH) << 16);
+		DMA_BCR(DMA_MDEC_IN) = DMA_CHUNK_LENGTH |
+			((length / DMA_CHUNK_LENGTH) << 16);
 
-	DMA_CHCR(0) = 0x01000201;
+	DMA_CHCR(DMA_MDEC_IN) = 0x01000201;
 }
 
 int DecDCTinSync(int mode) {
@@ -161,21 +165,22 @@ void DecDCTout(uint32_t *data, size_t length) {
 		length += DMA_CHUNK_LENGTH - 1;
 	}
 
-	DMA_MADR(1) = (uint32_t) data;
+	DMA_MADR(DMA_MDEC_OUT) = (uint32_t) data;
 	if (length < DMA_CHUNK_LENGTH)
-		DMA_BCR(1) = 0x00010000 | length;
+		DMA_BCR(DMA_MDEC_OUT) = 0x00010000 | length;
 	else
-		DMA_BCR(1) = DMA_CHUNK_LENGTH | ((length / DMA_CHUNK_LENGTH) << 16);
+		DMA_BCR(DMA_MDEC_OUT) = DMA_CHUNK_LENGTH |
+			((length / DMA_CHUNK_LENGTH) << 16);
 
-	DMA_CHCR(1) = 0x01000200;
+	DMA_CHCR(DMA_MDEC_OUT) = 0x01000200;
 }
 
 int DecDCToutSync(int mode) {
 	if (mode)
-		return (DMA_CHCR(1) >> 24) & 1;
+		return (DMA_CHCR(DMA_MDEC_OUT) >> 24) & 1;
 
 	for (int i = MDEC_SYNC_TIMEOUT; i; i--) {
-		if (!(DMA_CHCR(1) & (1 << 24)))
+		if (!(DMA_CHCR(DMA_MDEC_OUT) & (1 << 24)))
 			return 0;
 	}
 

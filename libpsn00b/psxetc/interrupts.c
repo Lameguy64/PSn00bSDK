@@ -157,6 +157,31 @@ void *GetDMACallback(DMA_Channel dma) {
 	return _dma_handlers[dma];
 }
 
+/* DMA channel priority API */
+
+int SetDMAPriority(DMA_Channel dma, int priority) {
+	if ((dma < 0) || (dma >= NUM_DMA_CHANNELS))
+		return -1;
+
+	uint32_t dpcr    = DMA_DPCR;
+	uint32_t channel = dpcr >> (dma * 4);
+
+	dpcr &= ~(0xf << (dma * 4));
+	if (priority >= 0)
+		dpcr |= ((priority & 7) | 8) << (dma * 4);
+
+	DMA_DPCR = dpcr;
+	return (channel & 8) ? (channel & 7) : -1;
+}
+
+int GetDMAPriority(DMA_Channel dma) {
+	if ((dma < 0) || (dma >= NUM_DMA_CHANNELS))
+		return -1;
+
+	uint32_t channel = DMA_DPCR >> (dma * 4);
+	return (channel & 8) ? (channel & 7) : -1;
+}
+
 /* Hook installation/removal API */
 
 int ResetCallback(void) {

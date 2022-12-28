@@ -811,6 +811,48 @@ int CdMode(void);
 int CdStatus(void);
 
 /**
+ * @brief Returns the CD-ROM controller's region code.
+ *
+ * @details Reads region information from the drive using a CdlTest command.
+ * This can be used to reliably determine the system's region without having to
+ * resort to workarounds like probing the BIOS ROM.
+ *
+ * This function may return incorrect results and trigger error callbacks on
+ * emulators or consoles equipped with CD-ROM drive emulation devices such as
+ * the PSIO. It is not affected by modchips.
+ *
+ * @return Region code or 0 if the region cannot be determined
+ */
+CdlRegionCode CdGetRegion(void);
+
+/**
+ * @brief Attempts to disable the CD-ROM controller's region check.
+ *
+ * @details Sends undocumented commands to the drive in an attempt to disable
+ * the region string check, in order to allow reading data from non-PS1 discs
+ * as well as CD-Rs without needing a modchip. As unlocking commands are region
+ * specific, the drive's region must be obtained beforehand using CdGetRegion()
+ * and passed to this function. The unlock persists even if the lid is opened,
+ * but not if a CdlReset command is issued.
+ *
+ * Unlocking is only supported on US, European and Net Yaroze consoles (not on
+ * Japanese models, devkits and most emulators). This function will return 1
+ * without doing anything if CdlRegionDebug is passed as region, as debug
+ * consoles can already read unlicensed discs.
+ *
+ * NOTE: if any callbacks were set using CdReadyCallback() or CdSyncCallback()
+ * prior to calling CdUnlock(), they will be called with an error code as part
+ * of the unlocking sequence, even if the unlock was successful. It is thus
+ * recommended to call this function before setting any callbacks.
+ *
+ * @param region
+ * @return 1 if the drive was successfully unlocked, 0 otherwise
+ *
+ * @see CdGetRegion()
+ */
+int CdUnlock(CdlRegionCode region);
+
+/**
  * @brief Retrieves the disc's table of contents.
  *
  * @details Retrieves the track entries from a CD's table of contents (TOC). The
@@ -830,21 +872,6 @@ int CdStatus(void);
  * @see CdControl()
  */
 int CdGetToc(CdlLOC *toc);
-
-/**
- * @brief Returns the CD-ROM controller's region code.
- *
- * @details Attempts to fetch region information from the drive using a CdlTest
- * command. This can be used to reliably determine the system's region without
- * having to resort to workarounds like probing the BIOS ROM.
- *
- * This function may return incorrect results on emulators or consoles equipped
- * with CD-ROM drive emulation devices such as the PSIO. It is not affected by
- * modchips.
- *
- * @return Region code or 0 if the region cannot be determined
- */
-CdlRegionCode CdGetRegion(void);
 
 /**
  * @brief Sets the CD-ROM volume mixing matrix.
