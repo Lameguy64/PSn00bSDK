@@ -233,3 +233,30 @@ void PutDispEnvRaw(const DISPENV_RAW *env) {
 	GPU_GP1 = 0x08000000 | env->vid_mode; // Set video mode
 	GPU_GP1 = 0x05000000 | fb_pos;        // Set VRAM location to display
 }
+
+/* Misc. display functions */
+
+GPU_VideoMode GetVideoMode(void) {
+	return _gpu_video_mode;
+}
+
+void SetVideoMode(GPU_VideoMode mode) {
+	uint32_t _mode, stat = GPU_GP1;
+
+	_gpu_video_mode = mode & 1;
+
+	_mode  = (mode & 1) << 3;
+	_mode |= (stat >> 17) & 0x37; // GPUSTAT bits 17-22 -> command bits 0-5
+	_mode |= (stat >> 10) & 0x40; // GPUSTAT bit 16 -> command bit 6
+	_mode |= (stat >>  7) & 0x80; // GPUSTAT bit 14 -> command bit 7
+
+	GPU_GP1 = 0x08000000 | _mode;
+}
+
+int GetODE(void) {
+	return (GPU_GP1 >> 31);
+}
+
+void SetDispMask(int mask) {
+	GPU_GP1 = 0x03000000 | (mask ? 0 : 1);
+}

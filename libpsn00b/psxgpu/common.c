@@ -46,7 +46,8 @@ static void _vblank_handler(void) {
 }
 
 static void _gpu_dma_handler(void) {
-	//while (!(GPU_GP1 & (1 << 26)) || (DMA_CHCR(DMA_GPU) & (1 << 24)))
+	if (GPU_GP1 & (1 << 24))
+		GPU_GP1 = 0x02000000;
 	while (!(GPU_GP1 & (1 << 26)))
 		__asm__ volatile("");
 
@@ -72,6 +73,7 @@ void ResetGraph(int mode) {
 	if (!ResetCallback()) {
 		EnterCriticalSection();
 		InterruptCallback(IRQ_VBLANK, &_vblank_handler);
+		InterruptCallback(IRQ_GPU, &_gpu_dma_handler);
 		DMACallback(DMA_GPU, &_gpu_dma_handler);
 
 		_gpu_video_mode = (GPU_GP1 >> 20) & 1;
@@ -307,31 +309,4 @@ void DrawOTag2(const uint32_t *ot) {
 	DMA_MADR(DMA_GPU) = (uint32_t) ot;
 	DMA_BCR(DMA_GPU)  = 0;
 	DMA_CHCR(DMA_GPU) = 0x01000401;
-}
-
-/* Misc. functions */
-
-GPU_VideoMode GetVideoMode(void) {
-	return _gpu_video_mode;
-}
-
-void SetVideoMode(GPU_VideoMode mode) {
-	uint32_t _mode, stat = GPU_GP1;
-
-	_gpu_video_mode = mode & 1;
-
-	_mode  = (mode & 1) << 3;
-	_mode |= (stat >> 17) & 0x37; // GPUSTAT 17-22  -> cmd bits 0-5
-	_mode |= (stat >> 10) & 0x40; // GPUSTAT bit 16 -> cmd bit 6
-	_mode |= (stat >>  7) & 0x80; // GPUSTAT bit 14 -> cmd bit 7
-
-	GPU_GP1 = 0x08000000 | mode;
-}
-
-int GetODE(void) {
-	return (GPU_GP1 >> 31);
-}
-
-void SetDispMask(int mask) {
-	GPU_GP1 = 0x03000000 | (mask ? 0 : 1);
 }
