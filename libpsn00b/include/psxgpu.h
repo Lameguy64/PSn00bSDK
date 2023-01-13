@@ -1,6 +1,6 @@
 /*
  * PSn00bSDK GPU library
- * (C) 2019-2022 Lameguy64, spicyjpeg - MPL licensed
+ * (C) 2019-2023 Lameguy64, spicyjpeg - MPL licensed
  */
 
 #ifndef __PSXGPU_H
@@ -117,9 +117,13 @@ typedef enum _GPU_VideoMode {
 
 #define setSemiTrans(p, abe) \
 	((abe) ? (getcode(p) |= 2) : (getcode(p) &= ~2))
+#define setSemiTrans_T(p, abe) \
+	((abe) ? (getcode_T(p) |= 2) : (getcode_T(p) &= ~2))
 
 #define setShadeTex(p, tge) \
 	((tge) ? (getcode(p) |= 1) : (getcode(p) &= ~1))
+#define setShadeTex_T(p, tge) \
+	((tge) ? (getcode_T(p) |= 1) : (getcode_T(p) &= ~1))
 
 #define getTPage(tp, abr, x, y) ( \
 	(((x)  /  64) & 15) | \
@@ -187,27 +191,26 @@ typedef enum _GPU_VideoMode {
 #define setBlit_T(p)	setcode_T(p, 0x80), \
 	(p)->pad[0] = 0, (p)->pad[1] = 0, (p)->pad[2] = 0, (p)->pad[3] = 0
 
-#define setDrawTPage(p, dfe, dtd, tpage) \
-	setlen(p, 1), \
+#define setDrawTPage_T(p, dfe, dtd, tpage) \
 	(p)->code[0] = (0xe1000000 | \
 		(tpage) | \
 		((dtd) <<  9) | \
 		((dfe) << 10) \
 	)
+#define setDrawTPage(p, dfe, dtd, tpage) \
+	setlen(p, 1), setDrawTPage_T(p, dfe, dtd, tpage)
 
-#define setDrawOffset(p, _x, _y) \
-	setlen(p, 1), \
-	(p)->code[0] = (0xe5000000 | \
-		((_x)  % 1024) | \
-		(((_y) % 1024) << 11) \
+#define setTexWindow_T(p, r) \
+	(p)->code[0] = (0xe2000000 | \
+		((r)->w  % 32) | \
+		(((r)->h % 32) <<  5) | \
+		(((r)->x % 32) << 10) | \
+		(((r)->y % 32) << 15) \
 	)
+#define setTexWindow(p, r) \
+	setlen(p, 1), setTexWindow_T(p, r)
 
-#define setDrawMask(p, sb, mt) \
-	setlen(p, 1), \
-	(p)->code[0] = (0xe6000000 | (sb) | ((mt) << 1))
-
-#define setDrawArea(p, r) \
-	setlen(p, 2), \
+#define setDrawArea_T(p, r) \
 	(p)->code[0] = (0xe3000000 | \
 		((r)->x  % 1024) | \
 		(((r)->y % 1024) << 10) \
@@ -216,15 +219,21 @@ typedef enum _GPU_VideoMode {
 		(((r)->x  + (r)->w - 1) % 1024) | \
 		((((r)->y + (r)->h - 1) % 1024) << 10) \
 	)
+#define setDrawArea(p, r) \
+	setlen(p, 2), setDrawArea_T(p, r)
 
-#define setTexWindow(p, r) \
-	setlen(p, 1), \
-	(p)->code[0] = (0xe2000000 | \
-		((r)->w  % 32) | \
-		(((r)->h % 32) <<  5) | \
-		(((r)->x % 32) << 10) | \
-		(((r)->y % 32) << 15) \
+#define setDrawOffset_T(p, _x, _y) \
+	(p)->code[0] = (0xe5000000 | \
+		((_x)  % 1024) | \
+		(((_y) % 1024) << 11) \
 	)
+#define setDrawOffset(p, _x, _y) \
+	setlen(p, 1), setDrawOffset_T(p, _x, _y)
+
+#define setDrawMask_T(p, sb, mt) \
+	(p)->code[0] = (0xe6000000 | (sb) | ((mt) << 1))
+#define setDrawMask(p, sb, mt) \
+	setlen(p, 1), setDrawMask_T(p, sb, mt)
 
 /* Primitive structure definitions */
 
@@ -434,25 +443,6 @@ _DEF_PRIM(SPRT_1,
 _DEF_ALIAS(SPRT_8,  SPRT_1)
 _DEF_ALIAS(SPRT_16, SPRT_1)
 
-_DEF_PRIM(DR_ENV,
-	uint32_t code[8];
-)
-_DEF_PRIM(DR_AREA,
-	uint32_t code[2];
-)
-_DEF_PRIM(DR_OFFSET,
-	uint32_t code[1];
-)
-_DEF_PRIM(DR_TWIN,
-	uint32_t code[2];
-)
-_DEF_PRIM(DR_TPAGE,
-	uint32_t code[1];
-)
-_DEF_PRIM(DR_MASK,
-	uint32_t code[1];
-)
-
 _DEF_PRIM(FILL,
 	uint8_t		r0, g0, b0, code;
 	uint16_t	x0, y0;
@@ -465,6 +455,30 @@ _DEF_PRIM(BLIT,
 	uint16_t	x1, y1;
 	uint16_t	w, h;
 	uint32_t	pad[4];
+)
+
+_DEF_PRIM(DR_AREA,
+	uint32_t code[2];
+)
+_DEF_PRIM(DR_OFFSET,
+	uint32_t code[1];
+)
+_DEF_PRIM(DR_TWIN,
+	uint32_t code[1];
+)
+_DEF_PRIM(DR_TPAGE,
+	uint32_t code[1];
+)
+_DEF_PRIM(DR_MASK,
+	uint32_t code[1];
+)
+
+_DEF_PRIM(DR_ENV,
+	DR_TPAGE_T	tpage;
+	DR_TWIN_T	twin;
+	DR_AREA_T	area;
+	DR_OFFSET_T	offset;
+	FILL_T		fill;
 )
 
 /* Structure definitions */
@@ -488,13 +502,13 @@ typedef struct _DISPENV {
 typedef struct _DRAWENV {
 	RECT		clip;		// Drawing area
 	int16_t		ofs[2];		// GPU draw offset (relative to draw area)
-	RECT		tw;			// Texture window (doesn't do anything atm)
+	RECT		tw;			// Texture window
 	uint16_t	tpage;		// Initial tpage value
 	uint8_t		dtd;		// Dither processing flag (simply OR'ed to tpage)
 	uint8_t		dfe;		// Drawing to display area blocked/allowed (simply OR'ed to tpage)
 	uint8_t		isbg;		// Clear draw area if non-zero
 	uint8_t		r0, g0, b0;	// Draw area clear color (if isbg iz nonzero)
-	DR_ENV		dr_env;		// Draw mode packet area (used by PutDrawEnv)
+	DR_ENV		dr_env;		// GPU primitive cache area (used internally)
 } DRAWENV;
 
 typedef struct _TIM_IMAGE {

@@ -1,6 +1,6 @@
 /*
  * PSn00bSDK GPU library (common functions)
- * (C) 2022 spicyjpeg - MPL licensed
+ * (C) 2022-2023 spicyjpeg - MPL licensed
  */
 
 #include <stdint.h>
@@ -11,7 +11,7 @@
 #include <hwregs_c.h>
 
 #define QUEUE_LENGTH		16
-#define DMA_CHUNK_LENGTH	8
+#define DMA_CHUNK_LENGTH	16
 #define VSYNC_TIMEOUT		0x100000
 
 static void _default_vsync_halt(void);
@@ -33,7 +33,7 @@ static void (*_drawsync_callback)(void) = (void *) 0;
 
 static volatile QueueEntry _draw_queue[QUEUE_LENGTH];
 static volatile uint8_t    _queue_head, _queue_tail, _queue_length;
-static volatile uint32_t   _vblank_counter;
+static volatile uint32_t   _vblank_counter, _last_vblank;
 static volatile uint16_t   _last_hblank;
 
 /* Private interrupt handlers */
@@ -47,9 +47,7 @@ static void _vblank_handler(void) {
 
 static void _gpu_dma_handler(void) {
 	if (GPU_GP1 & (1 << 24))
-		GPU_GP1 = 0x02000000;
-	while (!(GPU_GP1 & (1 << 26)))
-		__asm__ volatile("");
+		GPU_GP1 = 0x02000000; // Reset IRQ
 
 	if (--_queue_length) {
 		int head    = _queue_head;
@@ -82,8 +80,14 @@ void ResetGraph(int mode) {
 		_sdk_log("setup done, default mode is %s\n", _gpu_video_mode ? "PAL" : "NTSC");
 	}
 
-	if (mode == 3) {
+	_queue_head   = 0;
+	_queue_tail   = 0;
+	_queue_length = 0;
+
+	if (mode == 1) {
 		GPU_GP1 = 0x01000000; // Reset command buffer
+		GPU_GP1 = 0x02000000; // Reset IRQ
+		GPU_GP1 = 0x04000000; // Disable DMA request
 		return;
 	}
 
@@ -92,20 +96,20 @@ void ResetGraph(int mode) {
 	DMA_CHCR(DMA_GPU) = 0x00000201; // Stop DMA
 	DMA_CHCR(DMA_OTC) = 0x00000200; // Stop DMA
 
-	if (mode == 1) {
+	if (mode) {
 		GPU_GP1 = 0x01000000; // Reset command buffer
-		return;
+		GPU_GP1 = 0x02000000; // Reset IRQ
+		GPU_GP1 = 0x04000000; // Disable DMA request
+	} else {
+		GPU_GP1 = 0x00000000; // Reset GPU
 	}
 
-	GPU_GP1       = 0x00000000; // Reset GPU
+	_vblank_counter = 0;
+	_last_vblank    = 0;
+	_last_hblank    = 0;
+
 	TIMER_CTRL(0) = 0x0500;
 	TIMER_CTRL(1) = 0x0500;
-
-	_queue_head     = 0;
-	_queue_tail     = 0;
-	_queue_length   = 0;
-	_vblank_counter = 0;
-	_last_hblank    = 0;
 }
 
 /* VSync() API */
@@ -129,11 +133,13 @@ int VSync(int mode) {
 		return delta;
 	if (mode < 0)
 		return _vblank_counter;
+	if (!mode)
+		mode = 1; // VSync(0) = wait for one vblank
 
-	uint32_t status = GPU_GP1;
-
-	// Wait for at least one vertical blank event to occur.
-	do {
+	// Wait for at least one vertical blank event since the last call to
+	// VSync() to occur.
+	for (uint32_t target = _last_vblank + mode; _vblank_counter < target;) {
+		uint32_t status = GPU_GP1;
 		_vsync_halt_func();
 
 		// If interlaced mode is enabled, wait until the GPU starts displaying
@@ -142,9 +148,11 @@ int VSync(int mode) {
 			while (!((GPU_GP1 ^ status) & (1 << 31)))
 				__asm__ volatile("");
 		}
-	} while ((--mode) > 0);
+	}
 
+	_last_vblank = _vblank_counter;
 	_last_hblank = TIMER_VALUE(1);
+
 	return delta;
 }
 
@@ -269,8 +277,10 @@ void ClearOTag(uint32_t *ot, size_t length) {
 	// https://problemkaputt.de/psx-spx.htm#dmachannels
 	for (int i = 0; i < (length - 1); i++)
 		ot[i] = (uint32_t) &ot[i + 1] & 0x00ffffff;
+		//setaddr(&ot[i], &ot[i + 1]);
 
 	ot[length - 1] = 0x00ffffff;
+	//termPrim(&ot[length - 1]);
 }
 
 void AddPrim(uint32_t *ot, const void *pri) {
@@ -281,7 +291,7 @@ void DrawPrim(const uint32_t *pri) {
 	size_t length = getlen(pri);
 
 	DrawSync(0);
-	GPU_GP1 = 0x04000002;
+	GPU_GP1 = 0x04000002; // Enable DMA request, route to GP0
 
 	// NOTE: if length >= DMA_CHUNK_LENGTH then it also has to be a multiple of
 	// DMA_CHUNK_LENGTH, otherwise the DMA channel will get stuck waiting for
@@ -301,9 +311,9 @@ int DrawOTag(const uint32_t *ot) {
 }
 
 void DrawOTag2(const uint32_t *ot) {
-	GPU_GP1 = 0x04000002;
+	GPU_GP1 = 0x04000002; // Enable DMA request, route to GP0
 
-	while (!(GPU_GP1 & (1 << 26)) || (DMA_CHCR(DMA_GPU) & (1 << 24)))
+	while (DMA_CHCR(DMA_GPU) & (1 << 24))
 		__asm__ volatile("");
 
 	DMA_MADR(DMA_GPU) = (uint32_t) ot;

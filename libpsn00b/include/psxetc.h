@@ -1,6 +1,6 @@
 /*
  * PSn00bSDK interrupt management library
- * (C) 2019-2022 Lameguy64, spicyjpeg - MPL licensed
+ * (C) 2019-2023 Lameguy64, spicyjpeg - MPL licensed
  */
 
 /**
@@ -68,7 +68,7 @@ extern "C" {
  * | ID  | Channel          | Used by                                 |
  * | --: | :--------------- | :-------------------------------------- |
  * |   0 | IRQ_VBLANK       | psxgpu (use VSyncCallback() instead)    |
- * |   1 | IRQ_GPU          |                                         |
+ * |   1 | IRQ_GPU          | psxgpu (use DrawSyncCallback() instead) |
  * |   2 | IRQ_CD           | psxcd (use CdReadyCallback() instead)   |
  * |   3 | IRQ_DMA          | psxetc (use DMACallback() instead)      |
  * |   4 | IRQ_TIMER0       |                                         |
@@ -226,6 +226,11 @@ void RestartCallback(void);
  *
  * Note that interrupts are (obviously) disabled until RestartCallback() is
  * called.
+ *
+ * WARNING: any ongoing background processing or DMA transfer must be stopped
+ * before calling StopCallback(), otherwise crashes may occur. This includes
+ * flushing psxgpu's command queue using DrawSync(), stopping CD-ROM reading
+ * and calling StopPAD() to disable the BIOS controller driver if used.
  *
  * @see RestartCallback()
  */

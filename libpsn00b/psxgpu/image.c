@@ -1,6 +1,6 @@
 /*
  * PSn00bSDK GPU library (image and VRAM transfer functions)
- * (C) 2022 spicyjpeg - MPL licensed
+ * (C) 2022-2023 spicyjpeg - MPL licensed
  *
  * TODO: MoveImage() is currently commented out as it won't trigger a DMA IRQ,
  * making it unusable as a draw queue command. A way around this (perhaps using
@@ -14,7 +14,7 @@
 #include <hwregs_c.h>
 
 #define QUEUE_LENGTH		16
-#define DMA_CHUNK_LENGTH	8
+#define DMA_CHUNK_LENGTH	16
 
 /* Internal globals */
 
@@ -38,6 +38,9 @@ static void _dma_transfer(const RECT *rect, uint32_t *data, int write) {
 		length += DMA_CHUNK_LENGTH - 1;
 	}
 
+	while (!(GPU_GP1 & (1 << 26)))
+		__asm__ volatile("");
+
 	GPU_GP1 = 0x04000000; // Disable DMA request
 	GPU_GP0 = 0x01000000; // Flush cache
 
@@ -49,6 +52,9 @@ static void _dma_transfer(const RECT *rect, uint32_t *data, int write) {
 
 	// Enable DMA request, route to GP0 (2) or from GPU_READ (3)
 	GPU_GP1 = 0x04000002 | (write ^ 1);
+
+	while (DMA_CHCR(DMA_GPU) & (1 << 24))
+		__asm__ volatile("");
 
 	DMA_MADR(DMA_GPU) = (uint32_t) data;
 	if (length < DMA_CHUNK_LENGTH)
@@ -103,6 +109,9 @@ void StoreImage2(const RECT *rect, uint32_t *data) {
 }
 
 void MoveImage2(const RECT *rect, int x, int y) {
+	while (!(GPU_GP1 & (1 << 26)))
+		__asm__ volatile("");
+
 	GPU_GP0 = 0x80000000;
 	//GPU_GP0 = rect->x | (rect->y << 16);
 	GPU_GP0 = *((const uint32_t *) &(rect->x));
