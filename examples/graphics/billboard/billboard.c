@@ -152,7 +152,7 @@ int main() {
 				setRGB0(quad, 128, 128, 128);
 				
 				// Set tpage
-				quad->tpage = getTPage(tim.mode&0x8, 0, tim.prect->x, tim.prect->y);
+				quad->tpage = getTPage(tim.mode, 0, tim.prect->x, tim.prect->y);
 				
 				// Set CLUT
 				setClut(quad, tim.crect->x, tim.crect->y);

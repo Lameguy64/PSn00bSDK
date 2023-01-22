@@ -19,9 +19,9 @@
 				The System 573 BIOS does not parse SYSTEM.CNF, it's instead
 				hardcoded to look for an executable named PSX.EXE. Some modded
 				or hacked BIOS variants may instead look for slightly altered
-				file names (QSY.DXD, SSW.BXF, TSV.AXG) as an obfuscation
-				measure, so it's recommended to have multiple copies of the
-				executable on the disc.
+				file names (QSY.DXD, SSW.BXF, TSV.AXG, GSE.NXX, NSE.GXX) as an
+				obfuscation measure, so it's recommended to have multiple
+				copies of the executable on the disc.
 
 				Note that this behavior can be abused to make multi-system CDs
 				with different executables for PS1 and 573 (i.e. have both
@@ -33,6 +33,8 @@
 			<file name="QSY.DXD"	type="data" source="system573.exe" />
 			<file name="SSW.BXF"	type="data" source="system573.exe" />
 			<file name="TSV.AXG"	type="data" source="system573.exe" />
+			<file name="GSE.NXX"	type="data" source="system573.exe" />
+			<file name="NSE.GXX"	type="data" source="system573.exe" />
 
 			<dummy sectors="1024"/>
 		</directory_tree>

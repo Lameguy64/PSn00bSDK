@@ -14,7 +14,7 @@
 
 /* Unlock command strings */
 
-static char *_unlock_strings[] = {
+static const char *_unlock_strings[] = {
 	"",
 	"Licensed by",
 	"Sony",
@@ -24,7 +24,7 @@ static char *_unlock_strings[] = {
 	""
 };
 
-static const char *_unlock_regions[] = {
+static const char *const _unlock_regions[] = {
 	"of America", // CdlRegionSCEA
 	"(Europe)",   // CdlRegionSCEE
 	"World wide"  // CdlRegionSCEW
@@ -66,7 +66,7 @@ int CdDataSync(int mode) {
 			return 0;
 	}
 
-	_sdk_log("CdDataSync() timeout\n");
+	_sdk_log("CdDataSync() timeout, CHCR=0x%08x\n", DMA_CHCR(DMA_CD));
 	return -1;
 }
 

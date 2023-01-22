@@ -133,12 +133,13 @@ int VSync(int mode) {
 		return delta;
 	if (mode < 0)
 		return _vblank_counter;
-	if (!mode)
-		mode = 1; // VSync(0) = wait for one vblank
 
-	// Wait for at least one vertical blank event since the last call to
-	// VSync() to occur.
-	for (uint32_t target = _last_vblank + mode; _vblank_counter < target;) {
+	// Wait for the specified number of vertical blank events since the last
+	// call to VSync() to occur (if mode >= 2) or just for a single vertical
+	// blank (if mode = 0).
+	uint32_t target = mode ? (_last_vblank + mode) : (_vblank_counter + 1);
+
+	while (_vblank_counter < target) {
 		uint32_t status = GPU_GP1;
 		_vsync_halt_func();
 

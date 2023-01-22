@@ -624,7 +624,7 @@ void plasmastuff() {
 // Simple stripe transition effect
 void transition() {
 	
-	int i,count,comp;
+	int count = 0;
 	int bheight[16] = { 0 };
 	
 	TILE *tile = (TILE*)nextpri;
@@ -632,9 +632,9 @@ void transition() {
 	
 	while( 1 ) {
 		
-		comp = 0;
+		int comp = 0;
 		
-		for( i=0; i<16; i++ ) {
+		for( int i=0; i<16; i++ ) {
 			
 			if( bheight[i] > 0 ) {
 				
@@ -657,19 +657,11 @@ void transition() {
 		
 		if( bheight[count>>1] == 0 )
 			bheight[count>>1] = 1;
-		
 		display();
 		count++;
 		
 		if( comp >= 16 )
 			break;
-
-		/*
-			I haven't yet managed to figure out why this loop hangs on no$psx
-			if I comment out this completely useless call to puts(). Some
-			alignment or timing crap perhaps? -- spicyjpeg
-		*/
-		puts(".");
 	}
 	
 	DrawSync(0);

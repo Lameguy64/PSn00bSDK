@@ -53,7 +53,7 @@ static void _dma_transfer(const RECT *rect, uint32_t *data, int write) {
 	// Enable DMA request, route to GP0 (2) or from GPU_READ (3)
 	GPU_GP1 = 0x04000002 | (write ^ 1);
 
-	while (DMA_CHCR(DMA_GPU) & (1 << 24))
+	while ((DMA_CHCR(DMA_GPU) & (1 << 24)) || !(GPU_GP1 & (1 << 28)))
 		__asm__ volatile("");
 
 	DMA_MADR(DMA_GPU) = (uint32_t) data;
