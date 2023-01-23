@@ -1,6 +1,6 @@
 /*
  * PSn00bSDK SPU library (common functions)
- * (C) 2022 spicyjpeg - MPL licensed
+ * (C) 2022-2023 spicyjpeg - MPL licensed
  */
 
 #include <stdint.h>
@@ -32,7 +32,7 @@ static void _wait_status(uint16_t mask, uint16_t value) {
 			return;
 	}
 
-	_sdk_log("status register timeout (0x%04x)\n", SPU_STAT);
+	_sdk_log("timeout, status=0x%04x\n", SPU_STAT);
 }
 
 static size_t _dma_transfer(uint32_t *data, size_t length, int write) {

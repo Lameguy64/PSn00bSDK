@@ -1,6 +1,6 @@
 /*
  * PSn00bSDK .STR FMV playback example
- * (C) 2022 spicyjpeg - MPL licensed
+ * (C) 2022-2023 spicyjpeg - MPL licensed
  *
  * This example demonstrates playback of full-motion video in the standard .STR
  * format, using the MDEC for frame decoding and XA for audio. Decoded frames
@@ -34,9 +34,10 @@
  * Playback is stopped once the .STR header is no longer present in sectors
  * read.
  *
- * Note that PSn00bSDK's bitstream decoding API only supports version 1 and 2
- * bitstreams currently, so make sure your .STR files are encoded as v2 and not
- * v3.
+ * PSn00bSDK's bitstream decoding API supports both version 2 and 3 bitstreams.
+ * Encoding your .STR files as v3 may result in slightly higher quality
+ * depending on the encoder, but also higher CPU usage during playback compared
+ * to the older v2.
  */
 
 #include <stdint.h>
@@ -102,13 +103,12 @@ void init_context(RenderContext *ctx) {
 	FntOpen(4, 12, 312, 16, 2, 256);
 }
 
-void display(RenderContext *ctx, int sync) {
+void display(RenderContext *ctx) {
 	Framebuffer *db;
 	ctx->db_active ^= 1;
 
 	DrawSync(0);
-	if (sync)
-		VSync(0);
+	//VSync(0);
 
 	db = &(ctx->db[ctx->db_active]);
 	PutDrawEnv(&(db->draw));
@@ -163,13 +163,13 @@ typedef struct {
 	volatile int8_t cur_frame, cur_slice;
 } StreamContext;
 
-StreamContext str_ctx;
+static StreamContext str_ctx;
 
 // This buffer is used by cd_sector_handler() as a temporary area for sectors
 // read from the CD. Due to DMA limitations it can't be allocated on the stack
 // (especially not in the interrupt callbacks' stack, whose size is very
 // limited).
-STR_Header sector_header;
+static STR_Header sector_header;
 
 void cd_sector_handler(void) {
 	StreamBuffer *frame = &str_ctx.frames[str_ctx.cur_frame];
@@ -268,7 +268,7 @@ void init_stream(void) {
 	// optional but makes the decompressor slightly faster. See the libpsxpress
 	// documentation for more details.
 	DecDCTvlcSize(0x8000);
-	DecDCTvlcCopyTable((DECDCTTAB *) 0x1f800000);
+	DecDCTvlcCopyTableV3((VLC_TableV3 *) 0x1f800000);
 
 	str_ctx.cur_frame = 0;
 	str_ctx.cur_slice = 0;
@@ -309,7 +309,7 @@ void start_stream(CdlFILE *file) {
 
 static RenderContext ctx;
 
-#define SHOW_STATUS(...) { FntPrint(-1, __VA_ARGS__); FntFlush(-1); display(&ctx, 1); }
+#define SHOW_STATUS(...) { FntPrint(-1, __VA_ARGS__); FntFlush(-1); display(&ctx); }
 #define SHOW_ERROR(...)  { SHOW_STATUS(__VA_ARGS__); while (1) __asm__("nop"); }
 
 int main(int argc, const char* argv[]) {
@@ -318,7 +318,7 @@ int main(int argc, const char* argv[]) {
 	SHOW_STATUS("INITIALIZING\n");
 	SpuInit();
 	CdInit();
-	InitGeom(); // Required for PSn00bSDK's DecDCTvlc()
+	InitGeom(); // GTE initialization required by the VLC decompressor
 	DecDCTReset(0);
 
 	SHOW_STATUS("OPENING VIDEO FILE\n");
@@ -330,8 +330,9 @@ int main(int argc, const char* argv[]) {
 	init_stream();
 	start_stream(&file);
 
-	// Disable framebuffer clearing to get rid of flickering during playback.
-	display(&ctx, 1);
+	// Clear the screen, then disable framebuffer clearing to get rid of
+	// flickering during playback.
+	display(&ctx);
 	ctx.db[0].draw.isbg = 0;
 	ctx.db[1].draw.isbg = 0;
 #ifdef DISP_24BPP
@@ -339,9 +340,13 @@ int main(int argc, const char* argv[]) {
 	ctx.db[1].disp.isrgb24 = 1;
 #endif
 
-	int decode_errors = 0;
+	int frame_time = 1, decode_errors = 0;
 
 	while (1) {
+#ifdef DRAW_OVERLAY
+		int frame_start = TIMER_VALUE(1);
+#endif
+
 		// Wait for a full frame to be read from the disc and decompress the
 		// bitstream into the format expected by the MDEC. If the video has
 		// ended, restart playback from the beginning.
@@ -355,38 +360,45 @@ int main(int argc, const char* argv[]) {
 		}
 
 #ifdef DRAW_OVERLAY
-		// Measure CPU usage of the decompressor using the hblank counter.
-		int total_time = TIMER_VALUE(1) + 1;
-		TIMER_VALUE(1) = 0;
+		int decode_time = TIMER_VALUE(1);
 #endif
 
-		if (DecDCTvlc(frame->bs_data, frame->mdec_data)) {
+		VLC_Context vlc_ctx;
+		if (DecDCTvlcStart(
+			&vlc_ctx,
+			frame->mdec_data,
+			sizeof(frame->mdec_data) / 4,
+			frame->bs_data
+		)) {
 			decode_errors++;
 			continue;
 		}
 
 #ifdef DRAW_OVERLAY
-		int cpu_usage = TIMER_VALUE(1) * 100 / total_time;
+		// Calculate CPU usage of the decompressor.
+		decode_time   = (TIMER_VALUE(1) - decode_time) & 0xffff;
+		int cpu_usage = decode_time * 100 / frame_time;
 #endif
 
 		// Wait for the MDEC to finish decoding the previous frame, then flip
 		// the framebuffers to display it and prepare the buffer for the next
 		// frame.
-		// NOTE: you should *not* call VSync(0) during playback, as the refresh
-		// rate of the GPU is not synced to the video's frame rate. If you want
-		// to minimize screen tearing, consider triple buffering instead (i.e.
-		// always keep 2 fully decoded frames in VRAM and use VSyncCallback()
-		// to register a function that displays the next decoded frame whenever
-		// vblank occurs).
+		// NOTE: as the refresh rate of the GPU is not synced to the video's
+		// frame rate, this VSync(0) call may potentially end up waiting too
+		// long and desynchronizing playback. A better solution would be to
+		// implement triple buffering (i.e. always keep 2 fully decoded frames
+		// in VRAM and use VSyncCallback() to register a function that displays
+		// the next decoded frame if available whenever vblank occurs).
+		VSync(0);
 		DecDCTinSync(0);
 		DecDCToutSync(0);
 
 #ifdef DRAW_OVERLAY
-		FntPrint(-1, "FRAME:%5d    READ ERRORS:  %5d\n", str_ctx.frame_id, str_ctx.dropped_frames);
-		FntPrint(-1, "CPU:  %5d%%   DECODE ERRORS:%5d\n", cpu_usage, decode_errors);
+		FntPrint(-1, "FRAME:%6d      READ ERRORS:  %6d\n", str_ctx.frame_id, str_ctx.dropped_frames);
+		FntPrint(-1, "CPU:  %6d%%     DECODE ERRORS:%6d\n", cpu_usage, decode_errors);
 		FntFlush(-1);
 #endif
-		display(&ctx, 0);
+		display(&ctx);
 
 		// Feed the newly decompressed frame to the MDEC. The MDEC will not
 		// actually start decoding it until an output buffer is also configured
@@ -414,6 +426,10 @@ int main(int argc, const char* argv[]) {
 			str_ctx.slices[str_ctx.cur_slice],
 			BLOCK_SIZE * str_ctx.slice_pos.h / 2
 		);
+
+#ifdef DRAW_OVERLAY
+		frame_time = (TIMER_VALUE(1) - frame_start) & 0xffff;
+#endif
 	}
 
 	return 0;

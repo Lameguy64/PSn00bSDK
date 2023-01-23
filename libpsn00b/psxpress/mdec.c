@@ -1,12 +1,11 @@
 /*
  * PSn00bSDK MDEC library (low-level MDEC/DMA API)
- * (C) 2022 spicyjpeg - MPL licensed
+ * (C) 2022-2023 spicyjpeg - MPL licensed
  */
 
 #include <stdint.h>
 #include <assert.h>
 #include <psxetc.h>
-#include <psxapi.h>
 #include <psxpress.h>
 #include <hwregs_c.h>
 
@@ -15,14 +14,14 @@
 
 /* Default IDCT matrix and quantization tables */
 
-#define S0 0x5a82	// 0x4000 * cos(0/16 * pi) * sqrt(2)
-#define S1 0x7d8a	// 0x4000 * cos(1/16 * pi) * 2
-#define S2 0x7641	// 0x4000 * cos(2/16 * pi) * 2
-#define S3 0x6a6d	// 0x4000 * cos(3/16 * pi) * 2
-#define S4 0x5a82	// 0x4000 * cos(4/16 * pi) * 2
-#define S5 0x471c	// 0x4000 * cos(5/16 * pi) * 2
-#define S6 0x30fb	// 0x4000 * cos(6/16 * pi) * 2
-#define S7 0x18f8	// 0x4000 * cos(7/16 * pi) * 2
+#define S0 0x5a82	// (1 << 14) * cos(0/16 * pi) * sqrt(2)
+#define S1 0x7d8a	// (1 << 14) * cos(1/16 * pi) * 2
+#define S2 0x7641	// (1 << 14) * cos(2/16 * pi) * 2
+#define S3 0x6a6d	// (1 << 14) * cos(3/16 * pi) * 2
+#define S4 0x5a82	// (1 << 14) * cos(4/16 * pi) * 2
+#define S5 0x471c	// (1 << 14) * cos(5/16 * pi) * 2
+#define S6 0x30fb	// (1 << 14) * cos(6/16 * pi) * 2
+#define S7 0x18f8	// (1 << 14) * cos(7/16 * pi) * 2
 
 static const DECDCTENV _default_mdec_env = {
 	// The default luma and chroma quantization table is based on the MPEG-1
@@ -85,8 +84,6 @@ static const DECDCTENV _default_mdec_env = {
 /* Public API */
 
 void DecDCTReset(int mode) {
-	FastEnterCriticalSection();
-
 	SetDMAPriority(DMA_MDEC_IN,  3);
 	SetDMAPriority(DMA_MDEC_OUT, 3);
 	DMA_CHCR(DMA_MDEC_IN)  = 0x00000201; // Stop DMA
@@ -95,26 +92,28 @@ void DecDCTReset(int mode) {
 	MDEC1 = 0x80000000; // Reset MDEC
 	MDEC1 = 0x60000000; // Enable DMA in/out requests
 
-	FastExitCriticalSection();
 	if (!mode)
 		DecDCTPutEnv(0, 0);
 }
 
 void DecDCTPutEnv(const DECDCTENV *env, int mono) {
-	const DECDCTENV *_env = env ? env : &_default_mdec_env;
 	DecDCTinSync(0);
+	if (!env)
+		env = &_default_mdec_env;
 
 	MDEC0 = 0x60000000; // Set IDCT matrix
-	DecDCTinRaw((const uint32_t *) _env->dct, 32);
+	DecDCTinRaw((const uint32_t *) env->dct, 32);
 	DecDCTinSync(0);
 
-	MDEC0 = 0x40000000 | (mono ? 0 : 1); // Set table(s)
-	DecDCTinRaw((const uint32_t *) _env->iq_y, mono ? 16 : 32);
+	MDEC0 = 0x40000000 | (mono ? 0 : 1); // Set quantization table(s)
+	DecDCTinRaw((const uint32_t *) env->iq_y, mono ? 16 : 32);
 	DecDCTinSync(0);
 }
 
 void DecDCTin(const uint32_t *data, int mode) {
 	uint32_t header = *data;
+	DecDCTinSync(0);
+
 	if (mode == DECDCT_MODE_RAW)
 		MDEC0 = header;
 	else if (mode & DECDCT_MODE_24BPP)
@@ -153,7 +152,7 @@ int DecDCTinSync(int mode) {
 			return 0;
 	}
 
-	_sdk_log("DecDCTinSync() timeout\n");
+	_sdk_log("DecDCTinSync() timeout, MDEC1=0x%08x\n", MDEC1);
 	return -1;
 }
 
@@ -184,6 +183,6 @@ int DecDCToutSync(int mode) {
 			return 0;
 	}
 
-	_sdk_log("DecDCToutSync() timeout\n");
+	_sdk_log("DecDCToutSync() timeout, CHCR=0x%08x\n", DMA_CHCR(DMA_MDEC_OUT));
 	return -1;
 }

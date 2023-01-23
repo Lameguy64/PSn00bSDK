@@ -63,7 +63,7 @@ static const uint32_t _compressed_table[TABLE_LENGTH] = {
 static VLC_Context	_default_context;
 static size_t		_max_buffer_size = 0;
 
-const DECDCTTAB2	*_vlc_huffman_table2 = 0;
+const DECDCTTAB *_vlc_huffman_table2 = 0;
 
 /* VLC decoder */
 
@@ -77,14 +77,17 @@ int __attribute__((optimize(3))) DecDCTvlcContinue2(
 	VLC_Context *ctx, uint32_t *buf, size_t max_size
 ) {
 	const uint32_t	*input		= ctx->input;
-	uint32_t		remaining	= ctx->remaining;
 	uint32_t		window		= ctx->window;
 	uint32_t		next_window	= ctx->next_window;
-	uint16_t		quant_scale	= ctx->quant_scale;
+	uint32_t		remaining	= ctx->remaining;
+	int				is_v3		= ctx->is_v3;
+	int				bit_offset	= ctx->bit_offset;
 	int				block_index	= ctx->block_index;
 	int				coeff_index	= ctx->coeff_index;
-	int				bit_offset	= ctx->bit_offset;
-	int				is_v3		= ctx->is_v3;
+	uint16_t		quant_scale	= ctx->quant_scale;
+	int16_t			last_y		= ctx->last_y;
+	int16_t			last_cr		= ctx->last_cr;
+	int16_t			last_cb		= ctx->last_cb;
 
 	//if (!_vlc_huffman_table2)
 		//return -1;
@@ -122,13 +125,13 @@ int __attribute__((optimize(3))) DecDCTvlcContinue2(
 			} else if (window >> 24) {
 				// The first lookup table is for codes that not start with
 				// 00000000.
-				value = _vlc_huffman_table2->lut[_get_bits_unsigned(13)];
+				value = _vlc_huffman_table2->ac[_get_bits_unsigned(13)];
 				_advance_window(value >> 16);
 				*output = (uint16_t) value;
 			} else {
 				// If the code starts with 00000000, use the second lookup
 				// table.
-				value = _vlc_huffman_table2->lut00[_get_bits_unsigned(17)];
+				value = _vlc_huffman_table2->ac00[_get_bits_unsigned(17)];
 				_advance_window(value >> 16);
 				*output = (uint16_t) value;
 			}
@@ -176,12 +179,15 @@ int __attribute__((optimize(3))) DecDCTvlcContinue2(
 		return 0;
 
 	ctx->input			= input;
-	ctx->remaining		= remaining;
 	ctx->window			= window;
 	ctx->next_window	= next_window;
+	ctx->remaining		= remaining;
+	ctx->bit_offset		= bit_offset;
 	ctx->block_index	= block_index;
 	ctx->coeff_index	= coeff_index;
-	ctx->bit_offset		= bit_offset;
+	ctx->last_y			= last_y;
+	ctx->last_cr		= last_cr;
+	ctx->last_cb		= last_cb;
 	return 1;
 }
 
@@ -197,21 +203,24 @@ int DecDCTvlcStart2(
 		return -1;
 
 	ctx->input			= &input[2];
-	ctx->remaining		= (header->mdec0_header & 0xffff) * 2;
 	ctx->window			= (input[0] << 16) | (input[0] >> 16);
 	ctx->next_window	= (input[1] << 16) | (input[1] >> 16);
-	ctx->quant_scale	= (header->quant_scale & 63) << 10;
+	ctx->remaining		= (header->mdec0_header & 0xffff) * 2;
+	ctx->is_v3			= (header->version >= 3);
+	ctx->bit_offset		= 32;
 	ctx->block_index	= 0;
 	ctx->coeff_index	= 0;
-	ctx->bit_offset		= 32;
-	ctx->is_v3			= (header->version == 3);
+	ctx->quant_scale	= (header->quant_scale & 63) << 10;
+	ctx->last_y			= 0;
+	ctx->last_cr		= 0;
+	ctx->last_cb		= 0;
 
 	return DecDCTvlcContinue2(ctx, buf, max_size);
 }
 
 /* Stateful VLC decoder API (for Sony SDK compatibility) */
 
-int DecDCTvlc2(const uint32_t *bs, uint32_t *buf, DECDCTTAB2 *table) {
+int DecDCTvlc2(const uint32_t *bs, uint32_t *buf, DECDCTTAB *table) {
 	if (table)
 		_vlc_huffman_table2 = table;
 
@@ -230,7 +239,7 @@ size_t DecDCTvlcSize2(size_t size) {
 
 /* Lookup table decompressor */
 
-void DecDCTvlcBuild(DECDCTTAB2 *table) {
+void DecDCTvlcBuild(DECDCTTAB *table) {
 	uint32_t *output    = (uint32_t *) table;
 	_vlc_huffman_table2 = table;
 
