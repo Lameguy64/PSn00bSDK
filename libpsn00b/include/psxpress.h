@@ -246,8 +246,6 @@ int DecDCToutSync(int mode);
  * can be different). If max_size = 0, the entire frame will always be decoded
  * in one shot.
  *
- * Only bitstream version 2 is currently supported.
- *
  * WARNING: InitGeom() must be called prior to using DecDCTvlcStart() for the
  * first time. Attempting to call this function with the GTE disabled will
  * result in a crash.
@@ -411,7 +409,8 @@ void DecDCTvlcCopyTableV3(VLC_TableV3 *addr);
  * buffer can be different). If max_size = 0, the entire frame will always be
  * decoded in one shot.
  *
- * Only bitstream version 2 is currently supported.
+ * This function only supports decoding version 1 and 2 bitstreams. Use
+ * DecDCTvlcStart() to decode a version 3 bitstream.
  *
  * @param ctx Pointer to VLC_Context structure (which will be initialized)
  * @param buf

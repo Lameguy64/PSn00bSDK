@@ -83,7 +83,7 @@ typedef enum _GPU_VideoMode {
 	(p)->u0 = (_u0), (p)->v0 = (_v0), \
 	(p)->u1 = (_u1), (p)->v1 = (_v1), \
 	(p)->u2 = (_u2), (p)->v2 = (_v2)
-	
+
 #define setUV4(p, _u0, _v0, _u1, _v1, _u2, _v2, _u3, _v3) \
 	(p)->u0 = (_u0), (p)->v0 = (_v0), \
 	(p)->u1 = (_u1), (p)->v1 = (_v1), \
@@ -202,38 +202,48 @@ typedef enum _GPU_VideoMode {
 
 #define setTexWindow_T(p, r) \
 	(p)->code[0] = (0xe2000000 | \
-		((r)->w  % 32) | \
-		(((r)->h % 32) <<  5) | \
-		(((r)->x % 32) << 10) | \
-		(((r)->y % 32) << 15) \
+		((r)->w  & 0x1f) | \
+		(((r)->h & 0x1f) <<  5) | \
+		(((r)->x & 0x1f) << 10) | \
+		(((r)->y & 0x1f) << 15) \
 	)
 #define setTexWindow(p, r) \
 	setlen(p, 1), setTexWindow_T(p, r)
 
-#define setDrawArea_T(p, r) \
+#define setDrawAreaXY_T(p, _x0, _y0, _x1, _y1) \
 	(p)->code[0] = (0xe3000000 | \
-		((r)->x  % 1024) | \
-		(((r)->y % 1024) << 10) \
+		((_x0)  & 0x3ff) | \
+		(((_y0) & 0x3ff) << 10) \
 	), \
 	(p)->code[1] = (0xe4000000 | \
-		(((r)->x  + (r)->w - 1) % 1024) | \
-		((((r)->y + (r)->h - 1) % 1024) << 10) \
+		((_x1)  & 0x3ff) | \
+		(((_y1) & 0x3ff) << 10) \
+	)
+#define setDrawAreaXY(p, _x0, _y0, _x1, _y1) \
+	setlen(p, 2), setDrawAreaXY_T(p, _x0, _y0, _x1, _y1)
+
+#define setDrawArea_T(p, r) \
+	setDrawAreaXY_T(p, \
+		(r)->x, \
+		(r)->y, \
+		(r)->x + (r)->w - 1, \
+		(r)->y + (r)->h - 1 \
 	)
 #define setDrawArea(p, r) \
 	setlen(p, 2), setDrawArea_T(p, r)
 
 #define setDrawOffset_T(p, _x, _y) \
 	(p)->code[0] = (0xe5000000 | \
-		((_x)  % 1024) | \
-		(((_y) % 1024) << 11) \
+		((_x)  & 0x7ff) | \
+		(((_y) & 0x7ff) << 11) \
 	)
 #define setDrawOffset(p, _x, _y) \
 	setlen(p, 1), setDrawOffset_T(p, _x, _y)
 
-#define setDrawMask_T(p, sb, mt) \
-	(p)->code[0] = (0xe6000000 | (sb) | ((mt) << 1))
-#define setDrawMask(p, sb, mt) \
-	setlen(p, 1), setDrawMask_T(p, sb, mt)
+#define setDrawStp_T(p, pbw, mt) \
+	(p)->code[0] = (0xe6000000 | (pbw) | ((mt) << 1))
+#define setDrawStp(p, pbw, mt) \
+	setlen(p, 1), setDrawStp_T(p, pbw, mt)
 
 /* Primitive structure definitions */
 
@@ -469,7 +479,7 @@ _DEF_PRIM(DR_TWIN,
 _DEF_PRIM(DR_TPAGE,
 	uint32_t code[1];
 )
-_DEF_PRIM(DR_MASK,
+_DEF_PRIM(DR_STP,
 	uint32_t code[1];
 )
 
@@ -480,6 +490,9 @@ _DEF_PRIM(DR_ENV,
 	DR_OFFSET_T	offset;
 	FILL_T		fill;
 )
+
+#undef _DEF_PRIM
+#undef _DEF_ALIAS
 
 /* Structure definitions */
 
@@ -545,6 +558,7 @@ void PutDrawEnv(DRAWENV *env);
 void PutDrawEnvFast(DRAWENV *env);
 
 int GetODE(void);
+int IsIdleGPU(int timeout);
 int VSync(int mode);
 void *VSyncHaltFunction(void (*func)(void));
 void *VSyncCallback(void (*func)(void));

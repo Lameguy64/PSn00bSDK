@@ -321,3 +321,18 @@ void DrawOTag2(const uint32_t *ot) {
 	DMA_BCR(DMA_GPU)  = 0;
 	DMA_CHCR(DMA_GPU) = 0x01000401;
 }
+
+/* Queue pause/resume API */
+
+int IsIdleGPU(int timeout) {
+	if (timeout <= 0)
+		timeout = 1;
+
+	for (; timeout; timeout--) {
+		if (GPU_GP1 & (1 << 26))
+			return 0;
+	}
+
+	//_sdk_log("IsIdleGPU() timeout\n");
+	return -1;
+}

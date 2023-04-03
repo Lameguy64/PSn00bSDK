@@ -189,8 +189,15 @@ void cd_sector_handler(void) {
 		return;
 
 	// If this sector is actually part of a new frame, validate the sectors
-	// that have been read so far and flip the bitstream data buffers.
-	if (sector_header.frame_id != str_ctx.frame_id) {
+	// that have been read so far and flip the bitstream data buffers. If the
+	// frame number is actually lower than the current one, assume the drive
+	// has started reading another .STR file and stop playback.
+	if ((int) sector_header.frame_id < str_ctx.frame_id) {
+		str_ctx.frame_ready = -1;
+		return;
+	}
+
+	if ((int) sector_header.frame_id > str_ctx.frame_id) {
 		// Do not set the ready flag if any sector has been missed.
 		if (str_ctx.sector_count)
 			str_ctx.dropped_frames++;
@@ -263,11 +270,9 @@ void init_stream(void) {
 	CdReadyCallback(&cd_event_handler);
 	ExitCriticalSection();
 
-	// Set the maximum amount of data DecDCTvlc() can output and copy the
-	// lookup table used for decompression to the scratchpad area. This is
-	// optional but makes the decompressor slightly faster. See the libpsxpress
-	// documentation for more details.
-	DecDCTvlcSize(0x8000);
+	// Copy the lookup table used for frame decompression to the scratchpad
+	// area. This is optional but makes the decompressor slightly faster. See
+	// the libpsxpress documentation for more details.
 	DecDCTvlcCopyTableV3((VLC_TableV3 *) 0x1f800000);
 
 	str_ctx.cur_frame = 0;

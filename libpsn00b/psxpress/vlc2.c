@@ -123,7 +123,7 @@ int __attribute__((optimize(3))) DecDCTvlcContinue2(
 				*output = (uint16_t) _get_bits_unsigned(22);
 				_advance_window(22);
 			} else if (window >> 24) {
-				// The first lookup table is for codes that not start with
+				// The first lookup table is for codes that do not start with
 				// 00000000.
 				value = _vlc_huffman_table2->ac[_get_bits_unsigned(13)];
 				_advance_window(value >> 16);
@@ -136,12 +136,9 @@ int __attribute__((optimize(3))) DecDCTvlcContinue2(
 				*output = (uint16_t) value;
 			}
 		} else {
-			// Parse the DC (first) coefficient for this block. Version 2
-			// simply stores the signed 10-bit value as-is, while version 3
-			// uses a delta encoding combined with a compression method similar
-			// to exp-Golomb.
+			// Parse the DC (first) coefficient for this block.
 			if (is_v3) {
-				// TODO: version 3 is currently not supported.
+				// This implementation does not support version 3.
 				return -1;
 			} else {
 				value = _get_bits_unsigned(10);
@@ -161,7 +158,7 @@ int __attribute__((optimize(3))) DecDCTvlcContinue2(
 		// time and processes each 16-bit word starting from the the MSB, so an
 		// endianness conversion is necessary to preserve bit order when
 		// reading 32 bits at a time. Also note that the PS1 CPU is not capable
-		// of shifting by more than 31 bits - it will shift by 0 bits instead!
+		// of shifting by >=31 bits - it will shift by (N % 32) bits instead!
 		if (bit_offset < 0) {
 			window      = next_window << (-bit_offset);
 			bit_offset += 32;
