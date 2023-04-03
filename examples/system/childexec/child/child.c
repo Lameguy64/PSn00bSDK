@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <psxetc.h>
 #include <psxapi.h>
 #include <psxgpu.h>
 #include <psxgte.h>
