@@ -13,7 +13,10 @@ project(
 
 file(GLOB _sources *.c)
 psn00bsdk_add_executable(strvideo GPREL ${_sources})
-#psn00bsdk_add_cd_image(strvideo_iso strvideo iso.xml DEPENDS strvideo)
+#psn00bsdk_add_cd_image(
+	#strvideo_iso strvideo iso.xml
+	#DEPENDS strvideo system.cnf video.str
+#)
 
 install(
 	FILES

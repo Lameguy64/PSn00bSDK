@@ -17,7 +17,7 @@ psn00bsdk_add_library   (dynlink_cube  SHARED library/cube.c)
 psn00bsdk_add_library   (dynlink_balls SHARED library/balls.c)
 psn00bsdk_add_cd_image(
 	dynlink_iso dynlink iso.xml
-	DEPENDS dynlink_main dynlink_cube dynlink_balls
+	DEPENDS dynlink_main dynlink_cube dynlink_balls system.cnf
 )
 
 psn00bsdk_target_incbin(dynlink_balls PRIVATE ball16c library/ball16c.tim)

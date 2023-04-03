@@ -280,23 +280,22 @@ function(psn00bsdk_add_cd_image name image_name config_file)
 
 	cmake_path(HASH config_file _hash)
 
-	set(CD_IMAGE_NAME  ${image_name})
-	set(CD_CONFIG_FILE ${CMAKE_CURRENT_BINARY_DIR}/cd_image_${_hash}.xml)
-	configure_file("${config_file}" ${CD_CONFIG_FILE})
+	set(_xml_file ${CMAKE_CURRENT_BINARY_DIR}/cd_image_${_hash}.xml)
+	configure_file("${config_file}" ${_xml_file})
 
 	add_custom_command(
-		OUTPUT ${CD_IMAGE_NAME}.bin ${CD_IMAGE_NAME}.cue
+		OUTPUT ${image_name}.bin ${image_name}.cue
 		COMMAND
 			${MKPSXISO} -y
-			-o ${CD_IMAGE_NAME}.bin -c ${CD_IMAGE_NAME}.cue ${CD_CONFIG_FILE}
-		COMMENT "Building CD image ${CD_IMAGE_NAME}"
+			-o ${image_name}.bin -c ${image_name}.cue ${_xml_file}
+		COMMENT "Building CD image ${image_name}"
 		VERBATIM
 		${ARGN}
 	)
 	add_custom_target(
 		${name} ALL
 		DEPENDS
-			${CMAKE_CURRENT_BINARY_DIR}/${CD_IMAGE_NAME}.bin
-			${CMAKE_CURRENT_BINARY_DIR}/${CD_IMAGE_NAME}.cue
+			${CMAKE_CURRENT_BINARY_DIR}/${image_name}.bin
+			${CMAKE_CURRENT_BINARY_DIR}/${image_name}.cue
 	)
 endfunction()
