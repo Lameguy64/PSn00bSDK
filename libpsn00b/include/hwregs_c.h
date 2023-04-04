@@ -3,8 +3,7 @@
  * (C) 2022 spicyjpeg - MPL licensed
  */
 
-#ifndef __HWREGS_C_H
-#define __HWREGS_C_H
+#pragma once
 
 #include <stdint.h>
 
@@ -130,5 +129,3 @@
 #define BUS_EXP2_CFG		_MMIO32(IOBASE | 0x101c)
 #define BUS_COM_DELAY		_MMIO32(IOBASE | 0x1020)
 #define BUS_RAM_SIZE		_MMIO32(IOBASE | 0x1060)
-
-#endif

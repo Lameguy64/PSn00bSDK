@@ -14,8 +14,7 @@
  * registers and issue commands to the GTE.
  */
 
-#ifndef __PSXGTE_H
-#define __PSXGTE_H
+#pragma once
 
 #include <stdint.h>
 
@@ -258,6 +257,4 @@ void Square0(VECTOR *v0, VECTOR *v1);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

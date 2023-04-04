@@ -1,8 +1,10 @@
-#ifndef _SYS_FCNTL_H
-#define _SYS_FCNTL_H
+/*
+ * PSn00bSDK kernel API library
+ * (C) 2019-2023 Lameguy64, spicyjpeg - MPL licensed
+ */
 
-// File control mode flags for BIOS file functions
-// (many weren't documented in nocash docs)
+#pragma once
+
 #define FREAD			0x1			// Read
 #define FWRITE			0x2			// Write
 #define FNBLOCK			0x4			// Non-blocking read access
@@ -16,5 +18,3 @@
 #define FNBUF			0x4000		// No ring buffer and terminal interrupt
 #define FASYNC			0x8000		// Asynchronous I/O
 #define FNBLOCKS(a)		(a<<16)		// Number of blocks? (from nocash docs)
-
-#endif

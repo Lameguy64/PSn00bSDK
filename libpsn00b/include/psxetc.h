@@ -13,8 +13,7 @@
  * separate header).
  */
 
-#ifndef __PSXETC_H
-#define __PSXETC_H
+#pragma once
 
 /* IRQ and DMA channel definitions */
 
@@ -238,6 +237,4 @@ void StopCallback(void);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

@@ -21,8 +21,7 @@
  * library extension is considered for future development.
  */
 
-#ifndef __PSXCD_H
-#define __PSXCD_H
+#pragma once
 
 #include <stdint.h>
 
@@ -1072,6 +1071,4 @@ int CdLoadSession(int session);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

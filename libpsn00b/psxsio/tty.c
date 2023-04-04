@@ -8,7 +8,7 @@
  * critical section or even from an interrupt handler.
  */
 
-#include <ioctl.h>
+#include <sys/ioctl.h>
 #include <psxapi.h>
 #include <psxsio.h>
 #include <hwregs_c.h>
@@ -93,8 +93,8 @@ void AddSIO(int baud) {
 
 	close(0);
 	close(1);
-	DelDev(_sio_dcb.name);
-	AddDev(&_sio_dcb);
+	DelDrv(_sio_dcb.name);
+	AddDrv(&_sio_dcb);
 	open(_sio_dcb.name, 2);
 	open(_sio_dcb.name, 1);
 }
@@ -102,6 +102,6 @@ void AddSIO(int baud) {
 void DelSIO(void) {
 	SIO_Quit();
 
-	DelDev(_sio_dcb.name);
-	AddDummyTty();
+	DelDrv(_sio_dcb.name);
+	add_nullcon_driver();
 }

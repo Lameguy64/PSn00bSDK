@@ -210,7 +210,7 @@ void RestartCallback(void) {
 
 	// Install the ISR hook and prevent the kernel's internal handlers from
 	// automatically acknowledging SPI and timer IRQs.
-	SetCustomExitFromException(&_isr_jmp_buf);
+	HookEntryInt(&_isr_jmp_buf);
 	ChangeClearPAD(0);
 	ChangeClearRCnt(0, 0);
 	ChangeClearRCnt(1, 0);
@@ -237,7 +237,7 @@ void StopCallback(void) {
 	DMA_DPCR = _saved_dma_dpcr & 0x07777777;
 	DMA_DICR = 0;
 
-	SetDefaultExitFromException();
+	ResetEntryInt();
 	ChangeClearPAD(1);
 	ChangeClearRCnt(0, 1);
 	ChangeClearRCnt(1, 1);

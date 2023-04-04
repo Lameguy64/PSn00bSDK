@@ -22,8 +22,7 @@
  * anyway.
  */
 
-#ifndef __PSXPRESS_H
-#define __PSXPRESS_H
+#pragma once
 
 #include <stdint.h>
 #include <stddef.h>
@@ -511,6 +510,4 @@ void DecDCTvlcBuild(DECDCTTAB *table);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

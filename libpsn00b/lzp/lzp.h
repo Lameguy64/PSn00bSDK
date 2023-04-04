@@ -1,20 +1,29 @@
-/*!	\file lzp.h
- *	\brief Main library header
+/*
+ * liblzp data compression library
+ * (C) 2019 Lameguy64 - MPL licensed
  */
 
-/*!	\mainpage
- *	\version	0.20b
- *	\author		John Wilbert 'Lameguy64' Villamor
+/**
+ * @file lzp.h
+ * @brief Utility library for file bundling and compression
  *
- * 	\section	creditsSection Credits
- * 	- LZ77 data compression/decompression routines based from Ilya Muravyov's
- *	  crush.cpp released under public domain. Refined and ported to C by Lameguy64.
- *	- CRC calculation routines based from Lammert Bies' lib_crc routines.
+ * @details This library implements a simple in-memory archive format which
+ * can be used to package and compress assets for faster loading, as well as a
+ * generic LZ77 compressor and matching decompressor. Two archive formats are
+ * supported, one uncompressed (.QLP) and one with individually compressed
+ * entries (.LZP).
  *
+ * This header provides the LZ77 compression API and functions to parse and
+ * decompress .LZP archives after they have been loaded into memory.
+ *
+ * @section creditsSection Credits
+ * - LZ77 data compression/decompression routines based from Ilya Muravyov's
+ *   crush.cpp released under public domain. Refined and ported to C by
+ *   Lameguy64.
+ * - CRC calculation routines based from Lammert Bies' lib_crc routines.
  */
 
-#ifndef _LZPACK_H
-#define _LZPACK_H
+#pragma once
 
 #include <stdint.h>
 #ifdef _WIN32
@@ -218,6 +227,3 @@ int lzpUnpackFile(void* buff, const LZP_HEAD* lzpack, int fileNum);
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif // _LZPACK_H

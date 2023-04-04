@@ -3,8 +3,7 @@
  * (C) 2019-2023 PSXSDK authors, Lameguy64, spicyjpeg - MPL licensed
  */
 
-#ifndef __CTYPE_H
-#define __CTYPE_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,6 +21,4 @@ int toupper(int ch);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

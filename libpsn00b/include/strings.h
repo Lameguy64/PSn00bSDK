@@ -3,8 +3,7 @@
  * (C) 2019-2022 PSXSDK authors, Lameguy64, spicyjpeg - MPL licensed
  */
 
-#ifndef __STRINGS_H
-#define __STRINGS_H
+#pragma once
 
 #include <string.h>
 
@@ -15,5 +14,3 @@
 #define bcmp(b1, b2, len)		memcmp(b1, b2, len)
 #define index(s, c)				strchr(s, c)
 #define rindex(s, c)			strrchr(s, c)
-
-#endif

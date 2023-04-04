@@ -8,7 +8,7 @@
 	{
 		"type": "a",
 		"id":   1,
-		"name": "seek",
+		"name": "lseek",
 		"file": "stdio.s"
 	},
 	{
@@ -33,6 +33,12 @@
 		"type": "a",
 		"id":   5,
 		"name": "ioctl",
+		"file": "stdio.s"
+	},
+	{
+		"type": "a",
+		"id":   7,
+		"name": "isatty",
 		"file": "stdio.s"
 	},
 	{
@@ -109,6 +115,12 @@
 	},
 	{
 		"type": "a",
+		"id":   81,
+		"name": "LoadExec",
+		"file": "sys.s"
+	},
+	{
+		"type": "a",
 		"id":   85,
 		"name": "_bu_init",
 		"file": "drivers.s"
@@ -128,13 +140,25 @@
 	{
 		"type": "a",
 		"id":   153,
-		"name": "AddDummyTty",
+		"name": "add_nullcon_driver",
 		"file": "drivers.s"
 	},
 	{
 		"type": "a",
 		"id":   156,
 		"name": "SetConf",
+		"file": "sys.s"
+	},
+	{
+		"type": "a",
+		"id":   157,
+		"name": "GetConf",
+		"file": "sys.s"
+	},
+	{
+		"type": "a",
+		"id":   159,
+		"name": "SetMem",
 		"file": "sys.s"
 	},
 	{
@@ -170,13 +194,13 @@
 	{
 		"type": "b",
 		"id":   0,
-		"name": "_kernel_malloc",
+		"name": "alloc_kernel_memory",
 		"file": "sys.s"
 	},
 	{
 		"type": "b",
 		"id":   1,
-		"name": "_kernel_free",
+		"name": "free_kernel_memory",
 		"file": "sys.s"
 	},
 	{
@@ -296,13 +320,13 @@
 	{
 		"type": "b",
 		"id":   24,
-		"name": "SetDefaultExitFromException",
+		"name": "ResetEntryInt",
 		"file": "sys.s"
 	},
 	{
 		"type": "b",
 		"id":   25,
-		"name": "SetCustomExitFromException",
+		"name": "HookEntryInt",
 		"file": "sys.s"
 	},
 	{
@@ -314,7 +338,7 @@
 	{
 		"type": "b",
 		"id":   64,
-		"name": "chdir",
+		"name": "cd",
 		"file": "fs.s"
 	},
 	{
@@ -343,20 +367,26 @@
 	},
 	{
 		"type": "b",
+		"id":   70,
+		"name": "undelete",
+		"file": "fs.s"
+	},
+	{
+		"type": "b",
 		"id":   71,
-		"name": "AddDev",
+		"name": "AddDrv",
 		"file": "drivers.s"
 	},
 	{
 		"type": "b",
 		"id":   72,
-		"name": "DelDev",
+		"name": "DelDrv",
 		"file": "drivers.s"
 	},
 	{
 		"type": "b",
 		"id":   73,
-		"name": "ListDev",
+		"name": "ListDrv",
 		"file": "drivers.s"
 	},
 	{
@@ -394,6 +424,18 @@
 		"id":   80,
 		"name": "_new_card",
 		"file": "drivers.s"
+	},
+	{
+		"type": "b",
+		"id":   84,
+		"name": "_get_errno",
+		"file": "stdio.s"
+	},
+	{
+		"type": "b",
+		"id":   85,
+		"name": "_get_error",
+		"file": "stdio.s"
 	},
 	{
 		"type": "b",

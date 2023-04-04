@@ -1,10 +1,9 @@
 /*
  * PSn00bSDK standard library
- * (C) 2019-2022 PSXSDK authors, Lameguy64, spicyjpeg - MPL licensed
+ * (C) 2019-2023 PSXSDK authors, Lameguy64, spicyjpeg - MPL licensed
  */
 
-#ifndef __STDLIB_H
-#define __STDLIB_H
+#pragma once
 
 #include <stddef.h>
 
@@ -58,6 +57,4 @@ void free(void *ptr);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

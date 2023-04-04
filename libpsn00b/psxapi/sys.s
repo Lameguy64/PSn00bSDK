@@ -6,7 +6,7 @@
 
 .set noreorder
 
-## A0 table functions (8)
+## A0 table functions (11)
 
 .section .text.b_setjmp
 .global b_setjmp
@@ -48,6 +48,14 @@ FlushCache:
 	jr $t2
 	li $t1, 0x44
 
+.section .text.LoadExec
+.global LoadExec
+.type LoadExec, @function
+LoadExec:
+	li $t2, 0xa0
+	jr $t2
+	li $t1, 0x51
+
 .section .text.SetConf
 .global SetConf
 .type SetConf, @function
@@ -55,6 +63,22 @@ SetConf:
 	li $t2, 0xa0
 	jr $t2
 	li $t1, 0x9c
+
+.section .text.GetConf
+.global GetConf
+.type GetConf, @function
+GetConf:
+	li $t2, 0xa0
+	jr $t2
+	li $t1, 0x9d
+
+.section .text.SetMem
+.global SetMem
+.type SetMem, @function
+SetMem:
+	li $t2, 0xa0
+	jr $t2
+	li $t1, 0x9f
 
 .section .text._boot
 .global _boot
@@ -74,18 +98,18 @@ GetSystemInfo:
 
 ## B0 table functions (27)
 
-.section .text._kernel_malloc
-.global _kernel_malloc
-.type _kernel_malloc, @function
-_kernel_malloc:
+.section .text.alloc_kernel_memory
+.global alloc_kernel_memory
+.type alloc_kernel_memory, @function
+alloc_kernel_memory:
 	li $t2, 0xb0
 	jr $t2
 	li $t1, 0x00
 
-.section .text._kernel_free
-.global _kernel_free
-.type _kernel_free, @function
-_kernel_free:
+.section .text.free_kernel_memory
+.global free_kernel_memory
+.type free_kernel_memory, @function
+free_kernel_memory:
 	li $t2, 0xb0
 	jr $t2
 	li $t1, 0x01
@@ -242,18 +266,18 @@ ReturnFromException:
 	jr $t2
 	li $t1, 0x17
 
-.section .text.SetDefaultExitFromException
-.global SetDefaultExitFromException
-.type SetDefaultExitFromException, @function
-SetDefaultExitFromException:
+.section .text.ResetEntryInt
+.global ResetEntryInt
+.type ResetEntryInt, @function
+ResetEntryInt:
 	li $t2, 0xb0
 	jr $t2
 	li $t1, 0x18
 
-.section .text.SetCustomExitFromException
-.global SetCustomExitFromException
-.type SetCustomExitFromException, @function
-SetCustomExitFromException:
+.section .text.HookEntryInt
+.global HookEntryInt
+.type HookEntryInt, @function
+HookEntryInt:
 	li $t2, 0xb0
 	jr $t2
 	li $t1, 0x19

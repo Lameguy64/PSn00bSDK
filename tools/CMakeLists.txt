@@ -38,11 +38,7 @@ file(
 )
 
 add_library(lzp STATIC ${_sources})
-target_include_directories(
-	lzp PUBLIC
-	lzpack/lzp
-	${LIBPSN00B_PATH}/include/lzp
-)
+target_include_directories(lzp PUBLIC ${LIBPSN00B_PATH}/lzp)
 
 ## Executables
 

@@ -16,8 +16,7 @@
  * compiled object files.
  */
 
-#ifndef _INLINE_C_H
-#define _INLINE_C_H
+#pragma once
 
 /* GTE load macros */
 
@@ -1612,5 +1611,3 @@
 	: "g"( r0 ) )
 #define gte_mvmva_b(sf, mx, v, cv, lm) gte_mvmva_core_b( 0x0400012 | \
 	((sf)<<19) | ((mx)<<17) | ((v)<<15) | ((cv)<<13) | ((lm)<<10) )
-
-#endif // _INLINE_C_H

@@ -3,8 +3,24 @@
  * (C) 2019-2023 Lameguy64, spicyjpeg - MPL licensed
  */
 
-#ifndef __PSXGPU_H
-#define __PSXGPU_H
+/**
+ * @file psxgpu.h
+ * @brief GPU library header
+ *
+ * @details This library provides access to the PS1's GPU through a fully
+ * asynchronous command queue, which allows GPU commands to be batched and sent
+ * efficiently in the background without stalling the CPU. Helper structures
+ * and macros to initialize, generate and link GPU display lists in memory are
+ * also provided, in addition to support for asynchronous VRAM data transfers
+ * and a debug font API that can be used to easily draw text overlays for
+ * debugging purposes.
+ *
+ * This library is for the most part a drop-in replacement for the official
+ * SDK's GPU library and is only missing a handful of functions, mainly related
+ * to Kanji debug fonts and command queue pausing.
+ */
+
+#pragma once
 
 #include <stdint.h>
 #include <stddef.h>
@@ -602,6 +618,4 @@ char *FntFlush(int id);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

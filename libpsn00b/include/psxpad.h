@@ -11,8 +11,7 @@
  * Reference: https://gist.github.com/scanlime/5042071
  */
  
-#ifndef _PSXPAD_H
-#define _PSXPAD_H
+#pragma once
 
 #include <stdint.h>
 
@@ -234,5 +233,3 @@ typedef struct __attribute__((packed)) _MemCardRequest {
 	uint8_t checksum;	// = lba_h ^ lba_l ^ data (CMD_WRITE only)
 	uint8_t dummy2[3];
 } MemCardRequest;
-
-#endif

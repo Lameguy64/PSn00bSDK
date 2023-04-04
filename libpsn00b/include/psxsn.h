@@ -18,8 +18,7 @@
  * in PSn00bSDK they are part of libpsxapi.
  */
 
-#ifndef __PSXSN_H
-#define __PSXSN_H
+#pragma once
 
 #include <stddef.h>
 
@@ -49,6 +48,4 @@ int PClseek(int fd, int offset, PCDRV_SeekMode mode);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

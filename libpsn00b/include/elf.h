@@ -9,8 +9,7 @@
  * converted to enums.
  */
 
-#ifndef __ELF_H
-#define __ELF_H 
+#pragma once
 
 #include <stdint.h>
 
@@ -121,18 +120,3 @@ typedef enum {
 	STT_LOPROC	= 13,		/* Start of processor-specific */
 	STT_HIPROC	= 15		/* End of processor-specific */
 } Elf32_st_type;
-
-// If you need to add more constants, you may use the following Python snippet
-// to quickly convert #defines to enums:
-/*
-import re
-t = """<paste #defines here>"""
-t = re.sub(
-	r"(0x[0-9a-f]+|0b[01]+|[0-9]+)",
-	lambda m: f"= {m.group(1)},",
-	t.replace("#define ",  "\t").replace("#define\t", "\t")
-)
-print("typedef enum {\n" + t + "\n} NAME;")
-*/
-
-#endif

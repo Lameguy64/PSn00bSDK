@@ -32,10 +32,10 @@ _96_remove:
 	jr $t2
 	li $t1, 0x72
 
-.section .text.AddDummyTty
-.global AddDummyTty
-.type AddDummyTty, @function
-AddDummyTty:
+.section .text.add_nullcon_driver
+.global add_nullcon_driver
+.type add_nullcon_driver, @function
+add_nullcon_driver:
 	li $t2, 0xa0
 	jr $t2
 	li $t1, 0x99
@@ -66,26 +66,26 @@ _card_clear:
 
 ## B0 table functions (12)
 
-.section .text.AddDev
-.global AddDev
-.type AddDev, @function
-AddDev:
+.section .text.AddDrv
+.global AddDrv
+.type AddDrv, @function
+AddDrv:
 	li $t2, 0xb0
 	jr $t2
 	li $t1, 0x47
 
-.section .text.DelDev
-.global DelDev
-.type DelDev, @function
-DelDev:
+.section .text.DelDrv
+.global DelDrv
+.type DelDrv, @function
+DelDrv:
 	li $t2, 0xb0
 	jr $t2
 	li $t1, 0x48
 
-.section .text.ListDev
-.global ListDev
-.type ListDev, @function
-ListDev:
+.section .text.ListDrv
+.global ListDrv
+.type ListDrv, @function
+ListDrv:
 	li $t2, 0xb0
 	jr $t2
 	li $t1, 0x49

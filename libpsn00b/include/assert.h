@@ -2,12 +2,11 @@
  * PSn00bSDK assert macro and internal logging
  * (C) 2022-2023 spicyjpeg - MPL licensed
  *
- * Note that the _sdk_log() macro is used internally by PSn00bSDK to output
- * debug messages and warnings.
+ * The _sdk_*() macros are used internally by PSn00bSDK to output messages when
+ * building in debug mode.
  */
 
-#ifndef __ASSERT_H
-#define __ASSERT_H
+#pragma once
 
 #include <stdio.h>
 
@@ -57,7 +56,5 @@ void _assert_abort(const char *file, int line, const char *expr);
 		_sdk_log("invalid args to %s() (%s)\n", __func__, #expr); \
 		return ret; \
 	}
-
-#endif
 
 #endif

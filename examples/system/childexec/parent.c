@@ -273,7 +273,7 @@ extern char child_exe[];
 void run_child(void) {
 	
 	// Arguments for the child program
-	char *args[] =
+	const char *args[] =
 	{
 		"SAMPLE=0",
 		"SESSION=1",
