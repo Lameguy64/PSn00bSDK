@@ -450,6 +450,8 @@ static char* get_filename(char *name, const char *filename)
 
 CdlFILE *CdSearchFile(CdlFILE *fp, const char *filename)
 {
+	_sdk_validate_args(fp && filename, NULL);
+
 	int i,j,found_dir,num_dirs;
 	int dir_len;
 	char tpath_rbuff[128];
@@ -553,6 +555,8 @@ CdlFILE *CdSearchFile(CdlFILE *fp, const char *filename)
 
 CdlDIR *CdOpenDir(const char* path)
 {
+	_sdk_validate_args(path, NULL);
+
 	CdlDIR_INT*	dir;
 	int			num_dirs;
 	int			i,found_dir;
@@ -631,6 +635,8 @@ CdlDIR *CdOpenDir(const char* path)
 
 int CdReadDir(CdlDIR *dir, CdlFILE* file)
 {
+	_sdk_validate_args(dir && file, 0);
+
 	CdlDIR_INT*		d_dir;
 	ISO_DIR_ENTRY*	dir_entry;
 
@@ -683,6 +689,9 @@ int CdReadDir(CdlDIR *dir, CdlFILE* file)
 
 void CdCloseDir(CdlDIR *dir)
 {
+	if (!dir)
+		return;
+
 	CdlDIR_INT*	d_dir;
 	
 	d_dir = (CdlDIR_INT*)dir;
@@ -698,6 +707,8 @@ int CdIsoError()
 
 int CdGetVolumeLabel(char *label)
 {
+	_sdk_validate_args(label, -1);
+
 	int i, length = 31;
 	ISO_DESCRIPTOR* descriptor;
 
@@ -761,6 +772,8 @@ static void _scan_callback(CdlIntrResult status, unsigned char *result)
 
 int CdLoadSession(int session)
 {
+	_sdk_validate_args(session >= 0, -1);
+
 	CdlLOC *loc;
 	CdlCB ready_oldcb;
 	char scanbuff[2048];

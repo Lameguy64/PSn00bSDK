@@ -33,6 +33,8 @@ static const char *const _unlock_regions[] = {
 /* Sector DMA transfer functions */
 
 int CdGetSector(void *madr, int size) {
+	_sdk_validate_args(madr && (size > 0), 0);
+
 	//while (!(CD_REG(0) & (1 << 6)))
 		//__asm__ volatile("");
 
@@ -47,6 +49,8 @@ int CdGetSector(void *madr, int size) {
 }
 
 int CdGetSector2(void *madr, int size) {
+	_sdk_validate_args(madr && (size > 0), 0);
+
 	//while (!(CD_REG(0) & (1 << 6)))
 		//__asm__ volatile("");
 
@@ -170,6 +174,8 @@ int CdUnlock(CdlRegionCode region) {
 /* Misc. functions */
 
 int CdGetToc(CdlLOC *toc) {
+	_sdk_validate_args(toc, 0);
+
 	uint8_t result[4];
 
 	if (!CdCommand(CdlGetTN, 0, 0, result))
@@ -199,6 +205,8 @@ int CdGetToc(CdlLOC *toc) {
 }
 
 int CdMix(const CdlATV *vol) {
+	_sdk_validate_args(vol, 0);
+
 	CD_REG(0) = 2;
 	CD_REG(2) = vol->val0;
 	CD_REG(3) = vol->val1;

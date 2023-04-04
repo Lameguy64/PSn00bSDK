@@ -164,12 +164,18 @@ void SpuInit(void) {
 }
 
 size_t SpuRead(uint32_t *data, size_t size) {
+	_sdk_validate_args(data && size, 0);
+
 	return _dma_transfer(data, size, 0) * 4;
 }
 
 size_t SpuWrite(const uint32_t *data, size_t size) {
-	if (_transfer_addr < WRITABLE_AREA_ADDR)
+	_sdk_validate_args(data && size, 0);
+
+	if (_transfer_addr < WRITABLE_AREA_ADDR) {
+		_sdk_log("ignoring attempt to write to capture buffers at 0x%05x\n", _transfer_addr);
 		return 0;
+	}
 
 	// I/O transfer mode is not that useful, but whatever.
 	if (_transfer_mode)
@@ -179,6 +185,8 @@ size_t SpuWrite(const uint32_t *data, size_t size) {
 }
 
 size_t SpuWritePartly(const uint32_t *data, size_t size) {
+	//_sdk_validate_args(data && size, 0);
+
 	size_t _size = SpuWrite(data, size);
 
 	_transfer_addr += (_size + 1) / 2;

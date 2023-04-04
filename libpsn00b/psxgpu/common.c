@@ -187,6 +187,8 @@ int EnqueueDrawOp(
 	uint32_t	arg2,
 	uint32_t	arg3
 ) {
+	_sdk_validate_args(func, -1);
+
 	// If GPU DMA is currently busy, append the command to the queue instead of
 	// executing it immediately. Note that interrupts must be disabled *prior*
 	// to checking if DMA is busy; disabling them afterwards would create a
@@ -263,6 +265,8 @@ void *DrawSyncCallback(void (*func)(void)) {
 /* OT and primitive drawing API */
 
 void ClearOTagR(uint32_t *ot, size_t length) {
+	_sdk_validate_args_void(ot && length);
+
 	DMA_MADR(DMA_OTC) = (uint32_t) &ot[length - 1];
 	DMA_BCR(DMA_OTC)  = length & 0xffff;
 	DMA_CHCR(DMA_OTC) = 0x11000002;
@@ -272,6 +276,8 @@ void ClearOTagR(uint32_t *ot, size_t length) {
 }
 
 void ClearOTag(uint32_t *ot, size_t length) {
+	_sdk_validate_args_void(ot && length);
+
 	// DMA6 only supports writing to RAM in reverse order (last to first), so
 	// the OT has to be cleared in software here. This function is thus much
 	// slower than ClearOTagR().
@@ -285,10 +291,14 @@ void ClearOTag(uint32_t *ot, size_t length) {
 }
 
 void AddPrim(uint32_t *ot, const void *pri) {
+	_sdk_validate_args_void(ot && pri);
+
 	addPrim(ot, pri);
 }
 
-void DrawPrim(const uint32_t *pri) {	
+void DrawPrim(const uint32_t *pri) {
+	_sdk_validate_args_void(pri);
+
 	size_t length = getlen(pri);
 
 	DrawSync(0);
@@ -308,10 +318,14 @@ void DrawPrim(const uint32_t *pri) {
 }
 
 int DrawOTag(const uint32_t *ot) {
+	_sdk_validate_args(ot, -1);
+
 	return EnqueueDrawOp((void *) &DrawOTag2, (uint32_t) ot, 0, 0);
 }
 
 void DrawOTag2(const uint32_t *ot) {
+	_sdk_validate_args_void(ot);
+
 	GPU_GP1 = 0x04000002; // Enable DMA request, route to GP0
 
 	while (DMA_CHCR(DMA_GPU) & (1 << 24))

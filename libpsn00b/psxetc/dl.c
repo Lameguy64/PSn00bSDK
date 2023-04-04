@@ -112,6 +112,8 @@ static uint32_t _elf_hash(const char *str) {
 /* Symbol map loading/introspection API */
 
 int DL_InitSymbolMap(int num_entries) {
+	_sdk_validate_args(num_entries, -1);
+
 	if (_symbol_map.entries)
 		DL_UnloadSymbolMap();
 
@@ -151,6 +153,8 @@ void DL_UnloadSymbolMap(void) {
 }
 
 void DL_AddMapSymbol(const char *name, void *ptr) {
+	_sdk_validate_args_void(name);
+
 	uint32_t hash  = _elf_hash(name);
 	int      index = _symbol_map.index;
 	_symbol_map.index = index + 1;
@@ -168,6 +172,8 @@ void DL_AddMapSymbol(const char *name, void *ptr) {
 }
 
 int DL_ParseSymbolMap(const char *ptr, size_t size) {
+	_sdk_validate_args(ptr && size, 0);
+
 	int entries = 0;
 
 	// Perform a quick scan over the entire map text and count the number of
@@ -232,6 +238,8 @@ int DL_ParseSymbolMap(const char *ptr, size_t size) {
 }
 
 void *DL_GetMapSymbol(const char *name) {
+	_sdk_validate_args(name, 0);
+
 	if (!_symbol_map.entries) {
 		_sdk_log("DL_GetMapSymbol() with no map loaded\n");
 		return 0;
@@ -275,8 +283,7 @@ void *DL_SetResolveCallback(void *(*callback)(DLL *, const char *)) {
 /* Library loading and linking API */
 
 DLL *DL_CreateDLL(DLL *dll, void *ptr, size_t size, DL_ResolveMode mode) {
-	if (!dll || !ptr)
-		return 0;
+	_sdk_validate_args(dll && ptr && size, 0);
 
 	dll->ptr        = ptr;
 	dll->malloc_ptr = (mode & DL_FREE_ON_DESTROY) ? ptr : 0;
@@ -463,6 +470,8 @@ void DL_DestroyDLL(DLL *dll) {
 }
 
 void *DL_GetDLLSymbol(const DLL *dll, const char *name) {
+	_sdk_validate_args(name, 0);
+
 	if (!dll)
 		return DL_GetMapSymbol(name);
 		//return _dl_resolve_callback(0, name);

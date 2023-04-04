@@ -69,6 +69,8 @@ static void _dma_transfer(const RECT *rect, uint32_t *data, int write) {
 /* VRAM transfer API */
 
 int LoadImage(const RECT *rect, const uint32_t *data) {
+	_sdk_validate_args(rect && data, -1);
+
 	int index = _next_saved_rect;
 
 	_saved_rects[index] = *rect;
@@ -83,6 +85,8 @@ int LoadImage(const RECT *rect, const uint32_t *data) {
 }
 
 int StoreImage(const RECT *rect, uint32_t *data) {
+	_sdk_validate_args(rect && data, -1);
+
 	int index = _next_saved_rect;
 
 	_saved_rects[index] = *rect;
@@ -97,18 +101,26 @@ int StoreImage(const RECT *rect, uint32_t *data) {
 }
 
 int MoveImage(const RECT *rect, int x, int y) {
+	_sdk_validate_args(rect, -1);
+
 	return EnqueueDrawOp((void *) &MoveImage2, (uint32_t) rect, x, y);
 }
 
 void LoadImage2(const RECT *rect, const uint32_t *data) {
+	_sdk_validate_args_void(rect && data);
+
 	_dma_transfer(rect, (uint32_t *) data, 1);
 }
 
 void StoreImage2(const RECT *rect, uint32_t *data) {
+	_sdk_validate_args_void(rect && data);
+
 	_dma_transfer(rect, data, 0);
 }
 
 void MoveImage2(const RECT *rect, int x, int y) {
+	_sdk_validate_args_void(rect);
+
 	while (!(GPU_GP1 & (1 << 26)))
 		__asm__ volatile("");
 
@@ -131,6 +143,8 @@ void MoveImage2(const RECT *rect, int x, int y) {
 // returning pointers to them, which become useless once the .TIM file is
 // unloaded from main RAM.
 int GsGetTimInfo(const uint32_t *tim, GsIMAGE *info) {
+	_sdk_validate_args(tim && info, 1);
+
 	if ((*(tim++) & 0xffff) != 0x0010)
 		return 1;
 
@@ -157,6 +171,8 @@ int GsGetTimInfo(const uint32_t *tim, GsIMAGE *info) {
 }
 
 int GetTimInfo(const uint32_t *tim, TIM_IMAGE *info) {
+	_sdk_validate_args(tim && info, 1);
+
 	if ((*(tim++) & 0xffff) != 0x0010)
 		return 1;
 

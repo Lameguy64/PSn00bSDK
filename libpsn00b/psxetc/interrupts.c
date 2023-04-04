@@ -4,6 +4,7 @@
  */
 
 #include <stdint.h>
+#include <assert.h>
 #include <psxapi.h>
 #include <psxetc.h>
 #include <hwregs_c.h>
@@ -99,8 +100,7 @@ static void _global_dma_handler(void) {
 /* IRQ and DMA handler API */
 
 void *InterruptCallback(IRQ_Channel irq, void (*func)(void)) {
-	if ((irq < 0) || (irq >= NUM_IRQ_CHANNELS))
-		return 0;
+	_sdk_validate_args((irq >= 0) && (irq < NUM_IRQ_CHANNELS), 0);
 
 	void *old_callback = _irq_handlers[irq];
 	_irq_handlers[irq] = func;
@@ -116,15 +116,13 @@ void *InterruptCallback(IRQ_Channel irq, void (*func)(void)) {
 }
 
 void *GetInterruptCallback(IRQ_Channel irq) {
-	if ((irq < 0) || (irq >= NUM_IRQ_CHANNELS))
-		return 0;
+	_sdk_validate_args((irq >= 0) && (irq < NUM_IRQ_CHANNELS), 0);
 
 	return _irq_handlers[irq];
 }
 
 void *DMACallback(DMA_Channel dma, void (*func)(void)) {
-	if ((dma < 0) || (dma >= NUM_DMA_CHANNELS))
-		return 0;
+	_sdk_validate_args((dma >= 0) && (dma < NUM_DMA_CHANNELS), 0);
 
 	void *old_callback = _dma_handlers[dma];
 	_dma_handlers[dma] = func;
@@ -151,8 +149,7 @@ void *DMACallback(DMA_Channel dma, void (*func)(void)) {
 }
 
 void *GetDMACallback(DMA_Channel dma) {
-	if ((dma < 0) || (dma >= NUM_DMA_CHANNELS))
-		return 0;
+	_sdk_validate_args((dma >= 0) && (dma < NUM_DMA_CHANNELS), 0);
 
 	return _dma_handlers[dma];
 }
@@ -160,8 +157,7 @@ void *GetDMACallback(DMA_Channel dma) {
 /* DMA channel priority API */
 
 int SetDMAPriority(DMA_Channel dma, int priority) {
-	if ((dma < 0) || (dma >= NUM_DMA_CHANNELS))
-		return -1;
+	_sdk_validate_args((dma >= 0) && (dma < NUM_DMA_CHANNELS), -1);
 
 	uint32_t dpcr    = DMA_DPCR;
 	uint32_t channel = dpcr >> (dma * 4);
@@ -175,8 +171,7 @@ int SetDMAPriority(DMA_Channel dma, int priority) {
 }
 
 int GetDMAPriority(DMA_Channel dma) {
-	if ((dma < 0) || (dma >= NUM_DMA_CHANNELS))
-		return -1;
+	_sdk_validate_args((dma >= 0) && (dma < NUM_DMA_CHANNELS), -1);
 
 	uint32_t channel = DMA_DPCR >> (dma * 4);
 	return (channel & 8) ? (channel & 7) : -1;

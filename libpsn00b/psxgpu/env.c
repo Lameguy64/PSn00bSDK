@@ -4,6 +4,7 @@
  */
 
 #include <stdint.h>
+#include <assert.h>
 #include <psxgpu.h>
 #include <hwregs_c.h>
 
@@ -36,6 +37,8 @@ static inline uint32_t _get_window_mask(int size) {
 /* Drawing API */
 
 DRAWENV *SetDefDrawEnv(DRAWENV *env, int x, int y, int w, int h) {
+	_sdk_validate_args(env && (w > 0) && (h > 0), 0);
+
 	env->clip.x = x;
 	env->clip.y = y;
 	env->clip.w = w;
@@ -60,6 +63,8 @@ DRAWENV *SetDefDrawEnv(DRAWENV *env, int x, int y, int w, int h) {
 }
 
 int DrawOTagEnv(const uint32_t *ot, DRAWENV *env) {
+	_sdk_validate_args(ot && env, -1);
+
 	// All commands are grouped into a single display list packet for
 	// performance reasons using tagless primitives (the GPU does not care
 	// about the grouping as the display list is parsed by the CPU).
@@ -102,6 +107,8 @@ int DrawOTagEnv(const uint32_t *ot, DRAWENV *env) {
 }
 
 void PutDrawEnv(DRAWENV *env) {
+	_sdk_validate_args_void(env);
+
 	DrawOTagEnv((const uint32_t *) 0x00ffffff, env);
 }
 
@@ -109,6 +116,8 @@ void PutDrawEnv(DRAWENV *env) {
 // useful if the DRAWENV structure is never modified (which is the case most of
 // the time).
 void PutDrawEnvFast(DRAWENV *env) {
+	_sdk_validate_args_void(env);
+
 	if (!(env->dr_env.tag))
 		DrawOTagEnv((const uint32_t *) 0x00ffffff, env);
 	else
@@ -118,6 +127,8 @@ void PutDrawEnvFast(DRAWENV *env) {
 /* Display API */
 
 DISPENV *SetDefDispEnv(DISPENV *env, int x, int y, int w, int h) {
+	_sdk_validate_args(env && (w > 0) && (h > 0), 0);
+
 	env->disp.x = x;
 	env->disp.y = y;
 	env->disp.w = w;
@@ -136,6 +147,8 @@ DISPENV *SetDefDispEnv(DISPENV *env, int x, int y, int w, int h) {
 }
 
 void PutDispEnv(const DISPENV *env) {
+	_sdk_validate_args_void(env);
+
 	uint32_t h_range, v_range, mode, fb_pos;
 
 	mode  = _gpu_video_mode << 3;
@@ -204,6 +217,8 @@ void PutDispEnv(const DISPENV *env) {
 /* Deprecated "raw" display API */
 
 void PutDispEnvRaw(const DISPENV_RAW *env) {
+	_sdk_validate_args_void(env);
+
 	uint32_t h_range, v_range, fb_pos;
 
 	h_range  =   608 + env->vid_xpos;
