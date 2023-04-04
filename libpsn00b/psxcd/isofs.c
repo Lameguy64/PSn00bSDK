@@ -92,7 +92,7 @@ static int _CdReadIsoDescriptor(int session_offs)
 
 	// Verify if volume descriptor is present
 	descriptor = (ISO_DESCRIPTOR*)_cd_iso_descriptor_buff;
-	if( strncmp("CD001", descriptor->header.id, 5) )
+	if( memcmp("CD001", descriptor->header.id, 5) )
 	{
 		_sdk_log("Disc does not contain a ISO9660 file system.\n");
 
@@ -211,7 +211,7 @@ static int _CdReadIsoDirectory(int lba)
 	return 0;
 }
 
-#ifndef NDEBUG
+#if 0
 
 static void dump_directory(void)
 {
@@ -228,8 +228,12 @@ static void dump_directory(void)
 	{
 		dir_entry = (ISO_DIR_ENTRY*)(_cd_iso_directory_buff+dir_pos);
 		
-		strncpy(namebuff, 
-			_cd_iso_directory_buff+dir_pos+sizeof(ISO_DIR_ENTRY), dir_entry->identifierLen);
+		memcpy(
+			namebuff, 
+			_cd_iso_directory_buff+dir_pos+sizeof(ISO_DIR_ENTRY),
+			dir_entry->identifierLen
+		);
+		namebuff[dir_entry->identifierLen] = 0;
 			
 		_sdk_log("P:%d L:%d %s\n", dir_pos, dir_entry->identifierLen, namebuff);
 		
@@ -271,9 +275,12 @@ static void dump_pathtable(void)
 	while( (int)(tbl_pos-_cd_iso_pathtable_buff) <
 		descriptor->pathTableSize.lsb )
 	{
-		strncpy(namebuff, 
+		memcpy(
+			namebuff, 
 			tbl_pos+sizeof(ISO_PATHTABLE_ENTRY), 
-			tbl_entry->nameLength);
+			tbl_entry->nameLength
+		);
+		namebuff[tbl_entry->nameLength] = 0;
 		
 		_sdk_log("%s\n", namebuff);
 		
@@ -308,9 +315,12 @@ static int get_pathtable_entry(int entry, ISO_PATHTABLE_ENTRY *tbl, char *namebu
 		{
 			if( namebuff )
 			{
-				strncpy(namebuff, 
+				memcpy(
+					namebuff, 
 					tbl_pos+sizeof(ISO_PATHTABLE_ENTRY), 
-					tbl_entry->nameLength);
+					tbl_entry->nameLength
+				);
+				namebuff[tbl_entry->nameLength] = 0;
 			}
 			
 			if( tbl )
@@ -381,9 +391,12 @@ static int find_dir_entry(const char *name, ISO_DIR_ENTRY *dirent)
 
 		if( !(dir_entry->flags & 0x2) )
 		{
-			strncpy(namebuff, 
+			memcpy(
+				namebuff, 
 				_cd_iso_directory_buff+dir_pos+sizeof(ISO_DIR_ENTRY), 
-				dir_entry->identifierLen);
+				dir_entry->identifierLen
+			);
+			namebuff[dir_entry->identifierLen] = 0;
 			
 			if( strcmp(namebuff, name) == 0 )
 			{
@@ -422,7 +435,8 @@ static char* get_pathname(char *path, const char *filename)
 		return NULL;
 	}
 	
-	strncpy(path, filename, (int)(c-filename));
+	memcpy(path, filename, c - filename);
+	path[c - filename] = 0;
 	return path;
 }
 
@@ -609,7 +623,11 @@ CdlDIR *CdOpenDir(const char* path)
 	_sdk_log( "Directory LBA = %d\n", tbl_entry.dirOffs );
 
 	_CdReadIsoDirectory( tbl_entry.dirOffs );
-
+	
+#ifndef NDEBUG
+	//dump_directory();
+#endif
+	
 	dir = (CdlDIR_INT*)malloc( sizeof(CdlDIR_INT) );
 	
 	dir->_len = _cd_iso_directory_len;
@@ -664,9 +682,12 @@ int CdReadDir(CdlDIR *dir, CdlFILE* file)
 	}
 	else
 	{
-		strncpy( file->name, 
+		memcpy(
+			file->name, 
 			d_dir->_dir+d_dir->_pos+sizeof(ISO_DIR_ENTRY), 
-			dir_entry->identifierLen );
+			dir_entry->identifierLen
+		);
+		file->name[dir_entry->identifierLen] = 0;
 	}
 	
 	CdIntToPos( dir_entry->entryOffs.lsb, &file->pos );
@@ -746,7 +767,7 @@ static void _scan_callback(CdlIntrResult status, unsigned char *result)
 		
 		if( _ses_scanbuff[0] == 0x1 )
 		{
-			if( strncmp((const char*)_ses_scanbuff+1, "CD001", 5) == 0 )
+			if( memcmp((const char*)_ses_scanbuff+1, "CD001", 5) == 0 )
 			{
 				CdControlF(CdlPause, 0);
 				_ses_scancomplete = 1;

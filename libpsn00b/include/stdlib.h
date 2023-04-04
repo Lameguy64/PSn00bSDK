@@ -39,11 +39,11 @@ void srand(int seed);
 int abs(int j);
 long labs(long i);
 
-long strtol(const char *nptr, char **endptr, int base);
-long long strtoll(const char *nptr, char **endptr, int base);
-float strtof(const char *nptr, char **endptr);
-double strtod(const char *nptr, char **endptr);
-long double strtold(const char *nptr, char **endptr);
+long strtol(const char *str, char **str_end, int base);
+long long strtoll(const char *str, char **str_end, int base);
+//float strtof(const char *str, char **str_end);
+//double strtod(const char *str, char **str_end);
+//long double strtold(const char *str, char **str_end);
 
 void InitHeap(void *addr, size_t size);
 void *sbrk(ptrdiff_t incr);

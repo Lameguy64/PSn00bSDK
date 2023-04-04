@@ -6,29 +6,35 @@
 #ifndef __STRING_H
 #define __STRING_H
 
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int strcmp(const char *dst , const char *src);
-int strncmp(const char *dst , const char *src , int len);
-char *strpbrk(const char *dst , const char *src);
-char *strtok(char *s , char *set);
-char *strstr(const char *big , const char *little);
+void *memset(void *dest, int ch, size_t count);
+void *memcpy(void *dest, const void *src, size_t count);
+void *memccpy(void *dest, const void *src, int ch, size_t count);
+void *memmove(void *dest, const void *src, size_t count);
+int memcmp(const void *lhs, const void *rhs, size_t count);
+void *memchr(const void *ptr, int ch, size_t count);
 
-char *strcat(char *s , const char *append);
-char *strncat(char *s , const char *append, int n);
-char *strcpy(char *dst , const char *src);
-char *strncpy(char *dst , const char *src , int n);
-int strlen(const char *s);
-char *strchr(const char *s , int c);
-char *strrchr(const char *s , int c);
+char *strcpy(char *dest, const char *src);
+char *strncpy(char *dest, const char *src, size_t count);
+int strcmp(const char *lhs, const char *rhs);
+int strncmp(const char *lhs, const char *rhs, size_t count);
+char *strchr(const char *str, int ch);
+char *strrchr(const char *str, int ch);
+char *strpbrk(const char *str, const char *breakset);
+char *strstr(const char *str, const char *substr);
 
-void *memmove(void *dst , const void *src , int n);
-void *memchr(void *s , int c , int n);
-void *memcpy(void *dst , const void *src , int n);
-void *memset(void *dst , char c , int n);
-int memcmp(const void *b1 , const void *b2 , int n);
+size_t strlen(const char *str);
+char *strcat(char *dest, const char *src);
+char *strncat(char *dest, const char *src, size_t count);
+char *strdup(const char *str);
+char *strndup(const char *str, size_t count);
+
+char *strtok(char *str, const char *delim);
 
 #ifdef __cplusplus
 }

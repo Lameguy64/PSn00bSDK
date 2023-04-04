@@ -11,10 +11,12 @@
 #define KERNEL_ARG_STRING	((const char *)   0x80000180)
 #define KERNEL_RETURN_VALUE	((volatile int *) 0x8000dffc)
 
-/* Argument parsing */
+/* BIOS argv parser (unused, interferes with child executable argv passing) */
 
 int			__argc;
 const char	**__argv;
+
+#if 0
 
 #define ARGC_MAX 16
 
@@ -48,6 +50,8 @@ static void _parse_kernel_args(void) {
 	}
 }
 
+#endif
+
 /* Main */
 
 // These are defined by the linker script. Note that these are *NOT* pointers,
@@ -66,11 +70,10 @@ extern int main(int argc, const char* argv[]);
 // Even though _start() usually takes no arguments, this implementation allows
 // parent executables to pass args directly to child executables without having
 // to overwrite the arg strings in kernel RAM.
-void _start_inner(int32_t override_argc, const char **override_argv) {
+void _start_inner(int argc, const char **argv) {
 	//__asm__ volatile("la $gp, _gp;");
 
-	// Clear BSS 4 bytes at a time. BSS is always aligned to 4 bytes by the
-	// linker script.
+	// BSS is always aligned to 4 bytes by the linker script.
 	for (uint32_t *i = (uint32_t *) __bss_start; i < (uint32_t *) _end; i++)
 		*i = 0;
 
@@ -78,17 +81,14 @@ void _start_inner(int32_t override_argc, const char **override_argv) {
 	// RAM. Note that InitHeap() can be called again in main().
 	InitHeap((void *) _end + 4, (void *) 0x801ffff8 - (void *) _end);
 
-	if (override_argv) {
-		__argc = override_argc;
-		__argv = override_argv;
-	} else {
-		_parse_kernel_args();
-	}
+	//_parse_kernel_args();
+	__argc = argc;
+	__argv = argv;
 
 	// Call the global constructors (if any) to initialize global objects
 	// before calling main(). Constructors are put by the linker script in a
 	// length-prefixed array in reverse order.
-	for (uint32_t i = (uint32_t) __CTOR_LIST__[0]; i >= 1; i--)
+	for (int i = (int) __CTOR_LIST__[0]; i >= 1; i--)
 		__CTOR_LIST__[i]();
 
 	// Store main()'s return value into the kernel return value area (for child
@@ -96,6 +96,6 @@ void _start_inner(int32_t override_argc, const char **override_argv) {
 	*KERNEL_RETURN_VALUE = main(__argc, __argv);
 
 	// Call global destructors (in forward order).
-	for (uint32_t i = 0; i < (uint32_t) __DTOR_LIST__[0]; i++)
+	for (int i = 0; i < (int) __DTOR_LIST__[0]; i++)
 		__DTOR_LIST__[i + 1]();
 }
