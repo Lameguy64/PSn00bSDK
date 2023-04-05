@@ -1,5 +1,5 @@
 # PSn00bSDK GitHub Actions CI script
-# (C) 2021 spicyjpeg - MPL licensed
+# (C) 2021-2023 spicyjpeg - MPL licensed
 
 # The GCC toolchain is stored in the GitHub Actions cache after being built. To
 # minimize build times, all the toolchain build steps are skipped if there is a
@@ -10,9 +10,11 @@
 name: Build PSn00bSDK
 on:   [ push, pull_request ]
 env:
-  BINUTILS_VERSION: 2.39
-  GCC_VERSION:      12.2.0
-  GCC_TARGET:       mipsel-none-elf
+  BINUTILS_VERSION: '2.40'
+  BINUTILS_OPTIONS: '--disable-docs --disable-nls --disable-werror --with-float=soft'
+  GCC_VERSION:      '12.2.0'
+  GCC_OPTIONS:      '--disable-docs --disable-nls --disable-werror --disable-libada --disable-libssp --disable-libquadmath --disable-threads --disable-libgomp --disable-libstdcxx-pch --disable-hosted-libstdcxx --enable-languages=c,c++ --without-isl --without-headers --with-float=soft --with-gnu-as --with-gnu-ld'
+  GCC_TARGET:       'mipsel-none-elf'
 
 jobs:
   # This is based on doc/toolchain.md, no surprises here other than the cache.
@@ -52,7 +54,7 @@ jobs:
       run: |
         mkdir binutils_linux
         cd binutils_linux
-        ../binutils-${{ env.BINUTILS_VERSION }}/configure --prefix=${{ github.workspace }}/gcc/linux --target=${{ env.GCC_TARGET }} --disable-docs --disable-nls --with-float=soft
+        ../binutils-${{ env.BINUTILS_VERSION }}/configure --prefix=${{ github.workspace }}/gcc/linux --target=${{ env.GCC_TARGET }} ${{ env.BINUTILS_OPTIONS }}
         make -j 2
         make install-strip
         echo "${{ github.workspace }}/gcc/linux/bin" >>$GITHUB_PATH
@@ -62,7 +64,7 @@ jobs:
       run: |
         mkdir gcc_linux
         cd gcc_linux
-        ../gcc-${{ env.GCC_VERSION }}/configure --prefix=${{ github.workspace }}/gcc/linux --target=${{ env.GCC_TARGET }} --disable-docs --disable-nls --disable-libada --disable-libssp --disable-libquadmath --disable-libstdc++-v3 --with-float=soft --enable-languages=c,c++ --with-gnu-as --with-gnu-ld
+        ../gcc-${{ env.GCC_VERSION }}/configure --prefix=${{ github.workspace }}/gcc/linux --target=${{ env.GCC_TARGET }} ${{ env.GCC_OPTIONS }}
         make -j 2
         make install-strip
 
@@ -71,7 +73,7 @@ jobs:
       run: |
         mkdir binutils_windows
         cd binutils_windows
-        ../binutils-${{ env.BINUTILS_VERSION }}/configure --prefix=${{ github.workspace }}/gcc/windows --build=x86_64-linux-gnu --host=x86_64-w64-mingw32 --target=${{ env.GCC_TARGET }} --disable-docs --disable-nls --with-float=soft
+        ../binutils-${{ env.BINUTILS_VERSION }}/configure --prefix=${{ github.workspace }}/gcc/windows --build=x86_64-linux-gnu --host=x86_64-w64-mingw32 --target=${{ env.GCC_TARGET }} ${{ env.BINUTILS_OPTIONS }}
         make -j 2
         make install-strip
 
@@ -80,7 +82,7 @@ jobs:
       run: |
         mkdir gcc_windows
         cd gcc_windows
-        ../gcc-${{ env.GCC_VERSION }}/configure --prefix=${{ github.workspace }}/gcc/windows --build=x86_64-linux-gnu --host=x86_64-w64-mingw32 --target=${{ env.GCC_TARGET }} --disable-docs --disable-nls --disable-libada --disable-libssp --disable-libquadmath --disable-libstdc++-v3 --with-float=soft --enable-languages=c,c++ --with-gnu-as --with-gnu-ld
+        ../gcc-${{ env.GCC_VERSION }}/configure --prefix=${{ github.workspace }}/gcc/windows --build=x86_64-linux-gnu --host=x86_64-w64-mingw32 --target=${{ env.GCC_TARGET }} ${{ env.GCC_OPTIONS }}
         make -j 2
         make install-strip
 

@@ -28,6 +28,7 @@ tested extensively:
 - ~~GCC 7.4.0 with binutils 2.31~~ (the linker fails to build PS1 DLLs)
 - GCC **11.1.0** with binutils **2.36**
 - GCC **11.2.0** with binutils **2.37**
+- GCC **12.2.0** with binutils **2.40**
 
 If you wish to pick an older GCC release but don't know which binutils version
 it requires, see [here](https://wiki.osdev.org/Cross-Compiler_Successful_Builds)
@@ -78,7 +79,7 @@ for a compatibility table.
    ```bash
    ../binutils-<VERSION>/configure \
      --prefix=/usr/local/mipsel-none-elf --target=mipsel-none-elf \
-     --disable-docs --disable-nls --with-float=soft
+     --disable-docs --disable-nls --disable-werror --with-float=soft
    ```
 
    Replace `<VERSION>` as usual. If you don't want to install the toolchain into
@@ -117,9 +118,11 @@ options.
    ```bash
    ../gcc-<VERSION>/configure \
      --prefix=/usr/local/mipsel-none-elf --target=mipsel-none-elf \
-     --disable-docs --disable-nls --disable-libada --disable-libssp \
-     --disable-libquadmath --disable-libstdc++-v3 --with-float=soft \
-     --enable-languages=c,c++ --with-gnu-as --with-gnu-ld
+     --disable-docs --disable-nls --disable-werror --disable-libada \
+     --disable-libssp --disable-libquadmath --disable-threads \
+     --disable-libgomp --disable-libstdcxx-pch --disable-hosted-libstdcxx \
+     --enable-languages=c,c++ --without-isl --without-headers \
+     --with-float=soft --with-gnu-as --with-gnu-ld
    ```
 
    If you previously set a custom installation path, remember to set it here as
@@ -172,7 +175,7 @@ that runs on Windows.
    ../binutils-<VERSION>/configure \
      --build=x86_64-linux-gnu --host=x86_64-w64-mingw32 \
      --prefix=/tmp/mipsel-none-elf --target=mipsel-none-elf \
-     --disable-docs --disable-nls --with-float=soft
+     --disable-docs --disable-nls --disable-werror --with-float=soft
    ```
 
    Then build binutils again:
@@ -187,10 +190,12 @@ that runs on Windows.
    ```bash
    ../gcc-<VERSION>/configure \
      --build=x86_64-linux-gnu --host=x86_64-w64-mingw32 \
-     --prefix=/tmp/mipsel-none-elf --target=mipsel-none-elf \
-     --disable-docs --disable-nls --disable-libada --disable-libssp \
-     --disable-libquadmath --disable-libstdc++-v3 --with-float=soft \
-     --enable-languages=c,c++ --with-gnu-as --with-gnu-ld
+     --prefix=/usr/local/mipsel-none-elf --target=mipsel-none-elf \
+     --disable-docs --disable-nls --disable-werror --disable-libada \
+     --disable-libssp --disable-libquadmath --disable-threads \
+     --disable-libgomp --disable-libstdcxx-pch --disable-hosted-libstdcxx \
+     --enable-languages=c,c++ --without-isl --without-headers \
+     --with-float=soft --with-gnu-as --with-gnu-ld
    ```
 
    And build it as usual:
@@ -211,14 +216,17 @@ that runs on Windows.
 
 ## Note regarding C++ support
 
-C++ support in PSn00bSDK, besides compile-time features like `constexpr`, only
-goes as far as basic classes, namespaces and the ability to dynamically create
-and delete class objects at any point of the program. The required dependencies
-(which are just wrappers around `malloc()` and `free()`) are supplied by `libc`.
+C++ support in PSn00bSDK is limited to the freestanding subset of the standard
+library provided by GCC, which includes most metaprogramming and compile-time
+utilities but not higher level functionality that requires runtime support such
+as exceptions, containers or streams. Basic C++ features that only depend on the
+compiler (classes, templates, `constexpr` and so on) are fully supported.
 
-Standard C++ libraries are not implemented and likely never going to be
-implemented due to bloat concerns that it may introduce. Besides, the official
-SDK lacks full C++ support as well.
+Implementing a full STL, while technically possible, is currently out of the
+scope of PSn00bSDK. There are other PS1 SDKs that provide an STL, such as
+[psyqo](https://github.com/grumpycoders/pcsx-redux/tree/main/src/mips/psyqo),
+and they might be a better fit for your project if you plan to make heavy use of
+C++ features.
 
 -----------------------------------------
-_Last updated on 2021-11-23 by spicyjpeg_
+_Last updated on 2023-04-05 by spicyjpeg_

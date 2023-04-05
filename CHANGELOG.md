@@ -19,6 +19,47 @@ to ensure the changelog can be parsed correctly.
 
 -------------------------------------------------------------------------------
 
+## 2023-04-05: 0.23
+
+spicyjpeg:
+
+- libc: Fixed bugs in some string manipulation and number parsing functions.
+  Added `memccpy()`. Removed the `SYSTEM.CNF` argument parser as it would
+  interfere with manual argc/argv passing in some edge cases.
+
+- psxgpu: Added `IsIdleGPU()` and fixed a bug in `SetVideoMode()`. Added new
+  "tagless" primitive structures with the `_T` suffix (e.g. `POLY_FT4_T`,
+  `SPRT_T`, ...) and related macros (`setPolyFT4_T()`, `setSPRT_T()`, ...) that
+  can be used to group multiple primitives into a single display list packet
+  for better performance. Fixed some macros not working properly with negative
+  values. Renamed `DR_MASK` and `setDrawMask()` to `DR_STP` and `setDrawStp()`
+  respectively for consistency with the official SDK.
+
+- psxcd: Added `CdUnlock()`. Improved reliability of `CdGetRegion()` on early
+  Japanese console models.
+
+- psxetc: Added `SetDMAPriority()` and `GetDMAPriority()`.
+
+- psxapi: Added PCDRV (host file I/O) API, declared in the `psxsn.h` header.
+
+- psxpress: Fixed bugs in the MDEC API. Added support for bitstream version 3
+  to the GTE-accelerated decoder. Replaced `DecDCTvlcCopyTable()` with
+  `DecDCTvlcCopyTableV2()` and `DecDCTvlcCopyTableV3()` for better control over
+  how much of the scratchpad is used for lookup tables.
+
+- examples: `mdec/strvideo` is now (finally) functional on real hardware and
+  can properly detect the end of a video file even if immediately followed by
+  another video on the disc. Added previously missing CD image dependencies to
+  the CMake scripts of the examples that make use of CD images.
+
+- tools: `elf2x` no longer adds region strings to converted executables, fixing
+  issues with DuckStation's region autodetection. Updated `mkpsxiso` to 2.03 in
+  order to fix a bug with its thread pool implementation on Linux.
+
+- Updated binutils and recompiled the GCC toolchain with the
+  `--disable-hosted-libstdcxx` option, allowing a subset of the C++ STL to be
+  used in PSn00bSDK projects.
+
 ## 2022-12-18: 0.22
 
 spicyjpeg:
