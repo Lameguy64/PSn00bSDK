@@ -1,6 +1,7 @@
 /*
  * PSn00bSDK standard library
  * (C) 2019-2022 PSXSDK authors, Lameguy64, spicyjpeg - MPL licensed
+ * (C) 2023 saxbophone (minor additions) - MPL licensed
  */
 
 #ifndef __STDLIB_H
@@ -22,6 +23,11 @@ typedef struct _HeapUsage {
 	size_t alloc_max;	// Maximum amount of memory ever allocated
 } HeapUsage;
 
+typedef struct {
+    int quot; // quotient result of integer division
+    int rem;  // remainder
+} div_t;
+
 /* API */
 
 #ifdef __cplusplus
@@ -38,6 +44,7 @@ void srand(int seed);
 
 int abs(int j);
 long labs(long i);
+div_t div(int x, int y);
 
 long strtol(const char *nptr, char **endptr, int base);
 long long strtoll(const char *nptr, char **endptr, int base);
