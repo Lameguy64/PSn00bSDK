@@ -1,85 +1,58 @@
 
 # PSn00bSDK
 
-PSn00bSDK is a 100% free and open source SDK project for the original Sony
-PlayStation for developing homebrew applications and games for the console.
-This SDK may be used for freeware, commercial, and open source homebrew
-projects as far as what the SDK currently supports. Out of all the open
-source PS1 SDK projects that have come and gone from active development
-over the years, PSn00bSDK is arguably the most capable of them all.
+PSn00bSDK is an open source homebrew software development kit for the original
+Sony PlayStation, consisting of a C/C++ compiler toolchain and a set of
+libraries that provide a layer of abstraction over the raw hardware in order to
+make game and app development easier. A CMake-based build system, CD-ROM image
+packing tool (`mkpsxiso`) and asset conversion utilities are also provided.
 
-Much of the SDK is merely just a set of libraries (`libpsn00b`) and some
-utilities for converting executables and data files to formats more usable
-on the target platform. The compiler used is just the standard GNU GCC
-toolchain compiled to target mipsel and has to be acquired separately.
-The library API was deliberately written to resemble the library API of the
-official libraries as closely as possible not only for familiarity reasons
-to experienced programmers but also so that existing sample code and tutorials
-that have been written over the years would still apply to this SDK, as well
-as making the process of porting over existing homebrew originally made with
-official SDKs easier with minimal modificationn provided they do not depend
-on libgs.
+At the heart of PSn00bSDK is `libpsn00b`, a set of libraries that implements
+most of the core functionality of the official Sony SDK (excluding higher-level
+libraries) plus several new extensions to it. Most of the basic APIs commonly
+used by homebrew apps and games built with the official SDK are available,
+making PSn00bSDK a good starting point for those who have an existing codebase
+but want to move away from Sony tools.
 
-PSn00bSDK is currently a work in progress and cannot really be considered
-production ready, but what is currently implemented should be enough to
-produce some interesting homebrew with the SDK especially with its extensive
-support for the GPU and GTE hardware. There's no reason not to fully support
-hardware features of a target platform when said hardware features have been
-fully documented for years (nocash's PSX specs document in this case).
+Currently supported features include:
 
-Most of `libpsn00b` is written mostly in MIPS assembly more so functions that
-interface with the hardware. Many of the standard C functions are implemented
-in custom MIPS assembly instead of equivalents found in the BIOS ROM, for both
-stability (the BIOS `libc` implementation of the PlayStation is actually buggy)
-and performance reasons.
-
-
-## Notable features
-
-As of October 11, 2022:
-
-* Extensive GPU support with lines, flat shaded or textured polygon and sprite
-  primitives, high-speed DMA for VRAM transfers and ordering tables. All video
-  modes for both NTSC and PAL standards also supported with fully adjustable
-  display area and automatic video standard detection based on last GPU mode.
+* Full support for the GPU's functionality including all primitive types (lines,
+  polygons, sprites) as well DMA transfers managed through a software-driven
+  command queue that can optionally be extended with custom commands. Both NTSC
+  and PAL video modes are fully supported.
 
 * Extensive GTE support with rotate, translate, perspective correction and
   lighting calculation fully supported through C and/or assembly GTE macros
   paired with high speed matrix and vector helper functions. All calculations
   performed in fixed point integer math, not a single float used.
 
-* Flexible interrupt service subsystem with easy to use callback mechanism for
-  simplified handling and hooking of hardware and DMA interrupts. No crude
-  event handler hooks or kernel hacks providing great compatibility with
-  HLE BIOS implementations and loader/menu type homebrew programs.
+* BIOS-based interrupt dispatch system providing the ability to register custom
+  callbacks for all IRQs and DMA channels while preserving compatibility with
+  all functions provided by the BIOS.
 
-* BIOS controller functions for polling controller input work as intended
-  thanks to proper handling of hardware interrupts. Optional limited support
-  for manual polling.
+* Basic support for controller input through the BIOS, with optional limited
+  support for manual polling.
 
-* Complete Serial I/O support and console driver to redirect standard input and
-  output to the serial port. Hardware flow control supported.
+* Complete Serial I/O support with buffering and console driver to redirect BIOS
+  standard input and output to the serial port. Hardware flow control supported.
 
-* Full CD-ROM support using `libpsxcd` featuring data reading, CD-DA and XA
-  audio playback, a built-in ISO9660 file system parser with no file count
-  limit and support for multi-session discs.
+* CD-ROM support featuring asynchronous reading, CD-DA and XA-ADPCM audio
+  playback and a built-in ISO9660 file system parser with no file count limit.
+  Additional support for multi-session discs and bypassing region checks on
+  supported console models.
 
-* MDEC support, lossy image decompression and video playback using
-  `libpsxpress` (currently only bitstream versions 1 and 2 are supported).
+* Full MDEC support for hardware accelerated lossy image decompression and video
+  playback.
 
 * Preliminary limited support for Konami System 573 arcade hardware.
 
-* Experimental support for dynamic linking at runtime, with support for
-  function and variable introspection by loading a map file generated at build
-  time.
+* Experimental support for dynamic linking at runtime, including function and
+  variable introspection by loading a map file generated at build time.
 
-* Uses Sony SDK library syntax for familiarity to experienced programmers
-  and makes porting existing homebrew projects to PSn00bSDK easier.
-
-* Works on real hardware and most popular emulators.
-
-* Fully expandable and customizable to your heart's content.
-
+Note that, while PSn00bSDK's API is to some extent compatible with the official
+SDK's, the project is *not* meant to be a drop-in replacement for it, both
+since reimplementing the entire SDK would be a major undertaking and because
+many parts of it are inefficient, clunky and/or provide relatively little value.
 
 ## Obtaining PSn00bSDK
 
@@ -97,19 +70,23 @@ used as a starting point.
 For more information on how to get started, or if you wish to build the SDK
 yourself from source instead, refer to [installation.md](doc/installation.md).
 
+## Tutorials and examples
 
-## Examples
+The `examples` directory contains several example programs showcasing different
+parts of the SDK (mostly graphics); the source code of `n00bdemo` can also be
+found in the same directory. More example programs may be added in the future
+and contributed example programs are welcome.
 
-There are a few examples and complete source code of `n00bdemo` included in the
-`examples` directory. More example programs may be added in the future and
-contributed example programs are welcome.
-
-There's also [Lameguy's PlayStation Programming Tutorial Series](http://lameguy64.net/tutorials/pstutorials)
-for learning how to program for the PlayStation. Much of the tutorials should
-apply to PSn00bSDK.
-
+[Lameguy's PlayStation Programming Tutorial Series](http://lameguy64.net/tutorials/pstutorials)
+was written with older versions of PSn00bSDK in mind and is outdated at this
+point, but may still be useful as an introduction to the console's hardware and
+the basics of the graphics and controller APIs.
 
 ## To-do List
+
+* `libpsxgte`: Rewrite all assembly functions from scratch as parts of them have
+  been lifted as-is from Sony libraries. **PSn00bSDK is currently** (and
+  will probably always be) **in a legal gray area due to this.**
 
 * `libpsxspu`: Plenty of work to be done. Some kind of MIDI sequencer (similar
   to the one present in the official SDK) should be added at some point, along
@@ -117,7 +94,7 @@ apply to PSn00bSDK.
 
 * `libpsxcd`: Implement a command queue mechanism for the CD-ROM.
 
-* `libpsxpress`: Add support for version 3 and IKI frame bitstreams.
+* `libpsxpress`: Add an API for SPU-ADPCM audio encoding at runtime.
 
 * `libc`: Improve the memory allocation framework with multiple allocators,
   replace the string functions with optimized implementations and maybe add
@@ -127,32 +104,33 @@ apply to PSn00bSDK.
   controller driver, and possibly a library for interfacing to IDE/ATAPI drives
   to make development for arcade systems easier.
 
-
 ## Credits
 
-Main developer/author/whatever:
+Main developers/authors:
 
 * **Lameguy64** (John "Lameguy" Wilbert Villamor)
+* **spicyjpeg**
 
 Contributors:
 
-* **spicyjpeg**: dynamic linker, `libpsxpress`, CMake scripts, some docs and
-  examples.
 * **Silent**, **G4Vi**, **Chromaryu**: `mkpsxiso` and `dumpsxiso` (maintained
   as a [separate repo](https://github.com/Lameguy64/mkpsxiso)).
 
 Honorable mentions:
 
+* **Soapy**: wrote the original version of the `inline_c.h` header containing
+  GTE macros.
 * **ijacquez**: helpful suggestions for getting C++ working.
-* **Nicolas Noble**: his OpenBIOS project gave insight to how the BIOS works
-  internally.
+* **Nicolas Noble**: author of the
+  [pcsx-redux](https://github.com/grumpycoders/pcsx-redux) emulator, OpenBIOS
+  and other projects which proved invaluable during development.
 
 Helpful contributors can be found in the changelog.
 
 References used:
 
-* [nocash's PlayStation specs document](http://problemkaputt.de/psx-spx.htm)
-  and Nicolas Noble's [updated version](https://psx-spx.consoledev.net).
+* [Martin Korth's psx-spx document](http://problemkaputt.de/psx-spx.htm) and the
+  [community-maintained version](https://psx-spx.consoledev.net).
 * MIPS and System V ABI specs (for the dynamic linker).
 * Tails92's PSXSDK project (during PSn00bSDK's infancy).
 

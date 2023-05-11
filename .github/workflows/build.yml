@@ -12,7 +12,7 @@ on:   [ push, pull_request ]
 env:
   BINUTILS_VERSION: '2.40'
   BINUTILS_OPTIONS: '--disable-docs --disable-nls --disable-werror --with-float=soft'
-  GCC_VERSION:      '12.2.0'
+  GCC_VERSION:      '13.1.0'
   GCC_OPTIONS:      '--disable-docs --disable-nls --disable-werror --disable-libada --disable-libssp --disable-libquadmath --disable-threads --disable-libgomp --disable-libstdcxx-pch --disable-hosted-libstdcxx --enable-languages=c,c++ --without-isl --without-headers --with-float=soft --with-gnu-as --with-gnu-ld'
   GCC_TARGET:       'mipsel-none-elf'
 
