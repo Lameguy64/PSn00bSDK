@@ -34,37 +34,7 @@ static inline uint32_t _get_window_mask(int size) {
 	return mask & 0x1f;
 }
 
-/* Drawing API */
-
-DRAWENV *SetDefDrawEnv(DRAWENV *env, int x, int y, int w, int h) {
-	_sdk_validate_args(env && (w > 0) && (h > 0), 0);
-
-	env->clip.x = x;
-	env->clip.y = y;
-	env->clip.w = w;
-	env->clip.h = h;
-
-	env->ofs[0] = 0;
-	env->ofs[1] = 0;
-
-	env->tw.x = 0;
-	env->tw.y = 0;
-	env->tw.w = 256;
-	env->tw.h = 256;
-
-	env->tpage = 0x0a;
-	env->dtd   = 1;
-	env->dfe   = 0;
-	env->isbg  = 0;
-	setRGB0(env, 0, 0, 0);
-
-	env->dr_env.tag = 0;
-	return env;
-}
-
-int DrawOTagEnv(const uint32_t *ot, DRAWENV *env) {
-	_sdk_validate_args(ot && env, -1);
-
+static const uint32_t *_build_drawenv_ot(const uint32_t *ot, DRAWENV *env) {
 	// All commands are grouped into a single display list packet for
 	// performance reasons using tagless primitives (the GPU does not care
 	// about the grouping as the display list is parsed by the CPU).
@@ -101,7 +71,59 @@ int DrawOTagEnv(const uint32_t *ot, DRAWENV *env) {
 		setWH(fill, env->clip.w, _min(env->clip.h, 0x1ff));
 	}
 
-	return EnqueueDrawOp((void *) &DrawOTag2, (uint32_t) prim, 0, 0);
+	return (const uint32_t *) prim;
+}
+
+/* Drawing API */
+
+void _send_linked_list(GPU_DrawOpType type, const uint32_t *ot);
+
+DRAWENV *SetDefDrawEnv(DRAWENV *env, int x, int y, int w, int h) {
+	_sdk_validate_args(env && (w > 0) && (h > 0), 0);
+
+	env->clip.x = x;
+	env->clip.y = y;
+	env->clip.w = w;
+	env->clip.h = h;
+
+	env->ofs[0] = 0;
+	env->ofs[1] = 0;
+
+	env->tw.x = 0;
+	env->tw.y = 0;
+	env->tw.w = 256;
+	env->tw.h = 256;
+
+	env->tpage = 0x0a;
+	env->dtd   = 1;
+	env->dfe   = 0;
+	env->isbg  = 0;
+	setRGB0(env, 0, 0, 0);
+
+	env->dr_env.tag = 0;
+	return env;
+}
+
+int DrawOTagEnv(const uint32_t *ot, DRAWENV *env) {
+	_sdk_validate_args(ot && env, -1);
+
+	return EnqueueDrawOp(
+		(void *)   &_send_linked_list,
+		(uint32_t) DRAWOP_TYPE_DMA,
+		(uint32_t) _build_drawenv_ot(ot, env),
+		0
+	);
+}
+
+int DrawOTagEnvIRQ(const uint32_t *ot, DRAWENV *env) {
+	_sdk_validate_args(ot && env, -1);
+
+	return EnqueueDrawOp(
+		(void *)   &_send_linked_list,
+		(uint32_t) DRAWOP_TYPE_GPU_IRQ,
+		(uint32_t) _build_drawenv_ot(ot, env),
+		0
+	);
 }
 
 void PutDrawEnv(DRAWENV *env) {

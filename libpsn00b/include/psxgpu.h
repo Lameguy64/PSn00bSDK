@@ -606,10 +606,15 @@ void MoveImage2(const RECT *rect, int x, int y);
 void ClearOTagR(uint32_t *ot, size_t length);
 void ClearOTag(uint32_t *ot, size_t length);
 int DrawOTag(const uint32_t *ot);
+int DrawOTagIRQ(const uint32_t *ot);
 int DrawOTagEnv(const uint32_t *ot, DRAWENV *env);
+int DrawOTagEnvIRQ(const uint32_t *ot, DRAWENV *env);
 void DrawOTag2(const uint32_t *ot);
+void DrawOTagIRQ2(const uint32_t *ot);
 int DrawBuffer(const uint32_t *buf, size_t length);
+int DrawBufferIRQ(const uint32_t *buf, size_t length);
 void DrawBuffer2(const uint32_t *buf, size_t length);
+void DrawBufferIRQ2(const uint32_t *buf, size_t length);
 void DrawPrim(const uint32_t *pri);
 
 void AddPrim(uint32_t *ot, const void *pri);

@@ -104,7 +104,17 @@ int StoreImage(const RECT *rect, uint32_t *data) {
 int MoveImage(const RECT *rect, int x, int y) {
 	_sdk_validate_args(rect, -1);
 
-	return EnqueueDrawOp((void *) &MoveImage2, (uint32_t) rect, x, y);
+	int index = _next_saved_rect;
+
+	_saved_rects[index] = *rect;
+	_next_saved_rect    = (index + 1) % QUEUE_LENGTH;
+
+	return EnqueueDrawOp(
+		(void *)   &MoveImage2,
+		(uint32_t) &_saved_rects[index],
+		(uint32_t) x,
+		(uint32_t) y
+	);
 }
 
 void LoadImage2(const RECT *rect, const uint32_t *data) {
