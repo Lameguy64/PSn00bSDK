@@ -5,9 +5,8 @@
 
 #pragma once
 
-#ifdef __cplusplus
+namespace std {
 extern "C" {
-#endif
 
 int isprint(int ch);
 int isgraph(int ch);
@@ -19,6 +18,5 @@ int isdigit(int ch);
 int tolower(int ch);
 int toupper(int ch);
 
-#ifdef __cplusplus
 }
-#endif
+}

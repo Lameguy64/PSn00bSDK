@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -23,6 +24,7 @@ uint16_t _font_clut;
 extern uint8_t _gpu_debug_font[];
 
 void FntLoad(int x, int y) {
+	_sdk_validate_args_void((x >= 0) && (y >= 0) && (x < 1024) && (y < 1024));
 
 	RECT pos;
 	TIM_IMAGE tim;
@@ -66,7 +68,8 @@ void FntLoad(int x, int y) {
 }
 
 int FntOpen(int x, int y, int w, int h, int isbg, int n) {
-	
+	_sdk_validate_args((w > 0) && (h > 0) && (n > 0), -1);
+
 	int i;
 	
 	// Initialize a text stream
@@ -98,7 +101,8 @@ int FntOpen(int x, int y, int w, int h, int isbg, int n) {
 }
 
 int FntPrint(int id, const char *fmt, ...) {
-	
+	_sdk_validate_args((id < _nstreams) && fmt, -1);
+
 	int n;
 	va_list ap;
 
@@ -124,7 +128,8 @@ int FntPrint(int id, const char *fmt, ...) {
 }
 
 char *FntFlush(int id) {
-	
+	_sdk_validate_args(id < _nstreams, 0);
+
 	char		*opri;
 	SPRT_8		*sprt;
 	DR_TPAGE	*tpage;
@@ -226,7 +231,8 @@ char *FntFlush(int id) {
 }
 
 char *FntSort(uint32_t *ot, char *pri, int x, int y, const char *text) {
-	
+	_sdk_validate_args(ot && pri, 0);
+
 	DR_TPAGE *tpage;
 	SPRT_8 *sprt = (SPRT_8*)pri;
 	int	i;

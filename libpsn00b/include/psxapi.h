@@ -1,10 +1,21 @@
 /*
  * PSn00bSDK kernel API library
- * (C) 2019-2022 Lameguy64, spicyjpeg - MPL licensed
+ * (C) 2019-2023 Lameguy64, spicyjpeg - MPL licensed
  */
 
-#ifndef __PSXAPI_H
-#define __PSXAPI_H
+/**
+ * @file psxapi.h
+ * @brief Kernel API library header
+ *
+ * @details This header provides access to most of the APIs made available by
+ * the system's BIOS, including basic file I/O, TTY output, controller and
+ * memory card drivers, threads, events as well as kernel memory allocation.
+ *
+ * For more information and up-to-date documentation on kernel APIs, see:
+ * https://psx-spx.consoledev.net/kernelbios/
+ */
+
+#pragma once
 
 #include <stdint.h>
 #include <stddef.h>
@@ -12,13 +23,38 @@
 
 /* Definitions */
 
-#define DescHW			0xf0000000
-#define DescSW			0xf4000000
+// TODO: these desperately need to be cleaned up
 
-#define HwCARD			(DescHW|0x11)
-#define HwCARD_1		(DescHW|0x12)
-#define HwCARD_0		(DescHW|0x13)
-#define SwCARD			(DescHW|0x02)
+#define SEEK_SET	0
+#define SEEK_CUR	1
+#define SEEK_END	2
+
+#define DescMask	0xff000000		// Event descriptor mask
+#define DescTH		DescMask
+#define DescHW		0xf0000000		// Hardware event (IRQ)
+#define DescEV		0xf1000000		// Event event
+#define DescRC		0xf2000000		// Root counter event
+#define DescUEV		0xf3000000		// User event
+#define DescSW		0xf4000000		// BIOS event
+
+#define	HwVBLANK	(DescHW|0x01)	// VBlank
+#define HwGPU		(DescHW|0x02)	// GPU
+#define HwCdRom		(DescHW|0x03)	// CDROM
+#define HwDMAC		(DescHW|0x04)	// DMA
+#define HwRTC0		(DescHW|0x05)	// Timer 0
+#define HwRTC1		(DescHW|0x06)	// Timer 1
+#define HwRTC2		(DescHW|0x07)	// Timer 2
+#define HwCNTL		(DescHW|0x08)	// Controller
+#define HwSPU		(DescHW|0x09)	// SPU
+#define HwPIO		(DescHW|0x0a)	// PIO & lightgun
+#define HwSIO		(DescHW|0x0b)	// Serial
+
+#define HwCPU		(DescHW|0x10)	// Processor exception
+#define HwCARD		(DescHW|0x11)	// Memory card (lower level BIOS functions)
+#define HwCard_0	(DescHW|0x12)
+#define HwCard_1	(DescHW|0x13)
+#define SwCARD		(DescSW|0x01)	// Memory card (higher level BIOS functions)
+#define SwMATH		(DescSW|0x02)
 
 #define EvSpIOE			0x0004
 #define EvSpERROR		0x8000
@@ -135,8 +171,6 @@ struct JMP_BUF {
 	uint32_t gp;
 };
 
-// Not recommended to use these functions to install IRQ handlers
-
 typedef struct {
 	uint32_t	*next;
 	uint32_t	*func2;
@@ -158,7 +192,8 @@ typedef struct {
 #define FastExitCriticalSection() \
 	(IRQ_MASK = __saved_irq_mask)
 
-/*#define FastEnterCriticalSection() { \
+#if 0
+#define FastEnterCriticalSection() { \
 	uint32_t r0, r1; \
 	__asm__ volatile( \
 		"mfc0 %0, $12;" \
@@ -179,9 +214,10 @@ typedef struct {
 		"nop;" \
 		: "=r"(r0) :: \
 	); \
-}*/
+}
+#endif
 
-/* API */
+/* BIOS API */
 
 #ifdef __cplusplus
 extern "C" {
@@ -199,23 +235,28 @@ int DisableEvent(int event);
 void DeliverEvent(uint32_t cl, uint32_t spec);
 void UnDeliverEvent(uint32_t cl, uint32_t spec);
 
-int open(const char *name, int mode);
+int open(const char *path, int mode);
 int close(int fd);
-int seek(int fd, uint32_t offset, int mode);
-int read(int fd, uint8_t *buff, size_t len);
-int write(int fd, const uint8_t *buff, size_t len);
+int lseek(int fd, uint32_t offset, int mode);
+int read(int fd, void *buff, size_t len);
+int write(int fd, const void *buff, size_t len);
+int getc(int fd);
+int putc(int ch, int fd);
 int ioctl(int fd, int cmd, int arg);
+int isatty(int fd);
 struct DIRENTRY *firstfile(const char *wildcard, struct DIRENTRY *entry);
 struct DIRENTRY *nextfile(struct DIRENTRY *entry);
-int erase(const char *name);
-int chdir(const char *path);
+int erase(const char *path);
+int undelete(const char *path);
+int cd(const char *path);
 
-//#define cd(p) chdir(p)
+int _get_errno(void);
+int _get_error(int fd);
 
-int AddDev(DCB *dcb);
-int DelDev(const char *name);
-void ListDev(void);
-void AddDummyTty(void);
+int AddDrv(DCB *dcb);
+int DelDrv(const char *name);
+void ListDrv(void);
+void add_nullcon_driver(void);
 
 int EnterCriticalSection(void);
 void ExitCriticalSection(void);
@@ -254,30 +295,33 @@ int ResetRCnt(int spec);
 void ChangeClearPAD(int mode);
 void ChangeClearRCnt(int t, int m);
 
-uint32_t OpenTh(uint32_t (*func)(), uint32_t sp, uint32_t gp);
-int CloseTh(uint32_t thread);
-int ChangeTh(uint32_t thread);
+int OpenTh(uint32_t (*func)(), uint32_t sp, uint32_t gp);
+int CloseTh(int thread);
+int ChangeTh(int thread);
 
-int Exec(struct EXEC *exec, int argc, char **argv);
+int Exec(struct EXEC *exec, int argc, const char **argv);
+int LoadExec(const char *path, int argc, const char **argv);
 void FlushCache(void);
 
 void b_setjmp(struct JMP_BUF *buf);
 void b_longjmp(const struct JMP_BUF *buf, int param);
-void SetDefaultExitFromException(void);
-void SetCustomExitFromException(const struct JMP_BUF *buf);
+void ResetEntryInt(void);
+void HookEntryInt(const struct JMP_BUF *buf);
 void ReturnFromException(void);
+
+int SetConf(int evcb, int tcb, uint32_t sp);
+void GetConf(int *evcb, int *tcb, uint32_t *sp);
+void SetMem(int size);
 
 int GetSystemInfo(int index);
 void *GetB0Table(void);
 void *GetC0Table(void);
 
-void *_kernel_malloc(int size);
-void _kernel_free(void *ptr);
+void *alloc_kernel_memory(int size);
+void free_kernel_memory(void *ptr);
 
 void _boot(void);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

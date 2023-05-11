@@ -17,5 +17,5 @@ psn00bsdk_add_cd_image(
 	iso      # Target name
 	template # Output file name (= template.bin + template.cue)
 	iso.xml  # Path to config file
-	DEPENDS template
+	DEPENDS template system.cnf
 )

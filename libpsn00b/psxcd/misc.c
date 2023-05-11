@@ -12,15 +12,29 @@
 
 #define DATA_SYNC_TIMEOUT	0x100000
 
-/* Private types */
+/* Unlock command strings */
 
-typedef struct {
-	uint8_t status, first_track, last_track;
-} TrackInfo;
+static const char *_unlock_strings[] = {
+	"",
+	"Licensed by",
+	"Sony",
+	"Computer",
+	"Entertainment",
+	"",
+	""
+};
+
+static const char *const _unlock_regions[] = {
+	"of America", // CdlRegionSCEA
+	"(Europe)",   // CdlRegionSCEE
+	"World wide"  // CdlRegionSCEW
+};
 
 /* Sector DMA transfer functions */
 
 int CdGetSector(void *madr, int size) {
+	_sdk_validate_args(madr && (size > 0), 0);
+
 	//while (!(CD_REG(0) & (1 << 6)))
 		//__asm__ volatile("");
 
@@ -35,6 +49,8 @@ int CdGetSector(void *madr, int size) {
 }
 
 int CdGetSector2(void *madr, int size) {
+	_sdk_validate_args(madr && (size > 0), 0);
+
 	//while (!(CD_REG(0) & (1 << 6)))
 		//__asm__ volatile("");
 
@@ -54,7 +70,7 @@ int CdDataSync(int mode) {
 			return 0;
 	}
 
-	_sdk_log("CdDataSync() timeout\n");
+	_sdk_log("CdDataSync() timeout, CHCR=0x%08x\n", DMA_CHCR(DMA_CD));
 	return -1;
 }
 
@@ -77,52 +93,40 @@ int CdPosToInt(const CdlLOC *p) {
 	) - 150;
 }
 
-/* Misc. functions */
-
-int CdGetToc(CdlLOC *toc) {
-	TrackInfo track_info;
-
-	if (!CdCommand(CdlGetTN, 0, 0, (uint8_t *) &track_info))
-		return 0;
-	if (CdSync(1, 0) != CdlComplete)
-		return 0;
-
-	int first  = btoi(track_info.first_track);
-	int tracks = btoi(track_info.last_track) + 1 - first;
-	//assert(first == 1);
-
-	for (int i = 0; i < tracks; i++) {
-		uint8_t track = itob(first + i);
-
-		if (!CdCommand(CdlGetTD, &track, 1, (uint8_t *) &toc[i]))
-			return 0;
-		if (CdSync(1, 0) != CdlComplete)
-			return 0;
-
-		toc[i].sector = 0;
-		toc[i].track  = track;
-	}
-
-	return tracks;
-}
+/* Drive unlocking API */
 
 CdlRegionCode CdGetRegion(void) {
-	uint8_t param = 0x22;
+	uint8_t param;
 	uint8_t result[16];
 
-	// Test command 0x22 is unsupported in firmware version C0, which was used
-	// exclusively in the SCPH-1000 Japanese model. It's thus safe to assume
-	// that the console is Japanese if the command returns a valid error.
+	// Firmware version C0 does not support test command 0x22 to retrieve the
+	// region, but it was only used in the SCPH-1000 Japanese model. Version D1
+	// (and possibly others?) is used in debug consoles.
+	// https://psx-spx.consoledev.net/cdromdrive/#19h20h-int3yymmddver
 	// https://psx-spx.consoledev.net/cdromdrive/#19h22h-int3for-europe
+	param = 0x20;
+	memset(result, 0, 4);
+
+	if (!CdCommand(CdlTest, &param, 1, result)) {
+		_sdk_log("failed to probe drive firmware version\n");
+		return CdlRegionUnknown;
+	}
+
+	_sdk_log("drive firmware version: 0x%02x\n", result[3]);
+	if (result[3] == 0xc0)
+		return CdlRegionSCEI;
+	if (result[3] >= 0xd0)
+		return CdlRegionDebug;
+
+	param = 0x22;
 	memset(result, 0, 16);
 
 	if (!CdCommand(CdlTest, &param, 1, result)) {
 		_sdk_log("failed to probe drive region\n");
-		return (result[1] == 0x10) ? CdlRegionSCEI : CdlRegionUnknown;
+		return CdlRegionUnknown;
 	}
 
 	_sdk_log("drive region: %s\n", result);
-
 	if (!strcmp(result, "for Japan"))
 		return CdlRegionSCEI;
 	if (!strcmp(result, "for U/C"))
@@ -137,7 +141,72 @@ CdlRegionCode CdGetRegion(void) {
 	return CdlRegionUnknown;
 }
 
+int CdUnlock(CdlRegionCode region) {
+	if (region <= CdlRegionSCEI)
+		return 0;
+	if (region >= CdlRegionDebug)
+		return 1;
+
+	// This is by far the most efficient way to do it.
+	_unlock_strings[5] = _unlock_regions[region - CdlRegionSCEA];
+
+	for (int i = 0; i < 7; i++) {
+		uint8_t result[4];
+
+		if (!CdCommand(
+			0x50 + i,
+			_unlock_strings[i],
+			strlen(_unlock_strings[i]),
+			result
+		))
+			return 0;
+
+		if (!(result[0] & CdlStatError) || (result[1] != 0x40)) {
+			_sdk_log("unlock failed, status=0x%02x, code=0x%02x\n", result[0], result[1]);
+			return 0;
+		}
+	}
+
+	_sdk_log("unlock successful\n");
+	return CdCommand(CdlNop, 0, 0, 0);
+}
+
+/* Misc. functions */
+
+int CdGetToc(CdlLOC *toc) {
+	_sdk_validate_args(toc, 0);
+
+	uint8_t result[4];
+
+	if (!CdCommand(CdlGetTN, 0, 0, result))
+		return 0;
+	if (CdSync(1, 0) != CdlComplete)
+		return 0;
+
+	int first  = btoi(result[1]);
+	int tracks = btoi(result[2]) + 1 - first;
+	//assert(first == 1);
+
+	for (int i = 0; i < tracks; i++) {
+		uint8_t track = itob(first + i);
+
+		if (!CdCommand(CdlGetTD, &track, 1, result))
+			return 0;
+		if (CdSync(1, 0) != CdlComplete)
+			return 0;
+
+		toc[i].minute = result[1];
+		toc[i].second = result[2];
+		toc[i].sector = 0;
+		toc[i].track  = track;
+	}
+
+	return tracks;
+}
+
 int CdMix(const CdlATV *vol) {
+	_sdk_validate_args(vol, 0);
+
 	CD_REG(0) = 2;
 	CD_REG(2) = vol->val0;
 	CD_REG(3) = vol->val1;

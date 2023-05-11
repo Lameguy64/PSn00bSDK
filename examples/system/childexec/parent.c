@@ -273,7 +273,7 @@ extern char child_exe[];
 void run_child(void) {
 	
 	// Arguments for the child program
-	char *args[] =
+	const char *args[] =
 	{
 		"SAMPLE=0",
 		"SESSION=1",
@@ -285,31 +285,27 @@ void run_child(void) {
 	
 	// Copy child executable to its intended adddress
 	memcpy((void*)exe->param.t_addr, child_exe+2048, exe->param.t_size);
-	
-	// Prepare for program execution and disable interrupts
-	//EnterCriticalSection();
-	StopCallback();
 
-	// Stop pads, enable auto acknowledge
+	// Prepare for program execution and disable interrupts
+	DrawSync(0);
 	StopPAD();
-	ChangeClearPAD(1);
-	ChangeClearRCnt(3, 1);
+	StopCallback();
+	FlushCache();
 
 	// Execute child
-	printf("Child exec!\n");
+	printf("Executing child...\n");
 	Exec(&exe->param, 3, args);
-	
+
 	// Restore interrupts for this PS-EXE
 	RestartCallback();
-	//ExitCriticalSection();
-	
+	printf("Child returned\n");
+
 	// Re-init and re-enable pads
 	InitPAD(pad_buff[0], 34, pad_buff[1], 34);
 	StartPAD();
 	ChangeClearPAD(0);
-	
+
 	// Set this program's display mode
 	SetDispMask(0);
 	PutDispEnv(&disp);
-	
 }

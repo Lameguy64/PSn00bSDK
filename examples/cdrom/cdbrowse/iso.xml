@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<iso_project
-	image_name="${CD_IMAGE_NAME}.bin"
-	cue_sheet="${CD_IMAGE_NAME}.cue"
->
+<iso_project>
 	<track type="data">
 		<identifiers
 			system			="PLAYSTATION"

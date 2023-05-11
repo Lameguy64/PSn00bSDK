@@ -3,8 +3,7 @@
  * (C) 2021-2022 spicyjpeg - MPL licensed
  */
 
-#ifndef __DLFCN_H
-#define __DLFCN_H 
+#pragma once
 
 #include <stdint.h>
 #include <stddef.h>
@@ -214,6 +213,4 @@ void *DL_GetDLLSymbol(const DLL *dll, const char *name);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

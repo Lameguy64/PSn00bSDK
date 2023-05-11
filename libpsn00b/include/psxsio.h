@@ -18,8 +18,7 @@
  * debugging purposes.
  */
 
-#ifndef __PSXSIO_H
-#define __PSXSIO_H
+#pragma once
 
 #include <stdint.h>
 
@@ -279,6 +278,4 @@ void DelSIO(void);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

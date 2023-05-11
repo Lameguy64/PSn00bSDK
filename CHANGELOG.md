@@ -19,6 +19,63 @@ to ensure the changelog can be parsed correctly.
 
 -------------------------------------------------------------------------------
 
+## 2023-05-11: 0.23
+
+- libc: Added some missing C++ STL headers (`cassert`, `cctype`, `cstdint`,
+  `cstdio`, `cstdlib`, `cstring`).
+
+- psxgpu: Added `SetDrawOpType()` and the `GPU_DrawOpType` enum for more
+  flexibility when using custom drawing queue callbacks with `EnqueueDrawOp()`.
+  Added GPU IRQ variants of all display list sending APIs (`DrawOTagIRQ()`,
+  `DrawOTagEnvIRQ()`, `DrawBufferIRQ()` and so on).
+
+- examples: Cleaned up `beginner/cppdemo` and updated it to use the new STL
+  headers.
+
+- docs: Added `drawing_queue.md`, a reference on the internals of the GPU
+  library's drawing queue implementation.
+
+## 2023-04-05
+
+spicyjpeg:
+
+- libc: Fixed bugs in some string manipulation and number parsing functions.
+  Added `memccpy()`. Removed the `SYSTEM.CNF` argument parser as it would
+  interfere with manual argc/argv passing in some edge cases.
+
+- psxgpu: Added `IsIdleGPU()` and fixed a bug in `SetVideoMode()`. Added new
+  "tagless" primitive structures with the `_T` suffix (e.g. `POLY_FT4_T`,
+  `SPRT_T`, ...) and related macros (`setPolyFT4_T()`, `setSPRT_T()`, ...) that
+  can be used to group multiple primitives into a single display list packet
+  for better performance. Fixed some macros not working properly with negative
+  values. Renamed `DR_MASK` and `setDrawMask()` to `DR_STP` and `setDrawStp()`
+  respectively for consistency with the official SDK.
+
+- psxcd: Added `CdUnlock()`. Improved reliability of `CdGetRegion()` on early
+  Japanese console models.
+
+- psxetc: Added `SetDMAPriority()` and `GetDMAPriority()`.
+
+- psxapi: Added PCDRV (host file I/O) API, declared in the `psxsn.h` header.
+
+- psxpress: Fixed bugs in the MDEC API. Added support for bitstream version 3
+  to the GTE-accelerated decoder. Replaced `DecDCTvlcCopyTable()` with
+  `DecDCTvlcCopyTableV2()` and `DecDCTvlcCopyTableV3()` for better control over
+  how much of the scratchpad is used for lookup tables.
+
+- examples: `mdec/strvideo` is now (finally) functional on real hardware and
+  can properly detect the end of a video file even if immediately followed by
+  another video on the disc. Added previously missing CD image dependencies to
+  the CMake scripts of the examples that make use of CD images.
+
+- tools: `elf2x` no longer adds region strings to converted executables, fixing
+  issues with DuckStation's region autodetection. Updated `mkpsxiso` to 2.03 in
+  order to fix a bug with its thread pool implementation on Linux.
+
+- Updated binutils and recompiled the GCC toolchain with the
+  `--disable-hosted-libstdcxx` option, allowing a subset of the C++ STL to be
+  used in PSn00bSDK projects.
+
 ## 2022-12-18: 0.22
 
 spicyjpeg:
@@ -457,16 +514,16 @@ Lameguy64:
 
 - Libpsn00b: Added `int8_t`, `int16_t`, `int32_t`, `int64_t`, `uint8_t`,
   `uint16_t`, `uint32_t` and `uint64_t` variable types in `sys/types.h`.
-  
+
 - psxgte: Replaced unsigned int variable types with `u_long` to further improve
   compatibility with code written for the official Sony SDK and to make my
   tutorial examples easier to compile on PSn00bSDK. Example programs have been
   updated to account for this change.
-  
+
 - psxcd: Changed type of 2nd argument of `CdRead()` from `u_int` to `u_long`,
   as well as changing the type of the size element in `CdlFILE` from `u_int` to
   `u_long`.
-  
+
 ## 2021-02-17
 
 Lameguy64:
@@ -480,13 +537,13 @@ Lameguy64:
 
 - Fixed prefixes to allow SDK libraries and examples to be built
   with `mipsel-none-elf`.
-  
+
 - examples: Fixed typo in `plasma_tbl.h` causing multiple definitions when
   compiling with newer versions of GCC in `n00bdemo`.
 
 - examples: `cartrom` example now marked as obsoleted, but still kept for
   reference purposes.
-  
+
 - Includes alextrevisan's GTE macros in `inline_c.h`.
 
 - Added makefile template.
@@ -520,7 +577,7 @@ Lameguy64:
 
 - examples: Removed redundant toolchain executable definitions in the
   makefiles.
-  
+
 - examples: Included HDTV example for Github repo.
 
 ## 2020-09-19
@@ -532,7 +589,7 @@ Lameguy64:
   environment variable. Library installation and linking is also made easier
   with the `PSN00BSDK_LIBS` environment variable. See readme in the `libpsn00b`
   directory for details.
-  
+
 - examples: Fixed libgcc not found error when compiling some of the examples.
 
 - libc: Added `strtok()`.
@@ -540,7 +597,7 @@ Lameguy64:
 - libc: Added support for command line arguments. Pass arguments via
   `SYSTEM.CNF` `BOOT=` string or a string array with `Exec()`. Arguments can
   be read via `argc`/`argv[]` in `main()` or `__argc`/`__argv` anywhere else.
-  
+
 - libc: Added `SetHeapSize()`.
 
 - psxgpu: Moved ISR and callback subsystem to `psxetc`. You'll have to link
@@ -554,7 +611,7 @@ Lameguy64:
 
 - psxcd: Fixed crashing on PSIO and possibly some emulators by implementing
   a response buffer read limiter.
-  
+
 - psxgpu: Interrupts are now disabled before setting up ISR and callbacks in
   `ResetGraph()`, as `LoadExec()` still has interrupts enabled when jumping to
   the loaded PS-EXE's entrypoint. Fixes programs made with PSn00bSDK crashing
@@ -574,10 +631,10 @@ Lameguy64:
 - psxcd: Updated media change detection logic, media change is checked
   by lid open status bit in all CD-ROM file functions. `CdControl()` calls will
   also trigger the media change status on lid open.
-  
+
 - psxcd: Fixed bug in `CdGetVolumeLabel()` where it constantly reparses the
   file system regardless of media change status.
-  
+
 - examples: Updated `cdrom/cdbrowse` example slightly.
 
 - psxcd: Added `CdLoadSession()`.
@@ -585,10 +642,10 @@ Lameguy64:
 - psxcd: Fixed bug where `CdReadDir()` locks up in an infinite loop when it
   encounters a NULL directory record, and the parser has not yet exceeded the
   length of the directory record.
-  
+
 - doc: Replaced library version numbers with SVN revision numbers in the
   introduced fields.
-  
+
 - doc: Started work on CD-ROM library overview.
 
 ## 2020-04-24
@@ -602,10 +659,10 @@ Lameguy64:
 
 - psxapi: Added BIOS `atoi()` and `atol()` calls. Temporary, may be replaced
   with a faster implementation.
-  
+
 - psxsio: Added `ioctl()` support for `FIOCSCAN` to probe for pending input in
   serial tty driver.
-  
+
 - examples: Reorganized examples, added new `tty` and `console` examples.
 
 ## 2020-03-11
@@ -637,7 +694,7 @@ Lameguy64:
   flag internal to the libraries when CD lid is opened, so file system
   functions can update the cached ISO descriptor when the disc has been
   changed.
-  
+
 - psxcd: Made internal variables and functions for iso9660 parsing static.
 
 ## 2020-02-25
@@ -671,13 +728,13 @@ Lameguy64:
 - psxgpu: Added parenthesis to argument value in `setlen()`, `setaddr()` and
   `setcode()` macros, preventing `addPrims()` from being used in a more
   sensible manner (ie. `addPrims(ot, sub_ot+3, sub_ot)`).
-  
+
 - examples: Added render2tex render to texture example.
 
 - psxspu: Fixed typo in `spuinit.s` on section specifier specifying a data
   section instead of text section, resulting to jump to
   non-instruction-aligned linker errors.
-  
+
 - psxgpu: Increased ISR stack size to 2048 bytes.
 
 - psxsio: Added `kbhit()` to poll keyboard input asynchronously and stdin
@@ -718,7 +775,7 @@ Lameguy64:
 
 - libc: Fixed negative integers not displaying properly in
   `vsprintf()`/`vsnprintf()`.
-  
+
 - libc: Fixed zero padding not working in `vsprintf()`/`vsnprintf()`.
 
 - fpscam: Added debug text using `FntOpen()`, `FntPrint()` and `FntFlush()`.
@@ -791,7 +848,7 @@ Lameguy64:
 - libc: Updated build method which takes `libgcc` from the compiler and adds
   its own object files into it, eliminating linker problems caused by having
   to order `libc` and `libgcc` libraries in a specific manner.
-  
+
 - psxgpu: Added `RestartCallback()`.
 
 - psxgpu: Added `StoreImage()` function.
@@ -810,11 +867,11 @@ Lameguy64:
   so its emulated like floats. `int64` still used for processing floats and
   doubles and old `vsprintf.c` file is still included for those who really
   want `int64` support for whatever reason.
-  
+
 - libc: Removed `stdarg.h` which is part of GCC and not license compatible
   with MPL. The toolchain compiled with libgcc provides `stdarg.h` and other
   standard headers.
-  
+
 - examples: Updated `sdk-common.mk` variable convention for better flexibility.
 
 - libpsn00b: Added `common.mk` file containing global values for all libraries.
@@ -825,17 +882,17 @@ Lameguy64:
   to install due to `GetInterruptCallback()` retrieving the callback value
   immediately in the branch delay slot of a `jr` instruction, which resuls to
   an inconsistent return value. This also broke `DrawSyncCallback()`.
-  
+
 - psxsio: Done fixes on `_sio_control()` from the aformentioned issues with
   load instructions in delay slots.
-  
+
 - psxgte: Added `DVECTOR` struct.
 
 - psxgpu: Added `setLineF2()`, `setLineG2()`, `setLineF3()` and `setLineG3()`
   primitive macros.
-  
+
 - Added more functions in documentation.
-  
+
 ## 2019-07-01
 
 williamblair:
@@ -887,7 +944,7 @@ Lameguy64:
 
 - psxgpu: Implemented IRQ callback system with `InterruptCallback()` allowing
   to set interrupt callbacks very easily.
-  
+
 - psxgpu: Implemented proper IRQ handler installed using HookEntryInt or
   `SetCustomExitFromException()` for handling VSync and other interrupts.
   `ChangeClearPAD(0)` must now be called after `_InitPad()` or vsync timeout
@@ -897,7 +954,7 @@ Lameguy64:
   making them not appear in symbol lists resulting in a cleaner symbol dump.
   Still not possible to do function-scope local labels like in ASMPSX because
   GAS syntax is ASS (or ASS GAS which is farts, GAS is farts).
-  
+
 - psxgpu: `DrawSync()` function now waits for DMA completion and GPU transfer
   ready instead of simply waiting for GPU transfer ready which is the likely
   cause of subtle GPU related timing issues, it also sets GPU DMA transfer

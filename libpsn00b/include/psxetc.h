@@ -1,6 +1,6 @@
 /*
  * PSn00bSDK interrupt management library
- * (C) 2019-2022 Lameguy64, spicyjpeg - MPL licensed
+ * (C) 2019-2023 Lameguy64, spicyjpeg - MPL licensed
  */
 
 /**
@@ -13,8 +13,7 @@
  * separate header).
  */
 
-#ifndef __PSXETC_H
-#define __PSXETC_H
+#pragma once
 
 /* IRQ and DMA channel definitions */
 
@@ -68,7 +67,7 @@ extern "C" {
  * | ID  | Channel          | Used by                                 |
  * | --: | :--------------- | :-------------------------------------- |
  * |   0 | IRQ_VBLANK       | psxgpu (use VSyncCallback() instead)    |
- * |   1 | IRQ_GPU          |                                         |
+ * |   1 | IRQ_GPU          | psxgpu (use DrawSyncCallback() instead) |
  * |   2 | IRQ_CD           | psxcd (use CdReadyCallback() instead)   |
  * |   3 | IRQ_DMA          | psxetc (use DMACallback() instead)      |
  * |   4 | IRQ_TIMER0       |                                         |
@@ -156,19 +155,50 @@ void *DMACallback(DMA_Channel dma, void (*func)(void));
 void *GetDMACallback(DMA_Channel dma);
 
 /**
- * @brief Initializes the interrupt dispatcher.
+ * @brief Enables, disables or sets the priority of a DMA channel.
+ *
+ * @details Enables the specified DMA channel and configures its priority (if
+ * priority >= 0) or disables it (if priority = -1). The priority value must be
+ * in 0-7 range, with 0 being the highest priority and 7 the lowest.
+ *
+ * All channels are disabled upon calling ResetCallback(); most libraries will
+ * re-enable them as needed. By default the priority is set to 3 for all
+ * channels.
+ *
+ * @param dma
+ * @param priority Priority in 0-7 range or -1 to disable the channel
+ * @return Previously set priority in 0-7 range, -1 if the channel was disabled
+ */
+int SetDMAPriority(DMA_Channel dma, int priority);
+
+/**
+ * @brief Gets the priority of a DMA channel.
+ *
+ * @details Returns the currently set priority value for the specified DMA
+ * channel in 0-7 range, with 0 being the highest priority and 7 the lowest.
+ * Returns -1 if the channel is not enabled.
+ *
+ * @param dma
+ * @return Priority in 0-7 range, -1 if the channel is disabled
+ *
+ * @see SetDMAPriority()
+ */
+int GetDMAPriority(DMA_Channel dma);
+
+/**
+ * @brief Initializes the interrupt dispatcher and DMA controller.
  *
  * @details Sets up the interrupt handling system, hooks the BIOS to dispatch
- * interrupts to the library and clears all registered callbacks. This function
- * must be called once at the beginning of the program, prior to registering
- * any IRQ or DMA callbacks.
+ * interrupts to the library, clears all registered callbacks and disables all
+ * DMA channels. This function must be called once at the beginning of the
+ * program, prior to registering any IRQ or DMA callbacks.
  *
  * ResetCallback() is called by psxgpu's ResetGraph(), so invoking it manually
  * is usually not required. Calling ResetCallback() after ResetGraph() will
  * actually result in improper initialization, as ResetGraph() registers
  * several callbacks used internally by psxgpu.
  *
- * @return 0 or -1 if the was already initialized
+ * @return 0 or -1 if the dispatcher was already initialized
  */
 int ResetCallback(void);
 
@@ -196,12 +226,15 @@ void RestartCallback(void);
  * Note that interrupts are (obviously) disabled until RestartCallback() is
  * called.
  *
+ * WARNING: any ongoing background processing or DMA transfer must be stopped
+ * before calling StopCallback(), otherwise crashes may occur. This includes
+ * flushing psxgpu's command queue using DrawSync(), stopping CD-ROM reading
+ * and calling StopPAD() to disable the BIOS controller driver if used.
+ *
  * @see RestartCallback()
  */
 void StopCallback(void);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

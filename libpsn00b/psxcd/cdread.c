@@ -89,6 +89,8 @@ static int _poll_retry(void) {
 /* Public API */
 
 int CdReadRetry(int sectors, uint32_t *buf, int mode, int attempts) {
+	_sdk_validate_args((sectors > 0) && buf && (attempts > 0), -1);
+
 	if (CdReadSync(1, 0) > 0) {
 		_sdk_log("CdRead() failed, another read in progress (%d sectors pending)\n", _pending_sectors);
 		return 0;

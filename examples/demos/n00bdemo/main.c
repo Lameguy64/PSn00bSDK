@@ -358,10 +358,9 @@ void stencilstuff() {
 	/* 
 	The stencil demo is achieved by utilizing the mask bit setting
 	primitive GP0(E6h). The structure of this primitive is defined as
-	DR_MASK initialized and set by setDrawMask(). These are not available
-	in Sony's SDK by default.
+	DR_STP initialized and set by setDrawStp().
 	
-	The DR_MASK primitive controls mask bit operations for drawing
+	The DR_STP primitive controls mask bit operations for drawing
 	primitives such as setting mask bits on every pixel drawn or mask
 	bit test where pixels won't be drawn on pixels with the mask bit set.
 	It applies to most graphics drawing primitives except VRAM fill.
@@ -373,10 +372,10 @@ void stencilstuff() {
 	bit operation disabled.
 	
 	The stencil effect featured in this demo is achieved by enabling set
-	mask bit with DR_MASK, drawing semi-transparent primitives using
+	mask bit with DR_STP, drawing semi-transparent primitives using
 	additive blending but color is all zero to make it completely invisible
 	but is enough to update the mask bits, disable mask set bit but enable
-	mask test with DR_MASK and then drawing a rectangle that fills the
+	mask test with DR_STP and then drawing a rectangle that fills the
 	entire screen. Semi-transparency mask in textures must not be used when
 	drawing the scene that will be 'below' the mask layer.
 	*/
@@ -384,7 +383,7 @@ void stencilstuff() {
 	
 	int spin=0;
 	
-	DR_MASK *mask;
+	DR_STP *mask;
 	TILE *rect;
 	
 	SC_OT s_ot;
@@ -430,10 +429,10 @@ void stencilstuff() {
 		
 		
 		// Sort mask primitive that enables setting mask bits
-		mask = (DR_MASK*)nextpri;
-		setDrawMask( mask, 1, 0 );
+		mask = (DR_STP*)nextpri;
+		setDrawStp( mask, 1, 0 );
 		addPrim( ot[db]+20, mask );
-		nextpri += sizeof(DR_MASK);
+		nextpri += sizeof(DR_STP);
 		
 		
 		// Sort the stars
@@ -465,10 +464,10 @@ void stencilstuff() {
 		
 		
 		// Sort mask primitive that enables mask bit test
-		mask = (DR_MASK*)nextpri;
-		setDrawMask( mask, 0, 1 );
+		mask = (DR_STP*)nextpri;
+		setDrawStp( mask, 0, 1 );
 		addPrim( ot[db]+18, mask );
-		nextpri += sizeof(DR_MASK);
+		nextpri += sizeof(DR_STP);
 
 		
 		// Sort rectangle that fills the screen
@@ -482,10 +481,10 @@ void stencilstuff() {
 		
 		
 		// Clear all mask settings
-		mask = (DR_MASK*)nextpri;
-		setDrawMask( mask, 0, 0 );
+		mask = (DR_STP*)nextpri;
+		setDrawStp( mask, 0, 0 );
 		addPrim( ot[db]+15, mask );
-		nextpri += sizeof(DR_MASK);
+		nextpri += sizeof(DR_STP);
 		
 
 		// Sort overlay then display
@@ -624,7 +623,7 @@ void plasmastuff() {
 // Simple stripe transition effect
 void transition() {
 	
-	int i,count,comp;
+	int count = 0;
 	int bheight[16] = { 0 };
 	
 	TILE *tile = (TILE*)nextpri;
@@ -632,9 +631,9 @@ void transition() {
 	
 	while( 1 ) {
 		
-		comp = 0;
+		int comp = 0;
 		
-		for( i=0; i<16; i++ ) {
+		for( int i=0; i<16; i++ ) {
 			
 			if( bheight[i] > 0 ) {
 				
@@ -657,19 +656,11 @@ void transition() {
 		
 		if( bheight[count>>1] == 0 )
 			bheight[count>>1] = 1;
-		
 		display();
 		count++;
 		
 		if( comp >= 16 )
 			break;
-
-		/*
-			I haven't yet managed to figure out why this loop hangs on no$psx
-			if I comment out this completely useless call to puts(). Some
-			alignment or timing crap perhaps? -- spicyjpeg
-		*/
-		puts(".");
 	}
 	
 	DrawSync(0);

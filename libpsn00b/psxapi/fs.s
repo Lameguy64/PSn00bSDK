@@ -6,12 +6,12 @@
 
 .set noreorder
 
-## B0 table functions (5)
+## B0 table functions (6)
 
-.section .text.chdir
-.global chdir
-.type chdir, @function
-chdir:
+.section .text.cd
+.global cd
+.type cd, @function
+cd:
 	li $t2, 0xb0
 	jr $t2
 	li $t1, 0x40
@@ -47,4 +47,12 @@ erase:
 	li $t2, 0xb0
 	jr $t2
 	li $t1, 0x45
+
+.section .text.undelete
+.global undelete
+.type undelete, @function
+undelete:
+	li $t2, 0xb0
+	jr $t2
+	li $t1, 0x46
 

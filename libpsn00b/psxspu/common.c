@@ -1,10 +1,11 @@
 /*
  * PSn00bSDK SPU library (common functions)
- * (C) 2022 spicyjpeg - MPL licensed
+ * (C) 2022-2023 spicyjpeg - MPL licensed
  */
 
 #include <stdint.h>
 #include <assert.h>
+#include <psxetc.h>
 #include <psxspu.h>
 #include <hwregs_c.h>
 
@@ -31,7 +32,7 @@ static void _wait_status(uint16_t mask, uint16_t value) {
 			return;
 	}
 
-	_sdk_log("status register timeout (0x%04x)\n", SPU_STAT);
+	_sdk_log("timeout, status=0x%04x\n", SPU_STAT);
 }
 
 static size_t _dma_transfer(uint32_t *data, size_t length, int write) {
@@ -59,13 +60,14 @@ static size_t _dma_transfer(uint32_t *data, size_t length, int write) {
 	SPU_CTRL |= ctrl;
 	_wait_status(0x0030, ctrl);
 
-	DMA_MADR(4) = (uint32_t) data;
+	DMA_MADR(DMA_SPU) = (uint32_t) data;
 	if (length < DMA_CHUNK_LENGTH)
-		DMA_BCR(4) = 0x00010000 | length;
+		DMA_BCR(DMA_SPU) = 0x00010000 | length;
 	else
-		DMA_BCR(4) = DMA_CHUNK_LENGTH | ((length / DMA_CHUNK_LENGTH) << 16);
+		DMA_BCR(DMA_SPU) = DMA_CHUNK_LENGTH |
+			((length / DMA_CHUNK_LENGTH) << 16);
 
-	DMA_CHCR(4) = 0x01000200 | write;
+	DMA_CHCR(DMA_SPU) = 0x01000200 | write;
 	return length;
 }
 
@@ -130,8 +132,8 @@ void SpuInit(void) {
 	SPU_EXT_VOL_L		= 0;
 	SPU_EXT_VOL_R		= 0;
 
-	DMA_DPCR   |= 0x000b0000; // Enable DMA4
-	DMA_CHCR(4) = 0x00000201; // Stop DMA4
+	SetDMAPriority(DMA_SPU, 3);
+	DMA_CHCR(DMA_SPU) = 0x00000201; // Stop DMA
 
 	SPU_DMA_CTRL = 0x0004; // Reset transfer mode
 	SPU_CTRL     = 0xc001; // Enable SPU, DAC, CD audio, disable DMA request
@@ -162,12 +164,18 @@ void SpuInit(void) {
 }
 
 size_t SpuRead(uint32_t *data, size_t size) {
+	_sdk_validate_args(data && size, 0);
+
 	return _dma_transfer(data, size, 0) * 4;
 }
 
 size_t SpuWrite(const uint32_t *data, size_t size) {
-	if (_transfer_addr < WRITABLE_AREA_ADDR)
+	_sdk_validate_args(data && size, 0);
+
+	if (_transfer_addr < WRITABLE_AREA_ADDR) {
+		_sdk_log("ignoring attempt to write to capture buffers at 0x%05x\n", _transfer_addr);
 		return 0;
+	}
 
 	// I/O transfer mode is not that useful, but whatever.
 	if (_transfer_mode)
@@ -177,6 +185,8 @@ size_t SpuWrite(const uint32_t *data, size_t size) {
 }
 
 size_t SpuWritePartly(const uint32_t *data, size_t size) {
+	//_sdk_validate_args(data && size, 0);
+
 	size_t _size = SpuWrite(data, size);
 
 	_transfer_addr += (_size + 1) / 2;
@@ -188,12 +198,20 @@ SPU_TransferMode SpuSetTransferMode(SPU_TransferMode mode) {
 	return mode;
 }
 
+SPU_TransferMode SpuGetTransferMode(void) {
+	return _transfer_mode;
+}
+
 uint32_t SpuSetTransferStartAddr(uint32_t addr) {
 	if (addr > 0x7ffff)
 		return 0;
 
 	_transfer_addr = getSPUAddr(addr);
 	return addr;
+}
+
+uint32_t SpuGetTransferStartAddr(void) {
+	return _transfer_addr * 8;
 }
 
 int SpuIsTransferCompleted(int mode) {

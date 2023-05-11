@@ -5,27 +5,27 @@
 
 #pragma once
 
-#include <stddef.h>
+#include <cstddef>
+
+namespace std {
 
 /* Definitions */
 
-#define RAND_MAX 0x7fff
+static constexpr int RAND_MAX = 0x7fff;
 
 /* Structure definitions */
 
-typedef struct _HeapUsage {
+struct HeapUsage {
 	size_t total;		// Total size of heap + stack
 	size_t heap;		// Amount of memory currently reserved for heap
 	size_t stack;		// Amount of memory currently reserved for stack
 	size_t alloc;		// Amount of memory currently allocated
 	size_t alloc_max;	// Maximum amount of memory ever allocated
-} HeapUsage;
+};
 
 /* API */
 
-#ifdef __cplusplus
 extern "C" {
-#endif
 
 extern int			__argc;
 extern const char	**__argv;
@@ -55,6 +55,5 @@ void *calloc(size_t num, size_t size);
 void *realloc(void *ptr, size_t size);
 void free(void *ptr);
 
-#ifdef __cplusplus
 }
-#endif
+}

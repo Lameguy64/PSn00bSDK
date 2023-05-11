@@ -6,7 +6,7 @@
 
 .set noreorder
 
-## A0 table functions (13)
+## A0 table functions (14)
 
 .section .text.open
 .global open
@@ -16,10 +16,10 @@ open:
 	jr $t2
 	li $t1, 0x00
 
-.section .text.seek
-.global seek
-.type seek, @function
-seek:
+.section .text.lseek
+.global lseek
+.type lseek, @function
+lseek:
 	li $t2, 0xa0
 	jr $t2
 	li $t1, 0x01
@@ -55,6 +55,14 @@ ioctl:
 	li $t2, 0xa0
 	jr $t2
 	li $t1, 0x05
+
+.section .text.isatty
+.global isatty
+.type isatty, @function
+isatty:
+	li $t2, 0xa0
+	jr $t2
+	li $t1, 0x07
 
 .section .text.getc
 .global getc
@@ -111,4 +119,22 @@ printf:
 	li $t2, 0xa0
 	jr $t2
 	li $t1, 0x3f
+
+## B0 table functions (2)
+
+.section .text._get_errno
+.global _get_errno
+.type _get_errno, @function
+_get_errno:
+	li $t2, 0xb0
+	jr $t2
+	li $t1, 0x54
+
+.section .text._get_error
+.global _get_error
+.type _get_error, @function
+_get_error:
+	li $t2, 0xb0
+	jr $t2
+	li $t1, 0x55
 

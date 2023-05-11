@@ -13,7 +13,10 @@ project(
 
 file(GLOB _sources *.c)
 psn00bsdk_add_executable(cdbrowse GPREL ${_sources})
-psn00bsdk_add_cd_image(cdbrowse_iso cdbrowse iso.xml DEPENDS cdbrowse)
+psn00bsdk_add_cd_image(
+	cdbrowse_iso cdbrowse iso.xml
+	DEPENDS cdbrowse system.cnf
+)
 
 psn00bsdk_target_incbin(cdbrowse PRIVATE ball16c ball16c.tim)
 

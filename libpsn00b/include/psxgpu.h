@@ -1,10 +1,26 @@
 /*
  * PSn00bSDK GPU library
- * (C) 2019-2022 Lameguy64, spicyjpeg - MPL licensed
+ * (C) 2019-2023 Lameguy64, spicyjpeg - MPL licensed
  */
 
-#ifndef __PSXGPU_H
-#define __PSXGPU_H
+/**
+ * @file psxgpu.h
+ * @brief GPU library header
+ *
+ * @details This library provides access to the PS1's GPU through a fully
+ * asynchronous command queue, which allows GPU commands to be batched and sent
+ * efficiently in the background without stalling the CPU. Helper structures
+ * and macros to initialize, generate and link GPU display lists in memory are
+ * also provided, in addition to support for asynchronous VRAM data transfers
+ * and a debug font API that can be used to easily draw text overlays for
+ * debugging purposes.
+ *
+ * This library is for the most part a drop-in replacement for the official
+ * SDK's GPU library and is only missing a handful of functions, mainly related
+ * to Kanji debug fonts and command queue pausing.
+ */
+
+#pragma once
 
 #include <stdint.h>
 #include <stddef.h>
@@ -27,6 +43,11 @@ typedef enum _GPU_VideoMode {
 	MODE_NTSC	= 0,
 	MODE_PAL	= 1
 } GPU_VideoMode;
+
+typedef enum _GPU_DrawOpType {
+	DRAWOP_TYPE_DMA		= 1,
+	DRAWOP_TYPE_GPU_IRQ	= 2
+} GPU_DrawOpType;
 
 /* Structure macros */
 
@@ -83,7 +104,7 @@ typedef enum _GPU_VideoMode {
 	(p)->u0 = (_u0), (p)->v0 = (_v0), \
 	(p)->u1 = (_u1), (p)->v1 = (_v1), \
 	(p)->u2 = (_u2), (p)->v2 = (_v2)
-	
+
 #define setUV4(p, _u0, _v0, _u1, _v1, _u2, _v2, _u3, _v3) \
 	(p)->u0 = (_u0), (p)->v0 = (_v0), \
 	(p)->u1 = (_u1), (p)->v1 = (_v1), \
@@ -101,9 +122,12 @@ typedef enum _GPU_VideoMode {
 #define setlen(p, _len)		(((P_TAG *) (p))->len = (uint8_t) (_len))
 #define setaddr(p, _addr)	(((P_TAG *) (p))->addr = (uint32_t) (_addr))
 #define setcode(p, _code)	(((P_TAG *) (p))->code = (uint8_t) (_code))
+#define setcode_T(p, _code)	(((P_TAG_T *) (p))->code = (uint8_t) (_code))
+
 #define getlen(p)			(((P_TAG *) (p))->len)
 #define getaddr(p)			(((P_TAG *) (p))->addr)
 #define getcode(p)			(((P_TAG *) (p))->code)
+#define getcode_T(p)		(((P_TAG_T *) (p))->code)
 
 #define nextPrim(p)			(void *) (0x80000000 | (((P_TAG *) (p))->addr))
 #define isendprim(p)		((((P_TAG *) (p))->addr) == 0xffffff)
@@ -114,16 +138,20 @@ typedef enum _GPU_VideoMode {
 
 #define setSemiTrans(p, abe) \
 	((abe) ? (getcode(p) |= 2) : (getcode(p) &= ~2))
+#define setSemiTrans_T(p, abe) \
+	((abe) ? (getcode_T(p) |= 2) : (getcode_T(p) &= ~2))
 
 #define setShadeTex(p, tge) \
 	((tge) ? (getcode(p) |= 1) : (getcode(p) &= ~1))
+#define setShadeTex_T(p, tge) \
+	((tge) ? (getcode_T(p) |= 1) : (getcode_T(p) &= ~1))
 
 #define getTPage(tp, abr, x, y) ( \
-	(((x)  /  64) & 15) | \
-	((((y) / 256) &  1) <<  4) | \
-	(((abr)       &  3) <<  5) | \
-	(((tp)        &  3) <<  7) | \
-	((((y) / 512) &  1) << 11) \
+	(((x) & 0x3c0) >> 6) | \
+	(((y) & 0x100) >> 4) | \
+	(((y) & 0x200) << 2) | \
+	(((abr) & 3) << 5) | \
+	(((tp)  & 3) << 7) \
 )
 
 #define getClut(x, y) (((y) << 6) | (((x) >> 4) & 0x3f))
@@ -147,58 +175,108 @@ typedef enum _GPU_VideoMode {
 #define setTile(p)		setlen(p,  3), setcode(p, 0x60)
 #define setLineF2(p)	setlen(p,  3), setcode(p, 0x40)
 #define setLineG2(p)	setlen(p,  4), setcode(p, 0x50)
-#define setLineF3(p)	setlen(p,  5), setcode(p, 0x48), \
-	(p)->pad = 0x55555555
-#define setLineG3(p)	setlen(p,  7), setcode(p, 0x58), \
-	(p)->pad = 0x55555555, (p)->p1 = 0, (p)->p2 = 0
-#define setLineF4(p)	setlen(p,  6), setcode(p, 0x4c), \
-	(p)->pad = 0x55555555
-#define setLineG4(p)	setlen(p,  9), setcode(p, 0x5c), \
-	(p)->pad = 0x55555555, (p)->p1 = 0, (p)->p2 = 0, (p)->p3 = 0
-#define setFill(p) 		setlen(p,  3), setcode(p, 0x02)
-#define setVram2Vram(p)	setlen(p,  8), setcode(p, 0x80), \
+#define setLineF3(p)	setlen(p,  5), setcode(p, 0x48), (p)->pad = 0x55555555
+#define setLineG3(p)	setlen(p,  7), setcode(p, 0x58), (p)->pad = 0x55555555, \
+	(p)->p1 = 0, (p)->p2 = 0
+#define setLineF4(p)	setlen(p,  6), setcode(p, 0x4c), (p)->pad = 0x55555555
+#define setLineG4(p)	setlen(p,  9), setcode(p, 0x5c), (p)->pad = 0x55555555, \
+	(p)->p1 = 0, (p)->p2 = 0, (p)->p3 = 0
+#define setFill(p)		setlen(p,  3), setcode(p, 0x02)
+#define setBlit(p)		setlen(p,  8), setcode(p, 0x80), \
 	(p)->pad[0] = 0, (p)->pad[1] = 0, (p)->pad[2] = 0, (p)->pad[3] = 0
 
-#define setDrawTPage(p, dfe, dtd, tpage) \
-	setlen(p, 1), \
+#define setPolyF3_T(p)	setcode_T(p, 0x20)
+#define setPolyFT3_T(p)	setcode_T(p, 0x24)
+#define setPolyG3_T(p)	setcode_T(p, 0x30)
+#define setPolyGT3_T(p)	setcode_T(p, 0x34)
+#define setPolyF4_T(p)	setcode_T(p, 0x28)
+#define setPolyFT4_T(p)	setcode_T(p, 0x2c)
+#define setPolyG4_T(p)	setcode_T(p, 0x38)
+#define setPolyGT4_T(p)	setcode_T(p, 0x3c)
+#define setSprt8_T(p)	setcode_T(p, 0x74)
+#define setSprt16_T(p)	setcode_T(p, 0x7c)
+#define setSprt_T(p)	setcode_T(p, 0x64)
+#define setTile1_T(p)	setcode_T(p, 0x68)
+#define setTile8_T(p)	setcode_T(p, 0x70)
+#define setTile16_T(p)	setcode_T(p, 0x78)
+#define setTile_T(p)	setcode_T(p, 0x60)
+#define setLineF2_T(p)	setcode_T(p, 0x40)
+#define setLineG2_T(p)	setcode_T(p, 0x50)
+#define setLineF3_T(p)	setcode_T(p, 0x48), (p)->pad = 0x55555555
+#define setLineG3_T(p)	setcode_T(p, 0x58), (p)->pad = 0x55555555, \
+	(p)->p1 = 0, (p)->p2 = 0
+#define setLineF4_T(p)	setcode_T(p, 0x4c), (p)->pad = 0x55555555
+#define setLineG4_T(p)	setcode_T(p, 0x5c), (p)->pad = 0x55555555, \
+	(p)->p1 = 0, (p)->p2 = 0, (p)->p3 = 0
+#define setFill_T(p)	setcode_T(p, 0x02)
+#define setBlit_T(p)	setcode_T(p, 0x80), \
+	(p)->pad[0] = 0, (p)->pad[1] = 0, (p)->pad[2] = 0, (p)->pad[3] = 0
+
+#define setDrawTPage_T(p, dfe, dtd, tpage) \
 	(p)->code[0] = (0xe1000000 | \
 		(tpage) | \
-		((dtd) <<  9) | \
-		((dfe) << 10) \
+		(((dtd) & 1) <<  9) | \
+		(((dfe) & 1) << 10) \
 	)
+#define setDrawTPage(p, dfe, dtd, tpage) \
+	setlen(p, 1), setDrawTPage_T(p, dfe, dtd, tpage)
 
-#define setDrawOffset(p, _x, _y) \
-	setlen(p, 1), \
-	(p)->code[0] = (0xe5000000 | \
-		((_x)  % 1024) | \
-		(((_y) % 1024) << 11) \
+#define setTexWindow_T(p, r) \
+	(p)->code[0] = (0xe2000000 | \
+		((r)->w  & 0x1f) | \
+		(((r)->h & 0x1f) <<  5) | \
+		(((r)->x & 0x1f) << 10) | \
+		(((r)->y & 0x1f) << 15) \
 	)
+#define setTexWindow(p, r) \
+	setlen(p, 1), setTexWindow_T(p, r)
 
-#define setDrawMask(p, sb, mt) \
-	setlen(p, 1), \
-	(p)->code[0] = (0xe6000000 | (sb) | ((mt) << 1))
-
-#define setDrawArea(p, r) \
-	setlen(p, 2), \
+#define setDrawAreaXY_T(p, _x0, _y0, _x1, _y1) \
 	(p)->code[0] = (0xe3000000 | \
-		((r)->x  % 1024) | \
-		(((r)->y % 1024) << 10) \
+		((_x0)  & 0x3ff) | \
+		(((_y0) & 0x3ff) << 10) \
 	), \
 	(p)->code[1] = (0xe4000000 | \
-		(((r)->x  + (r)->w - 1) % 1024) | \
-		((((r)->y + (r)->h - 1) % 1024) << 10) \
+		((_x1)  & 0x3ff) | \
+		(((_y1) & 0x3ff) << 10) \
 	)
+#define setDrawAreaXY(p, _x0, _y0, _x1, _y1) \
+	setlen(p, 2), setDrawAreaXY_T(p, _x0, _y0, _x1, _y1)
 
-#define setTexWindow(p, r) \
-	setlen(p, 1), \
-	(p)->code[0] = (0xe2000000 | \
-		((r)->w  % 32) | \
-		(((r)->h % 32) <<  5) | \
-		(((r)->x % 32) << 10) | \
-		(((r)->y % 32) << 15) \
+#define setDrawArea_T(p, r) \
+	setDrawAreaXY_T(p, \
+		(r)->x, \
+		(r)->y, \
+		(r)->x + (r)->w - 1, \
+		(r)->y + (r)->h - 1 \
 	)
+#define setDrawArea(p, r) \
+	setlen(p, 2), setDrawArea_T(p, r)
+
+#define setDrawOffset_T(p, _x, _y) \
+	(p)->code[0] = (0xe5000000 | \
+		((_x)  & 0x7ff) | \
+		(((_y) & 0x7ff) << 11) \
+	)
+#define setDrawOffset(p, _x, _y) \
+	setlen(p, 1), setDrawOffset_T(p, _x, _y)
+
+#define setDrawStp_T(p, pbw, mt) \
+	(p)->code[0] = (0xe6000000 | (pbw) | ((mt) << 1))
+#define setDrawStp(p, pbw, mt) \
+	setlen(p, 1), setDrawStp_T(p, pbw, mt)
+
+#define setDrawIRQ_T(p) \
+	(p)->code[0] = 0x1f000000
+#define setDrawIRQ(p) \
+	setlen(p, 1), setDrawIRQ_T(p)
 
 /* Primitive structure definitions */
+
+typedef struct _P_TAG_T {
+	uint32_t	color:24;
+	uint32_t	code:8;
+} P_TAG_T;
 
 typedef struct _P_TAG {
 	uint32_t	addr:24;
@@ -212,25 +290,31 @@ typedef struct _P_COLOR {
 	uint32_t	pad:8;
 } P_COLOR;
 
-typedef struct _POLY_F3 {
-	uint32_t	tag;
+// These macros are used to define two variants of each primitive, a regular one
+// and a "tagless" one (_T suffix) without the OT/display list header.
+#define _DEF_PRIM(name, ...) \
+	typedef struct _##name##_T { __VA_ARGS__ } name##_T; \
+	typedef struct _##name { uint32_t tag; __VA_ARGS__ } name;
+#define _DEF_ALIAS(name, target) \
+	typedef struct _##target##_T name##_T; \
+	typedef struct _##target name;
+
+_DEF_PRIM(POLY_F3,
 	uint8_t		r0, g0, b0, code;
 	int16_t		x0, y0;
 	int16_t		x1, y1;
 	int16_t		x2, y2;
-} POLY_F3;
+)
 
-typedef struct _POLY_F4 {
-	uint32_t	tag;
+_DEF_PRIM(POLY_F4,
 	uint8_t		r0, g0, b0, code;
 	int16_t		x0, y0;
 	int16_t		x1, y1;
 	int16_t		x2, y2;
 	int16_t		x3, y3;
-} POLY_F4;
+)
 
-typedef struct _POLY_FT3 {
-	uint32_t	tag;
+_DEF_PRIM(POLY_FT3,
 	uint8_t		r0, g0, b0, code;
 	int16_t		x0, y0;
 	uint8_t		u0, v0;
@@ -241,10 +325,9 @@ typedef struct _POLY_FT3 {
 	int16_t		x2, y2;
 	uint8_t		u2, v2;
 	uint16_t	pad;
-} POLY_FT3;
+)
 
-typedef struct _POLY_FT4 {
-	uint32_t	tag;
+_DEF_PRIM(POLY_FT4,
 	uint8_t		r0, g0, b0, code;
 	uint16_t	x0, y0;
 	uint8_t		u0, v0;
@@ -258,20 +341,18 @@ typedef struct _POLY_FT4 {
 	int16_t		x3, y3;
 	uint8_t		u3, v3;
 	uint16_t	pad1;
-} POLY_FT4;
+)
 
-typedef struct _POLY_G3 {
-	uint32_t	tag;
+_DEF_PRIM(POLY_G3,
 	uint8_t		r0, g0, b0, code;
 	int16_t		x0, y0;
 	uint8_t		r1, g1, b1, pad0;
 	int16_t		x1, y1;
 	uint8_t		r2, g2, b2, pad1;
 	int16_t		x2, y2;
-} POLY_G3;
+)
 
-typedef struct _POLY_G4 {
-	uint32_t	tag;
+_DEF_PRIM(POLY_G4,
 	uint8_t		r0, g0, b0, code;
 	int16_t		x0, y0;
 	uint8_t		r1, g1, b1, pad0;
@@ -280,10 +361,9 @@ typedef struct _POLY_G4 {
 	int16_t		x2, y2;
 	uint8_t		r3, g3, b3, pad2;
 	int16_t		x3, y3;
-} POLY_G4;
+)
 
-typedef struct _POLY_GT3 {
-	uint32_t	tag;
+_DEF_PRIM(POLY_GT3,
 	uint8_t		r0, g0, b0, code;
 	int16_t		x0, y0;
 	uint8_t		u0, v0;
@@ -296,10 +376,9 @@ typedef struct _POLY_GT3 {
 	int16_t		x2, y2;
 	uint8_t		u2, v2;
 	uint16_t	pad2;
-} POLY_GT3;
+)
 
-typedef struct _POLY_GT4 {
-	uint32_t	tag;
+_DEF_PRIM(POLY_GT4,
 	uint8_t		r0, g0, b0, code;
 	int16_t		x0, y0;
 	uint8_t		u0, v0;
@@ -316,34 +395,30 @@ typedef struct _POLY_GT4 {
 	int16_t		x3, y3;
 	uint8_t		u3, v3;
 	uint16_t	pad4;
-} POLY_GT4;
+)
 
-typedef struct _LINE_F2 {
-	uint32_t	tag;
+_DEF_PRIM(LINE_F2,
 	uint8_t		r0, g0, b0, code;
 	int16_t		x0, y0;
 	int16_t		x1, y1;
-} LINE_F2;
+)
 
-typedef struct _LINE_G2 {
-	uint32_t	tag;
+_DEF_PRIM(LINE_G2,
 	uint8_t		r0, g0, b0, code;
 	int16_t		x0, y0;
 	uint8_t		r1, g1, b1, p1;
 	int16_t		x1, y1;
-} LINE_G2;
+)
 
-typedef struct _LINE_F3 {
-	uint32_t	tag;
+_DEF_PRIM(LINE_F3,
 	uint8_t		r0, g0, b0, code;
 	int16_t		x0, y0;
 	int16_t		x1, y1;
 	int16_t		x2, y2;
 	uint32_t	pad;
-} LINE_F3;
+)
 
-typedef struct _LINE_G3 {
-	uint32_t	tag;
+_DEF_PRIM(LINE_G3,
 	uint8_t		r0, g0, b0, code;
 	int16_t		x0, y0;
 	uint8_t		r1, g1, b1, p1;
@@ -351,20 +426,18 @@ typedef struct _LINE_G3 {
 	uint8_t		r2, g2, b2, p2;
 	int16_t		x2, y2;
 	uint32_t	pad;
-} LINE_G3;
+)
 
-typedef struct _LINE_F4 {
-	uint32_t	tag;
+_DEF_PRIM(LINE_F4,
 	uint8_t		r0, g0, b0, code;
 	int16_t		x0, y0;
 	int16_t		x1, y1;
 	int16_t		x2, y2;
 	int16_t		x3, y3;
 	uint32_t	pad;
-} LINE_F4;
+)
 
-typedef struct _LINE_G4 {
-	uint32_t	tag;
+_DEF_PRIM(LINE_G4,
 	uint8_t		r0, g0, b0, code;
 	int16_t		x0, y0;
 	uint8_t		r1, g1, b1, p1;
@@ -374,88 +447,80 @@ typedef struct _LINE_G4 {
 	uint8_t		r3, g3, b3, p3;
 	int16_t		x3, y3;
 	uint32_t	pad;
-} LINE_G4;
+)
 
-typedef struct _TILE {
-	uint32_t	tag;
+_DEF_PRIM(TILE,
 	uint8_t		r0, g0, b0, code;
 	int16_t		x0, y0;
 	int16_t		w, h;
-} TILE;
+)
 
-struct _TILE_FIXED {
-	uint32_t	tag;
+_DEF_PRIM(TILE_1,
 	uint8_t		r0, g0, b0, code;
 	int16_t		x0, y0;
-};
-typedef struct _TILE_FIXED TILE_1;
-typedef struct _TILE_FIXED TILE_8;
-typedef struct _TILE_FIXED TILE_16;
+)
+_DEF_ALIAS(TILE_8,  TILE_1)
+_DEF_ALIAS(TILE_16, TILE_1)
 
-typedef struct _SPRT {
-	uint32_t	tag;
+_DEF_PRIM(SPRT,
 	uint8_t		r0, g0, b0, code;
 	int16_t		x0, y0;
 	uint8_t		u0, v0;
 	uint16_t	clut;
 	uint16_t	w, h;
-} SPRT;
+)
 
-struct _SPRT_FIXED {
-	uint32_t	tag;
+_DEF_PRIM(SPRT_1,
 	uint8_t		r0, g0, b0, code;
 	int16_t		x0, y0;
 	uint8_t		u0, v0;
 	uint16_t	clut;
-};
-typedef struct _SPRT_FIXED SPRT_8;
-typedef struct _SPRT_FIXED SPRT_16;
+)
+_DEF_ALIAS(SPRT_8,  SPRT_1)
+_DEF_ALIAS(SPRT_16, SPRT_1)
 
-typedef struct _DR_ENV {
-	uint32_t tag;
-	uint32_t code[8];
-} DR_ENV;
-
-typedef struct _DR_AREA {
-	uint32_t tag;
-	uint32_t code[2];
-} DR_AREA;
-
-typedef struct _DR_OFFSET {
-	uint32_t tag;
-	uint32_t code[1];
-} DR_OFFSET;
-
-typedef struct _DR_TWIN {
-	uint32_t tag;
-	uint32_t code[2];
-} DR_TWIN;
-
-typedef struct _DR_TPAGE {
-	uint32_t tag;
-	uint32_t code[1];
-} DR_TPAGE;
-
-typedef struct _DR_MASK {
-	uint32_t tag;
-	uint32_t code[1];
-} DR_MASK;
-
-typedef struct _FILL {
-	uint32_t	tag;
+_DEF_PRIM(FILL,
 	uint8_t		r0, g0, b0, code;
-	uint16_t	x0, y0; // Note: coordinates must be in 16 pixel steps
+	uint16_t	x0, y0;
 	uint16_t	w, h;
-} FILL;
+)
 
-typedef struct _VRAM2VRAM {
-	uint32_t	tag;
+_DEF_PRIM(DR_MOVE,
 	uint8_t		p0, p1, p2, code;
 	uint16_t	x0, y0;
 	uint16_t	x1, y1;
 	uint16_t	w, h;
-	uint32_t	pad[4];
-} VRAM2VRAM;
+)
+
+_DEF_PRIM(DR_AREA,
+	uint32_t code[2];
+)
+_DEF_PRIM(DR_OFFSET,
+	uint32_t code[1];
+)
+_DEF_PRIM(DR_TWIN,
+	uint32_t code[1];
+)
+_DEF_PRIM(DR_TPAGE,
+	uint32_t code[1];
+)
+_DEF_PRIM(DR_STP,
+	uint32_t code[1];
+)
+_DEF_PRIM(DR_IRQ,
+	uint32_t code[1];
+)
+
+_DEF_PRIM(DR_ENV,
+	DR_TPAGE_T	tpage;
+	DR_TWIN_T	twin;
+	DR_AREA_T	area;
+	DR_OFFSET_T	offset;
+	FILL_T		fill;
+)
+
+#undef _DEF_PRIM
+#undef _DEF_ALIAS
 
 /* Structure definitions */
 
@@ -478,13 +543,13 @@ typedef struct _DISPENV {
 typedef struct _DRAWENV {
 	RECT		clip;		// Drawing area
 	int16_t		ofs[2];		// GPU draw offset (relative to draw area)
-	RECT		tw;			// Texture window (doesn't do anything atm)
+	RECT		tw;			// Texture window
 	uint16_t	tpage;		// Initial tpage value
 	uint8_t		dtd;		// Dither processing flag (simply OR'ed to tpage)
 	uint8_t		dfe;		// Drawing to display area blocked/allowed (simply OR'ed to tpage)
 	uint8_t		isbg;		// Clear draw area if non-zero
 	uint8_t		r0, g0, b0;	// Draw area clear color (if isbg iz nonzero)
-	DR_ENV		dr_env;		// Draw mode packet area (used by PutDrawEnv)
+	DR_ENV		dr_env;		// GPU primitive cache area (used internally)
 } DRAWENV;
 
 typedef struct _TIM_IMAGE {
@@ -521,31 +586,35 @@ void PutDrawEnv(DRAWENV *env);
 void PutDrawEnvFast(DRAWENV *env);
 
 int GetODE(void);
+int IsIdleGPU(int timeout);
 int VSync(int mode);
 void *VSyncHaltFunction(void (*func)(void));
 void *VSyncCallback(void (*func)(void));
 
-int EnqueueDrawOp(
-	void		(*func)(uint32_t, uint32_t, uint32_t),
-	uint32_t	arg1,
-	uint32_t	arg2,
-	uint32_t	arg3
-);
+void SetDrawOpType(GPU_DrawOpType type);
+int EnqueueDrawOp(void (*func)(), uint32_t arg1, uint32_t arg2, uint32_t arg3);
 int DrawSync(int mode);
 void *DrawSyncCallback(void (*func)(void));
 
 int LoadImage(const RECT *rect, const uint32_t *data);
 int StoreImage(const RECT *rect, uint32_t *data);
-//int MoveImage(const RECT *rect, int x, int y);
+int MoveImage(const RECT *rect, int x, int y);
 void LoadImage2(const RECT *rect, const uint32_t *data);
 void StoreImage2(const RECT *rect, uint32_t *data);
-//void MoveImage2(const RECT *rect, int x, int y);
+void MoveImage2(const RECT *rect, int x, int y);
 
 void ClearOTagR(uint32_t *ot, size_t length);
 void ClearOTag(uint32_t *ot, size_t length);
 int DrawOTag(const uint32_t *ot);
+int DrawOTagIRQ(const uint32_t *ot);
 int DrawOTagEnv(const uint32_t *ot, DRAWENV *env);
+int DrawOTagEnvIRQ(const uint32_t *ot, DRAWENV *env);
 void DrawOTag2(const uint32_t *ot);
+void DrawOTagIRQ2(const uint32_t *ot);
+int DrawBuffer(const uint32_t *buf, size_t length);
+int DrawBufferIRQ(const uint32_t *buf, size_t length);
+void DrawBuffer2(const uint32_t *buf, size_t length);
+void DrawBufferIRQ2(const uint32_t *buf, size_t length);
 void DrawPrim(const uint32_t *pri);
 
 void AddPrim(uint32_t *ot, const void *pri);
@@ -564,6 +633,4 @@ char *FntFlush(int id);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

@@ -5,11 +5,10 @@
 
 #pragma once
 
-#include <stdarg.h>
+#include <cstdarg>
 
-#ifdef __cplusplus
+namespace std {
 extern "C" {
-#endif
 
 /* String I/O API (provided by BIOS) */
 
@@ -29,6 +28,5 @@ int snprintf(char *string, unsigned int size, const char *fmt, ...);
 int vsscanf(const char *str, const char *format, va_list ap);
 int sscanf(const char *str, const char *fmt, ...);
 
-#ifdef __cplusplus
 }
-#endif
+}

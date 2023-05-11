@@ -1,0 +1,34 @@
+/*
+ * PSn00bSDK standard library
+ * (C) 2019-2023 Lameguy64, spicyjpeg - MPL licensed
+ *
+ * This is a replacement for the <cstdint> header included with GCC, which seems
+ * to be broken (at least in GCC 12.2.0) as it requires some macros to be set.
+ */
+
+#pragma once
+
+#include <stdint.h>
+
+namespace std {
+
+#define _DEF_TYPE(bits, prefix) \
+	using ::prefix##bits##_t; \
+	using ::prefix##_fast##bits##_t; \
+	using ::prefix##_least##bits##_t;
+
+_DEF_TYPE( 8, int)
+_DEF_TYPE( 8, uint)
+_DEF_TYPE(16, int)
+_DEF_TYPE(16, uint)
+_DEF_TYPE(32, int)
+_DEF_TYPE(32, uint)
+
+#undef _DEF_TYPE
+
+using ::intmax_t;
+using ::uintmax_t;
+using ::intptr_t;
+using ::uintptr_t;
+
+}

@@ -1,7 +1,7 @@
 // Based on ilia muraviev's CRUSH compressor program which falls under public domain
 
 #include <string.h>
-#if LZP_USE_MALLOC == TRUE
+#ifdef LZP_USE_MALLOC
 #include <stdlib.h>
 #endif
 
@@ -11,7 +11,7 @@
 
 
 // Internal structure for hash table allocation sizes
-#if LZP_NO_COMPRESS == FALSE
+#ifndef LZP_NO_COMPRESS
 
 struct {
 	short WindowSize;	// Window size (17 - 23)
@@ -67,7 +67,7 @@ struct {
 // LZ77
 //
 
-#if LZP_NO_COMPRESS == FALSE
+#ifndef LZP_NO_COMPRESS
 
 int update_hash1(int h, int c) {
 
@@ -108,13 +108,13 @@ int get_penalty(int a, int b) {
 
 int lzCompress(void* outBuff, const void* inBuff, int inSize, int level) {
 
-	#if LZP_USE_MALLOC == FALSE
+#ifndef LZP_USE_MALLOC
 	int head[HASH1_SIZE+HASH2_SIZE];
 	int prev[W_SIZE];
-	#else
+#else
 	int* head = malloc(4*(HASH1_SIZE+HASH2_SIZE));
 	int* prev = malloc(4*W_SIZE);
-	#endif
+#endif
 
 
 	int max_chain[] = {4, 256, 1<<12};
@@ -319,10 +319,10 @@ int lzCompress(void* outBuff, const void* inBuff, int inSize, int level) {
 
 	flush_bits();
 
-	#if LZP_USE_MALLOC == TRUE
+#ifdef LZP_USE_MALLOC
 	free(head);
 	free(prev);
-	#endif
+#endif
 
 	return(outBytes);
 

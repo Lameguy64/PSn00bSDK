@@ -212,7 +212,7 @@ void spu_irq_handler(void) {
 	// if str_ctx.state is set to STATE_DATA_NEEDED and fetch the next chunk.
 }
 
-void cd_read_handler(int event, uint8_t *payload) {
+void cd_read_handler(CdlIntrResult event, uint8_t *payload) {
 	// Attempt to read the chunk again if an error has occurred, otherwise
 	// start uploading it to SPU RAM.
 	if (event == CdlDiskError) {

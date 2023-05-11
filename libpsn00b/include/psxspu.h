@@ -1,10 +1,25 @@
 /*
  * PSn00bSDK SPU library
- * (C) 2019-2022 Lameguy64, spicyjpeg - MPL licensed
+ * (C) 2019-2023 Lameguy64, spicyjpeg - MPL licensed
  */
 
-#ifndef __PSXSPU_H
-#define __PSXSPU_H
+/**
+ * @file psxspu.h
+ * @brief SPU library header
+ *
+ * @details The PSn00bSDK SPU library allows for SPU initialization, DMA
+ * transfers (both sample data uploads and capture buffer reads) and provides
+ * helper macros for accessing SPU control registers, which can be used to
+ * control sample playback on each channel, configure reverb and enable more
+ * advanced features such as interrupts.
+ *
+ * This library currently has fewer functions than its Sony SDK counterpart, in
+ * part because it is not yet complete but also since the vast majority of the
+ * Sony library's functions are redundant, inefficient and can be replaced with
+ * simple SPU register writes.
+ */
+
+#pragma once
 
 #include <stdint.h>
 #include <stddef.h>
@@ -12,6 +27,7 @@
 
 /* Definitions */
 
+#if 0
 typedef enum _SPU_AttrMask {
 	SPU_VOICE_VOLL			= 1 << 0,	// Left volume
 	SPU_VOICE_VOLR			= 1 << 1,	// Right volume
@@ -33,6 +49,7 @@ typedef enum _SPU_AttrMask {
 	SPU_VOICE_ADSR_ADSR1	= 1 << 17,
 	SPU_VOICE_ADSR_ADSR2	= 1 << 18
 } SPU_AttrMask;
+#endif
 
 typedef enum _SPU_TransferMode {
 	SPU_TRANSFER_BY_DMA	= 0,
@@ -46,6 +63,7 @@ typedef enum _SPU_WaitMode {
 
 /* Structure definitions */
 
+#if 0
 typedef struct _SpuVolume {
 	int16_t left, right;
 } SpuVolume;
@@ -72,6 +90,7 @@ typedef struct _SpuCommonAttr {
 	SpuVolume	mvol, mvolmode, mvolx;
 	SpuExtAttr	cd, ext;
 } SpuCommonAttr;
+#endif
 
 /* Macros */
 
@@ -137,11 +156,11 @@ size_t SpuRead(uint32_t *data, size_t size);
 size_t SpuWrite(const uint32_t *data, size_t size);
 size_t SpuWritePartly(const uint32_t *data, size_t size);
 SPU_TransferMode SpuSetTransferMode(SPU_TransferMode mode);
+SPU_TransferMode SpuGetTransferMode(void);
 uint32_t SpuSetTransferStartAddr(uint32_t addr);
+uint32_t SpuGetTransferStartAddr(void);
 int SpuIsTransferCompleted(int mode);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

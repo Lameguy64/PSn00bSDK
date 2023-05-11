@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <psxetc.h>
 #include <psxapi.h>
 #include <psxgpu.h>
 #include <psxgte.h>
@@ -238,11 +239,12 @@ int main(int argc, const char *argv[]) {
 		display();
 		
 	}
-	
+
+	DrawSync(0);
 	StopPAD();
-	
+	StopCallback();
+
 	return 0;
-	
 }
 
 void init(void) {

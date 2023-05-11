@@ -13,7 +13,10 @@ project(
 
 file(GLOB _sources *.c)
 psn00bsdk_add_executable(cdstream GPREL ${_sources})
-psn00bsdk_add_cd_image(cdstream_iso cdstream iso.xml DEPENDS cdstream)
+psn00bsdk_add_cd_image(
+	cdstream_iso cdstream iso.xml
+	DEPENDS cdstream system.cnf stream.vag
+)
 
 install(
 	FILES

@@ -6,10 +6,7 @@
 	a file from the source tree, you'll have to prepend its path with
 	${PROJECT_SOURCE_DIR}.
 -->
-<iso_project
-	image_name="${CD_IMAGE_NAME}.bin"
-	cue_sheet="${CD_IMAGE_NAME}.cue"
->
+<iso_project>
 	<track type="data">
 		<!--
 			The "volume", "volume_set", "publisher", "data_preparer" and

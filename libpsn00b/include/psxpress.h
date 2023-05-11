@@ -1,6 +1,6 @@
 /*
  * PSn00bSDK MDEC library
- * (C) 2022 spicyjpeg - MPL licensed
+ * (C) 2022-2023 spicyjpeg - MPL licensed
  */
 
 /**
@@ -17,11 +17,12 @@
  * FMV playback is not part of this library per se, but can implemented using
  * the APIs defined here alongside some code to stream data from the CD drive.
  *
- * Currently only version 1 and 2 .BS files are supported.
+ * Currently bitstream versions 1, 2 and 3 are supported. Version 0 and .IKI
+ * bitstreams are not supported, but no encoder is publicly available for those
+ * anyway.
  */
 
-#ifndef __PSXPRESS_H
-#define __PSXPRESS_H
+#pragma once
 
 #include <stdint.h>
 #include <stddef.h>
@@ -34,27 +35,25 @@ typedef struct _DECDCTENV {
 	int16_t dct[64];	// Inverse DCT matrix (2.14 fixed-point)
 } DECDCTENV;
 
-// This is the "small" lookup table used by DecDCTvlc(). It can be copied to
-// the scratchpad.
-typedef struct _DECDCTTAB {
-	uint16_t	lut0[2];
-	uint32_t	lut2[8];
-	uint32_t	lut3[64];
-	uint16_t	lut4[8];
-	uint16_t	lut5[8];
-	uint16_t	lut7[16];
-	uint16_t	lut8[32];
-	uint16_t	lut9[32];
-	uint16_t	lut10[32];
-	uint16_t	lut11[32];
-	uint16_t	lut12[32];
-} DECDCTTAB;
+typedef struct _VLC_TableV2 {
+	uint16_t ac0[2];
+	uint32_t ac2[8], ac3[64];
+	uint16_t ac4[8], ac5[8], ac7[16], ac8[32];
+	uint16_t ac9[32], ac10[32], ac11[32], ac12[32];
+} VLC_TableV2;
 
-// This is the "large" table used by DecDCTvlc2().
-typedef struct _DECDCTTAB2 {
-	uint32_t	lut[8192];
-	uint32_t	lut00[512];
-} DECDCTTAB2;
+typedef struct _VLC_TableV3 {
+	uint16_t ac0[2];
+	uint32_t ac2[8], ac3[64];
+	uint16_t ac4[8], ac5[8], ac7[16], ac8[32];
+	uint16_t ac9[32], ac10[32], ac11[32], ac12[32];
+	uint8_t  dc[128], dc_len[9];
+	uint8_t  _reserved[3];
+} VLC_TableV3;
+
+typedef struct _DECDCTTAB {
+	uint32_t ac[8192], ac00[512];
+} DECDCTTAB;
 
 typedef enum _DECDCTMODE {
 	DECDCT_MODE_24BPP		= 1,
@@ -66,8 +65,9 @@ typedef enum _DECDCTMODE {
 typedef struct _VLC_Context {
 	const uint32_t	*input;
 	uint32_t		window, next_window, remaining;
-	uint16_t		quant_scale;
 	int8_t			is_v3, bit_offset, block_index, coeff_index;
+	uint16_t		quant_scale;
+	int16_t			last_y, last_cr, last_cb;
 } VLC_Context;
 
 // Despite what some docs claim, the "number of 32-byte blocks" and "always
@@ -233,8 +233,9 @@ int DecDCToutSync(int mode);
  * frame) into a buffer that can be passed to DecDCTin(). This function uses a
  * small (<1 KB) lookup table combined with the GTE to accelerate the process;
  * performance is roughly on par with DecDCTvlcStart2() if the lookup table
- * is copied to the scratchpad beforehand by calling DecDCTvlcCopyTable(). The
- * contents of the GTE's LZCR register, if any, will be destroyed.
+ * is copied to the scratchpad beforehand by calling DecDCTvlcCopyTableV2() or
+ * DecDCTvlcCopyTableV3(). The contents of the GTE's LZCS and LZCR registers,
+ * if any, will be destroyed.
  *
  * A VLC_Context object must be created and passed to this function, which will
  * then proceed to initialize its fields. The max_size argument sets the
@@ -243,8 +244,6 @@ int DecDCToutSync(int mode);
  * call DecDCTvlcContinue() with the same VLC_Context object (the output buffer
  * can be different). If max_size = 0, the entire frame will always be decoded
  * in one shot.
- *
- * Only bitstream version 2 is currently supported.
  *
  * WARNING: InitGeom() must be called prior to using DecDCTvlcStart() for the
  * first time. Attempting to call this function with the GTE disabled will
@@ -256,7 +255,7 @@ int DecDCToutSync(int mode);
  * @param bs
  * @return 0, 1 if more data needs to be output or -1 in case of failure
  *
- * @see DecDCTvlcContinue(), DecDCTvlcCopyTable()
+ * @see DecDCTvlcContinue(), DecDCTvlcCopyTableV2(), DecDCTvlcCopyTableV3()
  */
 int DecDCTvlcStart(VLC_Context *ctx, uint32_t *buf, size_t max_size, const uint32_t *bs);
 
@@ -275,7 +274,8 @@ int DecDCTvlcStart(VLC_Context *ctx, uint32_t *buf, size_t max_size, const uint3
  * context returned 0; in that case the context shall be discarded or reused to
  * decode another bitstream.
  *
- * The contents of the GTE's LZCR register, if any, will be destroyed.
+ * The contents of the GTE's LZCS and LZCR registers, if any, will be
+ * destroyed.
  *
  * See DecDCTvlcStart() for more details.
  *
@@ -309,7 +309,7 @@ int DecDCTvlcContinue(VLC_Context *ctx, uint32_t *buf, size_t max_size);
  * @param buf
  * @return 0, 1 if more data needs to be output or -1 in case of failure
  *
- * @see DecDCTvlcSize(), DecDCTvlcCopyTable()
+ * @see DecDCTvlcSize(), DecDCTvlcCopyTableV2(), DecDCTvlcCopyTableV3()
  */
 int DecDCTvlc(const uint32_t *bs, uint32_t *buf);
 
@@ -332,23 +332,60 @@ int DecDCTvlc(const uint32_t *bs, uint32_t *buf);
 size_t DecDCTvlcSize(size_t size);
 
 /**
- * @brief Moves the lookup table used by the .BS decompressor to the scratchpad
- * region.
+ * @brief Copies the lookup tables used by the .BS decompressor (v1/v2) to the
+ * scratchpad region.
  *
- * @details Copies the small (<1 KB) lookup table used by DecDCTvlcContinue(),
- * DecDCTvlcStart() and DecDCTvlc() (a DECDCTTAB structure) to the specified
- * address. A copy of this table is always present in main RAM, however this
- * function can be used to copy it to the scratchpad region to boost
- * decompression performance.
+ * @details Copies the lookup table used by DecDCTvlcContinue(),
+ * DecDCTvlcStart() and DecDCTvlc() to the specified address. A copy of this
+ * table is always present in main RAM, however this function can be used to
+ * copy it to the scratchpad region to boost decompression performance.
+ *
+ * This function copies a 676-byte table (VLC_TableV2 structure) containing
+ * only the data necessary for decoding version 1 and 2 bitstreams, to help
+ * save scratchpad space. If support for version 3 is required,
+ * DecDCTvlcCopyTableV3() can be used instead to copy the full 816-byte table.
  *
  * The address passed to this function is saved. Calls to DecDCTvlcStart(),
  * DecDCTvlcContinue() and DecDCTvlc() will automatically use the last table
- * copied. Call DecDCTvlcCopyTable(0) to revert to using the library's internal
- * table in main RAM.
+ * copied. Call DecDCTvlcCopyTableV2(0) or DecDCTvlcCopyTableV3(0) to revert to
+ * using the library's internal table in main RAM.
  *
- * @param addr Pointer to free area in scratchpad region or 0 to reset
+ * WARNING: attempting to decode a version 3 .BS file or .STR frame after
+ * calling this function will result in undefined behavior and potentially a
+ * crash. To re-enable version 3 decoding, use DecDCTvlcCopyTableV3() to copy
+ * the full table to the scratchpad or revert to using the built-in table in
+ * main RAM.
+ *
+ * @param addr Pointer to free 676-byte area in scratchpad region or 0 to reset
+ *
+ * @see DecDCTvlcCopyTableV3()
  */
-void DecDCTvlcCopyTable(DECDCTTAB *addr);
+void DecDCTvlcCopyTableV2(VLC_TableV2 *addr);
+
+/**
+ * @brief Copies the lookup tables used by the .BS decompressor (v1/v2/v3) to
+ * the scratchpad region.
+ *
+ * @details Copies the lookup table used by DecDCTvlcContinue(),
+ * DecDCTvlcStart() and DecDCTvlc() to the specified address. A copy of this
+ * table is always present in main RAM, however this function can be used to
+ * copy it to the scratchpad region to boost decompression performance.
+ *
+ * This function copies the full 816-byte table (VLC_TableV3 structure),
+ * including the data used to decode version 3 bitstreams. If support for
+ * version 3 is not required, DecDCTvlcCopyTableV2() can be used instead to
+ * save scratchpad space by only copying the first 676 bytes of the table.
+ *
+ * The address passed to this function is saved. Calls to DecDCTvlcStart(),
+ * DecDCTvlcContinue() and DecDCTvlc() will automatically use the last table
+ * copied. Call DecDCTvlcCopyTableV2(0) or DecDCTvlcCopyTableV3(0) to revert to
+ * using the library's internal table in main RAM.
+ *
+ * @param addr Pointer to free 816-byte area in scratchpad region or 0 to reset
+ *
+ * @see DecDCTvlcCopyTableV2()
+ */
+void DecDCTvlcCopyTableV3(VLC_TableV3 *addr);
 
 /**
  * @brief Decompresses or begins decompressing a .BS file into MDEC codes
@@ -360,8 +397,8 @@ void DecDCTvlcCopyTable(DECDCTTAB *addr);
  * calling DecDCTvlcBuild(), but does not use the GTE nor the scratchpad.
  * Depending on the specific bitstream being decoded DecDCTvlcStart2() might be
  * slightly faster or slower than DecDCTvlcStart() with its lookup table copied
- * to the scratchpad (see DecDCTvlcCopyTable()). DecDCTvlcStart() with the
- * table in main RAM tends to be much slower.
+ * to the scratchpad (see DecDCTvlcCopyTableV2() and DecDCTvlcCopyTableV3()).
+ * DecDCTvlcStart() with the table in main RAM tends to be much slower.
  *
  * A VLC_Context object must be created and passed to this function, which will
  * then proceed to initialize its fields. The max_size argument sets the
@@ -371,7 +408,8 @@ void DecDCTvlcCopyTable(DECDCTTAB *addr);
  * buffer can be different). If max_size = 0, the entire frame will always be
  * decoded in one shot.
  *
- * Only bitstream version 2 is currently supported.
+ * This function only supports decoding version 1 and 2 bitstreams. Use
+ * DecDCTvlcStart() to decode a version 3 bitstream.
  *
  * @param ctx Pointer to VLC_Context structure (which will be initialized)
  * @param buf
@@ -432,7 +470,7 @@ int DecDCTvlcContinue2(VLC_Context *ctx, uint32_t *buf, size_t max_size);
  *
  * @see DecDCTvlcSize2(), DecDCTvlcBuild()
  */
-int DecDCTvlc2(const uint32_t *bs, uint32_t *buf, DECDCTTAB2 *table);
+int DecDCTvlc2(const uint32_t *bs, uint32_t *buf, DECDCTTAB *table);
 
 /**
  * @brief Sets the maximum amount of data to be decompressed (alternate
@@ -458,7 +496,7 @@ size_t DecDCTvlcSize2(size_t size);
  * the .BS decompressor.
  *
  * @details Generates the lookup table required by DecDCTvlcStart2(),
- * DecDCTvlcContinue2() and DecDCTvlc2() (a DECDCTTAB2 structure) into the
+ * DecDCTvlcContinue2() and DecDCTvlc2() (a DECDCTTAB structure) into the
  * specified buffer. Since the table is relatively large (34 KB), it is
  * recommended to only generate it in a dynamically-allocated buffer when
  * needed and deallocate the buffer afterwards.
@@ -468,10 +506,8 @@ size_t DecDCTvlcSize2(size_t size);
  *
  * @param table
  */
-void DecDCTvlcBuild(DECDCTTAB2 *table);
+void DecDCTvlcBuild(DECDCTTAB *table);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

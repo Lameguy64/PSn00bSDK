@@ -1,5 +1,5 @@
-#ifndef _LZP_BIT_H
-#define _LZP_BIT_H
+
+#pragma once
 
 extern const unsigned char* inPtr;
 extern int inBytes;
@@ -21,6 +21,3 @@ int get_bits(int n);
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif // _LZP_BIT_H

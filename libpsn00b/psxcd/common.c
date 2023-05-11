@@ -208,6 +208,9 @@ int CdInit(void) {
 
 	BUS_CD_CFG = 0x00020943;
 
+	SetDMAPriority(DMA_CD, 3);
+	DMA_CHCR(DMA_CD) = 0x00000000; // Stop DMA
+
 	CD_REG(0) = 1;
 	CD_REG(3) = 0x1f; // Acknowledge all IRQs
 	CD_REG(2) = 0x1f; // Enable all IRQs
@@ -216,9 +219,6 @@ int CdInit(void) {
 
 	CdlATV mix = { 0x80, 0x00, 0x80, 0x00 };
 	CdMix(&mix);
-
-	DMA_DPCR        |= 0x0000b000; // Enable DMA3
-	DMA_CHCR(DMA_CD) = 0x00000000; // Stop DMA3
 
 	_last_mode    = 0;
 	_ack_pending  = 0;
@@ -244,6 +244,8 @@ int CdInit(void) {
 /* Low-level command API */
 
 int CdCommandF(CdlCommand cmd, const void *param, int length) {
+	_sdk_validate_args(param || (length <= 0), -1);
+
 	const uint8_t *_param = (const uint8_t *) param;
 
 	_last_command = (uint8_t) cmd;
@@ -283,7 +285,7 @@ int CdCommandF(CdlCommand cmd, const void *param, int length) {
 		__asm__ volatile("");
 
 	CD_REG(0) = 0;
-	for (; length; length--)
+	for (; length > 0; length--)
 		CD_REG(2) = *(_param++);
 
 	CD_REG(0) = 0;
@@ -292,6 +294,8 @@ int CdCommandF(CdlCommand cmd, const void *param, int length) {
 }
 
 int CdCommand(CdlCommand cmd, const void *param, int length, uint8_t *result) {
+	_sdk_validate_args(param || (length <= 0), -1);
+
 	/*if (_ack_pending) {
 		_sdk_log("CdCommand(0x%02x) failed, drive busy\n", cmd);
 		return 0;
@@ -329,8 +333,10 @@ int CdControlF(CdlCommand cmd, const void *param) {
 	} else {
 		// The command takes a mandatory parameter or no parameter.
 		length = flags & 3;
-		if (length && !param)
+		if (length && !param) {
+			_sdk_log("CdControl() param is required for command 0x%02x\n", cmd);
 			return -1;
+		}
 	}
 
 	return CdCommandF(cmd, param, length);
