@@ -1,0 +1,8 @@
+/*
+ * PSn00bSDK assert macro and internal logging
+ * (C) 2022-2023 spicyjpeg - MPL licensed
+ */
+
+#pragma once
+
+#include <assert.h>
