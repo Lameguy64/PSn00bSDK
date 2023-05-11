@@ -391,6 +391,9 @@ int vsnprintf(char *string, unsigned int size, const char *fmt, va_list ap)
 	int zero_flag_imp = 0;
 	int pad_quantity = 0;
 	int last;
+
+	// C11: required to check these cases and return error if detected
+	if (string == NULL || fmt == NULL || size == 0) { return -1; }
 	
 	l = strlen(fmt);
 	
