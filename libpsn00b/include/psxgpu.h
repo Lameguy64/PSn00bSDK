@@ -44,6 +44,11 @@ typedef enum _GPU_VideoMode {
 	MODE_PAL	= 1
 } GPU_VideoMode;
 
+typedef enum _GPU_DrawOpType {
+	DRAWOP_TYPE_DMA		= 1,
+	DRAWOP_TYPE_GPU_IRQ	= 2
+} GPU_DrawOpType;
+
 /* Structure macros */
 
 #define setVector(v, _x, _y, _z) \
@@ -142,11 +147,11 @@ typedef enum _GPU_VideoMode {
 	((tge) ? (getcode_T(p) |= 1) : (getcode_T(p) &= ~1))
 
 #define getTPage(tp, abr, x, y) ( \
-	(((x)  /  64) & 15) | \
-	((((y) / 256) &  1) <<  4) | \
-	(((abr)       &  3) <<  5) | \
-	(((tp)        &  3) <<  7) | \
-	((((y) / 512) &  1) << 11) \
+	(((x) & 0x3c0) >> 6) | \
+	(((y) & 0x100) >> 4) | \
+	(((y) & 0x200) << 2) | \
+	(((abr) & 3) << 5) | \
+	(((tp)  & 3) << 7) \
 )
 
 #define getClut(x, y) (((y) << 6) | (((x) >> 4) & 0x3f))
@@ -210,8 +215,8 @@ typedef enum _GPU_VideoMode {
 #define setDrawTPage_T(p, dfe, dtd, tpage) \
 	(p)->code[0] = (0xe1000000 | \
 		(tpage) | \
-		((dtd) <<  9) | \
-		((dfe) << 10) \
+		(((dtd) & 1) <<  9) | \
+		(((dfe) & 1) << 10) \
 	)
 #define setDrawTPage(p, dfe, dtd, tpage) \
 	setlen(p, 1), setDrawTPage_T(p, dfe, dtd, tpage)
@@ -260,6 +265,11 @@ typedef enum _GPU_VideoMode {
 	(p)->code[0] = (0xe6000000 | (pbw) | ((mt) << 1))
 #define setDrawStp(p, pbw, mt) \
 	setlen(p, 1), setDrawStp_T(p, pbw, mt)
+
+#define setDrawIRQ_T(p) \
+	(p)->code[0] = 0x1f000000
+#define setDrawIRQ(p) \
+	setlen(p, 1), setDrawIRQ_T(p)
 
 /* Primitive structure definitions */
 
@@ -475,12 +485,11 @@ _DEF_PRIM(FILL,
 	uint16_t	w, h;
 )
 
-_DEF_PRIM(BLIT,
+_DEF_PRIM(DR_MOVE,
 	uint8_t		p0, p1, p2, code;
 	uint16_t	x0, y0;
 	uint16_t	x1, y1;
 	uint16_t	w, h;
-	uint32_t	pad[4];
 )
 
 _DEF_PRIM(DR_AREA,
@@ -496,6 +505,9 @@ _DEF_PRIM(DR_TPAGE,
 	uint32_t code[1];
 )
 _DEF_PRIM(DR_STP,
+	uint32_t code[1];
+)
+_DEF_PRIM(DR_IRQ,
 	uint32_t code[1];
 )
 
@@ -579,12 +591,8 @@ int VSync(int mode);
 void *VSyncHaltFunction(void (*func)(void));
 void *VSyncCallback(void (*func)(void));
 
-int EnqueueDrawOp(
-	void		(*func)(uint32_t, uint32_t, uint32_t),
-	uint32_t	arg1,
-	uint32_t	arg2,
-	uint32_t	arg3
-);
+void SetDrawOpType(GPU_DrawOpType type);
+int EnqueueDrawOp(void (*func)(), uint32_t arg1, uint32_t arg2, uint32_t arg3);
 int DrawSync(int mode);
 void *DrawSyncCallback(void (*func)(void));
 
@@ -600,6 +608,8 @@ void ClearOTag(uint32_t *ot, size_t length);
 int DrawOTag(const uint32_t *ot);
 int DrawOTagEnv(const uint32_t *ot, DRAWENV *env);
 void DrawOTag2(const uint32_t *ot);
+int DrawBuffer(const uint32_t *buf, size_t length);
+void DrawBuffer2(const uint32_t *buf, size_t length);
 void DrawPrim(const uint32_t *pri);
 
 void AddPrim(uint32_t *ot, const void *pri);

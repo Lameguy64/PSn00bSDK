@@ -156,7 +156,9 @@ size_t SpuRead(uint32_t *data, size_t size);
 size_t SpuWrite(const uint32_t *data, size_t size);
 size_t SpuWritePartly(const uint32_t *data, size_t size);
 SPU_TransferMode SpuSetTransferMode(SPU_TransferMode mode);
+SPU_TransferMode SpuGetTransferMode(void);
 uint32_t SpuSetTransferStartAddr(uint32_t addr);
+uint32_t SpuGetTransferStartAddr(void);
 int SpuIsTransferCompleted(int mode);
 
 #ifdef __cplusplus

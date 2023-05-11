@@ -86,9 +86,7 @@ int DrawOTagEnv(const uint32_t *ot, DRAWENV *env) {
 	// Set drawing area
 	setDrawArea_T(&(prim->area), &(env->clip));
 	setDrawOffset_T(
-		&(prim->offset),
-		env->clip.x + env->ofs[0],
-		env->clip.y + env->ofs[1]
+		&(prim->offset), env->clip.x + env->ofs[0], env->clip.y + env->ofs[1]
 	);
 
 	if (env->isbg) {
@@ -109,7 +107,7 @@ int DrawOTagEnv(const uint32_t *ot, DRAWENV *env) {
 void PutDrawEnv(DRAWENV *env) {
 	_sdk_validate_args_void(env);
 
-	DrawOTagEnv((const uint32_t *) 0x00ffffff, env);
+	DrawOTagEnv((const uint32_t *) 0xffffff, env);
 }
 
 // This function skips rebuilding the cached packet whenever possible and is
@@ -119,7 +117,7 @@ void PutDrawEnvFast(DRAWENV *env) {
 	_sdk_validate_args_void(env);
 
 	if (!(env->dr_env.tag))
-		DrawOTagEnv((const uint32_t *) 0x00ffffff, env);
+		DrawOTagEnv((const uint32_t *) 0xffffff, env);
 	else
 		DrawOTag((const uint32_t *) &(env->dr_env));
 }

@@ -41,6 +41,7 @@ static void _dma_transfer(const RECT *rect, uint32_t *data, int write) {
 	while (!(GPU_GP1 & (1 << 26)))
 		__asm__ volatile("");
 
+	SetDrawOpType(DRAWOP_TYPE_DMA);
 	GPU_GP1 = 0x04000000; // Disable DMA request
 	GPU_GP0 = 0x01000000; // Flush cache
 
@@ -123,6 +124,8 @@ void MoveImage2(const RECT *rect, int x, int y) {
 
 	while (!(GPU_GP1 & (1 << 26)))
 		__asm__ volatile("");
+
+	SetDrawOpType(DRAWOP_TYPE_GPU_IRQ);
 
 	GPU_GP0 = 0x80000000;
 	//GPU_GP0 = rect->x | (rect->y << 16);

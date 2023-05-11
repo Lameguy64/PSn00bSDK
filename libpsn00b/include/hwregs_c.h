@@ -34,7 +34,7 @@
 #define CD_DATA				_MMIO8(IOBASE | 0x1802)
 #define CD_IRQ				_MMIO8(IOBASE | 0x1803)
 
-#define CD_REG(N)			_MMIO8(IOBASE | 0x1800 + (N))
+#define CD_REG(N)			_MMIO8((IOBASE | 0x1800) + (N))
 
 /* SPU */
 
@@ -73,13 +73,13 @@
 
 // These are not named SPU_VOICE_* to avoid name clashes with SPU attribute
 // flags defined in psxspu.h.
-#define SPU_CH_VOL_L(N)		_MMIO16(IOBASE | 0x1c00 + 16 * (N))
-#define SPU_CH_VOL_R(N)		_MMIO16(IOBASE | 0x1c02 + 16 * (N))
-#define SPU_CH_FREQ(N)		_MMIO16(IOBASE | 0x1c04 + 16 * (N))
-#define SPU_CH_ADDR(N)		_MMIO16(IOBASE | 0x1c06 + 16 * (N))
-#define SPU_CH_ADSR1(N)		_MMIO16(IOBASE | 0x1c08 + 16 * (N))
-#define SPU_CH_ADSR2(N)		_MMIO16(IOBASE | 0x1c0a + 16 * (N))
-#define SPU_CH_LOOP_ADDR(N)	_MMIO16(IOBASE | 0x1c0e + 16 * (N))
+#define SPU_CH_VOL_L(N)		_MMIO16((IOBASE | 0x1c00) + (16 * (N)))
+#define SPU_CH_VOL_R(N)		_MMIO16((IOBASE | 0x1c02) + (16 * (N)))
+#define SPU_CH_FREQ(N)		_MMIO16((IOBASE | 0x1c04) + (16 * (N)))
+#define SPU_CH_ADDR(N)		_MMIO16((IOBASE | 0x1c06) + (16 * (N)))
+#define SPU_CH_ADSR1(N)		_MMIO16((IOBASE | 0x1c08) + (16 * (N)))
+#define SPU_CH_ADSR2(N)		_MMIO16((IOBASE | 0x1c0a) + (16 * (N)))
+#define SPU_CH_LOOP_ADDR(N)	_MMIO16((IOBASE | 0x1c0e) + (16 * (N)))
 
 /* MDEC */
 
@@ -91,11 +91,11 @@
 // IMPORTANT: even though SIO_DATA is a 32-bit register, it should only be
 // accessed as 8-bit. Reading it as 16 or 32-bit works fine on real hardware,
 // but leads to problems in some emulators.
-#define SIO_DATA(N)			_MMIO8 (IOBASE | 0x1040 + 16 * (N))
-#define SIO_STAT(N)			_MMIO16(IOBASE | 0x1044 + 16 * (N))
-#define SIO_MODE(N)			_MMIO16(IOBASE | 0x1048 + 16 * (N))
-#define SIO_CTRL(N)			_MMIO16(IOBASE | 0x104a + 16 * (N))
-#define SIO_BAUD(N)			_MMIO16(IOBASE | 0x104e + 16 * (N))
+#define SIO_DATA(N)			_MMIO8 ((IOBASE | 0x1040) + (16 * (N)))
+#define SIO_STAT(N)			_MMIO16((IOBASE | 0x1044) + (16 * (N)))
+#define SIO_MODE(N)			_MMIO16((IOBASE | 0x1048) + (16 * (N)))
+#define SIO_CTRL(N)			_MMIO16((IOBASE | 0x104a) + (16 * (N)))
+#define SIO_BAUD(N)			_MMIO16((IOBASE | 0x104e) + (16 * (N)))
 
 /* IRQ controller */
 
@@ -107,15 +107,15 @@
 #define DMA_DPCR			_MMIO32(IOBASE | 0x10f0)
 #define DMA_DICR			_MMIO32(IOBASE | 0x10f4)
 
-#define DMA_MADR(N)			_MMIO32(IOBASE | 0x1080 + 16 * (N))
-#define DMA_BCR(N)			_MMIO32(IOBASE | 0x1084 + 16 * (N))
-#define DMA_CHCR(N)			_MMIO32(IOBASE | 0x1088 + 16 * (N))
+#define DMA_MADR(N)			_MMIO32((IOBASE | 0x1080) + (16 * (N)))
+#define DMA_BCR(N)			_MMIO32((IOBASE | 0x1084) + (16 * (N)))
+#define DMA_CHCR(N)			_MMIO32((IOBASE | 0x1088) + (16 * (N)))
 
 /* Timers */
 
-#define TIMER_VALUE(N)		_MMIO32(IOBASE | 0x1100 + 16 * (N))
-#define TIMER_CTRL(N)		_MMIO32(IOBASE | 0x1104 + 16 * (N))
-#define TIMER_RELOAD(N)		_MMIO32(IOBASE | 0x1108 + 16 * (N))
+#define TIMER_VALUE(N)		_MMIO32((IOBASE | 0x1100) + (16 * (N)))
+#define TIMER_CTRL(N)		_MMIO32((IOBASE | 0x1104) + (16 * (N)))
+#define TIMER_RELOAD(N)		_MMIO32((IOBASE | 0x1108) + (16 * (N)))
 
 /* Memory/bus control */
 

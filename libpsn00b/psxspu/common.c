@@ -198,12 +198,20 @@ SPU_TransferMode SpuSetTransferMode(SPU_TransferMode mode) {
 	return mode;
 }
 
+SPU_TransferMode SpuGetTransferMode(void) {
+	return _transfer_mode;
+}
+
 uint32_t SpuSetTransferStartAddr(uint32_t addr) {
 	if (addr > 0x7ffff)
 		return 0;
 
 	_transfer_addr = getSPUAddr(addr);
 	return addr;
+}
+
+uint32_t SpuGetTransferStartAddr(void) {
+	return _transfer_addr * 8;
 }
 
 int SpuIsTransferCompleted(int mode) {
