@@ -21,8 +21,11 @@ to ensure the changelog can be parsed correctly.
 
 ## 2023-05-11: 0.23
 
+spicyjpeg:
+
 - libc: Added some missing C++ STL headers (`cassert`, `cctype`, `cstdint`,
-  `cstdio`, `cstdlib`, `cstring`).
+  `cstdio`, `cstdlib`, `cstring`). Added `setjmp()` and `longjmp()` as well as
+  the `jmp_buf` type.
 
 - psxgpu: Added `SetDrawOpType()` and the `GPU_DrawOpType` enum for more
   flexibility when using custom drawing queue callbacks with `EnqueueDrawOp()`.

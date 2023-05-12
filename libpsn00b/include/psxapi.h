@@ -19,69 +19,73 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <setjmp.h>
 #include <hwregs_c.h>
 
 /* Definitions */
 
-// TODO: these desperately need to be cleaned up
+typedef enum _SeekMode {
+	SEEK_SET = 0,
+	SEEK_CUR = 1,
+	SEEK_END = 2
+} SeekMode;
 
-#define SEEK_SET	0
-#define SEEK_CUR	1
-#define SEEK_END	2
+typedef enum _EventDescriptor {
+	DescMask = 0xff000000, // Event descriptor mask
+	DescTH   = 0xff000000,
+	DescHW   = 0xf0000000, // Hardware event (IRQ)
+	DescEV   = 0xf1000000, // Event event
+	DescRC   = 0xf2000000, // Root counter event
+	DescUEV  = 0xf3000000, // User event
+	DescSW   = 0xf4000000  // BIOS event
+} EventDescriptor;
 
-#define DescMask	0xff000000		// Event descriptor mask
-#define DescTH		DescMask
-#define DescHW		0xf0000000		// Hardware event (IRQ)
-#define DescEV		0xf1000000		// Event event
-#define DescRC		0xf2000000		// Root counter event
-#define DescUEV		0xf3000000		// User event
-#define DescSW		0xf4000000		// BIOS event
+typedef enum _EventType {
+	HwVBLANK = DescHW | 0x01, // VBlank
+	HwGPU    = DescHW | 0x02, // GPU
+	HwCdRom  = DescHW | 0x03, // CDROM
+	HwDMAC   = DescHW | 0x04, // DMA
+	HwRTC0   = DescHW | 0x05, // Timer 0
+	HwRTC1   = DescHW | 0x06, // Timer 1
+	HwRTC2   = DescHW | 0x07, // Timer 2
+	HwCNTL   = DescHW | 0x08, // Controller
+	HwSPU    = DescHW | 0x09, // SPU
+	HwPIO    = DescHW | 0x0a, // PIO & lightgun
+	HwSIO    = DescHW | 0x0b, // Serial
+	HwCPU    = DescHW | 0x10, // Processor exception
+	HwCARD   = DescHW | 0x11, // Memory card (lower level BIOS functions)
+	HwCARD_0 = DescHW | 0x12,
+	HwCARD_1 = DescHW | 0x13,
 
-#define	HwVBLANK	(DescHW|0x01)	// VBlank
-#define HwGPU		(DescHW|0x02)	// GPU
-#define HwCdRom		(DescHW|0x03)	// CDROM
-#define HwDMAC		(DescHW|0x04)	// DMA
-#define HwRTC0		(DescHW|0x05)	// Timer 0
-#define HwRTC1		(DescHW|0x06)	// Timer 1
-#define HwRTC2		(DescHW|0x07)	// Timer 2
-#define HwCNTL		(DescHW|0x08)	// Controller
-#define HwSPU		(DescHW|0x09)	// SPU
-#define HwPIO		(DescHW|0x0a)	// PIO & lightgun
-#define HwSIO		(DescHW|0x0b)	// Serial
+	RCntCNT0 = DescRC | 0x00,
+	RCntCNT1 = DescRC | 0x01,
+	RCntCNT2 = DescRC | 0x02,
+	RCntCNT3 = DescRC | 0x03,
 
-#define HwCPU		(DescHW|0x10)	// Processor exception
-#define HwCARD		(DescHW|0x11)	// Memory card (lower level BIOS functions)
-#define HwCard_0	(DescHW|0x12)
-#define HwCard_1	(DescHW|0x13)
-#define SwCARD		(DescSW|0x01)	// Memory card (higher level BIOS functions)
-#define SwMATH		(DescSW|0x02)
+	SwCARD   = DescSW | 0x01, // Memory card (higher level BIOS functions)
+	SwMATH   = DescSW | 0x02
+} EventType;
 
-#define EvSpIOE			0x0004
-#define EvSpERROR		0x8000
-#define EvSpTIMOUT		0x0100
-#define EvSpNEW			0x0200
+typedef enum _EventFlag {
+	EvSpIOE    = 1 <<  2,
+	EvSpTIMOUT = 1 <<  8,
+	EvSpNEW    = 1 <<  9,
+	EvSpERROR  = 1 << 15,
 
-#define EvMdINTR		0x1000
-#define EvMdNOINTR		0x2000
+	EvMdINTR   = 1 << 12,
+	EvMdNOINTR = 1 << 13,
 
-// Root counter (timer) definitions
-#define DescRC			0xf2000000
-
-#define RCntCNT0		(DescRC|0x00)
-#define RCntCNT1		(DescRC|0x01)
-#define RCntCNT2		(DescRC|0x02)
-#define RCntCNT3		(DescRC|0x03)
-
-#define RCntMdINTR		0x1000		// Turns on IRQ
-#define RCntMdNOINTR	0x2000		// Polling mode
-#define RCntMdSC		0x0001		// IRQ when counter target
-#define RCntMdSP		0x0000
-#define RCntMdFR		0x0000
-#define RCntMdGATE		0x0010
+	RCntMdSP     = 0 <<  0,
+	RCntMdFR     = 0 <<  0,
+	RCntMdSC     = 1 <<  0, // IRQ when counter target
+	RCntMdGATE   = 1 <<  4,
+	RCntMdINTR   = 1 << 12, // Turns on IRQ
+	RCntMdNOINTR = 1 << 13  // Polling mode
+} EventFlag;
 
 /* Structure definitions */
 
-typedef struct {	// Thread control block
+typedef struct _TCB { // Thread control block
 	int					status;
 	int					mode;
 	union {
@@ -106,11 +110,11 @@ typedef struct {	// Thread control block
 	int					_reserved[9];
 } TCB;
 
-typedef struct {	// Process control block
+typedef struct _PCB { // Process control block
 	TCB *thread;
 } PCB;
 
-typedef struct {					// Device control block
+typedef struct _DCB { // Device control block
 	char	*name;
 	int		flags;
 	int		ssize;
@@ -133,7 +137,7 @@ typedef struct {					// Device control block
 	void	*f_testdevice;
 } DCB;
 
-typedef struct {			// File control block
+typedef struct _FCB { // File control block
 	int			status;
 	uint32_t	diskid;
 	void		*trns_addr;
@@ -147,7 +151,7 @@ typedef struct {			// File control block
 	uint32_t	fcbnum;
 } FCB;
 
-struct DIRENTRY {			// Directory entry
+struct DIRENTRY { // Directory entry
 	char			name[20];
 	int				attr;
 	int				size;
@@ -165,13 +169,7 @@ struct EXEC {
 	uint32_t sp, fp, rp, ret, base;
 };
 
-struct JMP_BUF {
-	uint32_t ra, sp, fp;
-	uint32_t s0, s1, s2, s3, s4, s5, s6, s7;
-	uint32_t gp;
-};
-
-typedef struct {
+typedef struct _INT_RP {
 	uint32_t	*next;
 	uint32_t	*func2;
 	uint32_t	*func1;
@@ -303,10 +301,8 @@ int Exec(struct EXEC *exec, int argc, const char **argv);
 int LoadExec(const char *path, int argc, const char **argv);
 void FlushCache(void);
 
-void b_setjmp(struct JMP_BUF *buf);
-void b_longjmp(const struct JMP_BUF *buf, int param);
 void ResetEntryInt(void);
-void HookEntryInt(const struct JMP_BUF *buf);
+void HookEntryInt(jmp_buf buf);
 void ReturnFromException(void);
 
 int SetConf(int evcb, int tcb, uint32_t sp);

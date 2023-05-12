@@ -12,6 +12,7 @@
 
 #define CD_ACK_TIMEOUT		0x100000
 #define CD_SYNC_TIMEOUT		0x100000
+#define MAX_RESULT_SIZE		32
 
 /* Internal globals */
 
@@ -134,7 +135,7 @@ static void _cd_irq_handler(void) {
 	if (_result_ptr) {
 		_result_ptr[0] = first_byte;
 
-		for (int i = 1; (CD_REG(0) & 0x20) && (i < 8); i++)
+		for (int i = 1; (CD_REG(0) & 0x20) && (i < MAX_RESULT_SIZE); i++)
 			_result_ptr[i] = CD_REG(1);
 	}
 
@@ -257,7 +258,6 @@ int CdCommandF(CdlCommand cmd, const void *param, int length) {
 
 		// Keep track of the last mode and seek location set (so retries can be
 		// attempted).
-		
 		if (cmd == CdlSetloc) {
 			_last_pos.minute = _param[0];
 			_last_pos.second = _param[1];

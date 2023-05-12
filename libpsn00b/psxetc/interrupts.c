@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 #include <assert.h>
+#include <setjmp.h>
 #include <psxapi.h>
 #include <psxetc.h>
 #include <hwregs_c.h>
@@ -36,7 +37,7 @@ static uint8_t _isr_stack[ISR_STACK_SIZE];
 extern uint8_t _gp[];
 static void _global_isr(void);
 
-static const struct JMP_BUF _isr_jmp_buf = {
+static const JumpBuffer _isr_jmp_buf = {
 	.ra = (uint32_t) &_global_isr,
 	.sp = (uint32_t) &_isr_stack[ISR_STACK_SIZE],
 	.fp = 0,
