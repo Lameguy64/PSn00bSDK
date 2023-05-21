@@ -8,8 +8,8 @@ Additional information may be found in the source code of each example.
 
 | Path                                           | Description                                           | Type | Notes |
 | :--------------------------------------------- | :---------------------------------------------------- | :--: | :---: |
-| [`beginner/cppdemo`](./beginner/cppdemo)       | Simple demonstration of (dynamic) C++ classes         | EXE  |       |
-| [`beginner/hello`](./beginner/hello)           | The obligatory "Hello World" example program          | EXE  |       |
+| [`beginner/hello`](./beginner/hello)           | A simple "hello world" example/project template       | EXE  |       |
+| [`beginner/hellocpp`](./beginner/hellocpp)     | C++ version of the example above                      | EXE  |       |
 | [`cdrom/cdbrowse`](./cdrom/cdbrowse)           | File browser using libpsxcd's directory functions     | CD   |       |
 | [`cdrom/cdxa`](./cdrom/cdxa)                   | CD-XA ADPCM audio player                              | CD   |   1   |
 | [`demos/n00bdemo`](./demos/n00bdemo)           | The premiere demonstration program of PSn00bSDK       | EXE  |   2   |
@@ -86,4 +86,4 @@ are for rebuilding the examples *after* the SDK has been installed.
    CD images for each example.
 
 -----------------------------------------
-_Last updated on 2022-10-27 by spicyjpeg_
+_Last updated on 2023-05-21 by spicyjpeg_

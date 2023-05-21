@@ -1,4 +1,4 @@
-/* 
+/*
  * LibPSn00b Example Programs
  *
  * CD-XA Audio Example
@@ -50,12 +50,6 @@
  * header of the received sector if it belongs to the channel currently
  * being played.
  *
- * Additionally, XA audio data must be encoded with video sectors at
- * the end of each XA stream to serve as a terminator marker which
- * triggers CdReadyCallback() during playback. From within the callback
- * a CdlReadS command with the location of the XA data can be issued again
- * to repeat the track or CdlPause to stop playback.
- *
  *
  * Tips:
  *
@@ -106,7 +100,7 @@
  *
  *
  * Example by Lameguy64
- *
+ * (TODO: clean up/rewrite this example)
  *
  * Changelog:
  *
@@ -115,7 +109,7 @@
  *	November 22, 2019	- Initial version
  *
  */
- 
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -171,94 +165,92 @@ TIM_IMAGE tim;
 /* XA audio handling stuff */
 volatile int num_loops=0;			/* Loop counter */
 volatile int xa_play_channel;		/* Currently playing channel number */
-CdlLOC xa_loc;						/* XA data start location
-
-
-/* Sector header structure for video sector terminator */
-typedef struct SECTOR_HEAD
-{
-	uint16_t id;
-	uint16_t chan;
-	uint8_t  pad[28];
-} SECTOR_HEAD;
-
+CdlLOC xa_loc;						/* XA data start location */
 
 /* Pad input buffer*/
 char padbuff[2][34];
 
-char xa_sector_buff[2048];
 
-/* Callback for detecting end of channel (hooked by CdReadyCallback) */
-void xa_callback(CdlIntrResult intr, unsigned char *result)
-{
-	SECTOR_HEAD *sec;
-	
-	/* Only respond to data ready callbacks */
-	if (intr == CdlDataReady)
-	{
-		/* Fetch data sector */
-		CdGetSector(&xa_sector_buff, 512);
-		
-		/* Quirk: This CdGetSector() implementation must fetch 2048 bytes */
-		/* or more otherwise the following sectors will be read in an	  */
-		/* incorrect byte order, probably due to stray data in the data	  */
-		/* FIFO. Trying to flush remaining bytes in the FIFO through      */
-		/* memory reads after DMA transfer yields random deadlocking on   */
-		/* real hardware for some reason. CdGetSector() probably reads    */
-		/* the data FIFO in software rather than DMA transfer whereas 	  */
-		/* CdGetSector2() uses DMA transfer in the official SDK.		  */
-		
-		/* Check if sector belongs to the currently playing channel */
-		sec = (SECTOR_HEAD*)xa_sector_buff;
-		
-		if( sec->id == 352 )
-		{
-			// Debug
-			//printf("ID=%d CHAN=%d PL=%d\n", sec->id, (sec->chan>>10)&0xF, xa_play_channel);
-		
-			/* Check if sector is of the currently playing channel */
-			if( ((sec->chan>>10)&0xF) == xa_play_channel ) 
-			{
-				num_loops++;
-			
-				/* Retry playback by seeking to start of XA data and stream */
-				CdControlF(CdlReadS, &xa_loc);
-			
-				/* Stop playback */
-				//CdControlF(CdlPause, 0);
-			}
-		}
+// https://problemkaputt.de/psx-spx.htm#cdromxasubheaderfilechannelinterleave
+typedef struct {
+	uint8_t file, channel;
+	uint8_t submode, coding_info;
+} XA_Header;
+
+typedef enum {
+	XA_END_OF_RECORD = 1 << 0,
+	XA_TYPE_VIDEO    = 1 << 1,
+	XA_TYPE_AUDIO    = 1 << 2,
+	XA_TYPE_DATA     = 1 << 3,
+	XA_TRIGGER       = 1 << 4,
+	XA_FORM2         = 1 << 5,
+	XA_REAL_TIME     = 1 << 6,
+	XA_END_OF_FILE   = 1 << 7
+} XA_SubmodeFlag;
+
+// https://problemkaputt.de/psx-spx.htm#cdromsectorencoding
+typedef struct {
+	CdlLOC     pos;
+	XA_Header  xa_header[2];
+	uint8_t    data[2048];
+	uint32_t   edc;
+	uint8_t    ecc[276];
+} Sector;
+
+// This buffer is used by cd_event_handler() as a temporary area for sectors
+// read from the CD. Due to DMA limitations it can't be allocated on the stack
+// (especially not in the interrupt callbacks' stack, whose size is very
+// limited).
+Sector sector;
+
+void cd_event_handler(CdlIntrResult event, uint8_t *payload) {
+	// Ignore all events other than a sector being ready.
+	if (event != CdlDataReady)
+		return;
+
+	// Fetch the sector and check if it is part of the audio file by checking
+	// its XA flags. If it isn't an audio sector, restart playback.
+	CdGetSector(&sector, sizeof(Sector) / 4);
+
+	if (
+		!(sector.xa_header[0].submode & XA_TYPE_AUDIO) &&
+		!(sector.xa_header[0].submode & XA_TYPE_AUDIO)
+	) {
+		// Seek back to the beginning of the file.
+		CdControlF(CdlReadS, &xa_loc);
+
+		num_loops++;
 	}
 }
 
 void init()
-{	
+{
 	int i;
-	
+
 	/* Uncomment to direct tty messages to serial */
 	//AddSIO(115200);
-	
+
 	/* Reset GPU (also installs event handler for VSync) */
 	printf("Init GPU... ");
 	ResetGraph( 0 );
 	printf("Done.\n");
-	
-	
+
+
 	/* Initialize SPU and CD-ROM */
 	printf("Initializing CD-ROM... ");
 	SpuInit();
 	CdInit();
 	printf("Done.\n");
-	
-	
+
+
 	/* Set display and draw environment parameters */
 	SetDefDispEnv(&disp[0], 0, 0, SCREEN_XRES, SCREEN_YRES);
 	SetDefDispEnv(&disp[1], 0, SCREEN_YRES, SCREEN_XRES, SCREEN_YRES);
-	
+
 	SetDefDrawEnv(&draw[0], 0, SCREEN_YRES, SCREEN_XRES, SCREEN_YRES);
 	SetDefDrawEnv(&draw[1], 0, 0, SCREEN_XRES, SCREEN_YRES);
-	
-	
+
+
 	/* Set clear color, area clear and dither processing */
 	setRGB0(&draw[0], 63, 0, 127);
 	draw[0].isbg = 1;
@@ -266,13 +258,13 @@ void init()
 	setRGB0(&draw[1], 63, 0, 127);
 	draw[1].isbg = 1;
 	draw[1].dtd = 1;
-	
-	
+
+
 	/* Load and open font stream */
 	FntLoad(960, 0);
 	FntOpen(32, 32, 256, 176, 2, 200);
-	
-	
+
+
 	/* Upload the ball texture */
 	GetTimInfo(ball16c, &tim); /* Get TIM parameters */
 	LoadImage(tim.prect, tim.paddr);		/* Upload texture to VRAM */
@@ -280,13 +272,13 @@ void init()
 	{
 		LoadImage(tim.crect, tim.caddr);	/* Upload CLUT if present */
 	}
-	
-	
+
+
 	/* Calculate ball positions */
 	printf("Calculating balls... ");
-	
+
 	for(i=0; i<MAX_BALLS; i++)
-	{	
+	{
 		balls[i].x = (rand()%304);
 		balls[i].y = (rand()%224);
 		balls[i].xdir = 1-(rand()%3);
@@ -299,17 +291,17 @@ void init()
 		balls[i].ydir *= 2;
 		balls[i].r = (rand()%256);
 		balls[i].g = (rand()%256);
-		balls[i].b = (rand()%256);	
+		balls[i].b = (rand()%256);
 	}
-	
+
 	printf("Done.\n");
-	
-	
+
+
 	/* Initialize pad */
 	InitPAD(padbuff[0], 34, padbuff[1], 34);
 	StartPAD();
 	ChangeClearPAD(0);
-	
+
 }
 
 
@@ -323,12 +315,12 @@ int main(int argc, const char* argv[])
 
 	CdlFILE	file;
 	CdlFILTER filter;
-	
+
 	int i,counter=0;
 	int sel_channel=0;
 	int p_up=0,p_down=0,p_right=0,p_cross=0,p_circle=0;
-	
-	
+
+
 	/* Init graphics and stuff before doing anything else */
 	init();
 
@@ -344,27 +336,27 @@ int main(int argc, const char* argv[])
 		sec = CdPosToInt(&file.pos);
 		printf("XA located at sector %d size %d.\n", sec, file.size);
 	}
-	
+
 	/* Save file location as XA location */
 	xa_loc = file.pos;
-	
+
 	/* Hook XA callback function to CdReadyCallback (for auto stop/loop */
 	EnterCriticalSection();
-	CdReadyCallback(xa_callback);
+	CdReadyCallback(&cd_event_handler);
 	ExitCriticalSection();
 
 	/* Set CD mode for XA streaming (2x speed, send XA to SPU, enable filter */
 	i = CdlModeSpeed|CdlModeRT|CdlModeSF;
 	CdControl(CdlSetmode, &i, 0);
-	
-	/* Set file 1 on filter for channels 0-7 */
+
+	/* Set file 1 on filter for channels 0-31 */
 	filter.file = 1;
-		
+
 	/* Main loop */
 	printf("Entering loop...\n");
-	
+
 	while(1) {
-		
+
 		pad = ((PADTYPE*)padbuff[0]);
 
 		if( pad->stat == 0 )
@@ -387,12 +379,12 @@ int main(int argc, const char* argv[])
 				{
 					p_up = 0;
 				}
-				
+
 				if( !(pad->btn&PAD_DOWN) )
 				{
 					if( !p_down )
 					{
-						if( sel_channel < 7 )
+						if( sel_channel < 31 )
 						{
 							sel_channel++;
 						}
@@ -403,7 +395,7 @@ int main(int argc, const char* argv[])
 				{
 					p_down = 0;
 				}
-				
+
 				/* Play selected XA channel from start */
 				if( !(pad->btn&PAD_CROSS) )
 				{
@@ -420,7 +412,7 @@ int main(int argc, const char* argv[])
 				{
 					p_cross = 0;
 				}
-				
+
 				/* Stop playback */
 				if( !(pad->btn&PAD_CIRCLE) )
 				{
@@ -434,7 +426,7 @@ int main(int argc, const char* argv[])
 				{
 					p_circle = 0;
 				}
-				
+
 				/* Change XA channel */
 				if( !(pad->btn&PAD_RIGHT) )
 				{
@@ -450,15 +442,15 @@ int main(int argc, const char* argv[])
 				{
 					p_right = 0;
 				}
-				
+
 			}
 		}
-		
-		
+
+
 		/* Display information */
 		FntPrint(-1, "\n PSN00BSDK XA AUDIO EXAMPLE\n\n");
 		FntPrint(-1, " CHANNEL:\n");
-		
+
 		for(i=0; i<8; i++)
 		{
 			if( i == sel_channel )
@@ -470,83 +462,83 @@ int main(int argc, const char* argv[])
 				FntPrint(-1, "    %d\n", i);
 			}
 		}
-		
-		FntPrint(-1, "\n CURRENT=%d STATUS=%x LOOPS=%d\n", 
+
+		FntPrint(-1, "\n CURRENT=%d STATUS=%x LOOPS=%d\n",
 			xa_play_channel, CdStatus(), num_loops);
 		FntPrint(-1, "\n <X>-PLAY (START) <O>-STOP\n <R>-SET CHANNEL\n");
-		
-		
+
+
 		/* Clear ordering table and set start address of primitive buffer */
 		ClearOTagR(ot[db], OT_LEN);
 		nextpri = pribuff[db];
-		
-		
+
+
 		/* Sort the balls */
 		sprt = (SPRT_16*)nextpri;
 		for( i=0; i<MAX_BALLS; i++ ) {
-			
+
 			setSprt16(sprt);
 			setXY0(sprt, balls[i].x, balls[i].y);
 			setRGB0(sprt, balls[i].r, balls[i].g, balls[i].b);
 			setUV0(sprt, 0, 0);
 			setClut(sprt, tim.crect->x, tim.crect->y);
-			
+
 			addPrim(ot[db]+(OT_LEN-1), sprt);
 			sprt++;
-			
+
 			balls[i].x += balls[i].xdir;
 			balls[i].y += balls[i].ydir;
-			
+
 			if( ( balls[i].x+16 ) > SCREEN_XRES ) {
 				balls[i].xdir = -2;
 			} else if( balls[i].x < 0 ) {
 				balls[i].xdir = 2;
 			}
-			
+
 			if( ( balls[i].y+16 ) > SCREEN_YRES ) {
 				balls[i].ydir = -2;
 			} else if( balls[i].y < 0 ) {
 				balls[i].ydir = 2;
 			}
-			
+
 		}
 		nextpri = (char*)sprt;
-		
-		
+
+
 		/* Sort a TPage primitive so the sprites will draw pixels from */
 		/* the correct texture page in VRAM */
 		tpri = (DR_TPAGE*)nextpri;
 		setDrawTPage(tpri, 0, 0, getTPage(0, 0, tim.prect->x, tim.prect->y));
 		addPrim(ot[db]+(OT_LEN-1), tpri);
 		nextpri += sizeof(DR_TPAGE);
-		
+
 		/* Draw font */
 		FntFlush(-1);
-		
+
 		/* Wait for GPU and VSync */
 		DrawSync(0);
 		VSync(0);
-		
+
 		/* Since draw.isbg is non-zero this clears the screen */
 		PutDispEnv(&disp[db]);
 		PutDrawEnv(&draw[db]);
 		SetDispMask(1);
-		
+
 		/* Begin drawing the new frame */
 		DrawOTag( ot[db]+(OT_LEN-1) );
-		
+
 		/* Alternate to the next buffer */
 		db = !db;
-		
+
 		/* Periodically issue CdlNop every second to update CdStatus() */
 		counter++;
 		if( (counter%60) == 59 )
 		{
 			CdControl(CdlNop, 0, 0);
 		}
-		
+
 	}
-	
+
 	return 0;
 
 }
