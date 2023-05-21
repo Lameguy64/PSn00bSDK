@@ -7,10 +7,11 @@
 
 .set noreorder
 
-.section .text._start
+.section .text._start, "ax", @progbits
 .global _start
 .type _start, @function
 .weak _start
+
 _start:
 	la $gp, _gp
 	j  _start_inner

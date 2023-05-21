@@ -626,10 +626,10 @@ DISPENV *SetDefDispEnv(DISPENV *env, int x, int y, int w, int h);
 DRAWENV *SetDefDrawEnv(DRAWENV *env, int x, int y, int w, int h);
 
 void FntLoad(int x, int y);
-char *FntSort(uint32_t *ot, char *pri, int x, int y, const char *text);
+void *FntSort(uint32_t *ot, void *pri, int x, int y, const char *text);
 int FntOpen(int x, int y, int w, int h, int isbg, int n);
 int FntPrint(int id, const char *fmt, ...);
-char *FntFlush(int id);
+void *FntFlush(int id);
 
 #ifdef __cplusplus
 }

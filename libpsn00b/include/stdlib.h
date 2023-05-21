@@ -27,16 +27,14 @@ typedef struct _HeapUsage {
 extern "C" {
 #endif
 
-extern int			__argc;
-extern const char	**__argv;
+extern int __argc;
+extern const char **__argv;
 
 void abort(void);
 
+int abs(int value);
 int rand(void);
 void srand(int seed);
-
-int abs(int j);
-long labs(long i);
 
 long strtol(const char *str, char **str_end, int base);
 long long strtoll(const char *str, char **str_end, int base);

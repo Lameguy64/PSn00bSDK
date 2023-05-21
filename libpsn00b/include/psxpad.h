@@ -10,7 +10,7 @@
  *
  * Reference: https://gist.github.com/scanlime/5042071
  */
- 
+
 #pragma once
 
 #include <stdint.h>
@@ -37,8 +37,8 @@ typedef enum {
 	PAD_SQUARE		= 1 << 15,
 
 	// Mouse
-	MOUSE_LEFT		= 1 << 10,
-	MOUSE_RIGHT		= 1 << 11,
+	MOUSE_RIGHT		= 1 << 10,
+	MOUSE_LEFT		= 1 << 11,
 
 	// neGcon
 	NCON_START		= 1 << 3,
@@ -46,9 +46,9 @@ typedef enum {
 	NCON_RIGHT		= 1 << 5,
 	NCON_DOWN		= 1 << 6,
 	NCON_LEFT		= 1 << 7,
-	NCON_R			= 1 << 8,
-	NCON_B			= 1 << 9,
-	NCON_A			= 1 << 10,
+	NCON_R			= 1 << 11,
+	NCON_B			= 1 << 12,
+	NCON_A			= 1 << 13,
 
 	// Guncon
 	GCON_A			= 1 << 3,

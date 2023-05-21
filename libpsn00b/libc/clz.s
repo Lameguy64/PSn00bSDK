@@ -1,43 +1,53 @@
 # PSn00bSDK leading zero count intrinsics
-# (C) 2022 spicyjpeg - MPL licensed
+# (C) 2022-2023 spicyjpeg - MPL licensed
 #
-# libgcc provides two functions used internally by GCC to count the number of 
-# leading zeroes or ones in a value, _clzsi2() (32-bit) and _clzdi2() (64-bit).
-# This file overrides them with faster implementations that make use of the
-# GTE's LZCS/LZCR registers.
+# libgcc provides two functions used internally by GCC to count the number of
+# leading zeroes in a value, __clzsi2() (32-bit) and __clzdi2() (64-bit). This
+# file overrides them with smaller implementations that make use of the GTE's
+# LZCS/LZCR registers.
 
 .set noreorder
 
-.section .text._clzsi2
-.global _clzsi2
-.type _clzsi2, @function
-_clzsi2:
-	mtc2 $a0, $30
-	nop
-	nop
-	mfc2 $v0, $31
+.set LZCS, $30
+.set LZCR, $31
 
-	jr   $ra
-	nop
+.section .text.__clzsi2, "ax", @progbits
+.global __clzsi2
+.type __clzsi2, @function
 
-.section .text._clzdi2
-.global _clzdi2
-.type _clzdi2, @function
-_clzdi2:
-	bnez $a1, .Lhas_msb
-	nop
-
-	mtc2 $a0, $30 # if (!msb) return 32 + clz(lsb)
-	b    .Lreturn
-	li   $v1, 32
-
-.Lhas_msb:
-	mtc2 $a1, $30  # if (msb) return 0 + clz(msb)
-	nop
-	li   $v1, 0
+__clzsi2:
+	mtc2  $a0, LZCS
+	bltz  $a0, .Lreturn # if (value & (1 << 31)) return 0
+	li    $v0, 0
+	mfc2  $v0, LZCR # else return GTE_CLZ(value)
 
 .Lreturn:
-	mfc2 $v0, $31
+	jr    $ra
+	nop
 
-	jr   $ra
-	addu $v0, $v1
+.section .text.__clzdi2, "ax", @progbits
+.global __clzdi2
+.type __clzdi2, @function
+
+__clzdi2:
+	mtc2  $a1, LZCS
+	bltz  $a1, .Lreturn2 # if (msb & (1 << 31)) return 0
+	li    $v0, 0
+	bnez  $a1, .LreturnMSB # else if (msb) return GTE_CLZ(msb)
+	nop
+
+.LnoMSB:
+	mtc2  $a0, LZCS
+	bltz  $a0, .Lreturn2 # else if (lsb & (1 << 31)) return 32
+	li    $v0, 32
+	mfc2  $v0, LZCR # else return 32 + GTE_CLZ(lsb)
+
+	jr    $ra
+	addiu $v0, 32
+
+.LreturnMSB:
+	mfc2  $v0, LZCR
+
+.Lreturn2:
+	jr    $ra
+	nop

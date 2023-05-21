@@ -7,9 +7,10 @@
 
 .set noreorder
 
-.section .text.setjmp
+.section .text.setjmp, "ax", @progbits
 .global setjmp
 .type setjmp, @function
+
 setjmp:
 	sw   $ra, 0x00($a0)
 	sw   $sp, 0x04($a0)
@@ -27,9 +28,10 @@ setjmp:
 	jr   $ra
 	li   $v0, 0
 
-.section .text.longjmp
+.section .text.longjmp, "ax", @progbits
 .global longjmp
 .type longjmp, @function
+
 longjmp:
 	lw   $ra, 0x00($a0)
 	lw   $sp, 0x04($a0)

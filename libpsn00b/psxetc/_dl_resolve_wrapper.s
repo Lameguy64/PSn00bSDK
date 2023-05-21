@@ -12,9 +12,10 @@
 
 .set noreorder
 
-.section .text._dl_resolve_wrapper
+.section .text._dl_resolve_wrapper, "ax", @progbits
 .global _dl_resolve_wrapper
 .type _dl_resolve_wrapper, @function
+
 _dl_resolve_wrapper:
 	# Save the arguments being passed to the function to be resolved.
 	addiu $sp, -20

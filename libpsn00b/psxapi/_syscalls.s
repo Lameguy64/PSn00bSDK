@@ -5,9 +5,10 @@
 
 ## Interrupt enable/disable
 
-.section .text.EnterCriticalSection
+.section .text.EnterCriticalSection, "ax", @progbits
 .global EnterCriticalSection
 .type EnterCriticalSection, @function
+
 EnterCriticalSection:
 	li  $a0, 0x01
 	syscall 0
@@ -15,9 +16,10 @@ EnterCriticalSection:
 	jr  $ra
 	nop
 
-.section .text.ExitCriticalSection
+.section .text.ExitCriticalSection, "ax", @progbits
 .global ExitCriticalSection
 .type ExitCriticalSection, @function
+
 ExitCriticalSection:
 	li  $a0, 0x02
 	syscall 0
@@ -25,9 +27,10 @@ ExitCriticalSection:
 	jr  $ra
 	nop
 
-.section .text.SwEnterCriticalSection
+.section .text.SwEnterCriticalSection, "ax", @progbits
 .global SwEnterCriticalSection
 .type SwEnterCriticalSection, @function
+
 SwEnterCriticalSection:
 	mfc0  $a0, $12 # cop0r12 &= ~0x401
 	li    $a1, -1026
@@ -39,9 +42,10 @@ SwEnterCriticalSection:
 	jr    $ra
 	xori  $v0, 1
 
-.section .text.SwExitCriticalSection
+.section .text.SwExitCriticalSection, "ax", @progbits
 .global SwExitCriticalSection
 .type SwExitCriticalSection, @function
+
 SwExitCriticalSection:
 	mfc0 $a0, $12 # cop0r12 |= 0x401
 	nop
@@ -54,18 +58,20 @@ SwExitCriticalSection:
 
 ## PCDRV (host file access) API
 
-.section .text.PCinit
+.section .text.PCinit, "ax", @progbits
 .global PCinit
 .type PCinit, @function
+
 PCinit:
 	break 0, 0x101 # () -> error
 
 	jr    $ra
 	nop
 
-.section .text.PCcreat
+.section .text.PCcreat, "ax", @progbits
 .global PCcreat
 .type PCcreat, @function
+
 PCcreat:
 	li    $a2, 0
 	move  $a1, $a0
@@ -78,9 +84,10 @@ PCcreat:
 	jr    $ra # return fd
 	move  $v0, $v1
 
-.section .text.PCopen
+.section .text.PCopen, "ax", @progbits
 .global PCopen
 .type PCopen, @function
+
 PCopen:
 	move  $a2, $a1
 	move  $a1, $a0
@@ -93,9 +100,10 @@ PCopen:
 	jr    $ra # return fd
 	move  $v0, $v1
 
-.section .text.PCclose
+.section .text.PCclose, "ax", @progbits
 .global PCclose
 .type PCclose, @function
+
 PCclose:
 	move  $a1, $a0
 	break 0, 0x104 # (fd, fd) -> error
@@ -103,9 +111,10 @@ PCclose:
 	jr    $ra
 	nop
 
-.section .text.PCread
+.section .text.PCread, "ax", @progbits
 .global PCread
 .type PCread, @function
+
 PCread:
 	move  $a3, $a1
 	move  $a1, $a0
@@ -118,9 +127,10 @@ PCread:
 	jr    $ra # return length
 	move  $v0, $v1
 
-.section .text.PCwrite
+.section .text.PCwrite, "ax", @progbits
 .global PCwrite
 .type PCwrite, @function
+
 PCwrite:
 	move  $a3, $a1
 	move  $a1, $a0
@@ -133,9 +143,10 @@ PCwrite:
 	jr    $ra # return length
 	move  $v0, $v1
 
-.section .text.PClseek
+.section .text.PClseek, "ax", @progbits
 .global PClseek
 .type PClseek, @function
+
 PClseek:
 	move  $a3, $a2
 	move  $a2, $a1

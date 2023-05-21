@@ -38,6 +38,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/libpsn00b.cmake OPTIONAL)
 if(TARGET psn00bsdk)
 	link_libraries(psn00bsdk)
 endif()
+link_libraries(-lgcc)
 
 # DON'T CHANGE THE ORDER or you'll break the libraries' internal dependencies.
 set(
@@ -93,38 +94,7 @@ find_program(ELF2CPE  elf2cpe  HINTS ${PSN00BSDK_TOOLS})
 find_program(SMXLINK  smxlink  HINTS ${PSN00BSDK_TOOLS})
 find_program(LZPACK   lzpack   HINTS ${PSN00BSDK_TOOLS})
 find_program(MKPSXISO mkpsxiso HINTS ${PSN00BSDK_TOOLS})
-
-## libgcc
-
-# Use the toolchain path to find libgcc. Of course different installers,
-# packages and distros have different opinions when it comes to deciding where
-# to install toolchains, so we have to bruteforce multiple combinations of
-# paths.
-if(CMAKE_C_COMPILER_VERSION)
-	string(REGEX MATCH "^([0-9]+)\." _dummy ${CMAKE_C_COMPILER_VERSION})
-
-	find_library(
-		PSN00BSDK_LIBGCC gcc #REQUIRED
-		HINTS
-			${PSN00BSDK_TC}/lib/gcc-cross/${PSN00BSDK_TARGET}/${CMAKE_C_COMPILER_VERSION}
-			${PSN00BSDK_TC}/lib/gcc-cross/${PSN00BSDK_TARGET}/${CMAKE_MATCH_1}
-			${PSN00BSDK_TC}/lib/gcc/${PSN00BSDK_TARGET}/${CMAKE_C_COMPILER_VERSION}
-			${PSN00BSDK_TC}/lib/gcc/${PSN00BSDK_TARGET}/${CMAKE_MATCH_1}
-			${PSN00BSDK_TC}/../lib/gcc-cross/${PSN00BSDK_TARGET}/${CMAKE_C_COMPILER_VERSION}
-			${PSN00BSDK_TC}/../lib/gcc-cross/${PSN00BSDK_TARGET}/${CMAKE_MATCH_1}
-			${PSN00BSDK_TC}/../lib/gcc/${PSN00BSDK_TARGET}/${CMAKE_C_COMPILER_VERSION}
-			${PSN00BSDK_TC}/../lib/gcc/${PSN00BSDK_TARGET}/${CMAKE_MATCH_1}
-		NO_DEFAULT_PATH
-		DOC "Path to libgcc (bundled with the GCC toolchain)"
-	)
-	if(PSN00BSDK_LIBGCC STREQUAL "PSN00BSDK_LIBGCC-NOTFOUND")
-		message(FATAL_ERROR "Failed to find libgcc in the GCC toolchain's files. Check your toolchain settings, or set the path to libgcc using -DPSN00BSDK_LIBGCC.")
-	endif()
-
-	add_library          (gcc STATIC IMPORTED)
-	set_target_properties(gcc PROPERTIES IMPORTED_LOCATION ${PSN00BSDK_LIBGCC})
-	link_libraries       (gcc)
-endif()
+#find_program(PSXAVENC psxavenc HINTS ${PSN00BSDK_TOOLS})
 
 ## Target helpers
 

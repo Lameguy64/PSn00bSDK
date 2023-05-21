@@ -221,6 +221,15 @@ typedef struct _INT_RP {
 extern "C" {
 #endif
 
+#if 0
+static inline void _InitCd(void) {
+	uint32_t old_dpcr = DMA_DPCR & 0xffff0fff;
+
+	_96_init();
+	DMA_DPCR |= old_dpcr;
+}
+#endif
+
 void SysEnqIntRP(int pri, INT_RP *rp);
 void SysDeqIntRP(int pri, INT_RP *rp);
 
@@ -261,7 +270,6 @@ void ExitCriticalSection(void);
 int SwEnterCriticalSection(void);
 void SwExitCriticalSection(void);
 
-void _InitCd(void);
 void _96_init(void);
 void _96_remove(void);
 

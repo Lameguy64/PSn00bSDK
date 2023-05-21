@@ -3,9 +3,10 @@
 
 .set noreorder
 
-.section .text.memset
+.section .text.memset, "ax", @progbits
 .global memset
 .type memset, @function
+
 memset:
 	# If more than 16 bytes have to be written then take the "large" path,
 	# otherwise use the code below.

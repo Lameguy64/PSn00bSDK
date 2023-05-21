@@ -58,9 +58,10 @@
 .set VLC_Table_dc,		0x2a4
 .set VLC_Table_dc_len,	0x324
 
-.section .text.DecDCTvlcStart
+.section .text.DecDCTvlcStart, "ax", @progbits
 .global DecDCTvlcStart
 .type DecDCTvlcStart, @function
+
 DecDCTvlcStart:
 	addiu $sp, -16
 	sw    $s0,  0($sp)
@@ -101,9 +102,10 @@ DecDCTvlcStart:
 	j     _vlc_skip_context_load
 	addiu input, 16 # input = &(bs->data[2])
 
-.section .text.DecDCTvlcContinue
+.section .text.DecDCTvlcContinue, "ax", @progbits
 .global DecDCTvlcContinue
 .type DecDCTvlcContinue, @function
+
 DecDCTvlcContinue:
 	addiu $sp, -16
 	sw    $s0,  0($sp)
