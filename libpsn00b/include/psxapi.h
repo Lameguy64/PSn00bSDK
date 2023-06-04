@@ -69,7 +69,7 @@ typedef enum _EventType {
 typedef enum _EventFlag {
 	EvSpIOE    = 1 <<  2,
 	EvSpTIMOUT = 1 <<  8,
-	EvSpNEW    = 1 <<  9,
+	EvSpNEW    = 1 <<  13,
 	EvSpERROR  = 1 << 15,
 
 	EvMdINTR   = 1 << 12,
