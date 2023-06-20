@@ -121,16 +121,20 @@ void Stream_Destroy(Stream_Context *ctx);
 /**
  * @brief Starts playback of a stream.
  *
- * @details Activates the given stream context and starts playing audio from its
- * FIFO. This function must be called while no other stream is active and after
- * the stream's FIFO has been filled up.
+ * @details Activates the given stream context and starts or resumes playing
+ * audio from its FIFO. This function must be called while no other stream is
+ * active and after the stream's FIFO has been filled up. In order to prevent
+ * skipping, the resume argument shall be set to true if the stream was
+ * previously stopped and its buffer in SPU RAM was not overwritten by another
+ * stream or sample data.
  *
  * @param ctx
+ * @param resume Should be true if resuming a previously stopped stream
  * @return True if the stream was started, false if another stream is active
  *
  * @see Stream_Stop()
  */
-bool Stream_Start(Stream_Context *ctx);
+bool Stream_Start(Stream_Context *ctx, bool resume);
 
 /**
  * @brief Stops playback of any currently active stream.

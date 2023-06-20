@@ -145,14 +145,14 @@ void Stream_Destroy(Stream_Context *ctx) {
 		ExitCriticalSection();
 }
 
-bool Stream_Start(Stream_Context *ctx) {
+bool Stream_Start(Stream_Context *ctx, bool resume) {
 	if (_active_ctx)
 		return false;
 
 	_active_ctx = ctx;
 
 	// Wait for the first chunk to be buffered and ready to play.
-	if (!ctx->chunk_counter) {
+	if (!resume) {
 		_spu_irq_handler();
 		SpuIsTransferCompleted(SPU_TRANSFER_WAIT);
 	}

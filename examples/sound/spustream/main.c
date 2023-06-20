@@ -154,7 +154,7 @@ typedef struct {
 	volatile int8_t db_active, buffering;
 } StreamContext;
 
-static StreamContext str_ctx;
+static StreamContext stream_ctx;
 
 void spu_irq_handler(void) {
 	// Acknowledge the interrupt to ensure it can be triggered again. The only
@@ -162,35 +162,35 @@ void spu_irq_handler(void) {
 	// enable it again once the chunk is ready.
 	SPU_CTRL &= ~(1 << 6);
 
-	int chunk_size = str_ctx.buffer_size * str_ctx.channels;
-	int chunk      = (str_ctx.next_chunk + 1) % (uint32_t) str_ctx.num_chunks;
+	int chunk_size = stream_ctx.buffer_size * stream_ctx.channels;
+	int chunk      = (stream_ctx.next_chunk + 1) % (uint32_t) stream_ctx.num_chunks;
 
-	str_ctx.db_active ^= 1;
-	str_ctx.buffering  = 1;
-	str_ctx.next_chunk = chunk;
+	stream_ctx.db_active ^= 1;
+	stream_ctx.buffering  = 1;
+	stream_ctx.next_chunk = chunk;
 
 	// Configure to SPU to trigger an IRQ once the chunk that is going to be
 	// filled now starts playing (so the next buffer can be loaded) and
 	// override both channels' loop addresses to make them "jump" to the new
 	// buffers, rather than actually looping when they encounter the loop flag
 	// at the end of the currently playing buffers.
-	int addr = BUFFER_START_ADDR + (str_ctx.db_active ? chunk_size : 0);
-	str_ctx.spu_addr = addr;
+	int addr = BUFFER_START_ADDR + (stream_ctx.db_active ? chunk_size : 0);
+	stream_ctx.spu_addr = addr;
 
 	SPU_IRQ_ADDR = getSPUAddr(addr);
-	for (int i = 0; i < str_ctx.channels; i++)
-		SPU_CH_LOOP_ADDR(i) = getSPUAddr(addr + str_ctx.buffer_size * i);
+	for (int i = 0; i < stream_ctx.channels; i++)
+		SPU_CH_LOOP_ADDR(i) = getSPUAddr(addr + stream_ctx.buffer_size * i);
 
 	// Start uploading the next chunk to the SPU.
 	SpuSetTransferStartAddr(addr);
-	SpuWrite((const uint32_t *) &str_ctx.data[chunk * chunk_size], chunk_size);
+	SpuWrite((const uint32_t *) &stream_ctx.data[chunk * chunk_size], chunk_size);
 }
 
 void spu_dma_handler(void) {
 	// Re-enable the SPU IRQ once the new chunk has been fully uploaded.
 	SPU_CTRL |= 1 << 6;
 
-	str_ctx.buffering = 0;
+	stream_ctx.buffering = 0;
 }
 
 /* Helper functions */
@@ -218,32 +218,32 @@ void init_stream(const VAG_Header *vag) {
 
 	int buf_size = vag->interleave;
 
-	str_ctx.data        = &((const uint8_t *) vag)[2048];
-	str_ctx.buffer_size = buf_size;
-	str_ctx.num_chunks  = (SWAP_ENDIAN(vag->size) + buf_size - 1) / buf_size;
-	str_ctx.sample_rate = SWAP_ENDIAN(vag->sample_rate);
-	str_ctx.channels    = vag->channels ? vag->channels : 1;
+	stream_ctx.data        = &((const uint8_t *) vag)[2048];
+	stream_ctx.buffer_size = buf_size;
+	stream_ctx.num_chunks  = (SWAP_ENDIAN(vag->size) + buf_size - 1) / buf_size;
+	stream_ctx.sample_rate = SWAP_ENDIAN(vag->sample_rate);
+	stream_ctx.channels    = vag->channels ? vag->channels : 1;
 
-	str_ctx.db_active  =  1;
-	str_ctx.next_chunk = -1;
+	stream_ctx.db_active  =  1;
+	stream_ctx.next_chunk = -1;
 
 	// Ensure at least one chunk is in SPU RAM by invoking the IRQ handler
 	// manually and blocking until the chunk has loaded.
 	spu_irq_handler();
-	while (str_ctx.buffering)
+	while (stream_ctx.buffering)
 		__asm__ volatile("");
 }
 
 void start_stream(void) {
-	int bits = 0x00ffffff >> (24 - str_ctx.channels);
+	int bits = 0x00ffffff >> (24 - stream_ctx.channels);
 
 	// Disable the IRQ as we're going to call spu_irq_handler() manually (due
 	// to finicky SPU timings).
 	SPU_CTRL &= ~(1 << 6);
 
-	for (int i = 0; i < str_ctx.channels; i++) {
-		SPU_CH_ADDR(i)  = getSPUAddr(str_ctx.spu_addr + str_ctx.buffer_size * i);
-		SPU_CH_FREQ(i)  = getSPUSampleRate(str_ctx.sample_rate);
+	for (int i = 0; i < stream_ctx.channels; i++) {
+		SPU_CH_ADDR(i)  = getSPUAddr(stream_ctx.spu_addr + stream_ctx.buffer_size * i);
+		SPU_CH_FREQ(i)  = getSPUSampleRate(stream_ctx.sample_rate);
 		SPU_CH_ADSR1(i) = 0x00ff;
 		SPU_CH_ADSR2(i) = 0x0000;
 	}
@@ -264,11 +264,11 @@ void start_stream(void) {
 // channels used to play the stream, to (again) prevent them from triggering
 // the SPU IRQ while the stream is paused.
 void stop_stream(void) {
-	int bits = 0x00ffffff >> (24 - str_ctx.channels);
+	int bits = 0x00ffffff >> (24 - stream_ctx.channels);
 
 	SpuSetKey(0, bits);
 
-	for (int i = 0; i < str_ctx.channels; i++)
+	for (int i = 0; i < stream_ctx.channels; i++)
 		SPU_CH_ADDR(i) = getSPUAddr(DUMMY_BLOCK_ADDR);
 
 	SpuSetKey(1, bits);
@@ -292,16 +292,16 @@ int main(int argc, const char* argv[]) {
 	init_stream((const VAG_Header *) stream_data);
 	start_stream();
 
-	int paused = 0, sample_rate = getSPUSampleRate(str_ctx.sample_rate);
+	int paused = 0, sample_rate = getSPUSampleRate(stream_ctx.sample_rate);
 
 	uint16_t last_buttons = 0xffff;
 
 	while (1) {
 		FntPrint(-1, "PLAYING SPU STREAM\n\n");
-		FntPrint(-1, "BUFFER: %d\n", str_ctx.db_active);
-		FntPrint(-1, "STATUS: %s\n\n", str_ctx.buffering ? "BUFFERING" : "IDLE");
+		FntPrint(-1, "BUFFER: %d\n", stream_ctx.db_active);
+		FntPrint(-1, "STATUS: %s\n\n", stream_ctx.buffering ? "BUFFERING" : "IDLE");
 
-		FntPrint(-1, "POSITION: %d/%d\n",  str_ctx.next_chunk, str_ctx.num_chunks);
+		FntPrint(-1, "POSITION: %d/%d\n",  stream_ctx.next_chunk, stream_ctx.num_chunks);
 		FntPrint(-1, "SMP RATE: %5d HZ\n\n", (sample_rate * 44100) >> 12);
 
 		FntPrint(-1, "[START]      %s\n", paused ? "RESUME" : "PAUSE");
@@ -334,22 +334,22 @@ int main(int argc, const char* argv[]) {
 		}
 
 		if (!(pad->btn & PAD_LEFT))
-			str_ctx.next_chunk--;
+			stream_ctx.next_chunk--;
 		if (!(pad->btn & PAD_RIGHT))
-			str_ctx.next_chunk++;
+			stream_ctx.next_chunk++;
 		if ((last_buttons & PAD_CIRCLE) && !(pad->btn & PAD_CIRCLE))
-			str_ctx.next_chunk = -1;
+			stream_ctx.next_chunk = -1;
 
 		if (!(pad->btn & PAD_DOWN) && (sample_rate > 0x400))
 			sample_rate -= 0x40;
 		if (!(pad->btn & PAD_UP) && (sample_rate < 0x2000))
 			sample_rate += 0x40;
 		if ((last_buttons & PAD_CROSS) && !(pad->btn & PAD_CROSS))
-			sample_rate = getSPUSampleRate(str_ctx.sample_rate);
+			sample_rate = getSPUSampleRate(stream_ctx.sample_rate);
 
 		// Only set the sample rate registers if necessary.
 		if (pad->btn != 0xffff) {
-			for (int i = 0; i < str_ctx.channels; i++)
+			for (int i = 0; i < stream_ctx.channels; i++)
 				SPU_CH_FREQ(i) = sample_rate;
 		}
 

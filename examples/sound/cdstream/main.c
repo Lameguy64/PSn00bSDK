@@ -312,7 +312,7 @@ int main(int argc, const char* argv[]) {
 
 	SHOW_STATUS("BUFFERING STREAM\n");
 	setup_stream(&file.pos);
-	Stream_Start(&stream_ctx);
+	Stream_Start(&stream_ctx, false);
 
 	int sectors_per_chunk = (stream_ctx.chunk_size + 2047) / 2048;
 	int vag_sample_rate   = getSPUSampleRate(stream_ctx.config.sample_rate);
@@ -326,7 +326,7 @@ int main(int argc, const char* argv[]) {
 		bool buffering = feed_stream();
 
 		FntPrint(-1, "PLAYING SPU STREAM\n\n");
-		FntPrint(-1, "BUFFER: %d\n", stream_ctx.db_active);
+		FntPrint(-1, "BUFFER: %d (%d)\n", stream_ctx.db_active, stream_ctx.chunk_counter);
 		FntPrint(-1, "STATUS: %s\n\n", buffering ? "READING" : "IDLE");
 
 		FntPrint(-1, "BUFFERED: %d/%d\n", stream_ctx.buffer.length, stream_ctx.config.buffer_size);
@@ -359,7 +359,7 @@ int main(int argc, const char* argv[]) {
 			if (paused)
 				Stream_Stop();
 			else
-				Stream_Start(&stream_ctx);
+				Stream_Start(&stream_ctx, true);
 		}
 
 		// Note that seeking will only work correctly with .VAG files whose
