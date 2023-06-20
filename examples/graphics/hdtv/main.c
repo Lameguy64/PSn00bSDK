@@ -651,13 +651,12 @@ void init() {
 	SetDefDispEnv( &db[0].disp, 0, 0, 640, SCREEN_YRES );
 	SetDefDrawEnv( &db[0].draw, 0, 0, SCREEN_XRES, SCREEN_YRES );
 	
-	db[0].disp.isinter = 1;		// enable interlace, mandatory for hi-res modes
+	// Enable interlace (mandatory for hi-res modes)
+	db[0].disp.isinter = 1;
 	
-	db[0].disp.screen.x = -37;	// shift left to center the widened picture
-	
-	db[0].disp.screen.w = 704;	// increase the picture width to 704 pixels
-								// (this does not strech the picture, it just
-								// tells the GPU to output more pixels)
+	// Increase the picture width to 704 pixels
+	// (without stretching it, just tell the GPU to output more pixels)
+	db[0].disp.screen.w = (704 * 256) / 640;
 	
 	// Enable draw area clear and dither processing
 	setRGB0( &db[0].draw, 63, 0, 127 );

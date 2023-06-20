@@ -203,9 +203,11 @@ static void _cd_irq_handler(void) {
 /* Initialization */
 
 int CdInit(void) {
-	EnterCriticalSection();
+	int _exit = EnterCriticalSection();
+
 	InterruptCallback(IRQ_CD, &_cd_irq_handler);
-	ExitCriticalSection();
+	if (_exit)
+		ExitCriticalSection();
 
 	BUS_CD_CFG = 0x00020943;
 

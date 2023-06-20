@@ -169,69 +169,62 @@ DISPENV *SetDefDispEnv(DISPENV *env, int x, int y, int w, int h) {
 void PutDispEnv(const DISPENV *env) {
 	_sdk_validate_args_void(env);
 
-	uint32_t h_range, v_range, mode, fb_pos;
+	uint32_t fb_pos, h_range, v_range, mode;
 
 	mode  = _gpu_video_mode << 3;
 	mode |= (env->isrgb24 & 1) << 4;
 	mode |= (env->isinter & 1) << 5;
 	mode |= (env->reverse & 1) << 7;
 
-	if (env->disp.h > 256)
-		mode |= 1 << 2;
+	int h_span = env->screen.w ? env->screen.w : 256;
+	int v_span = env->screen.h ? env->screen.h : 240;
 
-	// Calculate the horizontal display range values. The original code was
-	// this bad; in actual fact it was even worse due to being written in
-	// assembly and using slow multiplication even when not necessary.
-	int offset, span, default_span = 2560;
+	// Calculate the horizontal and vertical display range values.
+	h_span *= 10;
 
 	if (env->disp.w > 560) {
 		// 640 pixels
-		mode  |= 3;
-		offset = 620;
-		span   = env->screen.w * 4;
+		mode   |= 3 << 0;
+		//h_span *= 4;
 	} else if (env->disp.w > 400) {
 		// 512 pixels
-		mode  |= 2;
-		offset = 615;
-		span   = env->screen.w * 4 + env->screen.w;
+		mode   |= 2 << 0;
+		//h_span *= 5;
 	} else if (env->disp.w > 352) {
-		// 384 pixels (this mode is weird)
-		mode  |= 1 << 6;
-		offset = 539;
-		span   = env->screen.w * 8 - env->screen.w;
-		default_span = 2688;
+		// 368 pixels
+		mode   |= 1 << 6;
+		//h_span *= 7;
 	} else if (env->disp.w > 280) {
 		// 320 pixels
-		mode  |= 1;
-		offset = 600;
-		span   = env->screen.w * 8;
+		mode   |= 1 << 0;
+		//h_span *= 8;
 	} else {
 		// 256 pixels
-		offset = 590;
-		span   = env->screen.w * 8 + env->screen.w * 2;
+		mode   |= 0 << 0;
+		//h_span *= 10;
 	}
 
-	offset += env->screen.x * 4;
-	if (!span)
-		span = default_span;
+	if (env->disp.h > 256) {
+		mode   |= 1 << 2;
+		//v_span /= 2;
+	}
 
-	h_range  = offset & 0xfff;
-	h_range |= ((offset + span) & 0xfff) << 12;
+	int x   = env->screen.x + 0x760;
+	int y   = env->screen.y + (_gpu_video_mode ? 0xa3 : 0x88);
+	h_span /= 2;
+	v_span /= 2;
 
-	// Calculate the vertical display range values.
-	offset = 16 + env->screen.y;
-	span   = env->screen.h ? env->screen.h : 240;
+	fb_pos   = (env->disp.x  & 0x3ff);
+	fb_pos  |= (env->disp.y  & 0x1ff) << 10;
+	h_range  = ((x - h_span) & 0xfff);
+	h_range |= ((x + h_span) & 0xfff) << 12;
+	v_range  = ((y - v_span) & 0x3ff);
+	v_range |= ((y + v_span) & 0x3ff) << 10;
 
-	v_range  = offset & 0x3ff;
-	v_range |= ((offset + span) & 0x3ff) << 10;
-
-	fb_pos  =  env->disp.x & 0x3ff;
-	fb_pos |= (env->disp.y & 0x1ff) << 10;
-
+	GPU_GP1 = 0x05000000 | fb_pos;  // Set VRAM location to display
 	GPU_GP1 = 0x06000000 | h_range; // Set horizontal display range
 	GPU_GP1 = 0x07000000 | v_range; // Set vertical display range
 	GPU_GP1 = 0x08000000 | mode;    // Set video mode
-	GPU_GP1 = 0x05000000 | fb_pos;  // Set VRAM location to display
 }
 
 /* Deprecated "raw" display API */

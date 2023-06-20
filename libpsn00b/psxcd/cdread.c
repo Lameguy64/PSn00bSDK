@@ -47,7 +47,7 @@ static void _sector_callback(CdlIntrResult irq, uint8_t *result) {
 	CdCommandF(CdlPause, 0, 0);
 
 	_cd_override_callback = (CdlCB) 0;
-	if (!_pending_attempts && _read_callback)
+	if ((!_pending_sectors || !_pending_attempts) && _read_callback)
 		_read_callback(irq, result);
 
 	_read_timeout = VSync(-1) + CD_READ_COOLDOWN;

@@ -88,13 +88,15 @@ void ResetGraph(int mode) {
 	// Perform some basic system initialization when ResetGraph() is called for
 	// the first time.
 	if (!ResetCallback()) {
-		EnterCriticalSection();
+		int _exit = EnterCriticalSection();
+
 		InterruptCallback(IRQ_VBLANK, &_vblank_handler);
 		InterruptCallback(IRQ_GPU, &_gpu_irq_handler);
 		DMACallback(DMA_GPU, &_gpu_dma_handler);
-
 		_gpu_video_mode = (GPU_GP1 >> 20) & 1;
-		ExitCriticalSection();
+
+		if (_exit)
+			ExitCriticalSection();
 
 		_sdk_log("setup done, default mode is %s\n", _gpu_video_mode ? "PAL" : "NTSC");
 	}

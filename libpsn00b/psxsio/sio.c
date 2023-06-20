@@ -74,7 +74,7 @@ static void _sio_handler(void) {
 			SIO_CTRL(1) |= CR_TXIEN;
 			SIO_DATA(1)  = _tx_buffer.data[head];
 		} else {
-			SIO_CTRL(1) &= CR_TXIEN ^ 0xffff; 
+			SIO_CTRL(1) &= CR_TXIEN ^ 0xffff;
 		}
 	}
 
@@ -88,7 +88,7 @@ static void _sio_handler(void) {
 /* Serial port initialization API */
 
 void SIO_Init(int baud, uint16_t mode) {
-	EnterCriticalSection();
+	int _exit        = EnterCriticalSection();
 	_old_sio_handler = InterruptCallback(IRQ_SIO1, &_sio_handler);
 
 	SIO_CTRL(1) = CR_ERRRST;
@@ -106,16 +106,18 @@ void SIO_Init(int baud, uint16_t mode) {
 	_flow_control  = SIO_FC_NONE;
 	_ctrl_reg_flag = 0;
 
-	ExitCriticalSection();
+	if (_exit)
+		ExitCriticalSection();
 }
 
 void SIO_Quit(void) {
-	EnterCriticalSection();
-	InterruptCallback(IRQ_SIO1, _old_sio_handler);
+	int _exit = EnterCriticalSection();
 
+	InterruptCallback(IRQ_SIO1, _old_sio_handler);
 	SIO_CTRL(1) = CR_ERRRST;
 
-	ExitCriticalSection();
+	if (_exit)
+		ExitCriticalSection();
 }
 
 void SIO_SetFlowControl(SIO_FlowControl mode) {
