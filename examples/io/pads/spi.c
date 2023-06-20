@@ -1,29 +1,6 @@
 /*
  * PSn00bSDK controller polling example (SPI driver)
  * (C) 2021 spicyjpeg - MPL licensed
- *
- * This is a fairly complete timer driven, asynchronous high-speed SPI driver,
- * with support for sending custom commands (including memory card access), in
- * about 200 lines of code. Feel free to copypaste and adapt it.
- *
- * The way this works is by maintaining a queue of requests to send, each with
- * its own payload and callback. Timer 2 is configured to trigger an IRQ at
- * regular intervals. On each tick, the next request in the queue (or a poll
- * command if no request is pending) is prepared and the first byte is
- * sent; if the controller asks for more data by pulling /ACK low, the next
- * byte is sent and the received byte is placed into a buffer. This goes on
- * until the last byte is exchanged and the controller stops asserting /ACK.
- *
- * On the next tick, the response buffer is passed to the request's callback
- * and reset, and the next request in the queue is sent. This blindly assumes
- * it only takes one tick for a request/response to be sent, which is the case
- * for controllers' very small packets but not for memory cards. It is
- * advisable to call spi_set_poll_rate() to temporarily reduce poll rate while
- * accessing memory cards.
- *
- * Note that this driver completely takes over the SPI bus, so you won't be
- * able to use any BIOS functions that rely on SPI access (i.e. pad and memory
- * card APIs) alongside it.
  */
 
 #include <stdint.h>

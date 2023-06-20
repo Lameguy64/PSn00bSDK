@@ -94,7 +94,8 @@ typedef struct {
 	uint32_t interleave;	// Unused in mono files
 	uint32_t size;			// Big-endian, in bytes
 	uint32_t sample_rate;	// Big-endian, in Hertz
-	uint32_t _reserved[3];
+	uint16_t _reserved[5];
+	uint16_t channels;		// Unused in mono files
 	char     name[16];
 } VAG_Header;
 
