@@ -3,7 +3,7 @@
 #include <psxgpu.h>
 #include <psxgte.h>
 #include <inline_c.h>
-#include "smd.h"
+#include <smd/smd.h>
 #include "disp.h"
 
 DISPENV disp;

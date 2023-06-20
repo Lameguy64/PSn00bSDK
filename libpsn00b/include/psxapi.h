@@ -310,7 +310,7 @@ int LoadExec(const char *path, int argc, const char **argv);
 void FlushCache(void);
 
 void ResetEntryInt(void);
-void HookEntryInt(jmp_buf buf);
+void HookEntryInt(const JumpBuffer *buf);
 void ReturnFromException(void);
 
 int SetConf(int evcb, int tcb, uint32_t sp);

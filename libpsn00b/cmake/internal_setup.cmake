@@ -51,6 +51,7 @@ set(
 		psxsio
 		psxetc
 		psxapi
+		smd
 		lzp
 		c
 )

@@ -1,3 +1,6 @@
+# PSn00bSDK .SMD model parser library
+# (C) 2019-2023 Lameguy64, spicyjpeg - MPL licensed
+
 .set OT_ADDR,			0
 .set OT_LEN,			4
 .set OT_ZDIV,			8
@@ -332,5 +335,5 @@
 	nop
 	ori		$s3, CLIP_BOTTOM
 .no_clip_b_y3_q:
-	
+
 .endm

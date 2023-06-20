@@ -76,6 +76,7 @@ the following targets are defined:
 - `psxsio`
 - `psxetc`
 - `psxapi`
+- `smd`
 - `lzp`
 - `c`
 
@@ -394,4 +395,4 @@ CMake's `add_custom_command()` and `add_custom_target()` to convert models and
 generate LZP archives as part of the build pipeline.
 
 -----------------------------------------
-_Last updated on 2022-12-18 by spicyjpeg_
+_Last updated on 2023-06-20 by spicyjpeg_
