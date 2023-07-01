@@ -79,6 +79,7 @@
 #define SPU_CH_ADDR(N)		_MMIO16((IOBASE | 0x1c06) + (16 * (N)))
 #define SPU_CH_ADSR1(N)		_MMIO16((IOBASE | 0x1c08) + (16 * (N)))
 #define SPU_CH_ADSR2(N)		_MMIO16((IOBASE | 0x1c0a) + (16 * (N)))
+#define SPU_CH_ADSR_VOL(N)	_MMIO16((IOBASE | 0x1c0c) + (16 * (N)))
 #define SPU_CH_LOOP_ADDR(N)	_MMIO16((IOBASE | 0x1c0e) + (16 * (N)))
 
 /* MDEC */
