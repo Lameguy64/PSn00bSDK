@@ -194,7 +194,7 @@ void *FntFlush(int id) {
 			break;
 		}
 
-		i = toupper( *text )-32;
+		i = toupper( *text ) - ' ';
 
 		if( i > 0 ) {
 
@@ -236,11 +236,22 @@ void *FntSort(uint32_t *ot, void *pri, int x, int y, const char *text) {
 
 	DR_TPAGE *tpage;
 	SPRT_8 *sprt = (SPRT_8*)pri;
-	int	i;
+	int	i, sx, sy;
+
+	sx = x;
+	sy = y;
 
 	while( *text != 0 ) {
 
-		i = toupper( *text )-32;
+		if (*text == '\n') {
+			sx = x;
+			sy += 8;
+			text++;
+
+			continue;
+		}
+
+		i = toupper( *text ) - ' ';
 
 		if( i > 0 ) {
 
@@ -248,7 +259,7 @@ void *FntSort(uint32_t *ot, void *pri, int x, int y, const char *text) {
 			setSprt8(sprt);
 			setShadeTex(sprt, 1);
 			setSemiTrans(sprt, 1);
-			setXY0(sprt, x, y);
+			setXY0(sprt, sx, sy);
 			setUV0(sprt, (i % 16) * 8, (i / 16) * 8);
 			sprt->clut = _font_clut;
 			addPrim(ot, sprt);
@@ -256,7 +267,7 @@ void *FntSort(uint32_t *ot, void *pri, int x, int y, const char *text) {
 
 		}
 
-		x += 8;
+		sx += 8;
 		text++;
 
 	}

@@ -7,8 +7,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <string.h>
 #include <assert.h>
+#include <psxgpu.h>
 #include <psxspu.h>
 #include <psxetc.h>
 #include <psxapi.h>
@@ -27,9 +27,19 @@
 
 #define _min(x, y) (((x) < (y)) ? (x) : (y))
 
-/* Interrupt handlers */
+/* Private utilities */
 
 static volatile Stream_Context *_active_ctx = (void *) 0;
+
+static Stream_Time _default_timer_function(void) {
+	return VSync(-1);
+}
+
+static int _get_default_timer_rate(void) {
+	return (GetVideoMode() == MODE_PAL) ? 50 : 60;
+}
+
+/* Interrupt handlers */
 
 static void _spu_irq_handler(void) {
 	Stream_Context *ctx = _active_ctx;
@@ -59,7 +69,9 @@ static void _spu_irq_handler(void) {
 	// once the buffer's length is below the refill threshold.
 	ctx->db_active ^= 1;
 	ctx->buffering  = true;
-	ctx->chunk_counter++;
+
+	ctx->play_time   += ctx->samples_per_chunk;
+	ctx->last_updated = ctx->config.timer_function();
 
 	size_t tail        = ctx->buffer.tail;
 	uint8_t *ptr       = &ctx->buffer.data[ctx->buffer.tail];
@@ -82,12 +94,16 @@ static void _spu_irq_handler(void) {
 	uint32_t address =
 		ctx->config.spu_address + (ctx->db_active ? ctx->chunk_size : 0);
 
+	int sample_rate         = ctx->new_sample_rate;
+	ctx->config.sample_rate = sample_rate;
+
 	SPU_IRQ_ADDR = getSPUAddr(address);
 
 	for (uint32_t ch = 0, mask = ctx->config.channel_mask; mask; ch++, mask >>= 1) {
 		if (!(mask & 1))
 			continue;
 
+		SPU_CH_FREQ     (ch) = getSPUSampleRate(sample_rate);
 		SPU_CH_LOOP_ADDR(ch) = getSPUAddr(address + offset);
 		offset              += ctx->config.interleave;
 
@@ -110,8 +126,8 @@ static void _spu_dma_handler(void) {
 /* Public API */
 
 void Stream_Init(Stream_Context *ctx, const Stream_Config *config) {
-	memset(ctx, 0, sizeof(Stream_Context));
-	memcpy(&(ctx->config), config, sizeof(Stream_Config));
+	__builtin_memset(ctx, 0, sizeof(Stream_Context));
+	__builtin_memcpy(&(ctx->config), config, sizeof(Stream_Config));
 
 	ctx->num_channels = 0;
 	for (uint32_t mask = config->channel_mask; mask; mask >>= 1) {
@@ -121,8 +137,15 @@ void Stream_Init(Stream_Context *ctx, const Stream_Config *config) {
 
 	assert(ctx->num_channels);
 
-	ctx->chunk_size  = ctx->config.interleave * ctx->num_channels;
-	ctx->buffer.data = malloc(config->buffer_size);
+	if (!ctx->config.timer_function) {
+		ctx->config.timer_rate     = _get_default_timer_rate();
+		ctx->config.timer_function = &_default_timer_function;
+	}
+
+	ctx->chunk_size        = ctx->config.interleave * ctx->num_channels;
+	ctx->samples_per_chunk = ctx->config.interleave / 16 * 28;
+	ctx->new_sample_rate   = ctx->config.sample_rate;
+	ctx->buffer.data       = malloc(config->buffer_size);
 
 	assert(ctx->buffer.data);
 
@@ -160,6 +183,9 @@ bool Stream_Start(Stream_Context *ctx, bool resume) {
 	uint32_t address =
 		ctx->config.spu_address + (ctx->db_active ? ctx->chunk_size : 0);
 
+	int sample_rate         = ctx->new_sample_rate;
+	ctx->config.sample_rate = sample_rate;
+
 	SpuSetKey(0, ctx->config.channel_mask);
 
 	for (uint32_t ch = 0, mask = ctx->config.channel_mask; mask; ch++, mask >>= 1) {
@@ -167,7 +193,7 @@ bool Stream_Start(Stream_Context *ctx, bool resume) {
 			continue;
 
 		SPU_CH_ADDR (ch) = getSPUAddr(address);
-		SPU_CH_FREQ (ch) = getSPUSampleRate(ctx->config.sample_rate);
+		SPU_CH_FREQ (ch) = getSPUSampleRate(sample_rate);
 		SPU_CH_ADSR1(ch) = 0x00ff;
 		SPU_CH_ADSR2(ch) = 0x0000;
 
@@ -197,24 +223,38 @@ bool Stream_Stop(void) {
 
 	SpuSetKey(1, ctx->config.channel_mask);
 
-	_active_ctx = (void *) 0;
+	ctx->last_stopped = ctx->config.timer_function();
+	_active_ctx       = (void *) 0;
+
 	return true;
 }
 
 void Stream_SetSampleRate(Stream_Context *ctx, int value) {
-	ctx->config.sample_rate = value;
-
-	if (!Stream_IsActive(ctx))
-		return;
-
-	for (uint32_t ch = 0, mask = ctx->config.channel_mask; mask; ch++, mask >>= 1) {
-		if (mask & 1)
-			SPU_CH_FREQ(ch) = getSPUSampleRate(value);
-	}
+	ctx->new_sample_rate = value;
 }
 
 bool Stream_IsActive(const Stream_Context *ctx) {
 	return (ctx == _active_ctx);
+}
+
+uint32_t Stream_GetSamplesPlayed(const Stream_Context *ctx) {
+	// Calculate the time elapsed from the last update (or since the stream was
+	// stopped) and use the value to estimate how many samples have been played
+	// since then.
+	Stream_Time delta;
+
+	if (ctx == _active_ctx)
+		delta = ctx->config.timer_function() - ctx->last_updated;
+	else
+		delta = ctx->last_stopped - ctx->last_updated;
+
+	return ctx->play_time + (
+		(delta * ctx->config.sample_rate) / ctx->config.timer_rate
+	);
+}
+
+void Stream_ResetSamplesPlayed(Stream_Context *ctx) {
+	ctx->play_time = 0;
 }
 
 size_t Stream_GetRefillLength(const Stream_Context *ctx) {

@@ -88,9 +88,8 @@ is usually not necessary for executables as they are linked to all libraries
 by default (see `PSN00BSDK_EXECUTABLE_LINK_LIBRARIES`).
 
 Additionally, two "hidden" libraries named `gcc` and `psn00bsdk` are linked by
-default to all targets. The former is the GCC toolchain's `libgcc` (see
-`PSN00BSDK_LIBGCC`) while the latter is a virtual target used to set compiler
-flags and paths.
+default to all targets. The former is the GCC toolchain's `libgcc`, while the
+latter is a virtual target used to set compiler flags and paths.
 
 ## Commands
 
@@ -332,14 +331,6 @@ rather than setting this variable.
 `PSN00BSDK_TARGET` must be set regardless of whether or not `PSN00BSDK_TC` is
 also set.
 
-### `PSN00BSDK_LIBGCC` (`FILEPATH`)
-
-Path to the `libgcc` library bundled with the GCC toolchain. As required by GCC
-this library is always linked to all targets, regardless of whether any SDK
-libraries are linked or not. CMake will attempt to locate `libgcc`
-automatically after finding the toolchain, so setting this variable manually is
-not required in most cases.
-
 ## Internal settings
 
 These settings are not stored in CMake's cache and can only be set from within
@@ -395,4 +386,4 @@ CMake's `add_custom_command()` and `add_custom_target()` to convert models and
 generate LZP archives as part of the build pipeline.
 
 -----------------------------------------
-_Last updated on 2023-06-20 by spicyjpeg_
+_Last updated on 2023-07-03 by spicyjpeg_

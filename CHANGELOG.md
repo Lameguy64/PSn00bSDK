@@ -19,6 +19,32 @@ to ensure the changelog can be parsed correctly.
 
 -------------------------------------------------------------------------------
 
+## 2023-07-03: 0.24
+
+spicyjpeg:
+
+- libc: Fixed various mistakes in the GTE leading zero count intrinsics and the
+  `setjmp.h` header.
+
+- psxgpu: `PutDispEnv()` no longer requires manual adjustments in order to
+  center the screen in PAL mode. `FntSort()` now supports printing multiple
+  lines.
+
+- smd: The .SMD model parser code from n00bdemo has been split off into its own
+  library, usable from any PSn00bSDK project.
+
+- examples:  `beginner/hello`, `beginner/cppdemo` and `system/timer` have been
+  rewritten completely. `cdrom/cdxa` now checks for the end of the file properly
+  rather than relying on it to be encoded in a specific way. `sound/cdstream`
+  has been refactored to use a ring buffer in main RAM and includes a reusable
+  SPU audio streaming library.
+
+- Added some missing register macros (`SPU_CH_ADSR_VOL`) to `hwregs_c.h` and
+  fixed some previously wrong kernel-related constants.
+
+- Removed the `PSN00BSDK_LIBGCC` CMake variable and related code, as the GCC
+  toolchain can automatically find `libgcc` on its own.
+
 ## 2023-05-11: 0.23
 
 spicyjpeg:

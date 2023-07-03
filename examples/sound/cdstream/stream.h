@@ -32,7 +32,9 @@
 
 /* Type definitions */
 
-typedef uint32_t *(*Stream_Callback)(void);
+typedef uint32_t    Stream_Time;
+typedef void        (*Stream_Callback)(void);
+typedef Stream_Time (*Stream_TimerFunction)(void);
 
 /**
  * @brief Stream initialization settings structure.
@@ -45,20 +47,24 @@ typedef uint32_t *(*Stream_Callback)(void);
  * cannot be used. The channel mask is a bitfield whose bits represent which SPU
  * channels the stream is going to use: for instance, a value of 0b1101 will
  * assign the first channel of the stream to SPU channel 0, the second channel
- * to SPU channel 2 and the third channel to SPU channel 3. The sample rate is
- * in Hertz, while the interleave and buffer size are in bytes.
+ * to SPU channel 2 and the third channel to SPU channel 3. The sample rate and
+ * optional timer rate are in Hertz, while the interleave and buffer size are in
+ * bytes.
  *
- * The refill threshold, refill callback and underrun callback are optional. If
- * provided, the callbacks will be invoked by the SPU IRQ handler once the
- * FIFO's length goes below the specified threshold and once it reaches zero,
- * respectively.
+ * The refill threshold, refill callback, underrun callback and timer function
+ * are optional. If provided, the callbacks will be invoked by the SPU IRQ
+ * handler once the FIFO's length goes below the specified threshold and once it
+ * reaches zero, respectively. The timer function will be used to improve the
+ * accuracy of Stream_GetSamplesPlayed(); if not provided, VSync(-1) will be
+ * used by default.
  */
 typedef struct {
 	uint32_t spu_address, channel_mask;
 	size_t   interleave, buffer_size, refill_threshold;
-	int      sample_rate;
+	int      sample_rate, timer_rate;
 
-	Stream_Callback refill_callback, underrun_callback;
+	Stream_Callback      refill_callback, underrun_callback;
+	Stream_TimerFunction timer_function;
 } Stream_Config;
 
 typedef struct {
@@ -71,20 +77,20 @@ typedef struct {
  *
  * @details This structure represents a single audio stream. An arbitrary number
  * of streams may be created concurrently, however only one can be active at a
- * time (as the SPU only provides a single interrupt). With the exception of the
- * chunk counter, most fields are only used internally and shall not be accessed
- * directly.
+ * time (as the SPU only provides a single interrupt). All fields are only used
+ * internally and shall not be accessed directly.
  */
 typedef struct {
 	Stream_Config          config;
 	volatile Stream_Buffer buffer;
 
 	void    *old_irq_handler, *old_dma_handler;
-	size_t  chunk_size;
+	size_t  chunk_size, samples_per_chunk;
 	uint8_t num_channels;
 
-	volatile uint8_t  db_active, buffering, callback_issued;
-	volatile uint32_t chunk_counter;
+	volatile uint8_t     db_active, buffering, callback_issued;
+	volatile Stream_Time last_updated, last_stopped, play_time;
+	volatile int         new_sample_rate;
 } Stream_Context;
 
 /* Public API */
@@ -146,9 +152,9 @@ bool Stream_Stop(void);
 /**
  * @brief Changes the sampling rate of a stream.
  *
- * @details If the stream is currently active the pitch of the SPU channels
- * assigned to it is changed to match the new value, otherwise the new sampling
- * rate will be applied once the stream is started.
+ * @details If the stream is currently active the change will apply on the next
+ * FIFO data pull, otherwise the new sampling rate will be applied once the
+ * stream is started or resumed.
  *
  * @param ctx
  * @param value
@@ -162,6 +168,29 @@ void Stream_SetSampleRate(Stream_Context *ctx, int value);
  * @return True if the stream is active, false otherwise
  */
 bool Stream_IsActive(const Stream_Context *ctx);
+
+/**
+ * @brief Returns an estimate of how many audio samples have been played so far.
+ *
+ * @details The returned value can be divided by the stream's sampling rate to
+ * obtain the total playback time in seconds. The value is interpolated over
+ * time using VSync(-1) as a time reference by default. If greater accuracy is
+ * required, a custom timer function can be provided instead by setting the
+ * appropriate fields in the configuration object before calling Stream_Init().
+ *
+ * @param ctx
+ * @return Number of audio samples
+ *
+ * @see Stream_ResetSamplesPlayed()
+ */
+uint32_t Stream_GetSamplesPlayed(const Stream_Context *ctx);
+
+/**
+ * @brief Resets the audio sample counter returned by Stream_GetSamplesPlayed().
+ *
+ * @param ctx
+ */
+void Stream_ResetSamplesPlayed(Stream_Context *ctx);
 
 /**
  * @brief Returns how many bytes in a stream's FIFO are currently empty and can

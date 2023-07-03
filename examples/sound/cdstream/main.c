@@ -159,13 +159,13 @@ typedef struct {
 	(((uint32_t) (x) & 0xff000000) >> 24) \
 )
 
-/* Interrupt callbacks */
+/* Helper functions */
 
 #define DUMMY_BLOCK_ADDR   0x1000
 #define STREAM_BUFFER_ADDR 0x1010
 
 typedef struct {
-	int start_lba, stream_length;
+	int start_lba, stream_length, sample_rate;
 
 	volatile int    next_sector;
 	volatile size_t refill_length;
@@ -175,12 +175,10 @@ static Stream_Context    stream_ctx;
 static StreamReadContext read_ctx;
 
 void cd_read_handler(CdlIntrResult event, uint8_t *payload) {
-	// Mark the data as valid.
+	// Mark the data that has just been read as valid.
 	if (event != CdlDiskError)
 		Stream_Feed(&stream_ctx, read_ctx.refill_length * 2048);
 }
-
-/* Helper functions */
 
 // This isn't actually required for this example, however it is necessary if the
 // stream buffers are going to be allocated into a region of SPU RAM that was
@@ -254,14 +252,12 @@ void setup_stream(const CdlLOC *pos) {
 	int num_chunks   =
 		(SWAP_ENDIAN(vag->size) + vag->interleave - 1) / vag->interleave;
 
-	config.spu_address       = STREAM_BUFFER_ADDR;
-	config.channel_mask      = 0;
-	config.interleave        = vag->interleave;
-	config.buffer_size       = RAM_BUFFER_SIZE;
-	config.refill_threshold  = 0;
-	config.sample_rate       = SWAP_ENDIAN(vag->sample_rate);
-	config.refill_callback   = (void *) 0;
-	config.underrun_callback = (void *) 0;
+	__builtin_memset(&config, 0, sizeof(Stream_Config));
+
+	config.spu_address = STREAM_BUFFER_ADDR;
+	config.interleave  = vag->interleave;
+	config.buffer_size = RAM_BUFFER_SIZE;
+	config.sample_rate = SWAP_ENDIAN(vag->sample_rate);
 
 	// Use the first N channels of the SPU and pan them left/right in pairs
 	// (this assumes the stream contains one or more stereo tracks).
@@ -277,6 +273,7 @@ void setup_stream(const CdlLOC *pos) {
 	read_ctx.start_lba     = CdPosToInt(pos) + 1;
 	read_ctx.stream_length =
 		(num_channels * num_chunks * vag->interleave + 2047) / 2048;
+	read_ctx.sample_rate   = config.sample_rate;
 	read_ctx.next_sector   = 0;
 	read_ctx.refill_length = 0;
 
@@ -315,10 +312,9 @@ int main(int argc, const char* argv[]) {
 	Stream_Start(&stream_ctx, false);
 
 	int sectors_per_chunk = (stream_ctx.chunk_size + 2047) / 2048;
-	int vag_sample_rate   = getSPUSampleRate(stream_ctx.config.sample_rate);
 
 	bool paused      = false;
-	int  sample_rate = vag_sample_rate;
+	int  sample_rate = read_ctx.sample_rate;
 
 	uint16_t last_buttons = 0xffff;
 
@@ -326,12 +322,12 @@ int main(int argc, const char* argv[]) {
 		bool buffering = feed_stream();
 
 		FntPrint(-1, "PLAYING SPU STREAM\n\n");
-		FntPrint(-1, "BUFFER: %d (%d)\n", stream_ctx.db_active, stream_ctx.chunk_counter);
+		FntPrint(-1, "BUFFER: %d\n", stream_ctx.db_active);
 		FntPrint(-1, "STATUS: %s\n\n", buffering ? "READING" : "IDLE");
 
 		FntPrint(-1, "BUFFERED: %d/%d\n", stream_ctx.buffer.length, stream_ctx.config.buffer_size);
 		FntPrint(-1, "POSITION: %d/%d\n",  read_ctx.next_sector, read_ctx.stream_length);
-		FntPrint(-1, "SMP RATE: %5d HZ\n\n", (sample_rate * 44100) >> 12);
+		FntPrint(-1, "SMP RATE: %5d HZ\n\n", sample_rate);
 
 		FntPrint(-1, "[START]      %s\n", paused ? "RESUME" : "PAUSE");
 		FntPrint(-1, "[LEFT/RIGHT] SEEK\n");
@@ -371,16 +367,18 @@ int main(int argc, const char* argv[]) {
 		if ((last_buttons & PAD_CIRCLE) && !(pad->btn & PAD_CIRCLE))
 			read_ctx.next_sector = 0;
 
-		if (!(pad->btn & PAD_DOWN) && (sample_rate > 0x400))
-			sample_rate -= 0x40;
-		if (!(pad->btn & PAD_UP) && (sample_rate < 0x2000))
-			sample_rate += 0x40;
-		if ((last_buttons & PAD_CROSS) && !(pad->btn & PAD_CROSS))
-			sample_rate = vag_sample_rate;
-
-		// Only set the sample rate registers if necessary.
-		if (pad->btn != 0xffff)
-			Stream_SetSampleRate(&stream_ctx, (sample_rate * 44100) >> 12);
+		if (!(pad->btn & PAD_DOWN) && (sample_rate > 11000)) {
+			sample_rate -= 100;
+			Stream_SetSampleRate(&stream_ctx, sample_rate);
+		}
+		if (!(pad->btn & PAD_UP) && (sample_rate < 88200)) {
+			sample_rate += 100;
+			Stream_SetSampleRate(&stream_ctx, sample_rate);
+		}
+		if ((last_buttons & PAD_CROSS) && !(pad->btn & PAD_CROSS)) {
+			sample_rate = read_ctx.sample_rate;
+			Stream_SetSampleRate(&stream_ctx, sample_rate);
+		}
 
 		last_buttons = pad->btn;
 	}
