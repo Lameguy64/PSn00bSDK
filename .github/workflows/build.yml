@@ -10,17 +10,14 @@
 name: Build PSn00bSDK
 on:   [ push, pull_request ]
 env:
-  BINUTILS_VERSION: '2.40'
+  BINUTILS_VERSION: '2.41'
   BINUTILS_OPTIONS: '--disable-docs --disable-nls --disable-werror --with-float=soft'
-  GCC_VERSION:      '12.3.0'
+  GCC_VERSION:      '13.2.0'
   GCC_OPTIONS:      '--disable-docs --disable-nls --disable-werror --disable-libada --disable-libssp --disable-libquadmath --disable-threads --disable-libgomp --disable-libstdcxx-pch --disable-hosted-libstdcxx --enable-languages=c,c++ --without-isl --without-headers --with-float=soft --with-gnu-as --with-gnu-ld'
   GCC_TARGET:       'mipsel-none-elf'
 
 jobs:
   # This is based on doc/toolchain.md, no surprises here other than the cache.
-  # Since actions/cache@v2 has bugs when restoring on Windows caches created on
-  # Linux, v1 is used instead.
-  # https://github.com/actions/cache/issues/576
   build-gcc:
     name:    Build GCC toolchain
     runs-on: ubuntu-latest
@@ -28,8 +25,9 @@ jobs:
     steps:
     - name: Initialize toolchain cache
       id:   _cache
-      uses: actions/cache@v1
+      uses: actions/cache@v3.3.2
       with:
+        enableCrossOsArchive: true
         key:  gcc-${{ env.GCC_TARGET }}-${{ env.GCC_VERSION }}
         path: gcc
 
@@ -100,8 +98,9 @@ jobs:
         echo "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
     - name: Initialize toolchain cache
-      uses: actions/cache@v1
+      uses: actions/cache@v3.3.2
       with:
+        enableCrossOsArchive: true
         key:  gcc-${{ env.GCC_TARGET }}-${{ env.GCC_VERSION }}
         path: gcc
 
@@ -110,7 +109,7 @@ jobs:
         pacman -S --noconfirm mingw-w64-x86_64-ninja
 
     - name: Fetch repo contents
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path:       sdk
         submodules: recursive
@@ -125,7 +124,7 @@ jobs:
       # an artifact, so it's best to upload each package type as a separate
       # artifact.
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: psn00bsdk-windows
         path: build/packages/*.zip
@@ -137,8 +136,9 @@ jobs:
 
     steps:
     - name: Initialize toolchain cache
-      uses: actions/cache@v1
+      uses: actions/cache@v3.3.2
       with:
+        enableCrossOsArchive: true
         key:  gcc-${{ env.GCC_TARGET }}-${{ env.GCC_VERSION }}
         path: gcc
 
@@ -148,7 +148,7 @@ jobs:
         sudo apt-get install -y --no-install-recommends ninja-build
 
     - name: Fetch repo contents
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path:       sdk
         submodules: recursive
@@ -160,7 +160,7 @@ jobs:
         cmake --build build -t package
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: psn00bsdk-linux
         path: build/packages/*.zip
@@ -175,8 +175,9 @@ jobs:
     steps:
     - name: Initialize toolchain cache
       if:   ${{ github.ref_type == 'tag' }}
-      uses: actions/cache@v1
+      uses: actions/cache@v3.3.2
       with:
+        enableCrossOsArchive: true
         key:  gcc-${{ env.GCC_TARGET }}-${{ env.GCC_VERSION }}
         path: gcc
 
@@ -190,7 +191,7 @@ jobs:
 
     - name: Fetch repo contents
       if:   ${{ github.ref_type == 'tag' }}
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: sdk
 
@@ -201,7 +202,7 @@ jobs:
 
     - name: Fetch build artifacts
       if:   ${{ github.ref_type == 'tag' }}
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         path: .
 

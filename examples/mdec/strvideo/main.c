@@ -17,13 +17,13 @@
  *   CD drive handles XA-ADPCM sectors automatically, so no CPU intervention is
  *   necessary to play the audio track interleaved with the video.
  * - Once a full frame has been demuxed, the bitstream data is parsed and
- *   decompressed by the CPU (using DecDCTvlc()) to an array of run-length
- *   codes to be fed to the MDEC. This is done in the main loop.
+ *   decompressed by the CPU (using DecDCTvlc()) to an array of run-length codes
+ *   to be fed to the MDEC. This is done in the main loop.
  * - At the same time the last frame decompressed is read from RAM by the MDEC,
  *   which decodes it and outputs one 16-pixel-wide vertical slice at a time.
  * - When a slice is ready, it is uploaded by mdec_dma_handler() to the current
  *   framebuffer in VRAM while the MDEC is decoding the next slice.
- *   A text overlay is drawn on top of the framebuffer using the GPU after the
+ * - A text overlay is drawn on top of the framebuffer using the GPU after the
  *   entire frame has been decoded.
  *
  * Since pretty much all buffers used are going to be read and written at the
@@ -55,6 +55,12 @@
 // Uncomment to display the video in 24bpp mode. Note that the GPU does not
 // support 24bpp rendering, so the text overlay is only enabled in 16bpp mode.
 //#define DISP_24BPP
+
+// Uncomment to enable waiting for vertical sync after each frame is decoded.
+// This will get rid of screen tearing, but may result in the player failing to
+// play .STR files with higher frame rates (see main() for more details and
+// possible workarounds).
+//#define ENABLE_VSYNC
 
 /* Display/GPU context utilities */
 
@@ -163,12 +169,14 @@ typedef struct {
 	volatile int8_t cur_frame, cur_slice;
 } StreamContext;
 
+// This structure contains all buffers required for playback as well as the
+// current state of the player. Note that it takes up a significant amount of
+// RAM, so allocating it on the heap when needed and keeping a pointer to it
+// may be a better option.
 static StreamContext str_ctx;
 
 // This buffer is used by cd_sector_handler() as a temporary area for sectors
-// read from the CD. Due to DMA limitations it can't be allocated on the stack
-// (especially not in the interrupt callbacks' stack, whose size is very
-// limited).
+// read from the CD. Due to DMA limitations it can't be allocated on the stack.
 static STR_Header sector_header;
 
 void cd_sector_handler(void) {
@@ -394,7 +402,9 @@ int main(int argc, const char* argv[]) {
 		// implement triple buffering (i.e. always keep 2 fully decoded frames
 		// in VRAM and use VSyncCallback() to register a function that displays
 		// the next decoded frame if available whenever vblank occurs).
+#ifdef ENABLE_VSYNC
 		VSync(0);
+#endif
 		DecDCTinSync(0);
 		DecDCToutSync(0);
 

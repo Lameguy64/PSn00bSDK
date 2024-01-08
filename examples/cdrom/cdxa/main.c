@@ -214,7 +214,7 @@ void cd_event_handler(CdlIntrResult event, uint8_t *payload) {
 
 	if (
 		!(sector.xa_header[0].submode & XA_TYPE_AUDIO) &&
-		!(sector.xa_header[0].submode & XA_TYPE_AUDIO)
+		!(sector.xa_header[1].submode & XA_TYPE_AUDIO)
 	) {
 		// Seek back to the beginning of the file.
 		CdControlF(CdlReadS, &xa_loc);

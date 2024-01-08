@@ -127,13 +127,6 @@ typedef struct {
 	char     name[16];
 } VAG_Header;
 
-#define SWAP_ENDIAN(x) ( \
-	(((uint32_t) (x) & 0x000000ff) << 24) | \
-	(((uint32_t) (x) & 0x0000ff00) <<  8) | \
-	(((uint32_t) (x) & 0x00ff0000) >>  8) | \
-	(((uint32_t) (x) & 0xff000000) >> 24) \
-)
-
 /* Interrupt callbacks */
 
 // The first 4 KB of SPU RAM are reserved for capture buffers and psxspu
@@ -220,8 +213,8 @@ void init_stream(const VAG_Header *vag) {
 
 	stream_ctx.data        = &((const uint8_t *) vag)[2048];
 	stream_ctx.buffer_size = buf_size;
-	stream_ctx.num_chunks  = (SWAP_ENDIAN(vag->size) + buf_size - 1) / buf_size;
-	stream_ctx.sample_rate = SWAP_ENDIAN(vag->sample_rate);
+	stream_ctx.num_chunks  = (__builtin_bswap32(vag->size) + buf_size - 1) / buf_size;
+	stream_ctx.sample_rate = __builtin_bswap32(vag->sample_rate);
 	stream_ctx.channels    = vag->channels ? vag->channels : 1;
 
 	stream_ctx.db_active  =  1;

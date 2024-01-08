@@ -152,13 +152,6 @@ typedef struct {
 	char     name[16];
 } VAG_Header;
 
-#define SWAP_ENDIAN(x) ( \
-	(((uint32_t) (x) & 0x000000ff) << 24) | \
-	(((uint32_t) (x) & 0x0000ff00) <<  8) | \
-	(((uint32_t) (x) & 0x00ff0000) >>  8) | \
-	(((uint32_t) (x) & 0xff000000) >> 24) \
-)
-
 /* Helper functions */
 
 #define DUMMY_BLOCK_ADDR   0x1000
@@ -250,14 +243,14 @@ void setup_stream(const CdlLOC *pos) {
 
 	int num_channels = vag->channels ? vag->channels : 2;
 	int num_chunks   =
-		(SWAP_ENDIAN(vag->size) + vag->interleave - 1) / vag->interleave;
+		(__builtin_bswap32(vag->size) + vag->interleave - 1) / vag->interleave;
 
 	__builtin_memset(&config, 0, sizeof(Stream_Config));
 
 	config.spu_address = STREAM_BUFFER_ADDR;
 	config.interleave  = vag->interleave;
 	config.buffer_size = RAM_BUFFER_SIZE;
-	config.sample_rate = SWAP_ENDIAN(vag->sample_rate);
+	config.sample_rate = __builtin_bswap32(vag->sample_rate);
 
 	// Use the first N channels of the SPU and pan them left/right in pairs
 	// (this assumes the stream contains one or more stereo tracks).

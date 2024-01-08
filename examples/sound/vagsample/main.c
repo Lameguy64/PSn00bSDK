@@ -99,13 +99,6 @@ typedef struct {
 	char     name[16];
 } VAG_Header;
 
-#define SWAP_ENDIAN(x) ( \
-	(((uint32_t) (x) & 0x000000ff) << 24) | \
-	(((uint32_t) (x) & 0x0000ff00) <<  8) | \
-	(((uint32_t) (x) & 0x00ff0000) >>  8) | \
-	(((uint32_t) (x) & 0xff000000) >> 24) \
-)
-
 /* Helper functions */
 
 // The first 4 KB of SPU RAM are reserved for capture buffers and psxspu
@@ -119,17 +112,17 @@ static int next_sample_addr = ALLOC_START_ADDR;
 int upload_sample(const void *data, int size) {
 	// Round the size up to the nearest multiple of 64, as SPU DMA transfers
 	// are done in 64-byte blocks.
-	int _addr = next_sample_addr;
-	int _size = (size + 63) & 0xffffffc0;
+	int addr = next_sample_addr;
+	size     = (size + 63) & ~63;
 
 	SpuSetTransferMode(SPU_TRANSFER_BY_DMA);
-	SpuSetTransferStartAddr(_addr);
+	SpuSetTransferStartAddr(addr);
 
-	SpuWrite((const uint32_t *) data, _size);
+	SpuWrite((const uint32_t *) data, size);
 	SpuIsTransferCompleted(SPU_TRANSFER_WAIT);
 
-	next_sample_addr = _addr + _size;
-	return _addr;
+	next_sample_addr = addr + size;
+	return addr;
 }
 
 void play_sample(int addr, int sample_rate) {
@@ -168,13 +161,13 @@ int main(int argc, const char* argv[]) {
 	SpuInit();
 
 	// Upload the samples to the SPU and parse their headers.
-	VAG_Header *proyt_vag = (VAG_Header *) proyt;
-	VAG_Header *tdfx_vag  = (VAG_Header *) tdfx;
+	const VAG_Header *proyt_vag = (const VAG_Header *) proyt;
+	const VAG_Header *tdfx_vag  = (const VAG_Header *) tdfx;
 
-	int proyt_addr = upload_sample(&proyt_vag[1], SWAP_ENDIAN(proyt_vag->size));
-	int tdfx_addr  = upload_sample(&tdfx_vag[1],  SWAP_ENDIAN(tdfx_vag->size));
-	int proyt_sr   = SWAP_ENDIAN(proyt_vag->sample_rate);
-	int tdfx_sr    = SWAP_ENDIAN(tdfx_vag->sample_rate);
+	int proyt_addr = upload_sample(proyt_vag + 1, __builtin_bswap32(proyt_vag->size));
+	int tdfx_addr  = upload_sample(tdfx_vag + 1, __builtin_bswap32(tdfx_vag->size));
+	int proyt_sr   = __builtin_bswap32(proyt_vag->sample_rate);
+	int tdfx_sr    = __builtin_bswap32(tdfx_vag->sample_rate);
 
 	// Set up controller polling.
 	uint8_t pad_buff[2][34];

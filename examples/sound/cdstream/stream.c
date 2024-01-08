@@ -29,7 +29,7 @@
 
 /* Private utilities */
 
-static volatile Stream_Context *_active_ctx = (void *) 0;
+static volatile Stream_Context *volatile _active_ctx = (void *) 0;
 
 static Stream_Time _default_timer_function(void) {
 	return VSync(-1);
@@ -42,7 +42,7 @@ static int _get_default_timer_rate(void) {
 /* Interrupt handlers */
 
 static void _spu_irq_handler(void) {
-	Stream_Context *ctx = _active_ctx;
+	volatile Stream_Context *ctx = _active_ctx;
 
 	// Acknowledge the interrupt to ensure it can be triggered again. The only
 	// way to do this is actually to disable the interrupt entirely; we'll
@@ -90,13 +90,13 @@ static void _spu_irq_handler(void) {
 	// both channels' loop addresses to make them "jump" to the new buffers,
 	// rather than actually looping when they encounter the loop flag at the end
 	// of the currently playing buffers.
-	uint32_t offset  = 0;
 	uint32_t address =
 		ctx->config.spu_address + (ctx->db_active ? ctx->chunk_size : 0);
 
 	int sample_rate         = ctx->new_sample_rate;
 	ctx->config.sample_rate = sample_rate;
 
+	SpuSetTransferStartAddr(address);
 	SPU_IRQ_ADDR = getSPUAddr(address);
 
 	for (uint32_t ch = 0, mask = ctx->config.channel_mask; mask; ch++, mask >>= 1) {
@@ -104,15 +104,14 @@ static void _spu_irq_handler(void) {
 			continue;
 
 		SPU_CH_FREQ     (ch) = getSPUSampleRate(sample_rate);
-		SPU_CH_LOOP_ADDR(ch) = getSPUAddr(address + offset);
-		offset              += ctx->config.interleave;
+		SPU_CH_LOOP_ADDR(ch) = getSPUAddr(address);
+		address             += ctx->config.interleave;
 
 		// Make sure this channel's data ends with an appropriate loop flag.
 		//ptr[offset - 15] |= 0x03;
 	}
 
 	// Start uploading the next chunk to the SPU.
-	SpuSetTransferStartAddr(address);
 	SpuWrite((const uint32_t *) ptr, ctx->chunk_size);
 }
 
@@ -186,6 +185,9 @@ bool Stream_Start(Stream_Context *ctx, bool resume) {
 	int sample_rate         = ctx->new_sample_rate;
 	ctx->config.sample_rate = sample_rate;
 
+	// Disable the IRQ as we're going to call spu_irq_handler() manually (due to
+	// finicky SPU timings).
+	SPU_CTRL &= ~(1 << 6);
 	SpuSetKey(0, ctx->config.channel_mask);
 
 	for (uint32_t ch = 0, mask = ctx->config.channel_mask; mask; ch++, mask >>= 1) {
@@ -200,14 +202,14 @@ bool Stream_Start(Stream_Context *ctx, bool resume) {
 		address += ctx->config.interleave;
 	}
 
-	_spu_irq_handler();
 	SpuSetKey(1, ctx->config.channel_mask);
+	_spu_irq_handler();
 
 	return true;
 }
 
 bool Stream_Stop(void) {
-	Stream_Context *ctx = _active_ctx;
+	volatile Stream_Context *ctx = _active_ctx;
 
 	if (!ctx)
 		return false;
