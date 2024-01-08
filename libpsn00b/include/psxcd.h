@@ -1,6 +1,6 @@
 /*
  * PSn00bSDK CD-ROM library
- * (C) 2020-2022 Lameguy64, spicyjpeg - MPL licensed
+ * (C) 2020-2023 Lameguy64, spicyjpeg - MPL licensed
  */
 
 /**
@@ -27,85 +27,151 @@
 
 /* Enum definitions */
 
-typedef enum _CdlCommand {
-	CdlNop			= 0x01,
-	CdlSetloc		= 0x02,
-	CdlPlay			= 0x03,
-	CdlForward		= 0x04,
-	CdlBackward		= 0x05,
-	CdlReadN		= 0x06,
-	CdlStandby		= 0x07,
-	CdlStop			= 0x08,
-	CdlPause		= 0x09,
-	CdlInit			= 0x0a,
-	CdlMute			= 0x0b,
-	CdlDemute		= 0x0c,
-	CdlSetfilter	= 0x0d,
-	CdlSetmode		= 0x0e,
-	CdlGetparam		= 0x0f,
-	CdlGetlocL		= 0x10,
-	CdlGetlocP		= 0x11,
-	CdlSetsession	= 0x12,
-	CdlGetTN		= 0x13,
-	CdlGetTD		= 0x14,
-	CdlSeekL		= 0x15,
-	CdlSeekP		= 0x16,
-	CdlTest			= 0x19,
-	CdlGetID		= 0x1a,
-	CdlReadS		= 0x1b,
-	CdlReset		= 0x1c,
-	CdlGetQ			= 0x1d,
-	CdlReadTOC		= 0x1e
+/**
+ * @brief CD-ROM controller command definitions.
+ *
+ * @details This enum defines all commands supported by the CD-ROM drive,
+ * including ones that are not documented in the official SDK.
+ *
+ * Most commands are non-blocking: they can be issued using CdControl() or
+ * CdCommand() and will quickly return an "acknowledge" response, usually
+ * consisting of the current status flags and optionally other data. Some
+ * non-blocking commands, such as CdlReadN, CdlReadS or CdlPlay, will return an
+ * acknowledge response immediately but start reading data or playing audio
+ * asynchronously in the background.
+ *
+ * Other commands are blocking: they will still return an empty acknowledge
+ * response immediately, but will then proceed to execute asynchronously and
+ * return a second "complete" response once done. Any values returned by
+ * blocking commands will be received as part of the complete response. The
+ * acknowledge response is handled internally by libpsxcd and is not exposed to
+ * any user-provided callbacks.
+ *
+ * The following commands are supported:
+ *
+ * | ID   | Command       | Parameters       | Return values                  | Blocking | Notes                                                                                                                       |
+ * | ---: | :------------ | :--------------- | :----------------------------- | :------- | :-------------------------------------------------------------------------------------------------------------------------- |
+ * | 0x01 | CdlNop        |                  | uint8_t status                 | No       | This command will clear the CdlStatShellOpen status flag if it was previously set but the lid has since been closed.        |
+ * | 0x02 | CdlSetloc     | CdlLOC pos       | uint8_t status                 | No       | Only the first 3 fields of the CdlLOC structure are used. The track number is ignored.                                      |
+ * | 0x03 | CdlPlay       | uint8_t track    | uint8_t status                 | No       | The parameter is optional. When not passed, playback will start from the last location set using CdlSetloc.                 |
+ * | 0x04 | CdlForward    |                  | uint8_t status                 | No       |                                                                                                                             |
+ * | 0x05 | CdlBackward   |                  | uint8_t status                 | No       |                                                                                                                             |
+ * | 0x06 | CdlReadN      | (see note)       | uint8_t status                 | No       | CdControl() (but not CdCommand()) allows passing a CdlLOC as parameter, which will be sent as a separate CdlSetloc command. |
+ * | 0x07 | CdlStandby    |                  | uint8_t status                 | Yes      |                                                                                                                             |
+ * | 0x08 | CdlStop       |                  | uint8_t status                 | Yes      |                                                                                                                             |
+ * | 0x09 | CdlPause      |                  | uint8_t status                 | Yes      |                                                                                                                             |
+ * | 0x0a | CdlInit       |                  | uint8_t status                 | Yes      |                                                                                                                             |
+ * | 0x0b | CdlMute       |                  | uint8_t status                 | No       |                                                                                                                             |
+ * | 0x0c | CdlDemute     |                  | uint8_t status                 | No       |                                                                                                                             |
+ * | 0x0d | CdlSetfilter  | CdlFILTER filter | uint8_t status                 | No       |                                                                                                                             |
+ * | 0x0e | CdlSetmode    | uint8_t mode     | uint8_t status                 | No       | See CdlModeFlag for a list of mode flags.                                                                                   |
+ * | 0x0f | CdlGetparam   |                  | CdlPARAMINFO info              | No       |                                                                                                                             |
+ * | 0x10 | CdlGetlocL    |                  | CdlLOCINFOL info               | No       | As no status is provided in the response, the status flags returned by CdStatus() will not be updated.                      |
+ * | 0x11 | CdlGetlocP    |                  | CdlLOCINFOP info               | No       | As no status is provided in the response, the status flags returned by CdStatus() will not be updated.                      |
+ * | 0x12 | CdlSetsession | uint8_t session  | uint8_t status                 | Yes      |                                                                                                                             |
+ * | 0x13 | CdlGetTN      |                  | uint8_t status, first, last    | No       |                                                                                                                             |
+ * | 0x14 | CdlGetTD      | uint8_t track    | uint8_t status, minute, second | No       |                                                                                                                             |
+ * | 0x15 | CdlSeekL      | (see note)       | uint8_t status                 | Yes      | CdControl() (but not CdCommand()) allows passing a CdlLOC as parameter, which will be sent as a separate CdlSetloc command. |
+ * | 0x16 | CdlSeekP      | (see note)       | uint8_t status                 | Yes      | CdControl() (but not CdCommand()) allows passing a CdlLOC as parameter, which will be sent as a separate CdlSetloc command. |
+ * | 0x19 | CdlTest       | (varies)         | (varies)                       | No       | See the nocash documentation for more information on test subcommands and their parameters.                                 |
+ * | 0x1a | CdlGetID      |                  | CdlIDINFO info                 | Yes      |                                                                                                                             |
+ * | 0x1b | CdlReadS      | (see note)       | uint8_t status                 | No       | CdControl() (but not CdCommand()) allows passing a CdlLOC as parameter, which will be sent as a separate CdlSetloc command. |
+ * | 0x1c | CdlReset      |                  | uint8_t status                 | No       | After issuing a CdlReset command, no further commands shall be sent for about 150ms.                                        |
+ * | 0x1d | CdlGetQ       | uint8_t adr, p   | uint8_t data[10], peak_low     | Yes      | Not supported on some older console models, should not be used.                                                             |
+ * | 0x1e | CdlReadTOC    |                  | uint8_t status                 | Yes      | Not supported on some older console models, should not be used.                                                             |
+ *
+ * NOTE: all parameters and return values, such as track numbers, are in BCD
+ * format unless otherwise specified. The btoi() and itob() macros can be used
+ * to convert between decimal and BCD. Drive unlock commands are not listed in
+ * this enum, but can be issued by calling CdGetRegion() and CdUnlock().
+ *
+ * @see CdControl(), CdCommand(), CdlStatFlag
+ */
+typedef enum {
+	CdlNop			= 0x01,	// Updates the current CD-ROM status and resets the CdlStatShellOpen flag, without doing anything else.
+	CdlSetloc		= 0x02,	// Sets the seek target location, but does not seek. Actual seeking begins upon issuing a seek or read command.
+	CdlPlay			= 0x03,	// Begins CD-DA playback. Parameter specifies an optional track number to play (some emulators do not support it).
+	CdlForward		= 0x04,	// Starts fast-forwarding (CD-DA only). Issue CdlPlay to stop fast-forwarding.
+	CdlBackward		= 0x05,	// Starts rewinding (CD-DA only). Issue CdlPlay to stop rewinding.
+	CdlReadN		= 0x06,	// Begins reading data sectors and/or playing XA-ADPCM with automatic retry. Used in conjunction with CdReadyCallback().
+	CdlStandby		= 0x07,	// Starts the spindle motor if it was previously stopped.
+	CdlStop			= 0x08,	// Stops playback or data reading and shuts down the spindle motor.
+	CdlPause		= 0x09,	// Stops playback or data reading without stopping the spindle motor.
+	CdlInit			= 0x0a,	// Initializes the CD-ROM controller and aborts any ongoing command.
+	CdlMute			= 0x0b,	// Mutes the drive's audio output (both CD-DA and XA-ADPCM).
+	CdlDemute		= 0x0c,	// Unmutes the drive's audio output (both CD-DA and XA-ADPCM).
+	CdlSetfilter	= 0x0d,	// Configures the XA-ADPCM sector filter.
+	CdlSetmode		= 0x0e,	// Sets the CD-ROM mode flags (see CdlModeFlags).
+	CdlGetparam		= 0x0f,	// Returns the current CD-ROM mode flags and XA-ADPCM filter settings.
+	CdlGetlocL		= 0x10,	// Returns the location, mode and XA subheader of the current data sector. Does not work on CD-DA sectors.
+	CdlGetlocP		= 0x11,	// Returns the current physical CD location (using subchannel Q data).
+	CdlSetsession	= 0x12,	// Attempts to seek to the specified session on a multi-session disc. Used by CdLoadSession().
+	CdlGetTN		= 0x13,	// Returns the total number of tracks on the disc.
+	CdlGetTD		= 0x14,	// Returns the starting location of the specified track number.
+	CdlSeekL		= 0x15,	// Seeks (using data sector headers) to the position set by the last CdlSetloc command. Does not work on CD-DA sectors.
+	CdlSeekP		= 0x16,	// Seeks (using subchannel Q data) to the position set by the last CdlSetloc command.
+	CdlTest			= 0x19,	// Executes a test subcommand. Shall be issued using CdCommand() rather than CdControl().
+	CdlGetID		= 0x1a,	// Identifies the disc type and returns its license string if any.
+	CdlReadS		= 0x1b,	// Begins reading data sectors and/or playing XA-ADPCM in real-time (without automatic retry) mode.
+	CdlReset		= 0x1c,	// Resets the CD-ROM controller (similar behavior to manually opening and closing the lid).
+	CdlGetQ			= 0x1d,	// Reads up to 10 raw bytes of subchannel Q data directly from the disc's table of contents.
+	CdlReadTOC		= 0x1e	// Forces reading of the disc's table of contents.
 } CdlCommand;
 
-typedef enum _CdlStatFlag {
-	CdlStatError		= 1 << 0,
-	CdlStatStandby		= 1 << 1,
-	CdlStatSeekError	= 1 << 2,
-	CdlStatIdError		= 1 << 3,
-	CdlStatShellOpen	= 1 << 4,
-	CdlStatRead			= 1 << 5,
-	CdlStatSeek			= 1 << 6,
-	CdlStatPlay			= 1 << 7
+typedef enum {
+	CdlStatError		= 1 << 0,	// A command error has occurred. Set when an invalid command or parameters are sent.
+	CdlStatStandby		= 1 << 1,	// Set whenever the spindle motor is powered on or spinning up.
+	CdlStatSeekError	= 1 << 2,	// A seek error has occurred.
+	CdlStatIdError		= 1 << 3,	// Disc has been rejected due to being unlicensed (on consoles without a modchip installed).
+	CdlStatShellOpen	= 1 << 4,	// Lid is open or has been opened before. This flag is cleared by sending a CdlNop command.
+	CdlStatRead			= 1 << 5,	// Drive is currently reading data and/or playing XA-ADPCM.
+	CdlStatSeek			= 1 << 6,	// Drive is currently seeking.
+	CdlStatPlay			= 1 << 7	// Drive is currently playing a CD-DA track.
 } CdlStatFlag;
 
-typedef enum _CdlModeFlag {
-	CdlModeDA		= 1 << 0,
-	CdlModeAP		= 1 << 1,
-	CdlModeRept		= 1 << 2,
-	CdlModeSF		= 1 << 3,
+typedef enum {
+	CdlModeDA		= 1 << 0,	// Enable CD-DA playback.
+	CdlModeAP		= 1 << 1,	// Automatically pause CD-DA playback and invoke any callback set by CdAutoPauseCallback() when the end of a track is reached.
+	CdlModeRept		= 1 << 2,	// Automatically send report packets containing the current drive status and position during CD-DA playback.
+	CdlModeSF		= 1 << 3,	// Enable XA sector filter. When set, only XA-ADPCM sectors that match the file and channel numbers set using CdlSetloc will be played.
 	//CdlModeSize0	= 1 << 4,
 	//CdlModeSize1	= 1 << 5,
-	CdlModeIgnore	= 1 << 4,
-	CdlModeSize		= 1 << 5,
-	CdlModeRT		= 1 << 6,
-	CdlModeSpeed	= 1 << 7
+	CdlModeIgnore	= 1 << 4,	// Ignore any previously set sector size (CdlModeSize flag) and location set using CdlSetloc.
+	CdlModeSize		= 1 << 5,	// Return 2340 bytes instead of 2048 for each data sector read. The data returned is a full 2352-byte CD sector minus the sync bytes at the beginning.
+	CdlModeRT		= 1 << 6,	// Enable XA-ADPCM playback. When not set, XA-ADPCM sectors will be read as normal data.
+	CdlModeSpeed	= 1 << 7	// Read sectors at 2x speed instead of the default 1x. Should be cleared for CD-DA playback.
 } CdlModeFlag;
 
-typedef enum _CdlIntrResult {
-	CdlNoIntr		= 0,
-	CdlDataReady	= 1,
-	CdlComplete		= 2,
-	CdlAcknowledge	= 3,
-	CdlDataEnd		= 4,
-	CdlDiskError	= 5
+typedef enum {
+	CdlIDFlagAudio	= 1 << 4,	// Disc only contains CD-DA tracks.
+	CdlIDFlagNoDisc	= 1 << 6,	// No disc present.
+	CdlIDFlagDenied	= 1 << 7	// Disc has an invalid license string and has been rejected.
+} CdlIDFlag;
+
+typedef enum {
+	CdlNoIntr		= 0,	// No pending interrupt
+	CdlDataReady	= 1,	// INT1 (new sector or CD-DA report packet available)
+	CdlComplete		= 2,	// INT2 ("complete" response received, blocking command has finished)
+	CdlAcknowledge	= 3,	// INT3 ("acknowledge" response received, non-blocking command has finished or blocking command has started)
+	CdlDataEnd		= 4,	// INT4 (end of track or end of disc reached)
+	CdlDiskError	= 5		// INT5 (command error, read error or lid opened)
 } CdlIntrResult;
 
-typedef enum _CdlRegionCode {
+typedef enum {
 	CdlRegionUnknown	= 0,
 	CdlRegionSCEI		= 1,	// Japan
 	CdlRegionSCEA		= 2,	// North America
 	CdlRegionSCEE		= 3,	// Europe
-	CdlRegionSCEW		= 4,	// Wordwide (Net Yaroze)
-	CdlRegionDebug		= 5		// DebuggingStation or test console
+	CdlRegionSCEW		= 4,	// World (Net Yaroze)
+	CdlRegionDebug		= 5		// Debugging unit (DTL-Hxxxx)
 } CdlRegionCode;
 
-typedef enum _CdlIsoError {
-	CdlIsoOkay		= 0,
-	CdlIsoSeekError	= 1,
-	CdlIsoReadError	= 2,
-	CdlIsoInvalidFs	= 3,
-	CdlIsoLidOpen	= 4
+typedef enum {
+	CdlIsoOkay		= 0,	// File system parser okay.
+	CdlIsoSeekError	= 1,	// Logical seek error occurred. May occur when attempting to query the filesystem on an audio-only CD.
+	CdlIsoReadError	= 2,	// Read error occurred while reading the CD-ROM file system descriptor.
+	CdlIsoInvalidFs	= 3,	// Disc does not contain a standard ISO9660 file system.
+	CdlIsoLidOpen	= 4		// Lid is open when attempting to parse the CD-ROM file system.
 } CdlIsoError;
 
 /**
@@ -136,9 +202,9 @@ typedef enum _CdlIsoError {
  * NOTE: the minute, second and sector fields are in BCD format. The track
  * field is only returned by CdGetToc() and otherwise ignored by all commands.
  *
- * @see CdIntToPos(), CdPosToInt(), CdControl()
+ * @see CdIntToPos(), CdPosToInt(), CdControl(), CdlCommand
  */
-typedef struct _CdlLOC {
+typedef struct {
 	uint8_t minute;	// Minutes (BCD)
 	uint8_t second;	// Seconds (BCD)
 	uint8_t sector;	// Sector or frame (BCD)
@@ -154,7 +220,7 @@ typedef struct _CdlLOC {
  *
  * @see CdMix()
  */
-typedef struct _CdlATV {
+typedef struct {
 	uint8_t val0;	// CD to SPU L-to-L volume
 	uint8_t val1;	// CD to SPU L-to-R volume
 	uint8_t val2;	// CD to SPU R-to-R volume
@@ -170,11 +236,30 @@ typedef struct _CdlATV {
  *
  * @see CdSearchFile()
  */
-typedef struct _CdlFILE {
+typedef struct {
 	CdlLOC	pos;		// CD-ROM position coordinates of file
 	int		size;		// Size of file in bytes
 	char	name[16];	// File name
 } CdlFILE;
+
+/**
+ * @brief Current CD-ROM settings structure.
+ *
+ * @details This structure represents the parameters returned by the CD-ROM
+ * controller after issuing a CdlGetparam command. Mode flags can be set using
+ * the CdlSetmode command, while XA-ADPCM sector filter parameters can be set
+ * by sending a CdlSetfilter command.
+ *
+ * @see CdControl(), CdlCommand, CdlFILTER
+ */
+typedef struct {
+	uint8_t	status;		// Current CD-ROM status flags
+	uint8_t	mode;		// Current CD-ROM mode flags
+	uint8_t	pad;
+	uint8_t	file;		// Current XA-ADPCM filter file number (0-255)
+	uint8_t chan;		// Current XA-ADPCM filter channel number (0-31)
+	uint8_t pad2[3];
+} CdlPARAMINFO;
 
 /**
  * @brief Current logical location information structure.
@@ -189,7 +274,7 @@ typedef struct _CdlFILE {
  *
  * @see CdControl()
  */
-typedef struct _CdlLOCINFOL {
+typedef struct {
 	uint8_t minute;			// Minutes (BCD)
 	uint8_t second;			// Seconds (BCD)
 	uint8_t sector;			// Sector or frame (BCD)
@@ -213,7 +298,7 @@ typedef struct _CdlLOCINFOL {
  *
  * @see CdControl()
  */
-typedef struct _CdlLOCINFOP {
+typedef struct {
 	uint8_t track;			// Track number (BCD)
 	uint8_t index;			// Index number (BCD, usually 1)
 	uint8_t track_minute;	// Minutes relative to beginning of track (BCD)
@@ -225,7 +310,26 @@ typedef struct _CdlLOCINFOP {
 } CdlLOCINFOP;
 
 /**
- * @brief CD-ROM XA filter structure.
+ * @brief CD-ROM type and license information structure.
+ *
+ * @details This structure is returned by the CdlGetID command and contains
+ * information about the currently inserted disc, including whether or not it
+ * has passed the license check and its region string (if any). Note that the
+ * data returned may not be accurate on consoles equipped with modchips or
+ * optical drive emulation devices.
+ *
+ * @see CdControl(), CdlCommand, CdlIDFlag
+ */
+typedef struct {
+	uint8_t	status;		// Current CD-ROM status flags
+	uint8_t	flags;		// Disc flags (see CdlIDFlag)
+	uint8_t	type;		// Disc type from CD table of contents
+	uint8_t	atip;		// ATIP value from CD table of contents (usually 0)
+	char	license[4];	// License string
+} CdlIDINFO;
+
+/**
+ * @brief CD-ROM XA-ADPCM sector filter structure.
  *
  * @details This structure is used with the CdlSetfilter command to specify
  * sector filter parameters for XA-ADPCM audio playback.
@@ -241,10 +345,10 @@ typedef struct _CdlLOCINFOP {
  * by switching to alternate versions of a theme to fit specific scenes
  * seamlessly.
  *
- * @see CdControl()
+ * @see CdControl(), CdlCommand
  */
-typedef struct _CdlFILTER {
-	uint8_t		file;	// XA file number (usually 1)
+typedef struct {
+	uint8_t		file;	// XA file number (0-255)
 	uint8_t		chan;	// XA channel number (0-31)
 	uint16_t	pad;
 } CdlFILTER;
@@ -259,6 +363,26 @@ typedef struct _CdlFILTER {
  */
 typedef void *CdlDIR;
 
+/**
+ * @brief Callback function for CD-ROM events.
+ *
+ * @details This prototype is used for all user-defined CD-ROM callback
+ * functions. The first argument passed to the callback represents the type of
+ * the event that occurred (see CdlIntrResult) while the second argument is an
+ * optional pointer to the buffer the CD-ROM controller's response was stored
+ * into, if such a buffer was provided to CdControl() or CdCommand() when
+ * initially issuing the command.
+ *
+ * Most commands will return the current status flags as the first byte of the
+ * response. When processing the response to a command that returns status
+ * flags, libpsxcd will automatically fetch the first byte and store it in an
+ * internal variable even if no actual response buffer was provided. In such
+ * cases, the latest status flags can be retrieved using CdStatus() even when
+ * the second argument is a null pointer.
+ *
+ * @see CdSyncCallback(), CdReadyCallback(), CdAutoPauseCallback(),
+ * CdReadyCallback()
+ */
 typedef void (*CdlCB)(CdlIntrResult, uint8_t *);
 
 /* Public API */
@@ -291,11 +415,11 @@ int CdInit(void);
  * provided CdlLOC structure. The translation takes the lead-in offset into
  * account, so LBA 0 is correctly translated to 00:02:00 rather than 00:00:00.
  *
- * @param i Logical sector number minus the 150-sector lead-in
- * @param p Pointer to a CdlLOC structure
+ * @param i
+ * @param p
  * @return Pointer to the specified CdlLOC structure
  */
-CdlLOC* CdIntToPos(int i, CdlLOC *p);
+CdlLOC *CdIntToPos(int i, CdlLOC *p);
 
 /**
  * @brief Translates MSF coordinates to an LBA.
@@ -305,7 +429,7 @@ CdlLOC* CdIntToPos(int i, CdlLOC *p);
  * logical sector number. The translation takes the lead-in offset into account
  * so 00:02:00 is correctly translated to LBA 0 rather than 150.
  *
- * @param p Pointer to a CdlLOC structure
+ * @param p
  * @return Logical sector number minus the 150-sector lead-in
  */
 int CdPosToInt(const CdlLOC *p);
@@ -313,68 +437,24 @@ int CdPosToInt(const CdlLOC *p);
 /**
  * @brief Issues a command to the CD-ROM controller.
  *
- * @details Sends a CD-ROM command specified by com to the CD-ROM controller,
- * waits for an acknowledge interrupt (very fast) then returns. It will also
- * issue parameters from param to the CD-ROM controller if the command accepts
- * parameters. Any response from the controller is stored into the provided
- * buffer asynchronously.
+ * @details Sends a command, alongside any required parameters, to the CD-ROM
+ * controller and waits for an acknowledge interrupt (very fast). Any response
+ * from the controller is stored into the provided buffer asynchronously. See
+ * the CdlCommand enum for details on supported commands, their parameters and
+ * responses.
  *
- * Some commands (marked as blocking in the table below) will keep running in
- * the background after being acknowledged. Use CdSync() to wait for these
- * commands to finish, or CdSyncCallback() to register a callback to be
- * executed once the drive is idle.
+ * Some commands (see CdlCommand) are blocking and will keep running in the
+ * background after being acknowledged. Use CdSync() to wait for these commands
+ * to finish, or CdSyncCallback() to register a callback to be executed once
+ * the drive is idle.
  *
  * This function requires interrupts to be enabled and cannot be used in a
  * critical section or IRQ callback. Use CdControlF() in callbacks instead.
  *
- * The following commands are available:
- *
- * | Command       | Value | Parameter  | Blocking | Description                                                                                                       |
- * | :------------ | ----: | :--------- | :------- | :---------------------------------------------------------------------------------------------------------------- |
- * | CdlNop        |  0x01 |            | No       | Updates the current CD-ROM status and resets the CdlStatShellOpen flag, without doing anything else.              |
- * | CdlSetloc     |  0x02 | CdlLOC     | No       | Sets the seek target location, but does not seek. Actual seeking begins upon issuing a seek or read command.      |
- * | CdlPlay       |  0x03 | (uint8_t)  | No       | Begins CD-DA playback. Parameter specifies an optional track number to play (some emulators do not support it).   |
- * | CdlForward    |  0x04 |            | No       | Starts fast-forwarding (CD-DA only). Issue CdlPlay to stop fast forwarding.                                       |
- * | CdlBackward   |  0x05 |            | No       | Starts rewinding (CD-DA only). Issue CdlPlay to stop rewinding.                                                   |
- * | CdlReadN      |  0x06 | (CdlLOC)   | No       | Begins reading data sectors with automatic retry. Used in conjunction with CdReadyCallback().                     |
- * | CdlStandby    |  0x07 |            | Yes      | Starts the spindle motor if it was previously stopped.                                                            |
- * | CdlStop       |  0x08 |            | Yes      | Stops playback or data reading and shuts down the spindle motor.                                                  |
- * | CdlPause      |  0x09 |            | Yes      | Stops playback or data reading without stopping the spindle motor.                                                |
- * | CdlInit       |  0x0a |            | Yes      | Initializes the CD-ROM controller and aborts any ongoing command.                                                 |
- * | CdlMute       |  0x0b |            | No       | Mutes the drive's audio output (both CD-DA and XA).                                                               |
- * | CdlDemute     |  0x0c |            | No       | Unmutes the drive's audio output (both CD-DA and XA).                                                             |
- * | CdlSetfilter  |  0x0d | CdlFILTER  | No       | Configures the XA ADPCM sector filter.                                                                            |
- * | CdlSetmode    |  0x0e | uint8_t    | No       | Sets the CD-ROM mode.                                                                                             |
- * | CdlGetparam   |  0x0f |            | No       | Returns current CD-ROM mode and file/channel filter settings.                                                     |
- * | CdlGetlocL    |  0x10 |            | No       | Returns current logical CD position, mode and XA filter parameters.                                               |
- * | CdlGetlocP    |  0x11 |            | No       | Returns current physical CD position (using SubQ location data).                                                  |
- * | CdlSetsession |  0x12 | uint8_t    | Yes      | Attempts to seek to the specified session on a multi-session disc.                                                |
- * | CdlGetTN      |  0x13 |            | No       | Returns the number of tracks on the disc.                                                                         |
- * | CdlGetTD      |  0x14 | uint8_t    | No       | Returns the starting location of the specified track number.                                                      |
- * | CdlSeekL      |  0x15 | (CdlLOC)   | Yes      | Logical seek (using data sector headers) to target position, set by last CdlSetloc command.                       |
- * | CdlSeekP      |  0x16 | (CdlLOC)   | Yes      | Physical seek (using subchannel Q) to target position, set by last CdlSetloc command.                             |
- * | CdlTest       |  0x19 | (varies)   | Yes      | Executes a test subcommand (see nocash documentation). Shall be issued using CdCommand() rather than CdControl(). |
- * | CdlGetID      |  0x1a |            | Yes      | Identifies the disc type and returns its license string if any.                                                   |
- * | CdlReadS      |  0x1b | (CdlLOC)   | No       | Begins reading data sectors in real-time (without retry) mode. Intended for playing XA ADPCM or .STR files.       |
- * | CdlReset      |  0x1c |            | No       | Resets the CD-ROM controller (similar behavior to manually opening and closing the door).                         |
- * | CdlGetQ       |  0x1d | uint8_t[2] | Yes      | Reads up to 10 raw bytes of subchannel Q data directly from the table of contents.                                |
- * | CdlReadTOC    |  0x1e |            | Yes      | Forces reinitialization of the disc's table of contents.                                                          |
- *
- * Most commands return the current CD-ROM status as result (which is
- * automatically saved by the library and can be retrieved at any time using
- * CdStatus()). The following commands also return additional data:
- *
- * | Command     | Return values                           |
- * | :---------- | :-------------------------------------- |
- * | CdlGetparam | uint8_t status, mode, _pad, file, chan  |
- * | CdlGetlocL  | CdlLOCINFOL info                        |
- * | CdlGetlocP  | CdlLOCINFOP info                        |
- * | CdlGetTN    | uint8_t status, first_track, last_track |
- * | CdlGetTD    | uint8_t status, minutes, seconds        |
- *
- * NOTE: Values are in BCD format. For some commands (CdlReadN, CdlReadS,
- * CdlSeekL, CdlSeekP), if a CdlLOC parameter is passed, it will be sent to the
- * controller as a separate CdlSetloc command.
+ * NOTE: all parameters and return values are in BCD format unless otherwise
+ * specified. For some commands (CdlReadN, CdlReadS, CdlSeekL, CdlSeekP), if a
+ * CdlLOC parameter is passed, it will be sent to the controller as a separate
+ * CdlSetloc command.
  *
  * @param cmd
  * @param param Pointer to command parameters
@@ -383,7 +463,7 @@ int CdPosToInt(const CdlLOC *p);
  * command has not yet finished processing or -1 if a parameter is required but
  * was not specified
  *
- * @see CdSync(), CdControlF(), CdCommand()
+ * @see CdlCommand, CdSync(), CdControlF(), CdCommand()
  */
 int CdControl(CdlCommand cmd, const void *param, uint8_t *result);
 
@@ -404,7 +484,7 @@ int CdControl(CdlCommand cmd, const void *param, uint8_t *result);
  * command has not yet finished processing or -1 if a parameter is required but
  * was not specified
  *
- * @see CdControl(), CdControlF()
+ * @see CdlCommand, CdControl(), CdControlF()
  */
 int CdControlB(CdlCommand cmd, const void *param, uint8_t *result);
 
@@ -430,7 +510,7 @@ int CdControlB(CdlCommand cmd, const void *param, uint8_t *result);
  * @return -1 if a parameter is required but was not specified, otherwise 1
  * (even if sending the command failed)
  *
- * @see CdControl(), CdCommand()
+ * @see CdlCommand, CdControl(), CdCommand()
  */
 int CdControlF(CdlCommand cmd, const void *param);
 
@@ -440,7 +520,8 @@ int CdControlF(CdlCommand cmd, const void *param);
  * @details This is a more advanced variant of CdControl() that allows sending
  * commands with an arbitrary number of parameters, such as CdlTest commands,
  * and does not issue any additional CdlSetloc commands automatically. The
- * number of parameter bytes must be specified manually.
+ * number of parameter bytes must be specified manually. See the CdlCommand
+ * enum for details on supported commands, their parameters and responses.
  *
  * As with CdControl(), this function waits for the drive to acknowledge the
  * command. Any response from the controller is stored into the provided buffer
@@ -456,7 +537,7 @@ int CdControlF(CdlCommand cmd, const void *param);
  * @return 1 if the command was issued successfully or 0 if a previously issued
  * command has not yet finished processing
  *
- * @see CdSync(), CdCommandF(), CdControl()
+ * @see CdlCommand, CdSync(), CdCommandF(), CdControl()
  */
 int CdCommand(CdlCommand cmd, const void *param, int length, uint8_t *result);
 
@@ -478,7 +559,7 @@ int CdCommand(CdlCommand cmd, const void *param, int length, uint8_t *result);
  * @param length Number of parameter bytes expected by the command
  * @return Always 1 (even if sending the command failed)
  *
- * @see CdCommand(), CdControlF()
+ * @see CdlCommand, CdCommand(), CdControlF()
  */
 int CdCommandF(CdlCommand cmd, const void *param, int length);
 
@@ -664,16 +745,16 @@ int CdRead(int sectors, uint32_t *buf, int mode);
  *
  * @details This function works similarly to CdRead(), but retries reading in
  * case of errors. If reading fails, up to the specified number of attempts
- * will be done before an error is returned by CdReadSync().
+ * will be made before an error is returned by CdReadSync().
  *
  * This function requires interrupts to be enabled and cannot be used in a
  * critical section or IRQ callback. Any callback set using CdReadyCallback()
  * is temporarily disabled and restored once the read operation completes.
  *
- * IMPORTANT: in order for retries to be correctly processed, CdReadSync(0)
+ * IMPORTANT: in order for retries to be handled correctly, CdReadSync(0)
  * (blocking) shall be called immediately after starting the read, or
  * CdReadSync(1) (non-blocking) shall be called frequently (e.g. once per
- * frame) until reading has finished.
+ * frame) until reading has finished or an error occurs.
  *
  * @param sectors
  * @param buf
@@ -690,7 +771,7 @@ int CdReadRetry(int sectors, uint32_t *buf, int mode, int attempts);
  *
  * @details Aborts any ongoing read operation that was previously started by
  * calling CdRead() or CdReadRetry(). After aborting, CdReadSync() will return
- * -2 and any callback registered using CdReadCallback() *not* be called.
+ * -2 and any callback registered using CdReadCallback() will *not* be called.
  *
  * NOTE: the CD-ROM controller may take several hundred milliseconds to
  * actually stop reading. CdReadSync() should be used to make sure the drive is
@@ -865,7 +946,7 @@ int CdUnlock(CdlRegionCode region);
  * played if there are no silent gaps between tracks. The CD specification
  * recommends adding a 2-second pregap to each track for this reason.
  *
- * @param toc Pointer to an array of CdlLOC entries
+ * @param toc Pointer to an array of 99 CdlLOC entries
  * @return Number of tracks on the disc, or 0 in case of error
  *
  * @see CdControl()
@@ -1013,19 +1094,11 @@ int CdGetVolumeLabel(char *label);
  * CdOpenDir() and CdLoadSession(). Use this function to retrieve the exact
  * error occurred when any of those functions fail.
  *
- * @return CD-ROM ISO9660 parser error code, as listed below:
+ * @return CD-ROM ISO9660 parser error code (see CdlIsoError)
  *
- * | Value           | Description                                                                                         |
- * | :-------------- | :-------------------------------------------------------------------------------------------------- |
- * | CdlIsoOkay      | File system parser okay.                                                                            |
- * | CdlIsoSeekError | Logical seek error occurred. May occur when attempting to query the filesystem on an audio-only CD. |
- * | CdlIsoReadError | Read error occurred while reading the CD-ROM file system descriptor.                                |
- * | CdlIsoInvalidFs | Disc does not contain a standard ISO9660 file system.                                               |
- * | CdlIsoLidOpen   | Lid is open when attempting to parse the CD-ROM file system.                                        |
- *
- * @see CdSearchFile(), CdOpenDir()
+ * @see CdlIsoError, CdSearchFile(), CdOpenDir()
  */
-int CdIsoError(void);
+CdlIsoError CdIsoError(void);
 
 /**
  * @brief Locates and loads the specified disc session.

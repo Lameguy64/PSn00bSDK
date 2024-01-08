@@ -45,16 +45,24 @@ static void _dma_transfer(const RECT *rect, uint32_t *data, int write) {
 	GPU_GP1 = 0x04000000; // Disable DMA request
 	GPU_GP0 = 0x01000000; // Flush cache
 
-	GPU_GP0 = write ? 0xa0000000 : 0xc0000000;
+	uint32_t dreq_mode, status_mask;
+	if (write) {
+		GPU_GP0     = 0xa0000000; // Begin VRAM write
+		dreq_mode   = 0x04000002; // Enable DMA request, route to GP0
+		status_mask = 1 << 28;
+	} else {
+		GPU_GP0     = 0xc0000000; // Begin VRAM read
+		dreq_mode   = 0x04000003; // Enable DMA request, route to GPU_READ
+		status_mask = 1 << 27;
+	}
+
 	//GPU_GP0 = rect->x | (rect->y << 16);
 	GPU_GP0 = *((const uint32_t *) &(rect->x));
 	//GPU_GP0 = rect->w | (rect->h << 16);
 	GPU_GP0 = *((const uint32_t *) &(rect->w));
+	GPU_GP1 = dreq_mode;
 
-	// Enable DMA request, route to GP0 (2) or from GPU_READ (3)
-	GPU_GP1 = 0x04000002 | (write ^ 1);
-
-	while ((DMA_CHCR(DMA_GPU) & (1 << 24)) || !(GPU_GP1 & (1 << 28)))
+	while ((DMA_CHCR(DMA_GPU) & (1 << 24)) || !(GPU_GP1 & status_mask))
 		__asm__ volatile("");
 
 	DMA_MADR(DMA_GPU) = (uint32_t) data;

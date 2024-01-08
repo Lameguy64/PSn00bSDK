@@ -25,12 +25,12 @@ typedef struct _CdlDIR_INT
 extern volatile int _cd_media_changed;
 
 
-static int		_cd_iso_last_dir_lba;
-static uint8_t	_cd_iso_descriptor_buff[2048];
-static uint8_t	*_cd_iso_pathtable_buff=NULL;
-static uint8_t	*_cd_iso_directory_buff=NULL;
-static int		_cd_iso_directory_len;
-static int		_cd_iso_error=0;
+static int			_cd_iso_last_dir_lba;
+static uint8_t		_cd_iso_descriptor_buff[2048];
+static uint8_t		*_cd_iso_pathtable_buff=NULL;
+static uint8_t		*_cd_iso_directory_buff=NULL;
+static int			_cd_iso_directory_len;
+static CdlIsoError	_cd_iso_error=CdlIsoOkay;
 
 static int _CdReadIsoDescriptor(int session_offs)
 {
@@ -721,7 +721,7 @@ void CdCloseDir(CdlDIR *dir)
 	free( d_dir );
 }
 
-int CdIsoError()
+CdlIsoError CdIsoError()
 {
 	return _cd_iso_error;
 }

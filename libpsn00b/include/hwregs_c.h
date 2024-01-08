@@ -114,9 +114,9 @@
 
 /* Timers */
 
-#define TIMER_VALUE(N)		_MMIO32((IOBASE | 0x1100) + (16 * (N)))
-#define TIMER_CTRL(N)		_MMIO32((IOBASE | 0x1104) + (16 * (N)))
-#define TIMER_RELOAD(N)		_MMIO32((IOBASE | 0x1108) + (16 * (N)))
+#define TIMER_VALUE(N)		_MMIO16((IOBASE | 0x1100) + (16 * (N)))
+#define TIMER_CTRL(N)		_MMIO16((IOBASE | 0x1104) + (16 * (N)))
+#define TIMER_RELOAD(N)		_MMIO16((IOBASE | 0x1108) + (16 * (N)))
 
 /* Memory/bus control */
 

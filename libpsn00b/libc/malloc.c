@@ -224,7 +224,7 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 	}
 
 	// No luck.
-	void *new = malloc(_size);
+	void *new = malloc(size);
 	if (!new)
 		return 0;
 

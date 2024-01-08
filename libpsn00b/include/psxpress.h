@@ -29,20 +29,20 @@
 
 /* Structure definitions */
 
-typedef struct _DECDCTENV {
+typedef struct {
 	uint8_t iq_y[64];	// Luma quantization table, stored in zigzag order
 	uint8_t iq_c[64];	// Chroma quantization table, stored in zigzag order
 	int16_t dct[64];	// Inverse DCT matrix (2.14 fixed-point)
 } DECDCTENV;
 
-typedef struct _VLC_TableV2 {
+typedef struct {
 	uint16_t ac0[2];
 	uint32_t ac2[8], ac3[64];
 	uint16_t ac4[8], ac5[8], ac7[16], ac8[32];
 	uint16_t ac9[32], ac10[32], ac11[32], ac12[32];
 } VLC_TableV2;
 
-typedef struct _VLC_TableV3 {
+typedef struct {
 	uint16_t ac0[2];
 	uint32_t ac2[8], ac3[64];
 	uint16_t ac4[8], ac5[8], ac7[16], ac8[32];
@@ -51,18 +51,18 @@ typedef struct _VLC_TableV3 {
 	uint8_t  _reserved[3];
 } VLC_TableV3;
 
-typedef struct _DECDCTTAB {
+typedef struct {
 	uint32_t ac[8192], ac00[512];
 } DECDCTTAB;
 
-typedef enum _DECDCTMODE {
+typedef enum {
 	DECDCT_MODE_24BPP		= 1,
 	DECDCT_MODE_16BPP		= 0,
 	DECDCT_MODE_16BPP_BIT15	= 2,
 	DECDCT_MODE_RAW			= -1
 } DECDCTMODE;
 
-typedef struct _VLC_Context {
+typedef struct {
 	const uint32_t	*input;
 	uint32_t		window, next_window, remaining;
 	int8_t			is_v3, bit_offset, block_index, coeff_index;
@@ -70,10 +70,6 @@ typedef struct _VLC_Context {
 	int16_t			last_y, last_cr, last_cb;
 } VLC_Context;
 
-// Despite what some docs claim, the "number of 32-byte blocks" and "always
-// 0x3800" fields are actually a single 32-bit field which is copied over to
-// the output buffer, then parsed by DecDCTin() and written to the MDEC0
-// register.
 typedef struct {
 	uint32_t mdec0_header;
 	uint16_t quant_scale;
@@ -179,10 +175,10 @@ void DecDCTinRaw(const uint32_t *data, size_t length);
  * issued only when the MDEC isn't busy.
  *
  * WARNING: DecDCTinSync(0) might time out and return -1 if the MDEC can't
- * output decoded data, e.g. if the length passed DecDCTout() was too small and
- * no callback is registered to set up further transfers. DecDCTinSync(0) shall
- * only be used alongside DMACallback(1) or if the entirety of the decoded
- * stream (usually a whole frame) is being written to main RAM.
+ * output decoded data, e.g. if the length passed to DecDCTout() was too small
+ * and no callback is registered to set up further transfers. DecDCTinSync(0)
+ * shall only be used alongside DMACallback(1) or if the entirety of the
+ * decoded stream (usually a whole frame) is being written to main RAM.
  *
  * @param mode
  * @return 0 or -1 in case of a timeout (mode = 0), MDEC busy flag (mode = 1)
@@ -219,7 +215,8 @@ void DecDCTout(uint32_t *data, size_t length);
  * WARNING: DecDCToutSync(0) might time out and return -1 if the MDEC is unable
  * to consume enough input data in order to produce the desired amount of data.
  * If the input stream isn't contiguous in memory, DMACallback(0) shall be used
- * to register a callback that calls DecDCTin() to feed the MDEC.
+ * to register a callback that calls DecDCTin() or DecDCTinRaw() to feed the
+ * MDEC.
  *
  * @param mode
  * @return 0 or -1 in case of a timeout (mode = 0), DMA busy flag (mode = 1)
@@ -249,7 +246,7 @@ int DecDCToutSync(int mode);
  * first time. Attempting to call this function with the GTE disabled will
  * result in a crash.
  *
- * @param ctx Pointer to VLC_Context structure (which will be initialized)
+ * @param ctx Pointer to new VLC_Context structure
  * @param buf
  * @param max_size Maximum number of 32-bit words to output
  * @param bs
@@ -456,8 +453,8 @@ int DecDCTvlcContinue2(VLC_Context *ctx, uint32_t *buf, size_t max_size);
  * additionally, the maximum output buffer size is not passed as an argument
  * but is instead set by calling DecDCTvlcSize2().
  *
- * This function behaves identically to DecDCTvlcContinue() if bs = 0 and
- * DecDCTvlcStart() otherwise. The table argument can optionally be passed to
+ * This function behaves identically to DecDCTvlcContinue2() if bs = 0 and
+ * DecDCTvlcStart2() otherwise. The table argument can optionally be passed to
  * use a custom lookup table. If zero, the last pointer passed to
  * DecDCTvlcBuild() will be used.
  *

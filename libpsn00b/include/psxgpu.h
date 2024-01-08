@@ -27,7 +27,7 @@
 
 /* Definitions */
 
-typedef enum _GPU_DispFlags {
+typedef enum {
 	DISP_WIDTH_256		= 0,
 	DISP_WIDTH_320		= 1,
 	DISP_WIDTH_512		= 2,
@@ -39,12 +39,12 @@ typedef enum _GPU_DispFlags {
 	DISP_WIDTH_384		= 1 << 6
 } GPU_DispFlags;
 
-typedef enum _GPU_VideoMode {
+typedef enum {
 	MODE_NTSC	= 0,
 	MODE_PAL	= 1
 } GPU_VideoMode;
 
-typedef enum _GPU_DrawOpType {
+typedef enum {
 	DRAWOP_TYPE_DMA		= 1,
 	DRAWOP_TYPE_GPU_IRQ	= 2
 } GPU_DrawOpType;
@@ -273,19 +273,19 @@ typedef enum _GPU_DrawOpType {
 
 /* Primitive structure definitions */
 
-typedef struct _P_TAG_T {
+typedef struct {
 	uint32_t	color:24;
 	uint32_t	code:8;
 } P_TAG_T;
 
-typedef struct _P_TAG {
+typedef struct {
 	uint32_t	addr:24;
 	uint32_t	len:8;
 	uint32_t	color:24;
 	uint32_t	code:8;
 } P_TAG;
 
-typedef struct _P_COLOR {
+typedef struct {
 	uint32_t	color:24;
 	uint32_t	pad:8;
 } P_COLOR;
@@ -293,11 +293,11 @@ typedef struct _P_COLOR {
 // These macros are used to define two variants of each primitive, a regular one
 // and a "tagless" one (_T suffix) without the OT/display list header.
 #define _DEF_PRIM(name, ...) \
-	typedef struct _##name##_T { __VA_ARGS__ } name##_T; \
-	typedef struct _##name { uint32_t tag; __VA_ARGS__ } name;
+	typedef struct { __VA_ARGS__ } name##_T; \
+	typedef struct { uint32_t tag; __VA_ARGS__ } name;
 #define _DEF_ALIAS(name, target) \
-	typedef struct _##target##_T name##_T; \
-	typedef struct _##target name;
+	typedef target##_T name##_T; \
+	typedef target name;
 
 _DEF_PRIM(POLY_F3,
 	uint8_t		r0, g0, b0, code;
@@ -524,23 +524,23 @@ _DEF_PRIM(DR_ENV,
 
 /* Structure definitions */
 
-typedef struct _RECT {
+typedef struct {
 	int16_t x, y, w, h;
 } RECT;
 
-typedef struct _DISPENV_RAW {
+typedef struct {
 	uint32_t	vid_mode;
 	int16_t		vid_xpos, vid_ypos;
 	int16_t		fb_x, fb_y;
 } DISPENV_RAW;
 
-typedef struct _DISPENV {
+typedef struct {
 	RECT		disp, screen;
 	uint8_t		isinter, isrgb24, reverse;
 	uint8_t		_reserved;
 } DISPENV;
 
-typedef struct _DRAWENV {
+typedef struct {
 	RECT		clip;		// Drawing area
 	int16_t		ofs[2];		// GPU draw offset (relative to draw area)
 	RECT		tw;			// Texture window
@@ -552,7 +552,7 @@ typedef struct _DRAWENV {
 	DR_ENV		dr_env;		// GPU primitive cache area (used internally)
 } DRAWENV;
 
-typedef struct _TIM_IMAGE {
+typedef struct {
 	uint32_t	mode;
 	RECT		*crect;
 	uint32_t	*caddr;
@@ -560,7 +560,7 @@ typedef struct _TIM_IMAGE {
 	uint32_t	*paddr;
 } TIM_IMAGE;
 
-typedef struct _GsIMAGE {
+typedef struct {
 	uint32_t	pmode;
 	int16_t		px, py, pw, ph;
 	uint32_t	*pixel;
@@ -615,7 +615,7 @@ int DrawBuffer(const uint32_t *buf, size_t length);
 int DrawBufferIRQ(const uint32_t *buf, size_t length);
 void DrawBuffer2(const uint32_t *buf, size_t length);
 void DrawBufferIRQ2(const uint32_t *buf, size_t length);
-void DrawPrim(const uint32_t *pri);
+void DrawPrim(const void *pri);
 
 void AddPrim(uint32_t *ot, const void *pri);
 

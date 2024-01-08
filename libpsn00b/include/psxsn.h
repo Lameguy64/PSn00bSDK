@@ -11,24 +11,29 @@
  * write access to a directory on the host's filesystem when the executable is
  * running on an emulator or through a debugger that supports the PCDRV
  * protocol, such as Unirom or pcsx-redux. These functions are completely
- * separate and independent from the BIOS file API and do not register any
- * device drivers.
+ * separate and independent from the file APIs provided by the BIOS and do not
+ * register any device drivers.
  *
  * Note that in the official SDK these functions are provided by libsn, while
  * in PSn00bSDK they are part of libpsxapi.
+ *
+ * IMPORTANT: as these function rely on break instructions internally, calling
+ * them on real hardware without a PCDRV handler installed or on an emulator
+ * that does not support the API will result in an uncaught break exception,
+ * which will cause the BIOS to get stuck in an infinite loop.
  */
 
 #pragma once
 
 #include <stddef.h>
 
-typedef enum _PCDRV_OpenMode {
+typedef enum {
 	PCDRV_MODE_READ       = 0,
 	PCDRV_MODE_WRITE      = 1,
 	PCDRV_MODE_READ_WRITE = 2
 } PCDRV_OpenMode;
 
-typedef enum _PCDRV_SeekMode {
+typedef enum {
 	PCDRV_SEEK_SET = 0,
 	PCDRV_SEEK_CUR = 1,
 	PCDRV_SEEK_END = 2

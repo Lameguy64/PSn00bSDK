@@ -108,11 +108,11 @@ void DrawBufferIRQ2(const uint32_t *buf, size_t length) {
 	_send_buffer(DRAWOP_TYPE_GPU_IRQ, buf, length);
 }
 
-void DrawPrim(const uint32_t *pri) {
+void DrawPrim(const void *pri) {
 	_sdk_validate_args_void(pri);
 
 	DrawSync(0);
-	DrawBuffer2(&pri[1], getlen(pri));
+	DrawBuffer2(((const uint32_t *) pri) + 1, getlen(pri));
 }
 
 /* Helper functions */

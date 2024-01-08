@@ -65,17 +65,13 @@ extern uint8_t _end[];
 extern void (*__CTOR_LIST__[])(void);
 extern void (*__DTOR_LIST__[])(void);
 
-extern int main(int argc, const char* argv[]);
+extern int main(int argc, const char **argv);
 
 // Even though _start() usually takes no arguments, this implementation allows
 // parent executables to pass args directly to child executables without having
 // to overwrite the arg strings in kernel RAM.
-void _start_inner(int argc, const char **argv) {
-	//__asm__ volatile("la $gp, _gp;");
-
-	// BSS is always aligned to 4 bytes by the linker script.
-	for (uint32_t *i = (uint32_t *) __bss_start; i < (uint32_t *) _end; i++)
-		*i = 0;
+int _start_inner(int argc, const char **argv) {
+	__builtin_memset(__bss_start, 0, (void *) _end - (void *) __bss_start);
 
 	// Initialize the heap and place it after the executable, assuming 2 MB of
 	// RAM. Note that InitHeap() can be called again in main().
@@ -91,11 +87,12 @@ void _start_inner(int argc, const char **argv) {
 	for (int i = (int) __CTOR_LIST__[0]; i >= 1; i--)
 		__CTOR_LIST__[i]();
 
-	// Store main()'s return value into the kernel return value area (for child
-	// executables).
-	*KERNEL_RETURN_VALUE = main(__argc, __argv);
+	int value = main(argc, argv);
 
 	// Call global destructors (in forward order).
 	for (int i = 0; i < (int) __DTOR_LIST__[0]; i++)
 		__DTOR_LIST__[i + 1]();
+
+	//*KERNEL_RETURN_VALUE = value;
+	return value;
 }

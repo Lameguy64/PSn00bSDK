@@ -229,12 +229,12 @@ _vlc_skip_context_load:
 	srlv  temp, temp, $at
 	subu  value, temp
 .Ldc_cr_positive:
+	sll   value, 2 # last_cr = (last_cr + (value << 2)) & 0x3ff
 	addu  last_cr, value
 	andi  last_cr, 0x3ff
 
 .Ldc_cr_zero:
-	sll   temp, last_cr, 2 # *output = (last_cr << 2) | quant_scale
-	or    temp, quant_scale
+	or    temp, last_cr, quant_scale # *output = last_cr | quant_scale
 	b     .Lupdate_window_dc # update_window(dc_length)
 	sh    temp, 0(output)
 
@@ -259,14 +259,14 @@ _vlc_skip_context_load:
 	srlv  temp, temp, $at
 	subu  value, temp
 .Ldc_cb_positive:
+	sll   value, 2 # last_cb = (last_cb + (value << 2)) & 0x3ff
 	addu  last_cb, value
 	andi  last_cb, 0x3ff
 
 .Ldc_cb_zero:
-	sll   value, last_cb, 2 # *output = (last_cb << 2) | quant_scale
-	or    value, quant_scale
+	or    temp, last_cb, quant_scale # *output = last_cb | quant_scale
 	b     .Lupdate_window_dc # update_window(dc_length)
-	sh    value, 0(output)
+	sh    temp, 0(output)
 
 .Ldc_block_y: # if (block_index < Cb)
 	nop
@@ -293,12 +293,12 @@ _vlc_skip_context_load:
 	srlv  temp, temp, $at
 	subu  value, temp
 .Ldc_y_positive:
+	sll   value, 2 # last_y = (last_y + (value << 2)) & 0x3ff
 	addu  last_y, value
 	andi  last_y, 0x3ff
 
 .Ldc_y_zero:
-	sll   temp, last_y, 2 # *output = (last_y << 2) | quant_scale
-	or    temp, quant_scale
+	or    temp, last_y, quant_scale # *output = last_y | quant_scale
 	b     .Lupdate_window_dc # update_window(dc_length)
 	sh    temp, 0(output)
 
