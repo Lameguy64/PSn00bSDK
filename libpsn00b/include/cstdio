@@ -5,7 +5,9 @@
 
 #pragma once
 
-#include <cstdarg>
+// BUG: some GCC versions (13.2.0, possibly others?) do not ship with cstdarg.
+//#include <cstdarg>
+#include <stdarg.h>
 
 namespace std {
 extern "C" {
