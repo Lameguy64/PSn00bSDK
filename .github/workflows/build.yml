@@ -1,95 +1,54 @@
-# PSn00bSDK GitHub Actions CI script
-# (C) 2021-2023 spicyjpeg - MPL licensed
-
 # The GCC toolchain is stored in the GitHub Actions cache after being built. To
 # minimize build times, all the toolchain build steps are skipped if there is a
-# cached copy of the toolchain that has not expired (even though the build-gcc
-# job still has to run in order to check the cache's contents). The cache is
-# shared between all actions in a repo.
+# cached copy of the toolchain that has not expired. The cache is shared across
+# all actions in a repo.
 
 name: Build PSn00bSDK
 on:   [ push, pull_request ]
-env:
-  BINUTILS_VERSION: '2.41'
-  BINUTILS_OPTIONS: '--disable-docs --disable-nls --disable-werror --with-float=soft'
-  GCC_VERSION:      '13.2.0'
-  GCC_OPTIONS:      '--disable-docs --disable-nls --disable-werror --disable-libada --disable-libssp --disable-libquadmath --disable-threads --disable-libgomp --disable-libstdcxx-pch --disable-hosted-libstdcxx --enable-languages=c,c++ --without-isl --without-headers --with-float=soft --with-gnu-as --with-gnu-ld'
-  GCC_TARGET:       'mipsel-none-elf'
 
 jobs:
-  # This is based on doc/toolchain.md, no surprises here other than the cache.
-  build-gcc:
+  build-toolchain:
     name:    Build GCC toolchain
     runs-on: ubuntu-latest
 
     steps:
     - name: Initialize toolchain cache
-      id:   _cache
+      id:   cache
       uses: actions/cache@v3.3.2
       with:
         enableCrossOsArchive: true
-        key:  gcc-${{ env.GCC_TARGET }}-${{ env.GCC_VERSION }}
-        path: gcc
+        key:                  gcc
+        path:                 gcc
 
     - name: Install prerequisites
-      if:   ${{ steps._cache.outputs.cache-hit != 'true' }}
+      if:   ${{ steps.cache.outputs.cache-hit != 'true' }}
       run: |
         sudo apt-get update -y
         sudo apt-get install -y --no-install-recommends make g++-mingw-w64-x86-64
 
-    - name: Download and extract sources
-      if:   ${{ steps._cache.outputs.cache-hit != 'true' }}
-      run: |
-        wget -q -O binutils.tar.xz https://ftpmirror.gnu.org/gnu/binutils/binutils-${{ env.BINUTILS_VERSION }}.tar.xz
-        wget -q -O gcc.tar.xz https://ftpmirror.gnu.org/gnu/gcc/gcc-${{ env.GCC_VERSION }}/gcc-${{ env.GCC_VERSION }}.tar.xz
-        tar xf binutils.tar.xz
-        tar xf gcc.tar.xz
-        cd gcc-${{ env.GCC_VERSION }}
-        contrib/download_prerequisites
+    - name: Fetch repo contents
+      if:   ${{ steps.cache.outputs.cache-hit != 'true' }}
+      uses: actions/checkout@v4
+      with:
+        path: psn00bsdk
 
-    - name: Build binutils for Linux
-      if:   ${{ steps._cache.outputs.cache-hit != 'true' }}
+    - name: Build toolchain for Linux
+      if:   ${{ steps.cache.outputs.cache-hit != 'true' }}
       run: |
-        mkdir binutils_linux
-        cd binutils_linux
-        ../binutils-${{ env.BINUTILS_VERSION }}/configure --prefix=${{ github.workspace }}/gcc/linux --target=${{ env.GCC_TARGET }} ${{ env.BINUTILS_OPTIONS }}
-        make -j 2
-        make install-strip
-        echo "${{ github.workspace }}/gcc/linux/bin" >>$GITHUB_PATH
+        cd gcc
+        ../psn00bsdk/.github/scripts/build_toolchain.sh gcc-mipsel-none-elf-linux mipsel-none-elf
+        echo "${{ github.workspace }}/gcc/gcc-mipsel-none-elf-linux/bin" >>$GITHUB_PATH
 
-    - name: Build GCC for Linux
-      if:   ${{ steps._cache.outputs.cache-hit != 'true' }}
+    - name: Build toolchain for Windows
+      if:   ${{ steps.cache.outputs.cache-hit != 'true' }}
       run: |
-        mkdir gcc_linux
-        cd gcc_linux
-        ../gcc-${{ env.GCC_VERSION }}/configure --prefix=${{ github.workspace }}/gcc/linux --target=${{ env.GCC_TARGET }} ${{ env.GCC_OPTIONS }}
-        make -j 2
-        make install-strip
+        cd gcc
+        ../psn00bsdk/.github/scripts/build_toolchain.sh gcc-mipsel-none-elf-windows mipsel-none-elf x86_64-w64-mingw32
 
-    - name: Build binutils for Windows
-      if:   ${{ steps._cache.outputs.cache-hit != 'true' }}
-      run: |
-        mkdir binutils_windows
-        cd binutils_windows
-        ../binutils-${{ env.BINUTILS_VERSION }}/configure --prefix=${{ github.workspace }}/gcc/windows --build=x86_64-linux-gnu --host=x86_64-w64-mingw32 --target=${{ env.GCC_TARGET }} ${{ env.BINUTILS_OPTIONS }}
-        make -j 2
-        make install-strip
-
-    - name: Build GCC for Windows
-      if:   ${{ steps._cache.outputs.cache-hit != 'true' }}
-      run: |
-        mkdir gcc_windows
-        cd gcc_windows
-        ../gcc-${{ env.GCC_VERSION }}/configure --prefix=${{ github.workspace }}/gcc/windows --build=x86_64-linux-gnu --host=x86_64-w64-mingw32 --target=${{ env.GCC_TARGET }} ${{ env.GCC_OPTIONS }}
-        make -j 2
-        make install-strip
-
-  # No surprises here either. The GitHub Actions VMs even come with most of the
-  # dependencies required to build PSn00bSDK preinstalled.
-  build-sdk-windows:
+  build-psn00bsdk-windows:
     name:    Build PSn00bSDK on Windows
     runs-on: windows-2022
-    needs:   build-gcc
+    needs:   build-toolchain
 
     steps:
     - name: Add MSys2 to PATH
@@ -101,8 +60,8 @@ jobs:
       uses: actions/cache@v3.3.2
       with:
         enableCrossOsArchive: true
-        key:  gcc-${{ env.GCC_TARGET }}-${{ env.GCC_VERSION }}
-        path: gcc
+        key:                  gcc
+        path:                 gcc
 
     - name: Install prerequisites
       run: |
@@ -111,36 +70,35 @@ jobs:
     - name: Fetch repo contents
       uses: actions/checkout@v4
       with:
-        path:       sdk
+        path:       psn00bsdk
         submodules: recursive
 
     - name: Build and package PSn00bSDK
       run: |
-        cmake --preset ci -S sdk -G "Visual Studio 17 2022" -DPSN00BSDK_TC=${{ github.workspace }}\gcc\windows
+        cmake --preset ci -S psn00bsdk -G "Visual Studio 17 2022" -DPSN00BSDK_TC=${{ github.workspace }}\gcc\gcc-mipsel-none-elf-windows
         cmake --build build
-        cmake --build build -t package
+        cmake --install build
+        cd dist
+        zip -9 -r ../psn00bsdk-windows-${{ github.ref_name }}.zip .
 
-      # The GitHub Actions UI doesn't allow downloading individual files from
-      # an artifact, so it's best to upload each package type as a separate
-      # artifact.
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: psn00bsdk-windows
-        path: build/packages/*.zip
+        path: psn00bsdk-windows-${{ github.ref_name }}.zip
 
-  build-sdk-linux:
+  build-psn00bsdk-linux:
     name:    Build PSn00bSDK on Linux
     runs-on: ubuntu-latest
-    needs:   build-gcc
+    needs:   build-toolchain
 
     steps:
     - name: Initialize toolchain cache
       uses: actions/cache@v3.3.2
       with:
         enableCrossOsArchive: true
-        key:  gcc-${{ env.GCC_TARGET }}-${{ env.GCC_VERSION }}
-        path: gcc
+        key:                  gcc
+        path:                 gcc
 
     - name: Install prerequisites
       run: |
@@ -150,27 +108,29 @@ jobs:
     - name: Fetch repo contents
       uses: actions/checkout@v4
       with:
-        path:       sdk
+        path:       psn00bsdk
         submodules: recursive
 
     - name: Build and package PSn00bSDK
       run: |
-        cmake --preset ci -S sdk -G "Ninja" -DPSN00BSDK_TC=${{ github.workspace }}/gcc/linux
+        cmake --preset ci -S psn00bsdk -G "Ninja" -DPSN00BSDK_TC=${{ github.workspace }}/gcc/gcc-mipsel-none-elf-linux
         cmake --build build
-        cmake --build build -t package
+        cmake --install build
+        cd dist
+        zip -9 -r ../psn00bsdk-linux-${{ github.ref_name }}.zip .
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: psn00bsdk-linux
-        path: build/packages/*.zip
+        path: psn00bsdk-linux-${{ github.ref_name }}.zip
 
   # This job takes care of creating a new release and upload the build
   # artifacts if the last commit is associated to a tag.
   create-release:
     name:    Create release
     runs-on: ubuntu-latest
-    needs:   [ build-sdk-windows, build-sdk-linux ]
+    needs:   [ build-psn00bsdk-windows, build-psn00bsdk-linux ]
 
     steps:
     - name: Initialize toolchain cache
@@ -178,27 +138,19 @@ jobs:
       uses: actions/cache@v3.3.2
       with:
         enableCrossOsArchive: true
-        key:  gcc-${{ env.GCC_TARGET }}-${{ env.GCC_VERSION }}
-        path: gcc
-
-    - name: Package GCC toolchains
-      if:   ${{ github.ref_type == 'tag' }}
-      run: |
-        cd gcc/windows
-        zip -9 -q -r ../../gcc-${{ env.GCC_TARGET }}-${{ env.GCC_VERSION }}-windows.zip .
-        cd ../linux
-        zip -9 -q -r ../../gcc-${{ env.GCC_TARGET }}-${{ env.GCC_VERSION }}-linux.zip .
+        key:                  gcc
+        path:                 gcc
 
     - name: Fetch repo contents
       if:   ${{ github.ref_type == 'tag' }}
       uses: actions/checkout@v4
       with:
-        path: sdk
+        path: psn00bsdk
 
     - name: Generate release notes
       if:   ${{ github.ref_type == 'tag' }}
       run: |
-        python3 sdk/.github/scripts/generate_release_notes.py -v ${{ github.ref_name }} -o release.md sdk/CHANGELOG.md
+        python3 psn00bsdk/.github/scripts/generate_release_notes.py -v ${{ github.ref_name }} -o release.md psn00bsdk/CHANGELOG.md
 
     - name: Fetch build artifacts
       if:   ${{ github.ref_type == 'tag' }}
@@ -213,6 +165,6 @@ jobs:
         #fail_on_unmatched_files: true
         body_path: release.md
         files: |
-          *.zip
-          psn00bsdk-windows/*
-          psn00bsdk-linux/*
+          gcc/*.zip
+          psn00bsdk-windows/*.zip
+          psn00bsdk-linux/*.zip

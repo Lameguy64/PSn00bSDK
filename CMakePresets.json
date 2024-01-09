@@ -19,13 +19,11 @@
 		{
 			"name":        "package",
 			"displayName": "Installer package",
-			"description": "Use this preset to build installer packages via CPack.",
+			"description": "Use this preset to build installer packages.",
 			"inherits":    "default",
 			"cacheVariables": {
 				"CMAKE_BUILD_TYPE": "Release",
-				"SKIP_EXAMPLES":    "ON",
-				"BUNDLE_TOOLCHAIN": "ON",
-				"BUNDLE_NINJA":     "ON"
+				"SKIP_EXAMPLES":    "ON"
 			}
 		},
 		{
@@ -34,10 +32,9 @@
 			"description": "This preset is used by GitHub Actions to build PSn00bSDK.",
 			"inherits":    "default",
 			"binaryDir":   "${sourceDir}/../build",
+			"installDir":  "${sourceDir}/../dist",
 			"cacheVariables": {
 				"CMAKE_BUILD_TYPE":     "Release",
-				"BUNDLE_TOOLCHAIN":     "ON",
-				"BUNDLE_NINJA":         "ON",
 				"LIBPSN00B_GENERATOR":  "Ninja",
 				"PSN00BSDK_TARGET":     "$env{GCC_TARGET}",
 				"PSN00BSDK_GIT_TAG":    "$env{GITHUB_REF_NAME}",

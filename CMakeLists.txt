@@ -199,7 +199,3 @@ install(
 	DESTINATION ${CMAKE_INSTALL_DATADIR}/psn00bsdk
 	COMPONENT   examples
 )
-
-## CPack configuration
-
-include(cpack/setup.cmake)
