@@ -7,16 +7,42 @@
 	},
 	"configurePresets": [
 		{
-			"name":          "default",
-			"displayName":   "Default configuration",
-			"description":   "Use this preset to build the project using PSn00bSDK.",
+			"name":          "debug",
+			"displayName":   "Debug build",
+			"description":   "Build the project with no optimization and assertions enabled.",
 			"generator":     "Ninja",
 			"toolchainFile": "$env{PSN00BSDK_LIBS}/cmake/sdk.cmake",
 			"binaryDir":     "${sourceDir}/build",
 			"cacheVariables": {
-				"CMAKE_BUILD_TYPE": "Debug",
-				"PSN00BSDK_TC":     "",
-				"PSN00BSDK_TARGET": "mipsel-none-elf"
+				"CMAKE_BUILD_TYPE": "Debug"
+			},
+			"warnings": {
+				"dev": false
+			}
+		},
+		{
+			"name":          "release",
+			"displayName":   "Release build",
+			"description":   "Build the project with performance optimization and assertions stripped.",
+			"generator":     "Ninja",
+			"toolchainFile": "$env{PSN00BSDK_LIBS}/cmake/sdk.cmake",
+			"binaryDir":     "${sourceDir}/build",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Release"
+			},
+			"warnings": {
+				"dev": false
+			}
+		},
+		{
+			"name":          "min-size-release",
+			"displayName":   "Minimum size release build",
+			"description":   "Build the project with size optimization and assertions stripped.",
+			"generator":     "Ninja",
+			"toolchainFile": "$env{PSN00BSDK_LIBS}/cmake/sdk.cmake",
+			"binaryDir":     "${sourceDir}/build",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "MinSizeRel"
 			},
 			"warnings": {
 				"dev": false

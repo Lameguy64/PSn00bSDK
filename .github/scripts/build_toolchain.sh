@@ -6,12 +6,12 @@ GCC_VERSION="13.2.0"
 NUM_JOBS="4"
 
 if [ $# -eq 2 ]; then
-	TARGET_NAME="$1"
-	PACKAGE_NAME="$2"
+	PACKAGE_NAME="$1"
+	TARGET_NAME="$2"
 	BUILD_OPTIONS=""
 elif [ $# -eq 3 ]; then
-	TARGET_NAME="$1"
-	PACKAGE_NAME="$2"
+	PACKAGE_NAME="$1"
+	TARGET_NAME="$2"
 	BUILD_OPTIONS="--build=x86_64-linux-gnu --host=$3"
 else
 	echo "Usage: $0 <package name> <target triplet> [host triplet]"

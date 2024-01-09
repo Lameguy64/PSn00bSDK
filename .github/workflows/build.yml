@@ -17,8 +17,8 @@ jobs:
       uses: actions/cache@v3.3.2
       with:
         enableCrossOsArchive: true
-        key:                  gcc
-        path:                 gcc
+        key:                  toolchain
+        path:                 gcc-mipsel-none-elf-*
 
     - name: Install prerequisites
       if:   ${{ steps.cache.outputs.cache-hit != 'true' }}
@@ -35,15 +35,13 @@ jobs:
     - name: Build toolchain for Linux
       if:   ${{ steps.cache.outputs.cache-hit != 'true' }}
       run: |
-        cd gcc
-        ../psn00bsdk/.github/scripts/build_toolchain.sh gcc-mipsel-none-elf-linux mipsel-none-elf
-        echo "${{ github.workspace }}/gcc/gcc-mipsel-none-elf-linux/bin" >>$GITHUB_PATH
+        psn00bsdk/.github/scripts/build_toolchain.sh gcc-mipsel-none-elf-linux mipsel-none-elf
+        echo "${{ github.workspace }}/gcc-mipsel-none-elf-linux/bin" >>$GITHUB_PATH
 
     - name: Build toolchain for Windows
       if:   ${{ steps.cache.outputs.cache-hit != 'true' }}
       run: |
-        cd gcc
-        ../psn00bsdk/.github/scripts/build_toolchain.sh gcc-mipsel-none-elf-windows mipsel-none-elf x86_64-w64-mingw32
+        psn00bsdk/.github/scripts/build_toolchain.sh gcc-mipsel-none-elf-windows mipsel-none-elf x86_64-w64-mingw32
 
   build-psn00bsdk-windows:
     name:    Build PSn00bSDK on Windows
@@ -60,12 +58,12 @@ jobs:
       uses: actions/cache@v3.3.2
       with:
         enableCrossOsArchive: true
-        key:                  gcc
-        path:                 gcc
+        key:                  toolchain
+        path:                 gcc-mipsel-none-elf-*
 
     - name: Install prerequisites
       run: |
-        pacman -S --noconfirm mingw-w64-x86_64-ninja
+        pacman -S --noconfirm zip mingw-w64-x86_64-ninja
 
     - name: Fetch repo contents
       uses: actions/checkout@v4
@@ -75,7 +73,7 @@ jobs:
 
     - name: Build and package PSn00bSDK
       run: |
-        cmake --preset ci -S psn00bsdk -G "Visual Studio 17 2022" -DPSN00BSDK_TC=${{ github.workspace }}\gcc\gcc-mipsel-none-elf-windows
+        cmake --preset ci -S psn00bsdk -G "Visual Studio 17 2022" -DPSN00BSDK_TC=${{ github.workspace }}\gcc-mipsel-none-elf-windows
         cmake --build build
         cmake --install build
         cd dist
@@ -97,13 +95,13 @@ jobs:
       uses: actions/cache@v3.3.2
       with:
         enableCrossOsArchive: true
-        key:                  gcc
-        path:                 gcc
+        key:                  toolchain
+        path:                 gcc-mipsel-none-elf-*
 
     - name: Install prerequisites
       run: |
         sudo apt-get update -y
-        sudo apt-get install -y --no-install-recommends ninja-build
+        sudo apt-get install -y --no-install-recommends zip ninja-build
 
     - name: Fetch repo contents
       uses: actions/checkout@v4
@@ -113,7 +111,7 @@ jobs:
 
     - name: Build and package PSn00bSDK
       run: |
-        cmake --preset ci -S psn00bsdk -G "Ninja" -DPSN00BSDK_TC=${{ github.workspace }}/gcc/gcc-mipsel-none-elf-linux
+        cmake --preset ci -S psn00bsdk -G "Ninja" -DPSN00BSDK_TC=${{ github.workspace }}/gcc-mipsel-none-elf-linux
         cmake --build build
         cmake --install build
         cd dist
@@ -138,8 +136,8 @@ jobs:
       uses: actions/cache@v3.3.2
       with:
         enableCrossOsArchive: true
-        key:                  gcc
-        path:                 gcc
+        key:                  toolchain
+        path:                 gcc-mipsel-none-elf-*
 
     - name: Fetch repo contents
       if:   ${{ github.ref_type == 'tag' }}
@@ -165,6 +163,6 @@ jobs:
         #fail_on_unmatched_files: true
         body_path: release.md
         files: |
-          gcc/*.zip
+          gcc-mipsel-none-elf-*.zip
           psn00bsdk-windows/*.zip
           psn00bsdk-linux/*.zip
