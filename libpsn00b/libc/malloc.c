@@ -85,10 +85,8 @@ static BlockHeader *_find_fit(BlockHeader *head, size_t size) {
 	for (; prev; prev = prev->next) {
 		if (prev->next) {
 			uintptr_t next_bot = (uintptr_t) prev->next;
-			printf("[FindFit] Bottom of next block: %p\n", (void*)next_bot);
 			next_bot          -= (uintptr_t) prev->ptr + prev->size;
-			printf("[FindFit] Offset to free block: %p\n", (void*)prev->ptr + prev->size);
-			printf("[FindFit] Size of free block: %p\n", next_bot);
+
 			if (next_bot >= size)
 				return prev;
 		}
