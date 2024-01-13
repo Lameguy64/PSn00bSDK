@@ -199,7 +199,7 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 	// New memory block shorter?
 	if (prev->size >= _size) {
 		TrackHeapUsage(size - prev->size);
-		prev->size = _size;
+		prev->size = _size - sizeof(BlockHeader);
 
 		if (!prev->next)
 			sbrk((ptr - sbrk(0)) + _size);
@@ -214,14 +214,14 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 			return 0;
 
 		TrackHeapUsage(size - prev->size);
-		prev->size = _size;
+		prev->size = _size - sizeof(BlockHeader);
 		return ptr;
 	}
 
 	// Do we have free memory after it?
 	if (((prev->next)->ptr - ptr) > _size) {
 		TrackHeapUsage(size - prev->size);
-		prev->size = _size;
+		prev->size = _size - sizeof(BlockHeader);
 		return ptr;
 	}
 
