@@ -219,9 +219,8 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
   }
 
   // Do we have free memory after it?
-  if (((prev->next)->ptr - ptr - sizeof(BlockHeader)) >
-      _size - sizeof(BlockHeader)) {
-    TrackHeapUsage(size - prev->size);
+  if (((prev->next)->ptr - sizeof(BlockHeader) - ptr) > _size_nh) {
+    TrackHeapUsage(_size_nh - prev->size);
     prev->size = _size_nh;
     return ptr;
   }
@@ -250,10 +249,10 @@ __attribute__((weak)) void free(void *ptr) {
       _alloc_head->prev = 0;
     } else {
       _alloc_tail = 0;
-      sbrk(-size);
+      sbrk(-size - sizeof(BlockHeader));
     }
 
-    TrackHeapUsage(-(_alloc_head->size));
+    TrackHeapUsage(-(_alloc_head->size) - sizeof(BlockHeader));
     return;
   }
 
@@ -271,12 +270,12 @@ __attribute__((weak)) void free(void *ptr) {
   } else {
     // At the end, shrink heap
     void *top = sbrk(0);
-    size_t size = (top - (cur->prev)->ptr) - (cur->prev)->size;
+    size_t size = (top - (cur->prev)->ptr) + (cur->prev)->size;
     _alloc_tail = cur->prev;
 
     sbrk(-size);
   }
 
-  TrackHeapUsage(-(cur->size));
+  TrackHeapUsage(-(cur->size) - sizeof(BlockHeader));
   (cur->prev)->next = cur->next;
 }
