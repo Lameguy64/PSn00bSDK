@@ -201,8 +201,11 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
     TrackHeapUsage(_size_nh - prev->size);
     prev->size = _size_nh;
 
-    if (!prev->next)
+    // This is the last block, move the break back to accomodate shrinking
+    if (!prev->next) {
+      // We have overriden prev->size, need to calculate it from break
       sbrk((ptr - sbrk(0)) + _size_nh);
+    }
 
     return ptr;
   }
@@ -219,7 +222,7 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
   }
 
   // Do we have free memory after it?
-  if (((prev->next)->ptr - sizeof(BlockHeader) - ptr) > _size_nh) {
+  if (((prev->next)->ptr - sizeof(BlockHeader) - ptr) >= _size_nh) {
     TrackHeapUsage(_size_nh - prev->size);
     prev->size = _size_nh;
     return ptr;
