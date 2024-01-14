@@ -244,18 +244,17 @@ __attribute__((weak)) void free(void *ptr) {
 
   // First block; bumping head ahead.
   if (ptr == _alloc_head->ptr) {
-    size_t size = _alloc_head->size;
-    size += (uintptr_t)_alloc_head->ptr - (uintptr_t)_alloc_head;
+    size_t size = _alloc_head->size + sizeof(BlockHeader);
     _alloc_head = _alloc_head->next;
 
     if (_alloc_head) {
       _alloc_head->prev = 0;
     } else {
       _alloc_tail = 0;
-      sbrk(-size - sizeof(BlockHeader));
+      sbrk(-size);
     }
 
-    TrackHeapUsage(-(_alloc_head->size) - sizeof(BlockHeader));
+    TrackHeapUsage(-size);
     return;
   }
 
@@ -267,9 +266,11 @@ __attribute__((weak)) void free(void *ptr) {
       return;
   }
 
+  size_t heap_change;
   if (cur->next) {
     // In the middle, just unlink it
     (cur->next)->prev = cur->prev;
+	heap_change = -(cur->size) - sizeof(BlockHeader);
   } else {
     // At the end, shrink heap
     void *top = sbrk(0);
@@ -277,8 +278,9 @@ __attribute__((weak)) void free(void *ptr) {
     _alloc_tail = cur->prev;
 
     sbrk(-size);
+	heap_change = -size;
   }
 
-  TrackHeapUsage(-(cur->size) - sizeof(BlockHeader));
+  TrackHeapUsage(heap_change);
   (cur->prev)->next = cur->next;
 }
