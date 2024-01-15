@@ -90,7 +90,7 @@ static BlockHeader *_find_fit(BlockHeader *head, size_t size) {
       uintptr_t next_bot = (uintptr_t)prev->next;
       printf("[FindFit] next_bot: %x\n", next_bot);
       next_bot -= (uintptr_t)prev->ptr + prev->size;
-      printf("[FindFit] offset: %p, next_bot: %x\n", prev->ptr + prev->size,
+      printf("[FindFit] ptr: %p, size: %x, offset: %p, next_bot: %x\n", prev->ptr, prev->size, prev->ptr + prev->size,
              next_bot);
       if (next_bot >= size)
         return prev;
