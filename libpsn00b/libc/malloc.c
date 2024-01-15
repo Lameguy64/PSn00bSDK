@@ -15,6 +15,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #define _align(x, n) (((x) + ((n)-1)) & ~((n)-1))
@@ -81,12 +82,14 @@ __attribute__((weak)) void GetHeapUsage(HeapUsage *usage) {
 
 static BlockHeader *_find_fit(BlockHeader *head, size_t size) {
   BlockHeader *prev = head;
-
+  printf("[FindFit] size: %d\n", size);
   for (; prev; prev = prev->next) {
     if (prev->next) {
       uintptr_t next_bot = (uintptr_t)prev->next;
+      printf("[FindFit] next_bot: %d\n", next_bot);
       next_bot -= (uintptr_t)prev->ptr + prev->size;
-
+      printf("[FindFit] offset: %p, next_bot: %d\n", prev->ptr + prev->size,
+             next_bot);
       if (next_bot >= size)
         return prev;
     }
@@ -198,24 +201,26 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 
   // New memory block shorter?
   if (prev->size >= _size_nh) {
+    printf("[Realloc] new size shorter: %d >= %d\n", prev->size, _size_nh);
     TrackHeapUsage(_size_nh - prev->size);
     prev->size = _size_nh;
 
     // This is the last block, move the break back to accomodate shrinking
     if (!prev->next) {
       // We have overriden prev->size, need to calculate it from break
-      sbrk((ptr - sbrk(0)) + _size_nh);
+      void *new_break = sbrk((ptr - sbrk(0)) + _size_nh);
+      printf("[Realloc] last block, shrink break: %p\n", new_break);
     }
-
     return ptr;
   }
 
   // New memory block larger; is it the last one?
   if (!prev->next) {
+    printf("[Realloc] new block larger\n");
     void *new = sbrk(_size_nh - prev->size);
     if (!new)
       return 0;
-
+    printf("[Realloc] new break: %d => %p\n", _size_nh - prev->size, new);
     TrackHeapUsage(_size_nh - prev->size);
     prev->size = _size_nh;
     return ptr;
@@ -223,6 +228,10 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 
   // Do we have free memory after it?
   if (((prev->next)->ptr - sizeof(BlockHeader) - ptr) >= _size_nh) {
+	printf("[Realloc] free mem after: %d >= %d\n",
+		(prev->next)->ptr - sizeof(BlockHeader) - ptr,
+		_size_nh
+	);
     TrackHeapUsage(_size_nh - prev->size);
     prev->size = _size_nh;
     return ptr;
@@ -232,7 +241,7 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
   void *new = malloc(size);
   if (!new)
     return 0;
-
+  printf("[Realloc] new malloc addr: %p\n", new);
   __builtin_memcpy(new, ptr, prev->size);
   free(ptr);
   return new;
@@ -270,7 +279,7 @@ __attribute__((weak)) void free(void *ptr) {
   if (cur->next) {
     // In the middle, just unlink it
     (cur->next)->prev = cur->prev;
-	heap_change = -(cur->size) - sizeof(BlockHeader);
+    heap_change = -(cur->size) - sizeof(BlockHeader);
   } else {
     // At the end, shrink heap
     void *top = sbrk(0);
@@ -278,7 +287,7 @@ __attribute__((weak)) void free(void *ptr) {
     _alloc_tail = cur->prev;
 
     sbrk(-size);
-	heap_change = -size;
+    heap_change = -size;
   }
 
   TrackHeapUsage(heap_change);
