@@ -289,12 +289,10 @@ __attribute__((weak)) void free(void *ptr) {
   }
   printf("[Free] found: %p\n", cur);
 
-  size_t heap_change;
   if (cur->next) {
     // In the middle, just unlink it
     printf("[Free] has next, setting next->prev to cur->prev: %p\n", cur->prev);
     (cur->next)->prev = cur->prev;
-    heap_change = -(cur->size) - sizeof(BlockHeader);
   } else {
     // At the end, shrink heap
     printf("[Free] at end of heap\n");
@@ -306,10 +304,9 @@ __attribute__((weak)) void free(void *ptr) {
     printf("[Free] new tail: %p\n", _alloc_tail);
 
     sbrk(-size);
-    heap_change = -size;
   }
   printf("[Free] heap_change: 0x%x\n", heap_change);
-  TrackHeapUsage(heap_change);
+  TrackHeapUsage(-(cur->size) - sizeof(BlockHeader));
   (cur->prev)->next = cur->next;
   printf("[Free] cur->prev->next: %p\n", (cur->prev)->next);
   printf("[Free] setting prev->next to cur->next: %p\n", cur->next);
