@@ -305,7 +305,7 @@ __attribute__((weak)) void free(void *ptr) {
 
     sbrk(-size);
   }
-  printf("[Free] heap_change: 0x%x\n", heap_change);
+  printf("[Free] heap_change: 0x%x\n", -(cur->size) - sizeof(BlockHeader));
   TrackHeapUsage(-(cur->size) - sizeof(BlockHeader));
   (cur->prev)->next = cur->next;
   printf("[Free] cur->prev->next: %p\n", (cur->prev)->next);
