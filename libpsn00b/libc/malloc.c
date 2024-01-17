@@ -263,7 +263,8 @@ __attribute__((weak)) void free(void *ptr) {
   // First block; bumping head ahead.
   if (ptr == _alloc_head->ptr) {
     printf("[Free] first block, bump head forward\n");
-    size_t size = _alloc_head->size + sizeof(BlockHeader);
+    size_t size = _alloc_head->size; // + sizeof(BlockHeader);
+    size += (uintptr_t)_alloc_head->ptr - (uintptr_t)_alloc_head;
     printf("[Free] size: 0x%x\n", size);
     _alloc_head = _alloc_head->next;
     printf("[Free] new head: %p\n", _alloc_head);
@@ -273,10 +274,10 @@ __attribute__((weak)) void free(void *ptr) {
     } else {
       printf("[Free] No new head exists, nulling tail\n");
       _alloc_tail = 0;
-      sbrk(-size);
+      sbrk(-size - sizeof(BlockHeader));
     }
 
-    TrackHeapUsage(-size);
+    TrackHeapUsage(-(_alloc_head->size) - sizeof(BlockHeader));
     return;
   }
 
@@ -301,8 +302,8 @@ __attribute__((weak)) void free(void *ptr) {
     size_t size = (top - (cur->prev)->ptr) + (cur->prev)->size;
     printf("[Free] size: 0x%x\n", size);
     _alloc_tail = cur->prev;
-    printf("[Free] new tail: %p\n", _alloc_tail);
 
+    printf("[Free] new tail: %p\n", _alloc_tail);
     sbrk(-size);
   }
   printf("[Free] heap_change: 0x%x\n", -(cur->size) - sizeof(BlockHeader));
