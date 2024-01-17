@@ -273,7 +273,7 @@ __attribute__((weak)) void free(void *ptr) {
     } else {
       printf("[Free] No new head exists, nulling tail\n");
       _alloc_tail = 0;
-      // sbrk(-size);
+      sbrk(-size);
     }
 
     TrackHeapUsage(-size);
