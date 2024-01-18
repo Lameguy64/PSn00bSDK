@@ -157,10 +157,10 @@ __attribute__((weak)) void *malloc(size_t size) {
   // No luck at the beginning of the heap, let's walk the heap to find a fit.
   BlockHeader *prev = _find_fit(_alloc_head, _size);
   if (prev) {
-    BlockHeader *new = (BlockHeader *)((uintptr_t)prev->ptr + prev->size);
+    BlockHeader* new = (BlockHeader *)((uintptr_t)prev->ptr + prev->size);
     printf("[Malloc] found fit: %p\n", new);
 
-    void *ptr = (void *)&new[1];
+    void *ptr = (void *)(new + sizeof(BlockHeader));
     new->ptr = ptr;
     new->size = _size_nh;
     new->prev = prev;
@@ -176,11 +176,11 @@ __attribute__((weak)) void *malloc(size_t size) {
   }
 
   // Time to extend the size of the heap.
-  BlockHeader *new = (BlockHeader *)sbrk(_size);
+  BlockHeader* new = (BlockHeader *)sbrk(_size);
   if (!new)
     return 0;
   printf("[Malloc] extended heap: %p\n", new);
-  void *ptr = (void *)&new[1];
+  void *ptr = (void *)(new + sizeof(BlockHeader));
   new->ptr = ptr;
   new->size = _size_nh;
   new->prev = _alloc_tail;
