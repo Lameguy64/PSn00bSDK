@@ -286,6 +286,7 @@ __attribute__((weak)) void free(void *ptr) {
   BlockHeader *cur = _alloc_head;
   printf("[Free] find block, base: %p\n", cur);
   for (cur = _alloc_head; ptr != cur->ptr; cur = cur->next) {
+  printf("[Free] cur: %p cur->next: %p\n", cur, cur->next);
     if (!cur->next)
       return;
   }
@@ -293,7 +294,7 @@ __attribute__((weak)) void free(void *ptr) {
 
   if (cur->next) {
     // In the middle, just unlink it
-    printf("[Free] has next, setting next->prev to cur->prev: %p\n", cur->prev);
+    printf("[Free] has next %p, setting cur->next->prev to cur->prev: %p\n", cur->next, cur->prev);
     (cur->next)->prev = cur->prev;
   } else {
     // At the end, shrink heap
