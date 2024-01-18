@@ -40,7 +40,9 @@ static BlockHeader *_alloc_head, *_alloc_tail;
 
 __attribute__((weak)) void InitHeap(void *addr, size_t size) {
   _heap_start = addr;
+  printf("[Init] heap start %p\n", _heap_start);
   _heap_end = addr;
+  printf("[Init] heap end %p\n", _heap_end);
   _heap_limit = (void *)((uintptr_t)addr + size);
 
   _heap_alloc = 0;
@@ -52,7 +54,9 @@ __attribute__((weak)) void InitHeap(void *addr, size_t size) {
 }
 
 __attribute__((weak)) void *sbrk(ptrdiff_t incr) {
+  printf("[Sbrk] Increment: 0x%x\n", incr);
   void *old_end = _heap_end;
+  printf("[Sbrk] old end: %p\n", old_end);
   void *new_end = (void *)_align((uintptr_t)old_end + incr, 8);
   printf("[Sbrk] literal shift %p, aligned shift %p\n", old_end + incr,
          new_end);
