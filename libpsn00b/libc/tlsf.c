@@ -7,6 +7,8 @@
 
 #include "tlsf.h"
 
+#define TLSF_64BIT
+
 #if defined(__cplusplus)
 #define tlsf_decl inline
 #else
@@ -219,7 +221,7 @@ enum tlsf_private
 	ALIGN_SIZE_LOG2 = 3,
 #else
 	/* All allocation sizes and addresses are aligned to 4 bytes. */
-	ALIGN_SIZE_LOG2 = 3,
+	ALIGN_SIZE_LOG2 = 2,
 #endif
 	ALIGN_SIZE = (1 << ALIGN_SIZE_LOG2),
 
