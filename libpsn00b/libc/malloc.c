@@ -1,5 +1,9 @@
 #include "tlsf.h"
 
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+
 typedef struct _BlockHeader {
     struct _BlockHeader	*prev, *next;
     void				*ptr;
