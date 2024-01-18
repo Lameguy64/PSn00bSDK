@@ -22,7 +22,7 @@
 
 /* Private types */
 
-typedef struct _BlockHeader {
+typedef struct __attribute__((aligned (8))) _BlockHeader {
   struct _BlockHeader *prev, *next;
   void *ptr;
   size_t size;
