@@ -90,8 +90,13 @@ static BlockHeader *_find_fit(BlockHeader *head, size_t size) {
       uintptr_t next_bot = (uintptr_t)prev->next;
       printf("[FindFit] next_bot: %p\n", (void *)next_bot);
       next_bot -= (uintptr_t)prev->ptr + prev->size;
-      printf("[FindFit] ptr: %p, size: 0x%x, offset: %p, next_bot: %p\n",
-             prev->ptr, prev->size, prev->ptr + prev->size, (void *)next_bot);
+      printf(
+        "[FindFit] ptr: %p, size: 0x%x, offset: %p, next_bot: %p\n",
+        prev->ptr,
+        prev->size,
+        prev->ptr + prev->size,
+        (void *)next_bot
+      );
       if (next_bot >= size) {
         printf("[FindFit] found %p\n", prev);
         return prev;
@@ -118,8 +123,9 @@ __attribute__((weak)) void *malloc(size_t size) {
     BlockHeader *new = (BlockHeader *)sbrk(_size);
     if (!new)
       return 0;
-
+    printf("[Malloc] new: %p\n, new);
     void *ptr = (void *)(new + sizeof(BlockHeader));
+    printf("[Malloc] ptr: %p\n", ptr);
     new->ptr = ptr;
     new->size = _size_nh;
     new->prev = 0;
@@ -139,8 +145,10 @@ __attribute__((weak)) void *malloc(size_t size) {
     printf("[Malloc] bottom heap shifted: %p < %p\n", _alloc_start + _size,
            _alloc_head);
     BlockHeader *new = (BlockHeader *)_alloc_start;
+    printf("[Malloc] new: %p\n", new);
 
     void *ptr = (void *)(new + sizeof(BlockHeader));
+    printf("[Malloc] ptr: %p\n", ptr);
     new->ptr = ptr;
     new->size = _size_nh;
     new->prev = 0;
@@ -161,6 +169,7 @@ __attribute__((weak)) void *malloc(size_t size) {
     printf("[Malloc] found fit: %p\n", new);
 
     void *ptr = (void *)(new + sizeof(BlockHeader));
+    printf("[Malloc] ptr: %p\n", ptr);
     new->ptr = ptr;
     new->size = _size_nh;
     new->prev = prev;
@@ -181,13 +190,14 @@ __attribute__((weak)) void *malloc(size_t size) {
     return 0;
   printf("[Malloc] extended heap: %p\n", new);
   void *ptr = (void *)(new + sizeof(BlockHeader));
+  printf("[Malloc] ptr: %p\n", ptr);
   new->ptr = ptr;
   new->size = _size_nh;
   new->prev = _alloc_tail;
   new->next = 0;
 
   _alloc_tail->next = new;
-  printf("[Malloc] extend, _alloc_tail->next: %p\n", _alloc_tail->next);
+  printf("[Malloc] extend _alloc_tail->next: %p\n", _alloc_tail->next);
   _alloc_tail = new;
 
   TrackHeapUsage(_size);
