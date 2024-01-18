@@ -132,7 +132,9 @@ __attribute__((weak)) void *malloc(size_t size) {
     new->next = 0;
 
     _alloc_head = new;
+    printf("[Malloc] _alloc_head: %p\n", _alloc_head);
     _alloc_tail = new;
+    printf("[Malloc] _alloc_tail: %p\n", _alloc_tail);
 
     TrackHeapUsage(_size);
     return ptr;
@@ -154,9 +156,11 @@ __attribute__((weak)) void *malloc(size_t size) {
     new->prev = 0;
     new->next = _alloc_head;
     printf("[Malloc] new->next: %p\n", new->next);
-
     _alloc_head->prev = new;
+    printf("[Malloc] _alloc_head->prev: %p\n", new);
     _alloc_head = new;
+    printf("[Malloc] _alloc_head: %p\n", new);
+    printf("[Malloc] Unset here, _alloc_tail: %p\n", _alloc_tail);
 
     TrackHeapUsage(_size);
     return ptr;
@@ -197,8 +201,10 @@ __attribute__((weak)) void *malloc(size_t size) {
   new->next = 0;
 
   _alloc_tail->next = new;
-  printf("[Malloc] extend _alloc_tail->next: %p\n", _alloc_tail->next);
+  printf("[Malloc] alloc_tail->next: %p\n", _alloc_tail->next);
   _alloc_tail = new;
+  printf("[Malloc] _alloc_tail: %p\n", _alloc_tail);
+  printf("[Malloc] Unset here, _alloc_head: %p\n", _alloc_head);
 
   TrackHeapUsage(_size);
   return ptr;
