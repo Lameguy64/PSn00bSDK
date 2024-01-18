@@ -128,7 +128,7 @@ __attribute__((weak)) void *malloc(size_t size) {
     if (!new)
       return 0;
     printf("[Malloc] new: %p\n", new);
-    void *ptr = (void *)(new + sizeof(BlockHeader));
+    void *ptr = (void *)&new[1];
     printf("[Malloc] ptr: %p\n", ptr);
     new->ptr = ptr;
     printf("[Malloc] size: 0x%x\n", _size_nh);
@@ -154,7 +154,7 @@ __attribute__((weak)) void *malloc(size_t size) {
     BlockHeader *new = (BlockHeader *)_alloc_start;
     printf("[Malloc] new: %p\n", new);
 
-    void *ptr = (void *)(new + sizeof(BlockHeader));
+    void *ptr = (void *)&new[1];
     printf("[Malloc] ptr: %p\n", ptr);
     new->ptr = ptr;
     new->size = _size_nh;
@@ -177,7 +177,7 @@ __attribute__((weak)) void *malloc(size_t size) {
     BlockHeader* new = (BlockHeader *)((uintptr_t)prev->ptr + prev->size);
     printf("[Malloc] found fit: %p\n", new);
 
-    void *ptr = (void *)(new + sizeof(BlockHeader));
+    void *ptr = (void *)&new[1];
     printf("[Malloc] ptr: %p\n", ptr);
     new->ptr = ptr;
     new->size = _size_nh;
@@ -200,7 +200,7 @@ __attribute__((weak)) void *malloc(size_t size) {
   if (!new)
     return 0;
   printf("[Malloc] extended heap: %p\n", new);
-  void *ptr = (void *)(new + sizeof(BlockHeader));
+  void *ptr = (void *)&new[1];
   printf("[Malloc] ptr: %p\n", ptr);
   new->ptr = ptr;
   new->size = _size_nh;
