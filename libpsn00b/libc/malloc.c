@@ -123,7 +123,7 @@ __attribute__((weak)) void *malloc(size_t size) {
     BlockHeader *new = (BlockHeader *)sbrk(_size);
     if (!new)
       return 0;
-    printf("[Malloc] new: %p\n, new);
+    printf("[Malloc] new: %p\n", new);
     void *ptr = (void *)(new + sizeof(BlockHeader));
     printf("[Malloc] ptr: %p\n", ptr);
     new->ptr = ptr;
