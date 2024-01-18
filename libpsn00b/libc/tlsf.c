@@ -7,8 +7,6 @@
 
 #include "tlsf.h"
 
-#define TLSF_64BIT
-
 #if defined(__cplusplus)
 #define tlsf_decl inline
 #else
