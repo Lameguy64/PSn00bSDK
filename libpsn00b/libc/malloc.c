@@ -119,7 +119,7 @@ __attribute__((weak)) void *malloc(size_t size) {
     if (!new)
       return 0;
 
-    void *ptr = (void *)&new[1];
+    void *ptr = (void *)(new + sizeof(BlockHeader));
     new->ptr = ptr;
     new->size = _size_nh;
     new->prev = 0;
@@ -140,7 +140,7 @@ __attribute__((weak)) void *malloc(size_t size) {
            _alloc_head);
     BlockHeader *new = (BlockHeader *)_alloc_start;
 
-    void *ptr = (void *)&new[1];
+    void *ptr = (void *)(new + sizeof(BlockHeader));
     new->ptr = ptr;
     new->size = _size_nh;
     new->prev = 0;
