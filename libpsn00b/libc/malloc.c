@@ -53,7 +53,7 @@ __attribute__((weak)) void InitHeap(void *addr, size_t size) {
 
 __attribute__((weak)) void *sbrk(ptrdiff_t incr) {
   void *old_end = _heap_end;
-  void *new_end = (void*) old_end + incr;// (void *)_align((uintptr_t)old_end + incr, 8);
+  void *new_end = (void *)_align((uintptr_t)old_end + incr, 8);
   printf("[Sbrk] literal shift %p, aligned shift %p\n", old_end + incr,
          new_end);
 
@@ -219,8 +219,9 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
     // This is the last block, move the break back to accomodate shrinking
     if (!prev->next) {
       // We have overriden prev->size, need to calculate it from break
-      void *new_break = sbrk((ptr - sbrk(0)) + _size_nh);
-      printf("[Realloc] last block, shrink break: %p\n", new_break);
+      void* top = sbrk(0);
+      void *new_break = sbrk((ptr - top) + _size_nh);
+      printf("[Realloc] last block, shrink break: (%p - %p) + 0x%x => %p\n", ptr, top, _size_nh, new_break);
     }
     return ptr;
   }
@@ -238,9 +239,8 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
   }
 
   // Do we have free memory after it?
-  if (((prev->next)->ptr - sizeof(BlockHeader) - ptr) >= _size_nh) {
-    printf("[Realloc] free mem after: 0x%x >= 0x%x\n",
-           (prev->next)->ptr - sizeof(BlockHeader) - ptr, _size_nh);
+  if (prev->next - ptr >= _size_nh) {
+    printf("[Realloc] free mem after: %p >= 0x%x\n", prev->next - ptr, _size_nh);
     TrackHeapUsage(_size_nh - prev->size);
     prev->size = _size_nh;
     return ptr;
@@ -263,8 +263,9 @@ __attribute__((weak)) void free(void *ptr) {
   // First block; bumping head ahead.
   if (ptr == _alloc_head->ptr) {
     printf("[Free] first block, bump head forward\n");
-    size_t size = _alloc_head->size;
-    size += (uintptr_t)_alloc_head->ptr - (uintptr_t)_alloc_head;
+    size_t size = (((uinptr_t)_alloc_head->ptr) + _alloc_head->size) - (uintptr_t)_alloc_head
+    //size_t size = _alloc_head->size;
+    //size += (uintptr_t)_alloc_head->ptr - (uintptr_t)_alloc_head;
     printf("[Free] size: 0x%x\n", size);
     _alloc_head = _alloc_head->next;
     printf("[Free] new head: %p\n", _alloc_head);
@@ -306,8 +307,8 @@ __attribute__((weak)) void free(void *ptr) {
     printf("[Free] new tail: %p\n", _alloc_tail);
     sbrk(-size);
   }
-  printf("[Free] heap_change: 0x%x\n", -(cur->size) - sizeof(BlockHeader));
-  TrackHeapUsage(-(cur->size) - sizeof(BlockHeader));
+  printf("[Free] heap_change: 0x%x\n", -(cur->size - sizeof(BlockHeader)));
+  TrackHeapUsage(-(cur->size - sizeof(BlockHeader)));
   (cur->prev)->next = cur->next;
   printf("[Free] cur->prev->next: %p\n", (cur->prev)->next);
   printf("[Free] setting prev->next to cur->next: %p\n", cur->next);
