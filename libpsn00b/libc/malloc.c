@@ -239,8 +239,8 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
   }
 
   // Do we have free memory after it?
-  if (prev->next - ptr >= _size_nh) {
-    printf("[Realloc] free mem after: %p >= 0x%x\n", prev->next - ptr, _size_nh);
+  if ((uintptr_t)prev->next - (uintptr_t)ptr >= _size_nh) {
+    printf("[Realloc] free mem after: %p >= 0x%x\n", (uintptr_t)prev->next - (uintptr_t)ptr, _size_nh);
     TrackHeapUsage(_size_nh - prev->size);
     prev->size = _size_nh;
     return ptr;
@@ -263,7 +263,7 @@ __attribute__((weak)) void free(void *ptr) {
   // First block; bumping head ahead.
   if (ptr == _alloc_head->ptr) {
     printf("[Free] first block, bump head forward\n");
-    size_t size = (((uinptr_t)_alloc_head->ptr) + _alloc_head->size) - (uintptr_t)_alloc_head
+    size_t size = (((uintptr_t)_alloc_head->ptr) + _alloc_head->size) - (uintptr_t)_alloc_head;
     //size_t size = _alloc_head->size;
     //size += (uintptr_t)_alloc_head->ptr - (uintptr_t)_alloc_head;
     printf("[Free] size: 0x%x\n", size);
