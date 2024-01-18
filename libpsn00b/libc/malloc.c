@@ -127,6 +127,7 @@ __attribute__((weak)) void *malloc(size_t size) {
     void *ptr = (void *)(new + sizeof(BlockHeader));
     printf("[Malloc] ptr: %p\n", ptr);
     new->ptr = ptr;
+    printf("[Malloc] size: 0x%x\n", _size_nh);
     new->size = _size_nh;
     new->prev = 0;
     new->next = 0;
@@ -176,9 +177,11 @@ __attribute__((weak)) void *malloc(size_t size) {
     printf("[Malloc] ptr: %p\n", ptr);
     new->ptr = ptr;
     new->size = _size_nh;
+    printf("[Malloc] size: 0x%x\n", new->size);
     new->prev = prev;
+    printf("[Malloc] prev: %p\n", new->prev);
     new->next = prev->next;
-    printf("[Malloc] fit, new->next: %p\n", new->next);
+    printf("[Malloc] next: %p\n", new->next);
 
     (new->next)->prev = new;
     prev->next = new;
@@ -197,8 +200,11 @@ __attribute__((weak)) void *malloc(size_t size) {
   printf("[Malloc] ptr: %p\n", ptr);
   new->ptr = ptr;
   new->size = _size_nh;
+  printf("[Malloc] size: 0x%x\n", _size_nh);
   new->prev = _alloc_tail;
+  printf("[Malloc] prev: %p\n", new->prev);
   new->next = 0;
+  printf("[Malloc] next: %p\n", new->next);
 
   _alloc_tail->next = new;
   printf("[Malloc] alloc_tail->next: %p\n", _alloc_tail->next);
