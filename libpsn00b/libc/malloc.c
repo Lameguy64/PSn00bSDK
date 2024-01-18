@@ -129,7 +129,9 @@ __attribute__((weak)) void *malloc(size_t size) {
       return 0;
     printf("[Malloc] new: %p\n", new);
     void *ptr = (void *)&new[1];
+    // TODO: Need to explain/understand why these two are different.
     printf("[Malloc] ptr: %p\n", ptr);
+    printf("[Malloc] pointer arithmetic ptr: %p\n", (void*)(new + sizeof(BlockHeader)));
     new->ptr = ptr;
     printf("[Malloc] size: 0x%x\n", _size_nh);
     new->size = _size_nh;
