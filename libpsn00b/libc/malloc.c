@@ -1,5 +1,11 @@
 #include "tlsf.h"
 
+typedef struct _BlockHeader {
+    struct _BlockHeader	*prev, *next;
+    void				*ptr;
+    size_t				size;
+} BlockHeader;
+
 tlsf_t tlsf;
 
 __attribute__((weak)) void InitHeap(void *addr, size_t size) {
