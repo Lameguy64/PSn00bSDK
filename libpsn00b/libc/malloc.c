@@ -299,7 +299,7 @@ __attribute__((weak)) void free(void *ptr) {
     printf("[Free] at end of heap\n");
     void *top = sbrk(0);
     printf("[Free] heap top: %p\n", top);
-    size_t size = (top - (cur->prev)->ptr) - (cur->prev)->size;
+    size_t size = (top - (cur->prev)->ptr) + (cur->prev)->size;
     printf("[Free] size: 0x%x\n", size);
     _alloc_tail = cur->prev;
 
