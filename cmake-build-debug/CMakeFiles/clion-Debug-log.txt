@@ -1,0 +1,15 @@
+"/Users/jackkilrain/Library/Application Support/JetBrains/Toolbox/apps/CLion-Nova/ch-0/233.13871/CLion 2023.3 EAP.app/Contents/bin/cmake/mac/x64/bin/cmake" -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_MAKE_PROGRAM=/Users/jackkilrain/Library/Application Support/JetBrains/Toolbox/apps/CLion-Nova/ch-0/233.13871/CLion 2023.3 EAP.app/Contents/bin/ninja/mac/x64/ninja" -G Ninja -S /Users/jackkilrain/PSn00bSDK -B /Users/jackkilrain/PSn00bSDK/cmake-build-debug
+CMake Warning (dev) at /Users/jackkilrain/Library/Application Support/JetBrains/Toolbox/apps/CLion-Nova/ch-0/233.13871/CLion 2023.3 EAP.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/GNUInstallDirs.cmake:243 (message):
+  Unable to determine default CMAKE_INSTALL_LIBDIR directory because no
+  target architecture is known.  Please enable at least one language before
+  including GNUInstallDirs.
+Call Stack (most recent call first):
+  CMakeLists.txt:22 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Error at CMakeLists.txt:125 (message):
+  The mkpsxiso directory is empty.  Run 'git submodule update --init
+  --recursive' to populate it.
+
+
+-- Configuring incomplete, errors occurred!
