@@ -53,7 +53,7 @@ __attribute__((weak)) void InitHeap(void *addr, size_t size) {
 
 __attribute__((weak)) void *sbrk(ptrdiff_t incr) {
   void *old_end = _heap_end;
-  void *new_end = (void *)_align((uintptr_t)old_end + incr, 8);
+  void *new_end = (void*) old_end + incr;// (void *)_align((uintptr_t)old_end + incr, 8);
   printf("[Sbrk] literal shift %p, aligned shift %p\n", old_end + incr,
          new_end);
 
