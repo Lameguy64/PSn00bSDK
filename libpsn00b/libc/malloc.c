@@ -17,7 +17,7 @@ __attribute__((weak)) void GetHeapUsage(HeapUsage *usage) {
 /* Memory allocator */
 
 __attribute__((weak)) void *malloc(size_t size) {
-    return tlsf_malloc(tlsf_t, size);
+    return tlsf_malloc(tlsf, size);
 }
 
 __attribute__((weak)) void *calloc(size_t num, size_t size) {
