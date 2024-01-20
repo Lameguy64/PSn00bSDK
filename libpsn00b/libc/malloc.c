@@ -31,7 +31,7 @@ typedef struct __attribute__((aligned(ALIGN_SIZE))) _BlockHeader {
 } BlockHeader;
 
 void printBlockHeader(BlockHeader* bh) {
-  printf("[BlockHeader] %p => { prev: %p, next: %p, ptr: %p, 0x%x }\n", bh, bh->prev, bh->next, bh->ptr, bh->size);
+  printf("[BlockHeader] %p => { prev: %p, next: %p, ptr: %p, size: 0x%x }\n", bh, bh->prev, bh->next, bh->ptr, bh->size);
 }
 
 /* Internal globals */
