@@ -322,7 +322,7 @@ __attribute__((weak)) void free(void *ptr) {
     // In the middle, just unlink it
     assert((cur->next)->prev == cur);
     printf("[Free] has next %p, setting cur->next->prev: %p to cur->prev: %p\n",
-           (cur->next)->prev, cur->next, cur->prev);
+           cur->next, (cur->next)->prev, cur->prev);
     (cur->next)->prev = cur->prev;
   } else {
     // At the end, shrink heap
