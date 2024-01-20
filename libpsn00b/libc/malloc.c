@@ -348,8 +348,8 @@ __attribute__((weak)) void free(void *ptr) {
   (cur->prev)->next = cur->next;
   printf("[Free] setting cur->prev->next to cur->next: %p\n", cur->next);
   printf("[Free] Prev\n");
-  printfBlockHeader(cur->prev);
+  printBlockHeader(cur->prev);
   printf("[Free] Next\n");
-  printfBlockHeader(cur->next);
+  printBlockHeader(cur->next);
   printf("[Free] done\n");
 }
