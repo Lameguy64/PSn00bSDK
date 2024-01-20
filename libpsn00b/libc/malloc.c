@@ -30,6 +30,10 @@ typedef struct __attribute__((aligned(ALIGN_SIZE))) _BlockHeader {
   size_t size;
 } BlockHeader;
 
+void printBlockHeader(BlockHeader* bh) {
+  printf("[BlockHeader] { prev: %p, next: %p, ptr: %p, 0x%x }\n", bh->prev, bh->next, bh->ptr, bh->size);
+}
+
 /* Internal globals */
 
 static void *_heap_start, *_heap_end, *_heap_limit;
@@ -235,6 +239,7 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 
   // New memory block shorter?
   if (prev->size >= _size_nh) {
+    printf("[Realloc] prev: %p, next: %p\n", prev->prev, prev->next);
     printf("[Realloc] new size shorter: 0x%x >= 0x%x\n", prev->size, _size_nh);
     TrackHeapUsage(_size_nh - prev->size);
     prev->size = _size_nh;
@@ -342,4 +347,9 @@ __attribute__((weak)) void free(void *ptr) {
   assert((cur->prev)->next == cur);
   (cur->prev)->next = cur->next;
   printf("[Free] setting cur->prev->next to cur->next: %p\n", cur->next);
+  printf("[Free] Prev\n");
+  printfBlockHeader(cur->prev);
+  printf("[Free] Next\n");
+  printfBlockHeader(cur->next);
+  printf("[Free] done\n");
 }
