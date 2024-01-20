@@ -184,6 +184,7 @@ __attribute__((weak)) void *malloc(size_t size) {
     printf("[Malloc] next: %p\n", new->next);
 
     (new->next)->prev = new;
+    printf("[Malloc] (new->next)->prev: %p\n", (new->next)->prev);
     prev->next = new;
     printf("[Malloc] fit, prev->next: %p\n", prev->next);
 
