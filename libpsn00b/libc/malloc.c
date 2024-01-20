@@ -318,6 +318,7 @@ __attribute__((weak)) void free(void *ptr) {
   printf("[Free] cur->next: %p\n", cur->next);
   if (cur->next) {
     // In the middle, just unlink it
+    assert((cur->next)->prev == cur);
     printf("[Free] has next %p, setting cur->next->prev: %p to cur->prev: %p\n",
            (cur->next)->prev, cur->next, cur->prev);
     (cur->next)->prev = cur->prev;
@@ -336,6 +337,7 @@ __attribute__((weak)) void free(void *ptr) {
   printf("[Free] heap_change: 0x%x\n", -(cur->size + sizeof(BlockHeader)));
   TrackHeapUsage(-(cur->size + sizeof(BlockHeader)));
   printf("[Free] cur->prev->next: %p\n", (cur->prev)->next);
+  assert((cur->prev)->next == cur);
   (cur->prev)->next = cur->next;
   printf("[Free] setting cur->prev->next to cur->next: %p\n", cur->next);
 }
