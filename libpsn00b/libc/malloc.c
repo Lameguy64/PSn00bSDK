@@ -191,7 +191,10 @@ __attribute__((weak)) void *malloc(size_t size) {
     printf("[Malloc] (new->next)->prev: %p\n", (new->next)->prev);
     prev->next = new;
     printf("[Malloc] fit, prev->next: %p\n", prev->next);
-
+    printf("[Malloc] prev->prev\n");
+    printBlockHeader(prev->prev);
+    printf("[Malloc] prev->next\n");
+    printBlockHeader(prev->next);
     TrackHeapUsage(_size);
     return ptr;
   }
@@ -290,7 +293,8 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 __attribute__((weak)) void free(void *ptr) {
   if (!ptr || !_alloc_head)
     return;
-
+  printf("[Free] ptr: %p\n", ptr);
+  printBlockHeader(ptr - sizeof(BlockHeader));
   // First block; bumping head ahead.
   if (ptr == _alloc_head->ptr) {
     printf("[Free] first block, bump head forward\n");
