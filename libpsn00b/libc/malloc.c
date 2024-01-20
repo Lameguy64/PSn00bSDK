@@ -239,7 +239,8 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 
   // New memory block shorter?
   if (prev->size >= _size_nh) {
-    printf("[Realloc] prev: %p, next: %p\n", prev->prev, prev->next);
+    printf("[Realloc] this\n");
+    printBlockHeader(prev);
     printf("[Realloc] new size shorter: 0x%x >= 0x%x\n", prev->size, _size_nh);
     TrackHeapUsage(_size_nh - prev->size);
     prev->size = _size_nh;
