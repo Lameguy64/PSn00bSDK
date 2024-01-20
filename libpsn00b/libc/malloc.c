@@ -65,7 +65,7 @@ __attribute__((weak)) void *sbrk(ptrdiff_t incr) {
   // printf("[Sbrk] old end: %p\n", old_end);
   void *new_end = (void *)_align((uintptr_t)old_end + incr, ALIGN_SIZE);
   // printf("[Sbrk] literal shift %p, aligned shift %p\n", old_end + incr,
-         new_end);
+         // new_end);
 
   if (new_end > _heap_limit)
     return 0;
@@ -101,7 +101,7 @@ static BlockHeader *_find_fit(BlockHeader *head, size_t size) {
       // printf("[FindFit] next_bot: %p\n", (void *)next_bot);
       next_bot -= (uintptr_t)prev->ptr + prev->size;
       // printf("[FindFit] ptr: %p, size: 0x%x, offset: %p, next_bot: %p\n",
-             prev->ptr, prev->size, prev->ptr + prev->size, (void *)next_bot);
+             // prev->ptr, prev->size, prev->ptr + prev->size, (void *)next_bot);
       if (next_bot >= size) {
         // printf("[FindFit] found %p\n", prev);
         return prev;
@@ -150,7 +150,7 @@ __attribute__((weak)) void *malloc(size_t size) {
   // about having an incomplete data structure.
   if (((uintptr_t)_alloc_start + _size) < ((uintptr_t)_alloc_head)) {
     // printf("[Malloc] bottom heap shifted: %p < %p\n", _alloc_start + _size,
-           _alloc_head);
+           // _alloc_head);
     BlockHeader *new = (BlockHeader *)_alloc_start;
     // printf("[Malloc] new: %p\n", new);
 
@@ -254,7 +254,7 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
       void *top = sbrk(0);
       void *new_break = sbrk((ptr - top) + _size_nh);
       // printf("[Realloc] last block, shrink break: (%p - %p) + 0x%x => %p\n",
-             ptr, top, _size_nh, new_break);
+             // ptr, top, _size_nh, new_break);
     }
     return ptr;
   }
@@ -274,7 +274,7 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
   // Do we have free memory after it?
   if ((uintptr_t)prev->next - (uintptr_t)ptr >= _size_nh) {
     // printf("[Realloc] free mem after: %p >= 0x%x\n",
-           (uintptr_t)prev->next - (uintptr_t)ptr, _size_nh);
+           // (uintptr_t)prev->next - (uintptr_t)ptr, _size_nh);
     TrackHeapUsage(_size_nh - prev->size);
     prev->size = _size_nh;
     return ptr;
@@ -336,7 +336,7 @@ __attribute__((weak)) void free(void *ptr) {
     // In the middle, just unlink it
     assert((cur->next)->prev == cur);
     // printf("[Free] has next %p, setting cur->next->prev: %p to cur->prev: %p\n",
-           cur->next, (cur->next)->prev, cur->prev);
+           // cur->next, (cur->next)->prev, cur->prev);
     (cur->next)->prev = cur->prev;
   } else {
     // At the end, shrink heap
