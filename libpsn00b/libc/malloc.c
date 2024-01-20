@@ -18,11 +18,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define ALIGN_SIZE 8
 #define _align(x, n) (((x) + ((n)-1)) & ~((n)-1))
 
 /* Private types */
 
-typedef struct __attribute__((aligned (8))) _BlockHeader {
+typedef struct __attribute__((aligned(ALIGN_SIZE))) _BlockHeader {
   struct _BlockHeader *prev, *next;
   void *ptr;
   size_t size;
@@ -57,7 +58,7 @@ __attribute__((weak)) void *sbrk(ptrdiff_t incr) {
   printf("[Sbrk] Increment: 0x%x\n", incr);
   void *old_end = _heap_end;
   printf("[Sbrk] old end: %p\n", old_end);
-  void *new_end = (void *)_align((uintptr_t)old_end + incr, 8);
+  void *new_end = (void *)_align((uintptr_t)old_end + incr, ALIGN_SIZE);
   printf("[Sbrk] literal shift %p, aligned shift %p\n", old_end + incr,
          new_end);
 
@@ -94,13 +95,8 @@ static BlockHeader *_find_fit(BlockHeader *head, size_t size) {
       uintptr_t next_bot = (uintptr_t)prev->next;
       printf("[FindFit] next_bot: %p\n", (void *)next_bot);
       next_bot -= (uintptr_t)prev->ptr + prev->size;
-      printf(
-        "[FindFit] ptr: %p, size: 0x%x, offset: %p, next_bot: %p\n",
-        prev->ptr,
-        prev->size,
-        prev->ptr + prev->size,
-        (void *)next_bot
-      );
+      printf("[FindFit] ptr: %p, size: 0x%x, offset: %p, next_bot: %p\n",
+             prev->ptr, prev->size, prev->ptr + prev->size, (void *)next_bot);
       if (next_bot >= size) {
         printf("[FindFit] found %p\n", prev);
         return prev;
@@ -115,7 +111,7 @@ __attribute__((weak)) void *malloc(size_t size) {
   if (!size)
     return 0;
 
-  size_t _size = _align(size + sizeof(BlockHeader), 8);
+  size_t _size = _align(size + sizeof(BlockHeader), ALIGN_SIZE);
   size_t _size_nh = _size - sizeof(BlockHeader);
 
   // Nothing's initialized yet? Let's just initialize the bottom of our heap,
@@ -129,9 +125,6 @@ __attribute__((weak)) void *malloc(size_t size) {
       return 0;
     printf("[Malloc] new: %p\n", new);
     void *ptr = (void *)&new[1];
-    // TODO: Need to explain/understand why these two are different.
-    printf("[Malloc] ptr: %p\n", ptr);
-    printf("[Malloc] pointer arithmetic ptr: %p\n", (void*)(new + sizeof(BlockHeader)));
     new->ptr = ptr;
     printf("[Malloc] size: 0x%x\n", _size_nh);
     new->size = _size_nh;
@@ -176,7 +169,7 @@ __attribute__((weak)) void *malloc(size_t size) {
   // No luck at the beginning of the heap, let's walk the heap to find a fit.
   BlockHeader *prev = _find_fit(_alloc_head, _size);
   if (prev) {
-    BlockHeader* new = (BlockHeader *)((uintptr_t)prev->ptr + prev->size);
+    BlockHeader *new = (BlockHeader *)((uintptr_t)prev->ptr + prev->size);
     printf("[Malloc] found fit: %p\n", new);
 
     void *ptr = (void *)&new[1];
@@ -198,7 +191,7 @@ __attribute__((weak)) void *malloc(size_t size) {
   }
 
   // Time to extend the size of the heap.
-  BlockHeader* new = (BlockHeader *)sbrk(_size);
+  BlockHeader *new = (BlockHeader *)sbrk(_size);
   if (!new)
     return 0;
   printf("[Malloc] extended heap: %p\n", new);
@@ -234,7 +227,7 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
   if (!ptr)
     return malloc(size);
 
-  size_t _size = _align(size + sizeof(BlockHeader), 8);
+  size_t _size = _align(size + sizeof(BlockHeader), ALIGN_SIZE);
   size_t _size_nh = _size - sizeof(BlockHeader);
   BlockHeader *prev = (BlockHeader *)((uintptr_t)ptr - sizeof(BlockHeader));
 
@@ -247,9 +240,10 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
     // This is the last block, move the break back to accomodate shrinking
     if (!prev->next) {
       // We have overriden prev->size, need to calculate it from break
-      void* top = sbrk(0);
+      void *top = sbrk(0);
       void *new_break = sbrk((ptr - top) + _size_nh);
-      printf("[Realloc] last block, shrink break: (%p - %p) + 0x%x => %p\n", ptr, top, _size_nh, new_break);
+      printf("[Realloc] last block, shrink break: (%p - %p) + 0x%x => %p\n",
+             ptr, top, _size_nh, new_break);
     }
     return ptr;
   }
@@ -268,7 +262,8 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 
   // Do we have free memory after it?
   if ((uintptr_t)prev->next - (uintptr_t)ptr >= _size_nh) {
-    printf("[Realloc] free mem after: %p >= 0x%x\n", (uintptr_t)prev->next - (uintptr_t)ptr, _size_nh);
+    printf("[Realloc] free mem after: %p >= 0x%x\n",
+           (uintptr_t)prev->next - (uintptr_t)ptr, _size_nh);
     TrackHeapUsage(_size_nh - prev->size);
     prev->size = _size_nh;
     return ptr;
@@ -291,9 +286,10 @@ __attribute__((weak)) void free(void *ptr) {
   // First block; bumping head ahead.
   if (ptr == _alloc_head->ptr) {
     printf("[Free] first block, bump head forward\n");
-    size_t size = (((uintptr_t)_alloc_head->ptr) + _alloc_head->size) - (uintptr_t)_alloc_head;
-    //size_t size = _alloc_head->size;
-    //size += (uintptr_t)_alloc_head->ptr - (uintptr_t)_alloc_head;
+    size_t size = (((uintptr_t)_alloc_head->ptr) + _alloc_head->size) -
+                  (uintptr_t)_alloc_head;
+    // size_t size = _alloc_head->size;
+    // size += (uintptr_t)_alloc_head->ptr - (uintptr_t)_alloc_head;
     printf("[Free] size: 0x%x\n", size);
     _alloc_head = _alloc_head->next;
     printf("[Free] new head: %p\n", _alloc_head);
@@ -314,7 +310,7 @@ __attribute__((weak)) void free(void *ptr) {
   BlockHeader *cur = _alloc_head;
   printf("[Free] find block, base: %p\n", cur);
   for (cur = _alloc_head; ptr != cur->ptr; cur = cur->next) {
-  printf("[Free] cur: %p cur->next: %p\n", cur, cur->next);
+    printf("[Free] cur: %p cur->next: %p\n", cur, cur->next);
     if (!cur->next)
       return;
   }
@@ -322,7 +318,8 @@ __attribute__((weak)) void free(void *ptr) {
 
   if (cur->next) {
     // In the middle, just unlink it
-    printf("[Free] has next %p, setting cur->next->prev to cur->prev: %p\n", cur->next, cur->prev);
+    printf("[Free] has next %p, setting cur->next->prev to cur->prev: %p\n",
+           cur->next, cur->prev);
     (cur->next)->prev = cur->prev;
   } else {
     // At the end, shrink heap
@@ -336,8 +333,8 @@ __attribute__((weak)) void free(void *ptr) {
     printf("[Free] new tail: %p\n", _alloc_tail);
     sbrk(-size);
   }
-  printf("[Free] heap_change: 0x%x\n", -(cur->size - sizeof(BlockHeader)));
-  TrackHeapUsage(-(cur->size - sizeof(BlockHeader)));
+  printf("[Free] heap_change: 0x%x\n", -(cur->size + sizeof(BlockHeader)));
+  TrackHeapUsage(-(cur->size + sizeof(BlockHeader)));
   (cur->prev)->next = cur->next;
   printf("[Free] cur->prev->next: %p\n", (cur->prev)->next);
   printf("[Free] setting prev->next to cur->next: %p\n", cur->next);
