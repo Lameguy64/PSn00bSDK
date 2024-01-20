@@ -17,6 +17,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #define ALIGN_SIZE 8
 #define _align(x, n) (((x) + ((n)-1)) & ~((n)-1))
