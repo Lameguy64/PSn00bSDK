@@ -31,7 +31,7 @@ typedef struct __attribute__((aligned(ALIGN_SIZE))) _BlockHeader {
 } BlockHeader;
 
 void printBlockHeader(BlockHeader* bh) {
-  printf("[BlockHeader] %p => { prev: %p, next: %p, ptr: %p, size: 0x%x }\n", bh, bh->prev, bh->next, bh->ptr, bh->size);
+  // printf("[BlockHeader] %p => { prev: %p, next: %p, ptr: %p, size: 0x%x }\n", bh, bh->prev, bh->next, bh->ptr, bh->size);
 }
 
 /* Internal globals */
@@ -46,9 +46,9 @@ static BlockHeader *_alloc_head, *_alloc_tail;
 
 __attribute__((weak)) void InitHeap(void *addr, size_t size) {
   _heap_start = addr;
-  printf("[Init] heap start %p\n", _heap_start);
+  // printf("[Init] heap start %p\n", _heap_start);
   _heap_end = addr;
-  printf("[Init] heap end %p\n", _heap_end);
+  // printf("[Init] heap end %p\n", _heap_end);
   _heap_limit = (void *)((uintptr_t)addr + size);
 
   _heap_alloc = 0;
@@ -60,11 +60,11 @@ __attribute__((weak)) void InitHeap(void *addr, size_t size) {
 }
 
 __attribute__((weak)) void *sbrk(ptrdiff_t incr) {
-  printf("[Sbrk] Increment: 0x%x\n", incr);
+  // printf("[Sbrk] Increment: 0x%x\n", incr);
   void *old_end = _heap_end;
-  printf("[Sbrk] old end: %p\n", old_end);
+  // printf("[Sbrk] old end: %p\n", old_end);
   void *new_end = (void *)_align((uintptr_t)old_end + incr, ALIGN_SIZE);
-  printf("[Sbrk] literal shift %p, aligned shift %p\n", old_end + incr,
+  // printf("[Sbrk] literal shift %p, aligned shift %p\n", old_end + incr,
          new_end);
 
   if (new_end > _heap_limit)
@@ -94,21 +94,21 @@ __attribute__((weak)) void GetHeapUsage(HeapUsage *usage) {
 
 static BlockHeader *_find_fit(BlockHeader *head, size_t size) {
   BlockHeader *prev = head;
-  printf("[FindFit] size: 0x%x\n", size);
+  // printf("[FindFit] size: 0x%x\n", size);
   for (; prev; prev = prev->next) {
     if (prev->next) {
       uintptr_t next_bot = (uintptr_t)prev->next;
-      printf("[FindFit] next_bot: %p\n", (void *)next_bot);
+      // printf("[FindFit] next_bot: %p\n", (void *)next_bot);
       next_bot -= (uintptr_t)prev->ptr + prev->size;
-      printf("[FindFit] ptr: %p, size: 0x%x, offset: %p, next_bot: %p\n",
+      // printf("[FindFit] ptr: %p, size: 0x%x, offset: %p, next_bot: %p\n",
              prev->ptr, prev->size, prev->ptr + prev->size, (void *)next_bot);
       if (next_bot >= size) {
-        printf("[FindFit] found %p\n", prev);
+        // printf("[FindFit] found %p\n", prev);
         return prev;
       }
     }
   }
-  printf("[FindFit] Not found: %p\n", prev);
+  // printf("[FindFit] Not found: %p\n", prev);
   return prev;
 }
 
@@ -128,18 +128,18 @@ __attribute__((weak)) void *malloc(size_t size) {
     BlockHeader *new = (BlockHeader *)sbrk(_size);
     if (!new)
       return 0;
-    printf("[Malloc] new: %p\n", new);
+    // printf("[Malloc] new: %p\n", new);
     void *ptr = (void *)&new[1];
     new->ptr = ptr;
-    printf("[Malloc] size: 0x%x\n", _size_nh);
+    // printf("[Malloc] size: 0x%x\n", _size_nh);
     new->size = _size_nh;
     new->prev = 0;
     new->next = 0;
 
     _alloc_head = new;
-    printf("[Malloc] _alloc_head: %p\n", _alloc_head);
+    // printf("[Malloc] _alloc_head: %p\n", _alloc_head);
     _alloc_tail = new;
-    printf("[Malloc] _alloc_tail: %p\n", _alloc_tail);
+    // printf("[Malloc] _alloc_tail: %p\n", _alloc_tail);
 
     TrackHeapUsage(_size);
     return ptr;
@@ -149,23 +149,23 @@ __attribute__((weak)) void *malloc(size_t size) {
   // So let's check first if we have free space there, because I'm nervous
   // about having an incomplete data structure.
   if (((uintptr_t)_alloc_start + _size) < ((uintptr_t)_alloc_head)) {
-    printf("[Malloc] bottom heap shifted: %p < %p\n", _alloc_start + _size,
+    // printf("[Malloc] bottom heap shifted: %p < %p\n", _alloc_start + _size,
            _alloc_head);
     BlockHeader *new = (BlockHeader *)_alloc_start;
-    printf("[Malloc] new: %p\n", new);
+    // printf("[Malloc] new: %p\n", new);
 
     void *ptr = (void *)&new[1];
-    printf("[Malloc] ptr: %p\n", ptr);
+    // printf("[Malloc] ptr: %p\n", ptr);
     new->ptr = ptr;
     new->size = _size_nh;
     new->prev = 0;
     new->next = _alloc_head;
-    printf("[Malloc] new->next: %p\n", new->next);
+    // printf("[Malloc] new->next: %p\n", new->next);
     _alloc_head->prev = new;
-    printf("[Malloc] _alloc_head->prev: %p\n", new);
+    // printf("[Malloc] _alloc_head->prev: %p\n", new);
     _alloc_head = new;
-    printf("[Malloc] _alloc_head: %p\n", new);
-    printf("[Malloc] Unset here, _alloc_tail: %p\n", _alloc_tail);
+    // printf("[Malloc] _alloc_head: %p\n", new);
+    // printf("[Malloc] Unset here, _alloc_tail: %p\n", _alloc_tail);
 
     TrackHeapUsage(_size);
     return ptr;
@@ -175,25 +175,25 @@ __attribute__((weak)) void *malloc(size_t size) {
   BlockHeader *prev = _find_fit(_alloc_head, _size);
   if (prev) {
     BlockHeader *new = (BlockHeader *)((uintptr_t)prev->ptr + prev->size);
-    printf("[Malloc] found fit: %p\n", new);
+    // printf("[Malloc] found fit: %p\n", new);
 
     void *ptr = (void *)&new[1];
-    printf("[Malloc] ptr: %p\n", ptr);
+    // printf("[Malloc] ptr: %p\n", ptr);
     new->ptr = ptr;
     new->size = _size_nh;
-    printf("[Malloc] size: 0x%x\n", new->size);
+    // printf("[Malloc] size: 0x%x\n", new->size);
     new->prev = prev;
-    printf("[Malloc] prev: %p\n", new->prev);
+    // printf("[Malloc] prev: %p\n", new->prev);
     new->next = prev->next;
-    printf("[Malloc] next: %p\n", new->next);
+    // printf("[Malloc] next: %p\n", new->next);
 
     (new->next)->prev = new;
-    printf("[Malloc] (new->next)->prev: %p\n", (new->next)->prev);
+    // printf("[Malloc] (new->next)->prev: %p\n", (new->next)->prev);
     prev->next = new;
-    printf("[Malloc] fit, prev->next: %p\n", prev->next);
-    printf("[Malloc] prev->prev\n");
+    // printf("[Malloc] fit, prev->next: %p\n", prev->next);
+    // printf("[Malloc] prev->prev\n");
     printBlockHeader(prev->prev);
-    printf("[Malloc] prev->next\n");
+    // printf("[Malloc] prev->next\n");
     printBlockHeader(prev->next);
     TrackHeapUsage(_size);
     return ptr;
@@ -203,22 +203,22 @@ __attribute__((weak)) void *malloc(size_t size) {
   BlockHeader *new = (BlockHeader *)sbrk(_size);
   if (!new)
     return 0;
-  printf("[Malloc] extended heap: %p\n", new);
+  // printf("[Malloc] extended heap: %p\n", new);
   void *ptr = (void *)&new[1];
-  printf("[Malloc] ptr: %p\n", ptr);
+  // printf("[Malloc] ptr: %p\n", ptr);
   new->ptr = ptr;
   new->size = _size_nh;
-  printf("[Malloc] size: 0x%x\n", _size_nh);
+  // printf("[Malloc] size: 0x%x\n", _size_nh);
   new->prev = _alloc_tail;
-  printf("[Malloc] prev: %p\n", new->prev);
+  // printf("[Malloc] prev: %p\n", new->prev);
   new->next = 0;
-  printf("[Malloc] next: %p\n", new->next);
+  // printf("[Malloc] next: %p\n", new->next);
 
   _alloc_tail->next = new;
-  printf("[Malloc] alloc_tail->next: %p\n", _alloc_tail->next);
+  // printf("[Malloc] alloc_tail->next: %p\n", _alloc_tail->next);
   _alloc_tail = new;
-  printf("[Malloc] _alloc_tail: %p\n", _alloc_tail);
-  printf("[Malloc] Unset here, _alloc_head: %p\n", _alloc_head);
+  // printf("[Malloc] _alloc_tail: %p\n", _alloc_tail);
+  // printf("[Malloc] Unset here, _alloc_head: %p\n", _alloc_head);
 
   TrackHeapUsage(_size);
   return ptr;
@@ -242,9 +242,9 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 
   // New memory block shorter?
   if (prev->size >= _size_nh) {
-    printf("[Realloc] this\n");
+    // printf("[Realloc] this\n");
     printBlockHeader(prev);
-    printf("[Realloc] new size shorter: 0x%x >= 0x%x\n", prev->size, _size_nh);
+    // printf("[Realloc] new size shorter: 0x%x >= 0x%x\n", prev->size, _size_nh);
     TrackHeapUsage(_size_nh - prev->size);
     prev->size = _size_nh;
 
@@ -253,7 +253,7 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
       // We have overriden prev->size, need to calculate it from break
       void *top = sbrk(0);
       void *new_break = sbrk((ptr - top) + _size_nh);
-      printf("[Realloc] last block, shrink break: (%p - %p) + 0x%x => %p\n",
+      // printf("[Realloc] last block, shrink break: (%p - %p) + 0x%x => %p\n",
              ptr, top, _size_nh, new_break);
     }
     return ptr;
@@ -261,11 +261,11 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 
   // New memory block larger; is it the last one?
   if (!prev->next) {
-    printf("[Realloc] new block larger\n");
+    // printf("[Realloc] new block larger\n");
     void *new = sbrk(_size_nh - prev->size);
     if (!new)
       return 0;
-    printf("[Realloc] new break: 0x%x => %p\n", _size_nh - prev->size, new);
+    // printf("[Realloc] new break: 0x%x => %p\n", _size_nh - prev->size, new);
     TrackHeapUsage(_size_nh - prev->size);
     prev->size = _size_nh;
     return ptr;
@@ -273,7 +273,7 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 
   // Do we have free memory after it?
   if ((uintptr_t)prev->next - (uintptr_t)ptr >= _size_nh) {
-    printf("[Realloc] free mem after: %p >= 0x%x\n",
+    // printf("[Realloc] free mem after: %p >= 0x%x\n",
            (uintptr_t)prev->next - (uintptr_t)ptr, _size_nh);
     TrackHeapUsage(_size_nh - prev->size);
     prev->size = _size_nh;
@@ -284,7 +284,7 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
   void *new = malloc(size);
   if (!new)
     return 0;
-  printf("[Realloc] new malloc addr: %p\n", new);
+  // printf("[Realloc] new malloc addr: %p\n", new);
   __builtin_memcpy(new, ptr, prev->size);
   free(ptr);
   return new;
@@ -293,23 +293,23 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 __attribute__((weak)) void free(void *ptr) {
   if (!ptr || !_alloc_head)
     return;
-  printf("[Free] ptr: %p\n", ptr);
+  // printf("[Free] ptr: %p\n", ptr);
   printBlockHeader(ptr - sizeof(BlockHeader));
   // First block; bumping head ahead.
   if (ptr == _alloc_head->ptr) {
-    printf("[Free] first block, bump head forward\n");
+    // printf("[Free] first block, bump head forward\n");
     size_t size = (((uintptr_t)_alloc_head->ptr) + _alloc_head->size) -
                   (uintptr_t)_alloc_head;
     // size_t size = _alloc_head->size;
     // size += (uintptr_t)_alloc_head->ptr - (uintptr_t)_alloc_head;
-    printf("[Free] size: 0x%x\n", size);
+    // printf("[Free] size: 0x%x\n", size);
     _alloc_head = _alloc_head->next;
-    printf("[Free] new head: %p\n", _alloc_head);
+    // printf("[Free] new head: %p\n", _alloc_head);
     if (_alloc_head) {
       _alloc_head->prev = 0;
-      printf("[Free] New head exists, setting prev to null\n");
+      // printf("[Free] New head exists, setting prev to null\n");
     } else {
-      printf("[Free] No new head exists, nulling tail\n");
+      // printf("[Free] No new head exists, nulling tail\n");
       _alloc_tail = 0;
       sbrk(-size);
     }
@@ -321,44 +321,44 @@ __attribute__((weak)) void free(void *ptr) {
 #ifdef MALLOC_FREE_TRAVERSE
   // Finding the proper block
   BlockHeader *cur = _alloc_head;
-  printf("[Free] find block, base: %p\n", cur);
+  // printf("[Free] find block, base: %p\n", cur);
   for (cur = _alloc_head; ptr != cur->ptr; cur = cur->next) {
-    printf("[Free] cur: %p cur->next: %p\n", cur, cur->next);
+    // printf("[Free] cur: %p cur->next: %p\n", cur, cur->next);
     if (!cur->next)
       return;
   }
 #else
   BlockHeader* cur = (BlockHeader*)(ptr - sizeof(BlockHeader));
 #endif
-  printf("[Free] found: %p\n", cur);
-  printf("[Free] cur->next: %p\n", cur->next);
+  // printf("[Free] found: %p\n", cur);
+  // printf("[Free] cur->next: %p\n", cur->next);
   if (cur->next) {
     // In the middle, just unlink it
     assert((cur->next)->prev == cur);
-    printf("[Free] has next %p, setting cur->next->prev: %p to cur->prev: %p\n",
+    // printf("[Free] has next %p, setting cur->next->prev: %p to cur->prev: %p\n",
            cur->next, (cur->next)->prev, cur->prev);
     (cur->next)->prev = cur->prev;
   } else {
     // At the end, shrink heap
-    printf("[Free] at end of heap\n");
+    // printf("[Free] at end of heap\n");
     void *top = sbrk(0);
-    printf("[Free] heap top: %p\n", top);
+    // printf("[Free] heap top: %p\n", top);
     size_t size = (top - (cur->prev)->ptr) - (cur->prev)->size;
-    printf("[Free] size: 0x%x\n", size);
+    // printf("[Free] size: 0x%x\n", size);
     _alloc_tail = cur->prev;
 
-    printf("[Free] new tail: %p\n", _alloc_tail);
+    // printf("[Free] new tail: %p\n", _alloc_tail);
     sbrk(-size);
   }
-  printf("[Free] heap_change: 0x%x\n", -(cur->size + sizeof(BlockHeader)));
+  // printf("[Free] heap_change: 0x%x\n", -(cur->size + sizeof(BlockHeader)));
   TrackHeapUsage(-(cur->size + sizeof(BlockHeader)));
-  printf("[Free] cur->prev->next: %p\n", (cur->prev)->next);
+  // printf("[Free] cur->prev->next: %p\n", (cur->prev)->next);
   assert((cur->prev)->next == cur);
   (cur->prev)->next = cur->next;
-  printf("[Free] setting cur->prev->next to cur->next: %p\n", cur->next);
-  printf("[Free] Prev\n");
+  // printf("[Free] setting cur->prev->next to cur->next: %p\n", cur->next);
+  // printf("[Free] Prev\n");
   printBlockHeader(cur->prev);
-  printf("[Free] Next\n");
+  // printf("[Free] Next\n");
   printBlockHeader(cur->next);
-  printf("[Free] done\n");
+  // printf("[Free] done\n");
 }
