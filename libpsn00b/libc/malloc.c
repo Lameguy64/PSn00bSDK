@@ -318,6 +318,7 @@ __attribute__((weak)) void free(void *ptr) {
     return;
   }
 
+#ifdef MALLOC_FREE_TRAVERSE
   // Finding the proper block
   BlockHeader *cur = _alloc_head;
   printf("[Free] find block, base: %p\n", cur);
@@ -326,6 +327,9 @@ __attribute__((weak)) void free(void *ptr) {
     if (!cur->next)
       return;
   }
+#else
+  BlockHeader* cur = (BlockHeader*)(ptr - sizeof(BlockHeader));
+#endif
   printf("[Free] found: %p\n", cur);
   printf("[Free] cur->next: %p\n", cur->next);
   if (cur->next) {
