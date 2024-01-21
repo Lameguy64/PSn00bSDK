@@ -55,7 +55,7 @@ __attribute__((weak)) void InitHeap(void *addr, size_t size) {
 
 __attribute__((weak)) void *sbrk(ptrdiff_t incr) {
 	void *old_end = _heap_end;
-	void *new_end = (void *)_align((uintptr_t)old_end + incr, ALIGN_SIZE);
+	void *new_end = (void *) _align((uintptr_t) old_end + incr, ALIGN_SIZE);
 
 	if (new_end > _heap_limit)
 		return 0;
@@ -86,8 +86,8 @@ static BlockHeader *_find_fit(BlockHeader *head, size_t size) {
 	BlockHeader *prev = head;
 	for (; prev; prev = prev->next) {
 		if (prev->next) {
-			uintptr_t next_bot = (uintptr_t)prev->next;
-			next_bot -= (uintptr_t)prev->ptr + prev->size;
+			uintptr_t next_bot = (uintptr_t) prev->next;
+			next_bot -= (uintptr_t) prev->ptr + prev->size;
 			if (next_bot >= size) {
 				return prev;
 			}
@@ -109,10 +109,10 @@ __attribute__((weak)) void *malloc(size_t size) {
 		// if (!_alloc_start)
 		//_alloc_start = sbrk(0);
 
-		BlockHeader *new = (BlockHeader *)sbrk(_size);
+		BlockHeader *new = (BlockHeader *) sbrk(_size);
 		if (!new)
 			return 0;
-		void *ptr = (void *)&new[1];
+		void *ptr = (void *) &new[1];
 		new->ptr = ptr;
 		new->size = _size_nh;
 		new->prev = 0;
@@ -128,10 +128,10 @@ __attribute__((weak)) void *malloc(size_t size) {
 	// We *may* have the bottom of our heap that has shifted, because of a free.
 	// So let's check first if we have free space there, because I'm nervous
 	// about having an incomplete data structure.
-	if (((uintptr_t)_alloc_start + _size) < ((uintptr_t)_alloc_head)) {
-		BlockHeader *new = (BlockHeader*)_alloc_start;
+	if (((uintptr_t) _alloc_start + _size) < ((uintptr_t) _alloc_head)) {
+		BlockHeader *new = (BlockHeader*) _alloc_start;
 
-		void *ptr = (void *)&new[1];
+		void *ptr = (void *) &new[1];
 		new->ptr = ptr;
 		new->size = _size_nh;
 		new->prev = 0;
@@ -146,9 +146,9 @@ __attribute__((weak)) void *malloc(size_t size) {
 	// No luck at the beginning of the heap, let's walk the heap to find a fit.
 	BlockHeader *prev = _find_fit(_alloc_head, _size);
 	if (prev) {
-		BlockHeader *new = (BlockHeader *)((uintptr_t)prev->ptr + prev->size);
+		BlockHeader *new = (BlockHeader *) ((uintptr_t) prev->ptr + prev->size);
 
-		void *ptr = (void *)&new[1];
+		void *ptr = (void *) &new[1];
 		new->ptr = ptr;
 		new->size = _size_nh;
 		new->prev = prev;
@@ -161,10 +161,10 @@ __attribute__((weak)) void *malloc(size_t size) {
 	}
 
 	// Time to extend the size of the heap.
-	BlockHeader *new = (BlockHeader *)sbrk(_size);
+	BlockHeader *new = (BlockHeader *) sbrk(_size);
 	if (!new)
 		return 0;
-	void *ptr = (void *)&new[1];
+	void *ptr = (void *) &new[1];
 	new->ptr = ptr;
 	new->size = _size_nh;
 	new->prev = _alloc_tail;
@@ -191,7 +191,7 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 
 	size_t _size = _align(size + sizeof(BlockHeader), ALIGN_SIZE);
 	size_t _size_nh = _size - sizeof(BlockHeader);
-	BlockHeader *prev = (BlockHeader *)((uintptr_t)ptr - sizeof(BlockHeader));
+	BlockHeader *prev = (BlockHeader *) ((uintptr_t) ptr - sizeof(BlockHeader));
 
 	// New memory block shorter?
 	if (prev->size >= _size_nh) {
@@ -217,7 +217,7 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 	}
 
 	// Do we have free memory after it?
-	if ((uintptr_t)prev->next - (uintptr_t)ptr >= _size_nh) {
+	if ((uintptr_t) prev->next - (uintptr_t) ptr >= _size_nh) {
 		TrackHeapUsage(_size_nh - prev->size);
 		prev->size = _size_nh;
 		return ptr;
@@ -237,8 +237,8 @@ __attribute__((weak)) void free(void *ptr) {
 		return;
 	// First block; bumping head ahead.
 	if (ptr == _alloc_head->ptr) {
-		size_t size = (((uintptr_t)_alloc_head->ptr) + _alloc_head->size)
-					- (uintptr_t)_alloc_head;
+		size_t size = (((uintptr_t) _alloc_head->ptr) + _alloc_head->size)
+					- (uintptr_t) _alloc_head;
 		_alloc_head = _alloc_head->next;
 		if (_alloc_head) {
 			_alloc_head->prev = 0;
@@ -251,16 +251,7 @@ __attribute__((weak)) void free(void *ptr) {
 		return;
 	}
 
-#ifdef MALLOC_FREE_TRAVERSE
-	// Finding the proper block
-	BlockHeader *cur = _alloc_head;
-	for (cur = _alloc_head; ptr != cur->ptr; cur = cur->next) {
-		if (!cur->next)
-			return;
-	}
-#else
-	BlockHeader* cur = (BlockHeader*)(ptr - sizeof(BlockHeader));
-#endif
+	BlockHeader* cur = (BlockHeader*) (ptr - sizeof(BlockHeader));
 	if (cur->next) {
 		// In the middle, just unlink it
 		assert((cur->next)->prev == cur);
