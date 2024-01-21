@@ -20,7 +20,7 @@
 #include <assert.h>
 
 #define ALIGN_SIZE 8
-#define _align(x, n) (((x) + ((n)-1)) & ~((n)-1))
+#define _align(x, n) (((x) + ((n) - 1)) & ~((n) - 1))
 
 /* Private types */
 
@@ -43,7 +43,7 @@ static BlockHeader *_alloc_head, *_alloc_tail;
 __attribute__((weak)) void InitHeap(void *addr, size_t size) {
 	_heap_start = addr;
 	_heap_end = addr;
-	_heap_limit = (void *)((uintptr_t)addr + size);
+	_heap_limit = (void *) ((uintptr_t) addr + size);
 
 	_heap_alloc = 0;
 	_heap_alloc_max = 0;
@@ -129,7 +129,7 @@ __attribute__((weak)) void *malloc(size_t size) {
 	// So let's check first if we have free space there, because I'm nervous
 	// about having an incomplete data structure.
 	if (((uintptr_t) _alloc_start + _size) < ((uintptr_t) _alloc_head)) {
-		BlockHeader *new = (BlockHeader*) _alloc_start;
+		BlockHeader *new = (BlockHeader *) _alloc_start;
 
 		void *ptr = (void *) &new[1];
 		new->ptr = ptr;
