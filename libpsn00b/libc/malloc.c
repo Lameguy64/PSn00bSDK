@@ -31,25 +31,25 @@ typedef struct __attribute__((aligned(ALIGN_SIZE))) _BlockHeader {
 
 /* Internal globals */
 
-static void *_heap_start, *_heap_end, *_heap_limit;
-static size_t _heap_alloc, _heap_alloc_max;
+static void        *_heap_start, *_heap_end, *_heap_limit;
+static size_t      _heap_alloc, _heap_alloc_max;
 
-static void *_alloc_start;
+static void        *_alloc_start;
 static BlockHeader *_alloc_head, *_alloc_tail;
 
 /* Heap management API */
 
 __attribute__((weak)) void InitHeap(void *addr, size_t size) {
 	_heap_start = addr;
-	_heap_end = addr;
+	_heap_end   = addr;
 	_heap_limit = (void *) ((uintptr_t) addr + size);
 
-	_heap_alloc = 0;
+	_heap_alloc     = 0;
 	_heap_alloc_max = 0;
 
 	_alloc_start = addr;
-	_alloc_head = 0;
-	_alloc_tail = 0;
+	_alloc_head  = 0;
+	_alloc_tail  = 0;
 }
 
 __attribute__((weak)) void *sbrk(ptrdiff_t incr) {
@@ -72,10 +72,10 @@ __attribute__((weak)) void TrackHeapUsage(ptrdiff_t alloc_incr) {
 
 __attribute__((weak)) void GetHeapUsage(HeapUsage *usage) {
 	usage->total = _heap_limit - _heap_start;
-	usage->heap = _heap_end - _heap_start;
+	usage->heap  = _heap_end - _heap_start;
 	usage->stack = _heap_limit - _heap_end;
 
-	usage->alloc = _heap_alloc;
+	usage->alloc     = _heap_alloc;
 	usage->alloc_max = _heap_alloc_max;
 }
 
@@ -86,7 +86,7 @@ static BlockHeader *_find_fit(BlockHeader *head, size_t size) {
 	for (; prev; prev = prev->next) {
 		if (prev->next) {
 			uintptr_t next_bot = (uintptr_t) prev->next;
-			next_bot -= (uintptr_t) prev->ptr + prev->size;
+			next_bot          -= (uintptr_t) prev->ptr + prev->size;
 			if (next_bot >= size) {
 				return prev;
 			}
@@ -99,20 +99,18 @@ __attribute__((weak)) void *malloc(size_t size) {
 	if (!size)
 		return 0;
 
-	size_t _size = _align(size + sizeof(BlockHeader), ALIGN_SIZE);
+	size_t _size    = _align(size + sizeof(BlockHeader), ALIGN_SIZE);
 	size_t _size_nh = _size - sizeof(BlockHeader);
 
 	// Nothing's initialized yet? Let's just initialize the bottom of our heap,
 	// flag it as allocated.
 	if (!_alloc_head) {
-		// if (!_alloc_start)
-		//_alloc_start = sbrk(0);
-
 		BlockHeader *new = (BlockHeader *) sbrk(_size);
 		if (!new)
 			return 0;
+
 		void *ptr = (void *) &new[1];
-		new->ptr = ptr;
+		new->ptr  = ptr;
 		new->size = _size_nh;
 		new->prev = 0;
 		new->next = 0;
@@ -131,12 +129,13 @@ __attribute__((weak)) void *malloc(size_t size) {
 		BlockHeader *new = (BlockHeader *) _alloc_start;
 
 		void *ptr = (void *) &new[1];
-		new->ptr = ptr;
+		new->ptr  = ptr;
 		new->size = _size_nh;
 		new->prev = 0;
 		new->next = _alloc_head;
+
 		_alloc_head->prev = new;
-		_alloc_head = new;
+		_alloc_head       = new;
 
 		TrackHeapUsage(_size);
 		return ptr;
@@ -148,13 +147,14 @@ __attribute__((weak)) void *malloc(size_t size) {
 		BlockHeader *new = (BlockHeader *) ((uintptr_t) prev->ptr + prev->size);
 
 		void *ptr = (void *) &new[1];
-		new->ptr = ptr;
+		new->ptr  = ptr;
 		new->size = _size_nh;
 		new->prev = prev;
 		new->next = prev->next;
 
 		(new->next)->prev = new;
-		prev->next = new;
+		prev->next        = new;
+
 		TrackHeapUsage(_size);
 		return ptr;
 	}
@@ -163,14 +163,15 @@ __attribute__((weak)) void *malloc(size_t size) {
 	BlockHeader *new = (BlockHeader *) sbrk(_size);
 	if (!new)
 		return 0;
+
 	void *ptr = (void *) &new[1];
-	new->ptr = ptr;
+	new->ptr  = ptr;
 	new->size = _size_nh;
 	new->prev = _alloc_tail;
 	new->next = 0;
 
 	_alloc_tail->next = new;
-	_alloc_tail = new;
+	_alloc_tail       = new;
 
 	TrackHeapUsage(_size);
 	return ptr;
@@ -188,8 +189,8 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 	if (!ptr)
 		return malloc(size);
 
-	size_t _size = _align(size + sizeof(BlockHeader), ALIGN_SIZE);
-	size_t _size_nh = _size - sizeof(BlockHeader);
+	size_t      _size = _align(size + sizeof(BlockHeader), ALIGN_SIZE);
+	size_t      _size_nh = _size - sizeof(BlockHeader);
 	BlockHeader *prev = (BlockHeader *) ((uintptr_t) ptr - sizeof(BlockHeader));
 
 	// New memory block shorter?
@@ -200,7 +201,7 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 		// This is the last block, move the break back to accomodate shrinking
 		if (!prev->next) {
 			// We have overriden prev->size, need to calculate it from break
-			void *new_break = sbrk((ptr - sbrk(0)) + _size_nh);
+			sbrk((ptr - sbrk(0)) + _size_nh);
 		}
 		return ptr;
 	}
@@ -226,6 +227,7 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size) {
 	void *new = malloc(size);
 	if (!new)
 		return 0;
+
 	__builtin_memcpy(new, ptr, prev->size);
 	free(ptr);
 	return new;
@@ -239,6 +241,7 @@ __attribute__((weak)) void free(void *ptr) {
 		size_t size = (((uintptr_t) _alloc_head->ptr) + _alloc_head->size)
 					- (uintptr_t) _alloc_head;
 		_alloc_head = _alloc_head->next;
+
 		if (_alloc_head) {
 			_alloc_head->prev = 0;
 		} else {
@@ -250,20 +253,19 @@ __attribute__((weak)) void free(void *ptr) {
 		return;
 	}
 
+	// Finding the proper block
 	BlockHeader* cur = (BlockHeader*) (ptr - sizeof(BlockHeader));
 	if (cur->next) {
 		// In the middle, just unlink it
-		assert((cur->next)->prev == cur);
 		(cur->next)->prev = cur->prev;
 	} else {
 		// At the end, shrink heap
-		void *top = sbrk(0);
+		void   *top = sbrk(0);
 		size_t size = (top - (cur->prev)->ptr) - (cur->prev)->size;
 		_alloc_tail = cur->prev;
 
 		sbrk(-size);
 	}
 	TrackHeapUsage(-(cur->size + sizeof(BlockHeader)));
-	assert((cur->prev)->next == cur);
 	(cur->prev)->next = cur->next;
 }
