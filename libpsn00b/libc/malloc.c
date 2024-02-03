@@ -87,9 +87,8 @@ static BlockHeader *_find_fit(BlockHeader *head, size_t size) {
 			uintptr_t next_bot = (uintptr_t) prev->next;
 			next_bot          -= (uintptr_t) prev->ptr + prev->size;
 
-			if (next_bot >= size) {
+			if (next_bot >= size)
 				return prev;
-			}
 		}
 	}
 	return prev;
@@ -105,6 +104,8 @@ __attribute__((weak)) void *malloc(size_t size) {
 	// Nothing's initialized yet? Let's just initialize the bottom of our heap,
 	// flag it as allocated.
 	if (!_alloc_head) {
+		//if (!_alloc_start)
+			//_alloc_start = sbrk(0);
 		BlockHeader *new = (BlockHeader *) sbrk(_size);
 		if (!new)
 			return 0;
