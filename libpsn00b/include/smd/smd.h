@@ -54,6 +54,11 @@ typedef struct {
 #define SMD_PRI_TYPE_COLORING_SOLID 0
 #define SMD_PRI_TYPE_COLORING_GOURAUD 1
 
+#define SMD_PRI_TYPE_BLEND_50_ALPHA 0
+#define SMD_PRI_TYPE_BLEND_ADD 1
+#define SMD_PRI_TYPE_BLEND_SUB 2
+#define SMD_PRI_TYPE_BLEND_25_SUB 3
+
 typedef struct {
 	SMD_PRI_TYPE prim_id;
 
