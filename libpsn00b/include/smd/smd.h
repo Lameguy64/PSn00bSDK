@@ -43,29 +43,36 @@ typedef struct {
 	uint8_t len;
 } SMD_PRI_TYPE;
 
+typedef enum: uint8_t {
+	SMD_KIND_LINE = 0,
+	SMD_KIND_TRIANGLE = 1,
+	SMD_KIND_QUAD = 2,
+} SMD_KIND;
 
-#define SMD_PRI_TYPE_LINE 0
-#define SMD_PRI_TYPE_TRIANGLE 1
-#define SMD_PRI_TYPE_QUAD 2
+typedef enum: uint8_t {
+	// No shading (no normals)
+	SMD_LIGHTING_NONE = 0,
+	// Flat shading (1 normal)
+	SMD_LIGHTING_FLAT = 1,
+	// Smooth shading (3 normals)
+	SMD_LIGHTING_SMOOTH = 2
+} SMD_LIGHTING;
 
-// No shading (no normals)
-#define SMD_PRI_TYPE_LIGHTING_NONE 0
-// Flat shading (1 normal)
-#define SMD_PRI_TYPE_LIGHTING_FLAT 1
-// Smooth shading (3 normals per vectex)
-#define SMD_PRI_TYPE_LIGHTING_SMOOTH 2
+typedef enum: uint8_t {
+	SMD_COLORING_SOLID = 0,
+	SMD_COLORING_GOURAUD = 1
+} SMD_COLORING;
 
-#define SMD_PRI_TYPE_COLORING_SOLID 0
-#define SMD_PRI_TYPE_COLORING_GOURAUD 1
-
-// 50% Background + 50% Foreground (50% alpha)
-#define SMD_PRI_TYPE_BLEND_50_ALPHA 0
-// 100% background + 100% foreground (additive)
-#define SMD_PRI_TYPE_BLEND_ADD 1
-// 100% background - 100% foreground (subtractive)
-#define SMD_PRI_TYPE_BLEND_SUB 2
-// 100% background - 25% foreground (subtract 25%)
-#define SMD_PRI_TYPE_BLEND_25_SUB 3
+typedef enum: uint8_t {
+	// 50% background + 50% foreground (50% alpha)
+	SMD_BLEND_ALPHA_50 = 0,
+	// 100% background + 100% foreground (additive)
+	SMD_BLEND_ADDITIVE = 1,
+	// 100% background - 100% foreground (subtractive)
+	SMD_BLEND_SUBTRACT = 2,
+	// 100% background - 25% foreground (subtract 25%)
+	SMD_BLEND_SUBTRACT_25 = 3
+} SMD_BLEND;
 
 typedef struct {
 	SMD_PRI_TYPE prim_id;
