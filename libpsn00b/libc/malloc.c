@@ -1,96 +1,115 @@
-/*
- * PSn00bSDK default memory allocator
- * (C) 2022 Nicolas Noble, spicyjpeg
- *
- * This code is based on psyqo's malloc implementation, available here:
- * https://github.com/grumpycoders/pcsx-redux/blob/main/src/mips/psyqo/src/alloc.c
- *
- * Heap management and memory allocation are completely separate, with the
- * latter being built on top of the former. This makes it possible to override
- * only InitHeap() and sbrk() while still using the default allocator, or
- * override malloc()/realloc()/free() while using the default heap manager.
- * Custom allocators should call TrackHeapUsage() to let the heap manager know
- * how much memory is allocated at a given time.
- */
+#include "malloc.h"
 
-#include <stddef.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <stdio.h>
-
+#if MALLOC_IMPL == MALLOC_IMPL_TLSF
 #include "tlsf.h"
 
-#define ALIGN_SIZE 8
-#define _align(x, n) (((x) + ((n) - 1)) & ~((n) - 1))
+tlsf_t __tlsf_allocator = NULL;
 
-/* Private types */
-
-typedef struct __attribute__((aligned(ALIGN_SIZE))) _BlockHeader {
-	struct _BlockHeader	*prev, *next;
-	void				*ptr;
-	size_t				size;
-} BlockHeader;
-
-/* Internal globals */
-
-static void			*_heap_start, *_heap_end, *_heap_limit;
-static size_t		_heap_alloc, _heap_alloc_max;
-
-static void			*_alloc_start;
-static BlockHeader	*_alloc_head, *_alloc_tail;
-
-static tlsf_t tlsf;
-
-/* Heap management API */
-
-__attribute__((weak)) void InitHeap(void *addr, size_t size) {
-	tlsf = tlsf_create_with_pool(addr, size);
-	if (!tlsf) {
-		printf("Unable to initialise heap\n");
+void InitHeap(void* addr, size_t size) {
+	if (__tlsf_allocator != NULL) {
+		printf("[ERROR] Heap already initialised\n");
 		abort();
+		return;
 	}
-	_heap_start = addr;
-	_heap_end   = addr;
-	_heap_limit = (void *) ((uintptr_t) addr + size);
-
-	_heap_alloc     = 0;
-	_heap_alloc_max = 0;
-
-	_alloc_start = addr;
-	_alloc_head  = 0;
-	_alloc_tail  = 0;
+	__tlsf_allocator = tlsf_create_with_pool(addr, size);
+	if (__tlsf_allocator == null) {
+		printf("[ERROR] Unable to initialise allocator\n");
+		return;
+	}
 }
 
-__attribute__((weak)) void TrackHeapUsage(ptrdiff_t alloc_incr) {
-	_heap_alloc += alloc_incr;
-
-	if (_heap_alloc > _heap_alloc_max)
-		_heap_alloc_max = _heap_alloc;
+void TrackHeapUsage(ptrdiff_t alloc_incr) {
 }
 
-__attribute__((weak)) void GetHeapUsage(HeapUsage *usage) {
-	usage->total = _heap_limit - _heap_start;
-	usage->heap  = _heap_end   - _heap_start;
-	usage->stack = _heap_limit - _heap_end;
-
-	usage->alloc     = _heap_alloc;
-	usage->alloc_max = _heap_alloc_max;
+void GetHeapUsage(HeapUsage* usage) {
 }
 
-/* Memory allocator */
-
-__attribute__((weak)) void *malloc(size_t size) {
-	return tlsf_malloc(tlsf, size);
+void* malloc(size_t size) {
+	return tlsf_malloc(__tlsf_allocator, size);
 }
 
-__attribute__((weak)) void *calloc(size_t num, size_t size) {
-	return malloc(num * size);
+void* calloc(size_t num, size_t size) {
+	return tlsf_malloc(__tlsf_allocator, num * size);
 }
 
-__attribute__((weak)) void *realloc(void *ptr, size_t size) {
-	return tlsf_realloc(tlsf, ptr, size);
+void* realloc(void* ptr, size_t size) {
+	return tlsf_realloc(__tlsf_allocator, ptr, size);
 }
 
-__attribute__((weak)) void free(void *ptr) {
-	return tlsf_free(tlsf, ptr);
+void free(void* ptr) {
+	tlsf_free(__tlsf_allocator, ptr);
 }
+
+#elif MALLOC_IMPL == MALLOC_IMPL_AFF
+#include "aff.h"
+
+void InitHeap(void* addr, size_t size) {
+	affInitHeap(addr, size);
+}
+
+void TrackHeapUsage(ptrdiff_t alloc_incr) {
+	affTrackHeapUsage(alloc_incr);
+}
+
+void GetHeapUsage(HeapUsage* usage) {
+	affGetHeapUsage(usage);
+}
+
+void* malloc(size_t size) {
+	return affMalloc(size);
+}
+
+void* calloc(size_t num, size_t size) {
+	return affCalloc(num, size);
+}
+
+void* realloc(void* ptr, size_t size) {
+	return affRealloc(ptr, size);
+}
+
+void free(void* ptr) {
+	affFree(ptr);
+}
+
+#elif MALLOC_IMPL == MALLOC_IMPL_CUSTOM
+#include <stdio.h>
+
+void InitHeap(void* addr, size_t size) {
+	printf("[ERROR] Unimplemented custom allocator handle: void InitHeap(void* addr, size_t size)\n");
+	abort();
+}
+
+void TrackHeapUsage(ptrdiff_t alloc_incr) {
+	printf("[ERROR] Unimplemented custom allocator handle: void TrackHeapUsage(ptrdiff_t alloc_incr)\n");
+	abort();
+}
+
+void GetHeapUsage(HeapUsage* usage) {
+	printf("[ERROR] Unimplemented custom allocator handle: void GetHeapUsage(HeapUsage* usage)\n");
+	abort();
+}
+
+void* malloc(size_t size) {
+	printf("[ERROR] Unimplemented custom allocator handle: void* malloc(size_t)\n");
+	abort();
+	return NULL;
+}
+
+void* calloc(size_t num, size_t size) {
+	printf("[ERROR] Unimplemented custom allocator handle: void* calloc(size_t num, size_t size)\n");
+	abort();
+	return NULL;
+}
+
+void* realloc(void* ptr, size_t size) {
+	printf("[ERROR] Unimplemented custom allocator handle: void* realloc(void* ptr, size_t size)\n");
+	abort();
+	return NULL;
+}
+
+void free(void* ptr) {
+	printf("[ERROR] Unimplemented custom allocator handle: void free(void* ptr)\n");
+	abort();
+}
+
+#endif

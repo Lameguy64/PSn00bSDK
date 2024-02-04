@@ -49,6 +49,8 @@ extern "C" {
 typedef void* tlsf_t;
 typedef void* pool_t;
 
+extern tlsf_t __tlsf_allocator;
+
 /* Create/destroy a memory pool. */
 tlsf_t tlsf_create(void* mem);
 tlsf_t tlsf_create_with_pool(void* mem, size_t bytes);
