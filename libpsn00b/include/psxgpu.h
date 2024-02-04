@@ -594,7 +594,16 @@ typedef struct {
 extern "C" {
 #endif
 
-void ResetGraph(int mode);
+typedef enum {
+	// Resets GPU including video mode and sets displaymask to 0
+	RESET_GRAPH_ALL_VIDEO_MODE_DISPLAY_MASK = 0,
+	// Cancels any outgoing DMA requests and resets the GPU command buffer
+	RESET_GRAPH_DMA_IRQ_COMMAND_BUFFER = 1,
+	// Resets the GPU command buffer
+	RESET_GRAPH_COMMAND_BUFFER = 2
+} ResetGraphMode;
+
+void ResetGraph(ResetGraphMode mode);
 
 GPU_VideoMode GetVideoMode(void);
 void SetVideoMode(GPU_VideoMode mode);
