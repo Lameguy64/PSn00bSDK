@@ -112,4 +112,6 @@ void free(void* ptr) {
 	abort();
 }
 
+#else
+#error Invalid MALLOC_IMPL defined, must be one of (0: custom, 1: AFF, 2: TLSF)
 #endif
