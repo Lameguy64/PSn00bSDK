@@ -43,20 +43,28 @@ typedef struct {
 	uint8_t len;
 } SMD_PRI_TYPE;
 
+
 #define SMD_PRI_TYPE_LINE 0
 #define SMD_PRI_TYPE_TRIANGLE 1
 #define SMD_PRI_TYPE_QUAD 2
 
-#define SMD_PRI_TYPE_LIGHTING_NONE 0 // No shading (no normals)
-#define SMD_PRI_TYPE_LIGHTING_FLAT 1 // Flat shading (1 normal)
-#define SMD_PRI_TYPE_LIGHTING_SMOOTH 2 // Smooth shading (3 normals per vertex)
+// No shading (no normals)
+#define SMD_PRI_TYPE_LIGHTING_NONE 0
+// Flat shading (1 normal)
+#define SMD_PRI_TYPE_LIGHTING_FLAT 1
+// Smooth shading (3 normals per vectex)
+#define SMD_PRI_TYPE_LIGHTING_SMOOTH 2
 
 #define SMD_PRI_TYPE_COLORING_SOLID 0
 #define SMD_PRI_TYPE_COLORING_GOURAUD 1
 
+// 50% Background + 50% Foreground (50% alpha)
 #define SMD_PRI_TYPE_BLEND_50_ALPHA 0
+// 100% background + 100% foreground (additive)
 #define SMD_PRI_TYPE_BLEND_ADD 1
+// 100% background - 100% foreground (subtractive)
 #define SMD_PRI_TYPE_BLEND_SUB 2
+// 100% background - 25% foreground (subtract 25%)
 #define SMD_PRI_TYPE_BLEND_25_SUB 3
 
 typedef struct {
