@@ -270,3 +270,13 @@ function(psn00bsdk_add_cd_image name image_name config_file)
 			${CMAKE_CURRENT_BINARY_DIR}/${image_name}.cue
 	)
 endfunction()
+
+set(PSN00B_ALLOCATOR_IMPLEMENTATIONS CUSTOM AFF TLSF)
+
+function(psn00bsdk_use_allocator name allocator_type)
+	list(FIND PSN00B_ALLOCATOR_IMPLEMENTATIONS ${allocator_type} index)
+	if (index EQUAL -1)
+		message(FATAL_ERROR "allocator_type must be one of ${PSN00B_ALLOCATOR_IMPLEMENTATIONS}")
+	endif()
+	target_compile_definitions(${name} MALLOC_IMPL=${index})
+endfunction()
