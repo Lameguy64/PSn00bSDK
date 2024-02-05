@@ -49,8 +49,8 @@ else()
 	endif()
 endif()
 list(FIND PSN00BSDK_LIBC_ALLOCATORS ${PSN00BSDK_LIBC_ALLOCATOR} index)
-# Guarnateed to not be -1 here
-set(PSN00BSDK_LIBC_ALLOCATOR index)
+# Guaranteed to not be -1 here
+set(PSN00BSDK_LIBC_ALLOCATOR ${index})
 
 # DON'T CHANGE THE ORDER or you'll break the libraries' internal dependencies.
 set(
