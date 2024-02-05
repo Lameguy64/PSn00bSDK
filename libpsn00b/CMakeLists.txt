@@ -24,7 +24,6 @@ foreach(_library IN LISTS PSN00BSDK_LIBRARIES)
 	# libc needs special handling due to the different directory name.
 	if(${_library} STREQUAL "c")
 		set(_path ${PROJECT_SOURCE_DIR}/libc)
-		target_compile_definitions(${_library} PRIVATE MALLOC_IMPL=${PSN00BSDK_LIBC_ALLOCATOR})
 	else()
 		set(_path ${PROJECT_SOURCE_DIR}/${_library})
 	endif()
@@ -51,6 +50,9 @@ foreach(_library IN LISTS PSN00BSDK_LIBRARIES)
 		)
 
 		target_compile_definitions(${_name} PRIVATE SDK_LIBRARY_NAME="${_library}")
+		if(${_library} STREQUAL "c")
+			target_compile_definitions(${_name} PRIVATE MALLOC_IMPL=${PSN00BSDK_LIBC_ALLOCATOR})
+		endif()
 	endforeach()
 endforeach()
 
