@@ -40,6 +40,18 @@ if(TARGET psn00bsdk)
 endif()
 link_libraries(-lgcc)
 
+set(PSN00BSDK_LIBC_ALLOCATORS CUSTOM AFF TLSF)
+if(NOT DEFINED PSN00BSDK_LIBC_ALLOCATOR)
+	set(PSN00BSDK_LIBC_ALLOCATOR AFF)
+else()
+	if (NOT PSN00BSDK_LIBC_ALLOCATOR IN LIST PSN00BSDK_LIBC_ALLOCATORS)
+		message(FATAL_ERROR "Invalid allocator: ${PSN00BSDK_LIBC_ALLOCATOR} (must be CUSTOM, AFF or TLSF)")
+	endif()
+endif()
+list(FIND PSN00BSDK_LIBC_ALLOCATORS ${PSN00BSDK_LIBC_ALLOCATOR} index)
+# Guarnateed to not be -1 here
+set(PSN00BSDK_LIBC_ALLOCATOR index)
+
 # DON'T CHANGE THE ORDER or you'll break the libraries' internal dependencies.
 set(
 	PSN00BSDK_LIBRARIES
@@ -269,14 +281,4 @@ function(psn00bsdk_add_cd_image name image_name config_file)
 			${CMAKE_CURRENT_BINARY_DIR}/${image_name}.bin
 			${CMAKE_CURRENT_BINARY_DIR}/${image_name}.cue
 	)
-endfunction()
-
-set(PSN00B_ALLOCATOR_IMPLEMENTATIONS CUSTOM AFF TLSF)
-
-function(psn00bsdk_use_allocator name allocator_type)
-	list(FIND PSN00B_ALLOCATOR_IMPLEMENTATIONS ${allocator_type} index)
-	if (index EQUAL -1)
-		message(FATAL_ERROR "allocator_type must be one of ${PSN00B_ALLOCATOR_IMPLEMENTATIONS}")
-	endif()
-	target_compile_definitions(${name} PRIVATE MALLOC_IMPL=${index})
 endfunction()
