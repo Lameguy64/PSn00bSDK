@@ -50,6 +50,8 @@
 extern "C" {
 #endif
 
+#include <assert.h>
+
 /* tlsf_t: a TLSF structure. Can contain 1 to N pools. */
 /* pool_t: a block of memory that TLSF can manage. */
 typedef void* tlsf_t;
