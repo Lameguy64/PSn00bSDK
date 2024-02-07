@@ -38,7 +38,9 @@
 ** SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdlib.h>
 #include <stddef.h>
+#include <stdio.h>
 
 #if defined(__cplusplus)
 extern "C" {
@@ -84,6 +86,45 @@ void tlsf_walk_pool(pool_t pool, tlsf_walker walker, void* user);
 /* Returns nonzero if any internal consistency check fails. */
 int tlsf_check(tlsf_t tlsf);
 int tlsf_check_pool(pool_t pool);
+
+// ==== API ====
+
+tlsf_t __tlsf_allocator = NULL;
+
+void InitHeap(void* addr, size_t size) {
+	if (__tlsf_allocator != NULL) {
+		printf("[ERROR] Heap already initialised\n");
+		abort();
+		return;
+	}
+	__tlsf_allocator = tlsf_create_with_pool(addr, size);
+	if (__tlsf_allocator == NULL) {
+		printf("[ERROR] Unable to initialise allocator\n");
+		return;
+	}
+}
+
+void TrackHeapUsage(ptrdiff_t alloc_incr) {
+}
+
+void GetHeapUsage(HeapUsage* usage) {
+}
+
+void* malloc(size_t size) {
+	return tlsf_malloc(__tlsf_allocator, size);
+}
+
+void* calloc(size_t num, size_t size) {
+	return tlsf_malloc(__tlsf_allocator, num * size);
+}
+
+void* realloc(void* ptr, size_t size) {
+	return tlsf_realloc(__tlsf_allocator, ptr, size);
+}
+
+void free(void* ptr) {
+	tlsf_free(__tlsf_allocator, ptr);
+}
 
 #if defined(__cplusplus)
 };
