@@ -40,11 +40,6 @@ if(TARGET psn00bsdk)
 endif()
 link_libraries(-lgcc)
 
-message("ALLOCATOR: ${PSN00BSDK_LIBC_ALLOCATOR}")
-list(FIND PSN00BSDK_LIBC_ALLOCATORS ${PSN00BSDK_LIBC_ALLOCATOR} index)
-if (index EQUAL -1)
-	message(FATAL_ERROR "Invalid allocator: ${PSN00BSDK_LIBC_ALLOCATOR} (must be CUSTOM, AFF or TLSF)")
-endif()
 # Guaranteed to not be -1 here
 set(PSN00BSDK_LIBC_ALLOCATOR ${index})
 
