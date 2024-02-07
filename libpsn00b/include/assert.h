@@ -25,6 +25,7 @@ void _assert_abort(const char *file, int line, const char *expr);
 #define assert(expr)
 #define _sdk_log(fmt, ...)
 #define _sdk_assert(expr, fmt, ...)
+#define _sdk_assert_abort(expr, fmt, ...)
 #define _sdk_validate_args_void(expr)
 #define _sdk_validate_args(expr, ret)
 
