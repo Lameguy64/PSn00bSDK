@@ -40,7 +40,7 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include <stdio.h>
+#include <assert.h>
 
 #if defined(__cplusplus)
 extern "C" {
@@ -92,16 +92,10 @@ int tlsf_check_pool(pool_t pool);
 tlsf_t __tlsf_allocator = NULL;
 
 void InitHeap(void* addr, size_t size) {
-	if (__tlsf_allocator != NULL) {
-		printf("[ERROR] Heap already initialised\n");
-		abort();
-		return;
-	}
+	_sdk_assert_abort(__tlsf_allocator == NULL, (void) NULL, "[ERROR] Heap already initialised\n");
 	__tlsf_allocator = tlsf_create_with_pool(addr, size);
-	if (__tlsf_allocator == NULL) {
-		printf("[ERROR] Unable to initialise allocator\n");
-		return;
-	}
+	_sdk_assert_abort(__tlsf_allocator != NULL, (void) NULL, "[ERROR] Unable to initialise allocator\n");
+	_sdk_log("Initialised TLSF allocator\n");
 }
 
 void TrackHeapUsage(ptrdiff_t alloc_incr) {

@@ -46,6 +46,12 @@ void _assert_abort(const char *file, int line, const char *expr);
 		_sdk_log(fmt, __VA_ARGS__); \
 		return ret; \
 	}
+#define _sdk_assert_abort(expr, ret, fmt, ...) \
+	if (!(expr)) { \
+		_sdk_log(fmt, __VA_ARGS__); \
+		assert(expr); \
+		return ret; \
+	}
 #define _sdk_validate_args_void(expr) \
 	if (!(expr)) { \
 		_sdk_log("invalid args to %s() (%s)\n", __func__, #expr); \

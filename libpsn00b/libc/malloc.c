@@ -7,43 +7,43 @@
 #include "aff.h"
 
 #elif MALLOC_IMPL == MALLOC_IMPL_CUSTOM
-#include <stdio.h>
+#include <assert.h>
 
 void InitHeap(void* addr, size_t size) {
-	printf("[ERROR] Unimplemented custom allocator handle: void InitHeap(void* addr, size_t size)\n");
+	_sdk_log("[ERROR] Unimplemented custom allocator handle: void InitHeap(void* addr, size_t size)\n");
 	abort();
 }
 
 void TrackHeapUsage(ptrdiff_t alloc_incr) {
-	printf("[ERROR] Unimplemented custom allocator handle: void TrackHeapUsage(ptrdiff_t alloc_incr)\n");
+	_sdk_log("[ERROR] Unimplemented custom allocator handle: void TrackHeapUsage(ptrdiff_t alloc_incr)\n");
 	abort();
 }
 
 void GetHeapUsage(HeapUsage* usage) {
-	printf("[ERROR] Unimplemented custom allocator handle: void GetHeapUsage(HeapUsage* usage)\n");
+	_sdk_log("[ERROR] Unimplemented custom allocator handle: void GetHeapUsage(HeapUsage* usage)\n");
 	abort();
 }
 
 void* malloc(size_t size) {
-	printf("[ERROR] Unimplemented custom allocator handle: void* malloc(size_t)\n");
+	_sdk_log("[ERROR] Unimplemented custom allocator handle: void* malloc(size_t)\n");
 	abort();
 	return NULL;
 }
 
 void* calloc(size_t num, size_t size) {
-	printf("[ERROR] Unimplemented custom allocator handle: void* calloc(size_t num, size_t size)\n");
+	_sdk_log("[ERROR] Unimplemented custom allocator handle: void* calloc(size_t num, size_t size)\n");
 	abort();
 	return NULL;
 }
 
 void* realloc(void* ptr, size_t size) {
-	printf("[ERROR] Unimplemented custom allocator handle: void* realloc(void* ptr, size_t size)\n");
+	_sdk_log("[ERROR] Unimplemented custom allocator handle: void* realloc(void* ptr, size_t size)\n");
 	abort();
 	return NULL;
 }
 
 void free(void* ptr) {
-	printf("[ERROR] Unimplemented custom allocator handle: void free(void* ptr)\n");
+	_sdk_log("[ERROR] Unimplemented custom allocator handle: void free(void* ptr)\n");
 	abort();
 }
 
