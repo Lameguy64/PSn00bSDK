@@ -20,6 +20,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/flags.cmake)
 set(_types    EXECUTABLE_GPREL EXECUTABLE_NOGPREL SHARED_LIBRARY)
 set(_suffixes _exe_gprel _exe_nogprel _dll)
 
+message("[BUILD] Allocator: ${PSN00BSDK_LIBC_ALLOCATOR}")
 foreach(_library IN LISTS PSN00BSDK_LIBRARIES)
 	# libc needs special handling due to the different directory name.
 	if(${_library} STREQUAL "c")

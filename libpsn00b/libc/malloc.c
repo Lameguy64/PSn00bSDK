@@ -6,6 +6,7 @@
 tlsf_t __tlsf_allocator = NULL;
 
 void InitHeap(void* addr, size_t size) {
+	printf("[ALLOCATOR] Initialising TLSF\n");
 	if (__tlsf_allocator != NULL) {
 		printf("[ERROR] Heap already initialised\n");
 		abort();
@@ -44,6 +45,7 @@ void free(void* ptr) {
 #include "aff.h"
 
 void InitHeap(void* addr, size_t size) {
+	printf("[ALLOCATOR] Initialising AFF\n");
 	affInitHeap(addr, size);
 }
 
