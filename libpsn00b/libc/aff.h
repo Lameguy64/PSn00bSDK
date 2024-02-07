@@ -1,6 +1,8 @@
 #pragma once
 
-#ifndef _H_ALLOCATED_BLOCK_FIRST_FIT_
+#include "malloc_impl.h"
+
+#if !defined(_H_ALLOCATED_BLOCK_FIRST_FIT_) && MALLOC_IMPL == MALLOC_IMPL_AFF
 #define _H_ALLOCATED_BLOCK_FIRST_FIT_
 
 #include <stddef.h>

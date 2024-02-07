@@ -1,4 +1,8 @@
-#ifndef INCLUDED_tlsf
+#pragma once
+
+#include "malloc_impl.h"
+
+#if !defined(INCLUDED_tlsf) && MALLOC_IMPL == MALLOC_IMPL_TLSF
 #define INCLUDED_tlsf
 
 /*
