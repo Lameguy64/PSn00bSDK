@@ -46,7 +46,7 @@ void _assert_abort(const char *file, int line, const char *expr);
 		_sdk_log(fmt, __VA_ARGS__); \
 		return ret; \
 	}
-#define _sdk_assert_abort(expr, ret, fmt, ...) \
+#define _sdk_assert_abort(expr, fmt, ...) \
 	if (!(expr)) { \
 		_sdk_log(fmt, __VA_ARGS__); \
 		assert(expr); \
