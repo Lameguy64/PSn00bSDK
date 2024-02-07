@@ -50,6 +50,7 @@ foreach(_library IN LISTS PSN00BSDK_LIBRARIES)
 		)
 
 		target_compile_definitions(${_name} PRIVATE SDK_LIBRARY_NAME="${_library}")
+		target_compile_definitions(${_name} PRIVATE MALLOC_IMPL=${PSN00BSDK_LIBC_ALLOCATOR})
 		if(${_library} STREQUAL "c")
 			target_compile_definitions(${_name} PRIVATE MALLOC_IMPL=${PSN00BSDK_LIBC_ALLOCATOR})
 		endif()
