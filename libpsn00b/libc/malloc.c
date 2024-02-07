@@ -13,7 +13,7 @@ void InitHeap(void* addr, size_t size) {
 		return;
 	}
 	__tlsf_allocator = tlsf_create_with_pool(addr, size);
-	if (__tlsf_allocator == null) {
+	if (__tlsf_allocator == NULL) {
 		printf("[ERROR] Unable to initialise allocator\n");
 		return;
 	}
