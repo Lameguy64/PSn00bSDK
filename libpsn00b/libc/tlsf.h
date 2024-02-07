@@ -93,8 +93,6 @@ int tlsf_check_pool(pool_t pool);
 
 // ==== API ====
 
-tlsf_t __tlsf_allocator = NULL;
-
 void InitHeap(void* addr, size_t size) {
 	_sdk_assert_abort(__tlsf_allocator == NULL, "[ERROR] Heap already initialised\n");
 	__tlsf_allocator = tlsf_create_with_pool(addr, size);

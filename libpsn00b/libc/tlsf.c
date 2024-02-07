@@ -7,6 +7,8 @@
 
 #include "tlsf.h"
 
+tlsf_t __tlsf_allocator = NULL;
+
 #if defined(__cplusplus)
 #define tlsf_decl inline
 #else
