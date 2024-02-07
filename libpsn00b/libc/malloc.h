@@ -20,6 +20,14 @@
 #define MALLOC_IMPL MALLOC_IMPL_CUSTOM
 #endif
 
+#if MALLOC_IMPL == MALLOC_IMPL_CUSTOM
+#warning Malloc implementation: CUSTOM
+#elif MALLOC_IMPL == MALLOC_IMPL_AFF
+#warning Malloc implementation: AFF
+#elif MALLOC_IMPL == MALLOC_IMPL_TLSF
+#warning Malloc implementation: TLSF
+#endif
+
 __attribute__((weak)) void InitHeap(void* addr, size_t size);
 __attribute__((weak)) void TrackHeapUsage(ptrdiff_t alloc_incr);
 __attribute__((weak)) void GetHeapUsage(HeapUsage* usage);
