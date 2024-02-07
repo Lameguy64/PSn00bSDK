@@ -17,6 +17,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #define ALIGN_SIZE 8
 #define _align(x, n) (((x) + ((n) - 1)) & ~((n) - 1))
@@ -268,4 +269,35 @@ void affFree(void *ptr) {
 	}
 	TrackHeapUsage(-(cur->size + sizeof(BlockHeader)));
 	(cur->prev)->next = cur->next;
+}
+
+// ==== API ====
+
+void InitHeap(void* addr, size_t size) {
+	affInitHeap(addr, size);
+	_sdk_log("Initialised AFF allocator\n");
+}
+
+void TrackHeapUsage(ptrdiff_t alloc_incr) {
+	affTrackHeapUsage(alloc_incr);
+}
+
+void GetHeapUsage(HeapUsage* usage) {
+	affGetHeapUsage(usage);
+}
+
+void* malloc(size_t size) {
+	return affMalloc(size);
+}
+
+void* calloc(size_t num, size_t size) {
+	return affCalloc(num, size);
+}
+
+void* realloc(void* ptr, size_t size) {
+	return affRealloc(ptr, size);
+}
+
+void free(void* ptr) {
+	affFree(ptr);
 }

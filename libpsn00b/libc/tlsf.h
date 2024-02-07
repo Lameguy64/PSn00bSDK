@@ -87,39 +87,6 @@ void tlsf_walk_pool(pool_t pool, tlsf_walker walker, void* user);
 int tlsf_check(tlsf_t tlsf);
 int tlsf_check_pool(pool_t pool);
 
-// ==== API ====
-
-tlsf_t __tlsf_allocator = NULL;
-
-void InitHeap(void* addr, size_t size) {
-	_sdk_assert_abort(__tlsf_allocator == NULL, "[ERROR] Heap already initialised\n");
-	__tlsf_allocator = tlsf_create_with_pool(addr, size);
-	_sdk_assert_abort(__tlsf_allocator != NULL, "[ERROR] Unable to initialise allocator\n");
-	_sdk_log("Initialised TLSF allocator\n");
-}
-
-void TrackHeapUsage(ptrdiff_t alloc_incr) {
-}
-
-void GetHeapUsage(HeapUsage* usage) {
-}
-
-void* malloc(size_t size) {
-	return tlsf_malloc(__tlsf_allocator, size);
-}
-
-void* calloc(size_t num, size_t size) {
-	return tlsf_malloc(__tlsf_allocator, num * size);
-}
-
-void* realloc(void* ptr, size_t size) {
-	return tlsf_realloc(__tlsf_allocator, ptr, size);
-}
-
-void free(void* ptr) {
-	tlsf_free(__tlsf_allocator, ptr);
-}
-
 #if defined(__cplusplus)
 };
 #endif
