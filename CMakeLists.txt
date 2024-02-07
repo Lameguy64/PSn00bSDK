@@ -55,6 +55,12 @@ set(
 	CACHE STRING         "Git commit hash (used by CI)"
 )
 
+set(PSN00BSDK_LIBC_ALLOCATORS CUSTOM AFF TLSF)
+set(
+	PSN00BSDK_LIBC_ALLOCATOR "AFF"
+	CACHE STRING             "Allocator to use in libc implementation (one of ${PSN00BSDK_LIBC_ALLOCATORS})"
+)
+
 # Attempt to automatically select a suitable CMake generator to build libpsn00b
 # and the examples. Only Ninja and makefile-based generators can be used, as
 # other generators (VS and Xcode) do not allow custom toolchains to be used.
