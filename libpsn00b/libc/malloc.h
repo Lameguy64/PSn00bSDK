@@ -28,7 +28,7 @@ __attribute__((
 	malloc,
 	alloc_size(1)
 #ifdef gnu_version_10
-	malloc(free, 1)
+	, malloc(free, 1)
 #endif
 ))
 void* malloc(size_t size);
@@ -39,7 +39,7 @@ __attribute__((
 	malloc,
 	alloc_size(1, 2)
 #ifdef gnu_version_10
-	malloc(free, 1)
+	, malloc(free, 1)
 #endif
 ))
 void* calloc(size_t num, size_t size);
@@ -50,7 +50,7 @@ __attribute__((
 	malloc,
 	alloc_size(2)
 #ifdef gnu_version_10
-	malloc(free, 1)
+	, malloc(free, 1)
 #endif
 ))
 void* realloc(void* ptr, size_t size);
