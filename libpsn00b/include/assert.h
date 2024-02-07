@@ -50,7 +50,6 @@ void _assert_abort(const char *file, int line, const char *expr);
 	if (!(expr)) { \
 		_sdk_log(fmt, __VA_ARGS__); \
 		assert(expr); \
-		return ret; \
 	}
 #define _sdk_validate_args_void(expr) \
 	if (!(expr)) { \
