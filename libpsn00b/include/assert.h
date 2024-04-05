@@ -14,7 +14,7 @@
 extern "C" {
 #endif
 
-void _assert_abort(const char *file, int line, const char *expr);
+__attribute__((noreturn)) void _assert_abort(const char *file, int line, const char *expr);
 
 #ifdef __cplusplus
 }
