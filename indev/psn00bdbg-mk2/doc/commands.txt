@@ -1,0 +1,321 @@
+== Debugger commands ==
+
+	CMD_DB_GETSTAT (D0h)	- Get target status
+
+		Get current status of the target. Issue this command at regular
+		intervals to monitor for breakpoints or exceptions during program
+		execution.
+
+		Arguments:
+		
+			None.
+			
+		Response:
+		
+			[u8]	Status byte.
+						0 - Program stopped
+						1 - Breakpoint hit/trace complete
+						2 - Unhandled exception (see CMD_DB_GETREGS to
+						    determine cause of exception via CAUSE)
+						3 - Running
+		
+		
+	CMD_DB_GETINFO (D1h)	- Get debug monitor info string
+
+		Obtain information string of the debug monitor. Normally the
+		response would be 'PSnDBmk2'.
+			
+		Arguments:
+		
+			None.
+			
+		Response:
+		
+			[...] Zero terminated string. Transmission ends when a zero
+				  character has been received.
+			
+			
+	CMD_DB_SETEXEC (D2h)	- Execution control
+
+			Control program execution on the target.
+			
+		Arguments:
+		
+			[u8]	Set execution.
+						0 - stop target
+						1 - step single instruction
+						2 - resume execution
+					
+		Response:
+		
+			[u8] New target status (see CMD_DB_GETSTAT).
+
+
+	CMD_DB_RUNTO (D3h)		- Run to address
+
+		Resume execution up to the specified program counter address. If the
+		trace bit is set, and a non-sequential instruction was encountered
+		(ie. jump or branch instruction) before the target address is reached,
+		the monitor will break on the destination address of the non-sequential
+		instruction instead. Intended for run-to cursor and source level trace
+		operations- so the destination of a function call, conditional line or
+		a loop while tracing can be determined.
+		
+		If a previously defined breakpoint or hard breakpoint (hard-coded break
+		instruction) was encountered before the target address is reached, the
+		monitor will break on the breakpoints instead.
+		
+		This command automatically resumes execution if the target was in a
+		stopped state.
+		
+		Arguments:
+		
+			[u8]	Flags.
+						bit 0   : Trace enable
+						bit 1-7 : Reserved
+							
+			[u32]	Target program counter address.
+			
+		Response:
+		
+			[u8] New execution status (see D0).
+			
+
+	CMD_DB_SETBRK (D4h)		- Set program breakpoint
+
+		Defines a program breakpoint on the specified address. Up to 32 program
+		breakpoints can be set at a time.
+		
+		Breakpoints can only be set to writable memory regions as the
+		breakpoint mechanism works by patching break instructions into the
+		program text- a modification that is automatically undone and redone
+		between monitor interactions to appear invisible to the debugging host.
+		The patched instruction is also undone and immediately redone when
+		resuming from a breakpoint so program execution continues normally
+		between each break iteration.
+		
+		FlushCache() is called to clear the instruction cache whenever
+		breakpoints get patched and unpatched.
+		
+		Avoid placing a program breakpoint inside the delay slot of a
+		non-sequential instruction such as a jump or branch instruction,
+		otherwise the monitor will not be able to trace or resume execution
+		from the branch instruction.
+		
+		Setting a breakpoint to an already existing breakpoint will update
+		the existing breakpoint with the specified flags and target count,
+		as well as clearing the breakpoint counter.
+
+		Arguments:
+		
+			[u32]	Breakpoint address.
+			[u16]	Flags
+						Bits 0-1	: Breakpoint mode
+							0 - No break, but increment counter.
+							1 - Stop execution when encountered.
+							2 - Break when counter reaches target value.
+							3 - Reserved.
+						Bits 2-15	: Reserved
+			[u16]	Target Count
+			
+		Response:
+		
+			[u8]	Result byte
+						0 - Invalid address
+						1 - Breakpoint set
+						2 - Breakpoint updated
+						
+			
+
+	CMD_DB_CLRBRK (D5h)	- Clear program breakpoints
+
+		Clears all previously defined program breakpoints.
+		
+		Arguments:
+		
+			none
+			
+		Response:
+		
+			[u8]	Status byte (acknowledge)
+			
+			
+	CMD_DB_GETREGS (D6h)	- Get registers
+
+		Obtain all 32 general purpose register values and some special
+		registers- such as the hi/lo registers, EPC (program counter), CAUSE,
+		BADVADDR, JUMPDEST and DCIC. Two op-codes from EPC are also retrieved
+		totalling about 42 32-bit register words.
+
+		The value of register k0 is superfluous for it is used immediately by
+		the jump routines of the exception vectors. Software is not meant to
+		use the k0/k1 registers as it is used by the kernel's jump vector.
+		
+		Refer to the LSI L64360 datasheet for details on cop0 registers SR,
+		CAUSE, BADVADDR, JUMPDEST, and DCIC.
+					
+		Arguments:
+		
+			None.
+			
+		Response:
+		
+			[u32]	42 Processor register values in the following order:
+			
+						r0,at,v0,v1,a0,a1,a2,a3,
+						t0,t1,t2,t3,t4,t5,t6,t7,
+						s0,s1,s2,s3,s4,s5,s6,s7,
+						t8,t9,k0,k1,gp,sp,fp,ra,
+						EPC,hi,lo,
+						SR,CAUSE,BADVADDR,JUMPDEST,DCIC
+						opcode(EPC+0),opcode(EPC+4)
+
+
+	CMD_DB_MEM (D7h)		- Read/write n bytes from address
+
+		Reads or writes n bytes of memory to or from the specified address.
+			
+		Arguments:
+		
+			[u8]	Operation
+						0 - read
+						1 - write
+			[u32]	Read source address/write destination address
+			[u32]	Number of bytes
+			
+			[u8]    Write data of n bytes (only when writing to memory)
+			
+		Response (only when reading from memory):
+		
+			[...]	Bytes read of specified length.
+
+
+	CMD_DB_WORD (D8h)		- Read/write word
+
+		Reads or writes a word from memory.
+		
+		The specified memory address must be aligned to two or four bytes
+		when performing a 16-bit word or 32-bit memory operation respectively.
+		Failing to do so will cause an in-monitor exception and crash the
+		target.
+		
+		Arguments:
+		
+			[u8]	Operation
+						0 - read
+						1 - write
+			[u8]	Word size (0 - [u8], 1 - [u16], 2 - [u32]).
+			[u32]	Memory address.
+			
+			[u8/u16/u32]    Word value to write (only when writing to memory)
+			
+		Response (only when reading from memory):
+		
+			[u32]	Word value read (always 32-bit regardless of word size).
+
+			
+	CMD_DB_GETBRK (D9h)		- Get all breakpoints
+	
+		Returns an array of currently set breakpoints with their flag settings
+		and counter values.
+		
+		Arguments:
+		
+			None.
+			
+		Response:
+			
+			[u32]	Breakpoint address.
+			[u16]	Breakpoint flag
+			[u16]	Breakpoint counter target value.
+			[u16]	Breakpoint counter.
+			...
+			
+			The list is terminated with a breakpoint of address FFFFFFFFh.
+			
+			
+	CMD_DB_SETREG (DAh)		- Set register
+	
+		Sets any of the register values of the running target.
+		
+		This command, coupled with CMD_DB_MEM, can be used to upload and
+		execute a PS-EXE without a loader as long as the monitor program
+		is installed and responsive. To do this, stop the target with
+		CMD_DB_SETEXEC, upload the program text to its target address
+		using CMD_DB_MEM, then use CMD_DB_SETREG to reset the stack pointer
+		(sp) to the initial stacktop (801FFFF0h) and PC to the program text's
+		entrypoint (pc0), clear bits 0-5 of the SR register then execute the
+		program by resuming with CMD_DB_SETEXEC.
+		
+		Arguments:
+		
+			[u8]	Register number
+						0 - r0*     1 - at      2 - v0      3 - v1
+						4 - a0      5 - a1      6 - a2      7 - a3
+						8 - t0      9 - t1      10 - t2     11 - t3
+						12 - t4     13 - t5     14 - t6     15 - t7
+						16 - s0		17 - s1		18 - s2		19 - s3
+						20 - s4		21 - s5		22 - s6		23 - s7
+						24 - t8     25 - t9		26 - k0		27 - k1
+						28 - gp		29 - sp		30 - fp		31 - ra
+						32 - EPC	33 - hi		34 - lo		35 - SR
+						
+						* Ignored
+						
+			[u32]	Register value
+			
+		Response:
+		
+			[u8]	0 - Response byte
+			
+			
+	CMD_DB_MEMBRK (DBh)		- Set data access breakpoint registers
+	
+		Set breakpoint registers for memory access operations. Only a single
+		breakpoint address or a range of addresses with the compare mask can
+		be set with this command.
+		
+		The mask register is used to mask which bits between the address of
+		a memory access operation and the memory breakpoint address are
+		compared. For example, a mask value of FF000000h compares bits
+		31-24 of the addresses- the remaining bits are ignored.
+		
+		To deactivate data access breakpoint, simply set the address, mask
+		and flags to zero.
+		
+		Arguments:
+		
+			[u32]	Memory breakpoint address
+			[u32]	Memory breakpoint compare mask
+			[u8]	Breakpoint flags
+						Bit 0: Break on memory read
+						Bit 1: Break on memory write
+						Bit 2-7: Reserved
+						
+		Response:
+			[u8]	0 - Response byte
+
+
+	CMD_REBOOT (A0h)		- Reboot console
+	
+		While not necessarily a debug command, it is a convenience command
+		that allows remote reboot of the target. Soft reboot is performed by
+		simply jumping to the base address of the BIOS ROM segment, which is
+		equivalent to pressing the reset button on the console.
+		
+
+	Command numbers DC-DFh are not yet defined and are reserved.
+
+
+== Multiple Program Breakpoints Implementation ==
+
+	Because the hardware only supports one software breakpoint at a time,
+	performing rapid breakpoint cycles on every non-sequential instruction
+	via the trace bit in DCIC would incur a massive performance penalty and
+	potentially introduce system instability. Multiple software breakpoints
+	are instead implemented by patching break instructions to specified
+	breakpoint locations and the patched instructions are undone when the
+	original instruction needs to be executed (ie. resume program from break
+	address). This limits breakpoints to code residing in RAM, but this
+	method does not incur a performance penalty that can break speed
+	sensitive code.

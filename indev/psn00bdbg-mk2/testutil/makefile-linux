@@ -1,0 +1,11 @@
+OFILES	= main.o exec.o prompt.o comms.o serial.o mips_disassembler.o
+
+CFLAGS	= -g -O2
+
+CC		= gcc
+
+all: $(OFILES)
+	$(CC) $(CFLAGS) $(OFILES) -o psdbtest
+	
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@

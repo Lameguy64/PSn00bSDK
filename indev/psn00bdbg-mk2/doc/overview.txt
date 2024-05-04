@@ -1,0 +1,140 @@
+== Summary ==
+
+	The new PSn00bDBG-Mk2 monitor is a significant revision of the
+	original, mostly proof-of-concept version from 2018. Written from the
+	groud-up, such improvements include:
+
+	  * Abandoned event-based messages system in favor of a much simpler
+		command-acknowledge protocol and polling-based status monitoring.
+
+	  * Communication functions are consolidated to a single include file,
+	    giving provision to replace communication routines by swapping out
+		this include file.
+
+	  * Improved instruction step operation, with correct following of
+		branching and non-sequential instructions.
+
+	  * Enhanced run-to-address with optional break on branching or non-
+		sequential instructions- ideal for source-level trace operations.
+
+	  * Support for up to 32 program breakpoints with counters.
+
+	  * Block memory read and write- can be used to upload program text
+		directly through the debug monitor (similar to that of official
+		development systems).
+
+	  * Utilizes kernel stack instead of user stack- preserving the latter
+	    during debugging operations.
+
+	The new monitor is also better integrated into the kernel space-
+	taking advantage of TCB structures and hooking to more appropriate vectors
+	of both BIOS and kernel, reducing code size and improving system stability
+	when compared to the old debugger. The pollhost() macro (break 1024) is
+	also supported, and can be used to keep the debug monitor serviced for
+	instances where interrupts are disabled.
+
+	Unlike the old proof-of-concept debugger, a specifically written debugger
+	is not provided. Instead this debug monitor is to be used with GNU GDB as
+	the debugger, with a simple protocol middle-man that serves to translate
+	between the GDB remote debugging protocol and PSn00bDBG-Mk2 command set.
+
+
+== Installation and Operation ==
+
+	Three files are provided after assembling the debug monitor; patchcode.bin,
+	patchinst.bin and patch.bin. The former file is the assembled debug monitor,
+	while the latter file is a small software routine whose purpose is to
+	install and patch the debug monitor (patchcode.bin) into the kernel.
+	Finally, patch.bin are the two files combined, with patchcode.bin conca-
+	tenated over patchinst.bin as a payload.
+
+	The patch.bin file is intended for use with LITELOAD and n00bROM's 'Patch
+	Binary' loader- this function simply downloads the binary file to a fixed
+	address (80010000h), flush the instruction cache with FlushCache() and calls
+	it as a function routine. The binary would perform a call-return jump
+	to return to the loader after performing kernel patches, so LITELOAD or
+	n00bROM can resume for downloading a PS-EXE next.
+
+	The monitor code resides in the reserved kernel memory region between
+	address 8000C000h to 8000DFFFh (8KBytes) and is generally unused by
+	most if not all software titles, with exception of unlicensed CD
+	based cheat software such as Gameshark CD.
+
+	Once copied, the monitor is patched into the kernel with the following
+	operations:
+
+	  * Exception vector on 80000080h is modified to preserved the contents
+		of the cop0 DCIC register to a predetermined address, before the jump
+		to the BIOS exception hander with DCIC cleared.
+
+	  * The debug exception vector at 80000040h is patched with a jump
+		to the debug monitor for trapping exceptions pertaining to debugging
+		(ie. trace, break on address). The routine also preserves k0, k1 and
+		cop0 DCIC registers to predetermined addresses for use by the monitor
+		later.
+
+	  * The monitor is hooked to BIOS functions ReturnFromException() (B(57h))
+	    and SysErrUnresolvedException() (A(40h)) by patching the BIOS function
+		tables. The original address of ReturnFromException() is preserved in
+		the monitor for use as a return address after it has finished servicing
+		itself for pending commands.
+
+	Since the debug monitor is hooked to the exception handling subsystem, the
+	monitor operates like a background task over the current program and can
+	carry out debug operations completely transparently to the main program.
+	By design, the monitor depends on constant interrupts (such as Vblank) to
+	be able to service incoming commands- so when a program disables interrupts
+	and enters an infinite loop, the debugger is no longer able to respond to
+	commands.
+
+	To mitigate this a special break instruction provided in the pollhost()
+	macro (break 1024) can be used inside loops suspected for locking up the
+	program. The debug monitor will catch the breakpoint exception of this
+	instruction and ignore it by resuming execution, but this will allow the
+	monitor to service itself without interrupts via break exceptions.
+
+	Alternatively setting a program breakpoint that only counts iterations
+	can be used over pollhost() to keep the debug monitor serviced.
+
+
+== Improved Single Step ==
+
+	The old debugger implemented instruction step by simply setting the Program
+	Break address from the Program Counter address, adjusted to be just an inst-
+	ruction ahead of the current Program Counter. While the same method is also
+	employed in this new debugger for instruction step, this method does not
+	work directly for non-sequential, or branching, instructions.
+
+	The old debugger would inefficiently decipher the non-sequential instruction
+	and manually determine whether a branch is taken or not just to predict where
+	the next program counter is going to be on- despite cop0 providing debug
+	registers specifically for this purpose. This method, of course, is
+	inefficient, and wastes a lot of code space just for the branch interpreter.
+
+	The new PSn00bDBG-Mk2 debugger makes use of the debug registers and eliminates
+	the need for code to interpret non-sequential instructions, freeing up code
+	space for other features.
+
+
+== Multiple Program Breakpoints ==
+
+	PSn00bDBG-Mk2 supports up to 32 simultaneous program breakpoints with
+	execution counters and optional conditions. These breakpoints are
+	implemented by patching break instructions to designated points of the
+	program text- not without backing up the original instruction of
+	course.
+
+	When one of these breakpoints is encountered by the Program Counter, a break
+	exception occurs and the debug monitor halts program execution. Before debu
+	operations are carried out the break instruction is restored to the original
+	instruction, both so the breakpoint patches would not be visible from the
+	debugger's perspective, but also to restore the original program logic when
+	program execution is resumed from a break. The patches are re-applied when
+	resuming execution, and is done in such a way that the patches are performed
+	transparently from the debugging host.
+
+	This allows the debugger to support up to 32 program breakpoints with
+	virtually zero impact on processing performance. However, because it
+	relies on patching the program text to place break instructions, this does
+	not work on code located outside of RAM- such as the BIOS ROM or an
+	expansion cartridge ROM.
