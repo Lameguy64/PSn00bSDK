@@ -40,6 +40,9 @@ if(TARGET psn00bsdk)
 endif()
 link_libraries(-lgcc)
 
+# Guaranteed to not be -1 here
+set(PSN00BSDK_LIBC_ALLOCATOR ${index})
+
 # DON'T CHANGE THE ORDER or you'll break the libraries' internal dependencies.
 set(
 	PSN00BSDK_LIBRARIES

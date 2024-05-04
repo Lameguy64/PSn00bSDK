@@ -30,7 +30,7 @@ extern "C" {
 extern int __argc;
 extern const char **__argv;
 
-void abort(void);
+__attribute__((noreturn)) void abort(void);
 
 int abs(int value);
 int rand(void);
