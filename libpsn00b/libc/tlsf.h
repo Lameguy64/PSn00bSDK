@@ -86,6 +86,11 @@ size_t tlsf_block_size_max(void);
 size_t tlsf_pool_overhead(void);
 size_t tlsf_alloc_overhead(void);
 
+/* Tracking */
+void tlsf_init_heap(void* addr, size_t size);
+void tlsf_track_heap_usage(ptrdiff_t alloc_incr);
+void tlsf_get_heap_usage(HeapUsage* usage);
+
 /* Debugging. */
 typedef void (*tlsf_walker)(void* ptr, size_t size, int used, void* user);
 void tlsf_walk_pool(pool_t pool, tlsf_walker walker, void* user);
@@ -96,16 +101,15 @@ int tlsf_check_pool(pool_t pool);
 // ==== API ====
 
 void InitHeap(void* addr, size_t size) {
-	_sdk_assert_abort(__tlsf_allocator == NULL, "[ERROR] Heap already initialised\n");
-	__tlsf_allocator = tlsf_create_with_pool(addr, size);
-	_sdk_assert_abort(__tlsf_allocator != NULL, "[ERROR] Unable to initialise allocator\n");
-	_sdk_log("Initialised TLSF allocator\n");
+	tlsf_init_heap(addr, size);
 }
 
 void TrackHeapUsage(ptrdiff_t alloc_incr) {
+	tlsf_track_heap_usage(alloc_incr);
 }
 
 void GetHeapUsage(HeapUsage* usage) {
+	tlsf_get_heap_usage(usage);
 }
 
 void* malloc(size_t size) {

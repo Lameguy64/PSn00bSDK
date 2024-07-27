@@ -1075,6 +1075,42 @@ int test_ffs_fls()
 }
 #endif
 
+static void			*_heap_start, *_heap_end, *_heap_limit;
+static size_t		_heap_alloc, _heap_alloc_max;
+
+void tlsf_init_heap(void* addr, size_t size) {
+	_sdk_assert_abort(__tlsf_allocator == NULL, "[ERROR] Heap already initialised\n");
+	__tlsf_allocator = tlsf_create_with_pool(addr, size);
+	_sdk_assert_abort(__tlsf_allocator != NULL, "[ERROR] Unable to initialise allocator\n");
+	_heap_start = addr;
+	_heap_end = addr;
+	_heap_limit = (void*)((uintptr_t) addr + size);
+	_heap_alloc = 0;
+	_heap_alloc_max = 0;
+	_sdk_log("Initialised TLSF allocator\n");
+}
+
+void tlsf_track_heap_usage(void* alloc_addr, ptrdiff_t alloc_size) {
+	if (alloc_addr != NULL) {
+		void* alloc_end = alloc_addr + alloc_size;
+		if (alloc_end > _heap_end) {
+			_heap_end = alloc_end;
+		}
+	}
+	_heap_alloc += alloc_size;
+	if (_heap_alloc > _heap_alloc_max) {
+		_heap_alloc_max = _heap_alloc;
+	}
+}
+
+void tlsf_get_heap_usage(HeapUsage* usage) {
+	usage->total = _heap_limit - _heap_start;
+	usage->heap  = _heap_end   - _heap_start;
+	usage->stack = _heap_limit - _heap_end;
+	usage->alloc     = _heap_alloc;
+	usage->alloc_max = _heap_alloc_max;
+}
+
 tlsf_t tlsf_create(void* mem)
 {
 #if _DEBUG
@@ -1119,7 +1155,9 @@ void* tlsf_malloc(tlsf_t tlsf, size_t size)
 	control_t* control = tlsf_cast(control_t*, tlsf);
 	const size_t adjust = adjust_request_size(size, ALIGN_SIZE);
 	block_header_t* block = block_locate_free(control, adjust);
-	return block_prepare_used(control, block, adjust);
+	void* mem = block_prepare_used(control, block, adjust);
+	tlsf_track_heap_usage(mem, block_size(block));
+	return mem;
 }
 
 void* tlsf_memalign(tlsf_t tlsf, size_t align, size_t size)
@@ -1176,7 +1214,9 @@ void* tlsf_memalign(tlsf_t tlsf, size_t align, size_t size)
 		}
 	}
 
-	return block_prepare_used(control, block, adjust);
+	void* mem = block_prepare_used(control, block, adjust);
+	tlsf_track_heap_usage(mem, block_size(block));
+	return mem;
 }
 
 void tlsf_free(tlsf_t tlsf, void* ptr)
@@ -1187,6 +1227,7 @@ void tlsf_free(tlsf_t tlsf, void* ptr)
 		control_t* control = tlsf_cast(control_t*, tlsf);
 		block_header_t* block = block_from_ptr(ptr);
 		tlsf_assert(!block_is_free(block) && "block already marked as free");
+		tlsf_track_heap_usage(NULL, -block_size(block));
 		block_mark_as_free(block);
 		block = block_merge_prev(control, block);
 		block = block_merge_next(control, block);
@@ -1258,6 +1299,8 @@ void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 
 			/* Trim the resulting block and return the original pointer. */
 			block_trim_used(control, block, adjust);
+			const size_t newsize = block_size(block);
+			tlsf_track_heap_usage(ptr, newsize - cursize);
 			p = ptr;
 		}
 	}
