@@ -88,7 +88,7 @@ size_t tlsf_alloc_overhead(void);
 
 /* Tracking */
 void tlsf_init_heap(void* addr, size_t size);
-void tlsf_track_heap_usage(ptrdiff_t alloc_incr);
+void tlsf_track_heap_usage(void* alloc_addr, ptrdiff_t alloc_incr);
 void tlsf_get_heap_usage(HeapUsage* usage);
 
 /* Debugging. */
