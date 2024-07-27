@@ -44,6 +44,7 @@
 
 #include <stdlib.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <assert.h>
 
 #if defined(__cplusplus)
@@ -105,7 +106,7 @@ void InitHeap(void* addr, size_t size) {
 }
 
 void TrackHeapUsage(ptrdiff_t alloc_incr) {
-	tlsf_track_heap_usage(1, alloc_incr);
+	tlsf_track_heap_usage((void*) 1, alloc_incr);
 }
 
 void GetHeapUsage(HeapUsage* usage) {
