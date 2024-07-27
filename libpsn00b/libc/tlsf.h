@@ -105,7 +105,7 @@ void InitHeap(void* addr, size_t size) {
 }
 
 void TrackHeapUsage(ptrdiff_t alloc_incr) {
-	tlsf_track_heap_usage(alloc_incr);
+	tlsf_track_heap_usage(1, alloc_incr);
 }
 
 void GetHeapUsage(HeapUsage* usage) {
