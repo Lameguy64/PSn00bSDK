@@ -51,6 +51,7 @@ void affInitHeap(void *addr, size_t size) {
 	_alloc_start = addr;
 	_alloc_head  = 0;
 	_alloc_tail  = 0;
+	_sdk_log("Initialised AFF allocator\n");
 }
 
 void *sbrk(ptrdiff_t incr) {

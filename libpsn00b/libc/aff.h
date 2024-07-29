@@ -28,7 +28,6 @@ void affFree(void* ptr);
 
 void InitHeap(void* addr, size_t size) {
 	affInitHeap(addr, size);
-	_sdk_log("Initialised AFF allocator\n");
 }
 
 void TrackHeapUsage(ptrdiff_t alloc_incr) {
