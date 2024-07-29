@@ -288,20 +288,45 @@ void GetHeapUsage(HeapUsage* usage) {
 	affGetHeapUsage(usage);
 }
 
+__attribute__((hot))
+void free(void* ptr) {
+	affFree(ptr);
+}
+
+__attribute__((
+	hot,
+	malloc,
+	alloc_size(1)
+#ifdef gnu_version_10
+	, malloc(free, 1)
+#endif
+))
 void* malloc(size_t size) {
 	return affMalloc(size);
 }
 
+__attribute__((
+	hot,
+	malloc,
+	alloc_size(1, 2)
+#ifdef gnu_version_10
+	, malloc(free, 1)
+#endif
+))
 void* calloc(size_t num, size_t size) {
 	return affCalloc(num, size);
 }
 
+__attribute__((
+	hot,
+	malloc,
+	alloc_size(2)
+#ifdef gnu_version_10
+	, malloc(free, 1)
+#endif
+))
 void* realloc(void* ptr, size_t size) {
 	return affRealloc(ptr, size);
-}
-
-void free(void* ptr) {
-	affFree(ptr);
 }
 
 #endif

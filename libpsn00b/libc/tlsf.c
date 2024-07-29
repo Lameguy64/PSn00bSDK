@@ -1406,20 +1406,45 @@ void GetHeapUsage(HeapUsage* usage) {
 	tlsf_get_heap_usage(usage);
 }
 
+__attribute__((hot))
+void free(void* ptr) {
+	tlsf_free(__tlsf_allocator, ptr);
+}
+
+__attribute__((
+	hot,
+	malloc,
+	alloc_size(1)
+#ifdef gnu_version_10
+	, malloc(free, 1)
+#endif
+))
 void* malloc(size_t size) {
 	return tlsf_malloc(__tlsf_allocator, size);
 }
 
+__attribute__((
+	hot,
+	malloc,
+	alloc_size(1, 2)
+#ifdef gnu_version_10
+	, malloc(free, 1)
+#endif
+))
 void* calloc(size_t num, size_t size) {
 	return tlsf_malloc(__tlsf_allocator, num * size);
 }
 
+__attribute__((
+	hot,
+	malloc,
+	alloc_size(2)
+#ifdef gnu_version_10
+	, malloc(free, 1)
+#endif
+))
 void* realloc(void* ptr, size_t size) {
 	return tlsf_realloc(__tlsf_allocator, ptr, size);
-}
-
-void free(void* ptr) {
-	tlsf_free(__tlsf_allocator, ptr);
 }
 
 #endif
