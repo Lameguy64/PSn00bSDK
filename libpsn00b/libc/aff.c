@@ -14,7 +14,7 @@
  */
 #include "aff.h"
 
-#include <stdlib.h>
+#include "stdlib.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <assert.h>
