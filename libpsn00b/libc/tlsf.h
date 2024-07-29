@@ -42,7 +42,6 @@
 ** SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <stdlib.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <assert.h>
