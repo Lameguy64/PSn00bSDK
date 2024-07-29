@@ -274,6 +274,8 @@ void affFree(void *ptr) {
 
 // ==== API ====
 
+#if MALLOC_IMPL == MALLOC_IMPL_AFF
+
 void InitHeap(void* addr, size_t size) {
 	affInitHeap(addr, size);
 }
@@ -301,3 +303,5 @@ void* realloc(void* ptr, size_t size) {
 void free(void* ptr) {
 	affFree(ptr);
 }
+
+#endif

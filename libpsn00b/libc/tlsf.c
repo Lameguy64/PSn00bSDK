@@ -1,11 +1,11 @@
+#include "tlsf.h"
+
+#include <stdlib.h>
 #include <assert.h>
 #include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-
-#include "tlsf.h"
 
 tlsf_t __tlsf_allocator = NULL;
 
@@ -1310,6 +1310,8 @@ void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 
 // ==== API ====
 
+#if MALLOC_IMPL == MALLOC_IMPL_TLSF
+
 void InitHeap(void* addr, size_t size) {
 	tlsf_init_heap(addr, size);
 }
@@ -1337,3 +1339,5 @@ void* realloc(void* ptr, size_t size) {
 void free(void* ptr) {
 	tlsf_free(__tlsf_allocator, ptr);
 }
+
+#endif
