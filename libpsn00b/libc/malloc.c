@@ -1,6 +1,7 @@
-#include <stdlib.h>
+#include "malloc_impl.h"
 
 #if MALLOC_IMPL == MALLOC_IMPL_CUSTOM
+#include <stdlib.h>
 #include <assert.h>
 
 __attribute__((weak))

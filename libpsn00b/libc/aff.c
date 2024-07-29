@@ -12,9 +12,7 @@
  * Custom allocators should call TrackHeapUsage() to let the heap manager know
  * how much memory is allocated at a given time.
  */
-#include "aff.h"
-
-#include "stdlib.h"
+#include <stdlib.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <assert.h>
@@ -271,6 +269,8 @@ void affFree(void *ptr) {
 	affTrackHeapUsage(-(cur->size + sizeof(BlockHeader)));
 	(cur->prev)->next = cur->next;
 }
+
+#include "malloc_impl.h"
 
 // ==== API ====
 
