@@ -23,34 +23,4 @@ void* affRealloc(void* ptr, size_t size);
 
 void affFree(void* ptr);
 
-// ==== API ====
-
-void InitHeap(void* addr, size_t size) {
-	affInitHeap(addr, size);
-}
-
-void TrackHeapUsage(ptrdiff_t alloc_incr) {
-	affTrackHeapUsage(alloc_incr);
-}
-
-void GetHeapUsage(HeapUsage* usage) {
-	affGetHeapUsage(usage);
-}
-
-void* malloc(size_t size) {
-	return affMalloc(size);
-}
-
-void* calloc(size_t num, size_t size) {
-	return affCalloc(num, size);
-}
-
-void* realloc(void* ptr, size_t size) {
-	return affRealloc(ptr, size);
-}
-
-void free(void* ptr) {
-	affFree(ptr);
-}
-
 #endif // _H_ALLOCATED_BLOCK_FIRST_FIT_

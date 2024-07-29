@@ -3,13 +3,13 @@
 #ifndef _H_MALLOC_
 #define _H_MALLOC_
 
-#include <stddef.h>
-#include <stdint.h>
-#include <stdlib.h>
-
-#include "gnu_version.h"
-#include "malloc_impl.h"
-
+/*#include <stddef.h>*/
+/*#include <stdint.h>*/
+/*#include <stdlib.h>*/
+/**/
+/*#include "gnu_version.h"*/
+/*#include "malloc_impl.h"*/
+/**/
 /*__attribute__((weak))*/
 /*void InitHeap(void* addr, size_t size);*/
 /**/

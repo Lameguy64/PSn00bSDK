@@ -98,36 +98,6 @@ void tlsf_walk_pool(pool_t pool, tlsf_walker walker, void* user);
 int tlsf_check(tlsf_t tlsf);
 int tlsf_check_pool(pool_t pool);
 
-// ==== API ====
-
-void InitHeap(void* addr, size_t size) {
-	tlsf_init_heap(addr, size);
-}
-
-void TrackHeapUsage(ptrdiff_t alloc_incr) {
-	tlsf_track_heap_usage((void*) 1, alloc_incr);
-}
-
-void GetHeapUsage(HeapUsage* usage) {
-	tlsf_get_heap_usage(usage);
-}
-
-void* malloc(size_t size) {
-	return tlsf_malloc(__tlsf_allocator, size);
-}
-
-void* calloc(size_t num, size_t size) {
-	return tlsf_malloc(__tlsf_allocator, num * size);
-}
-
-void* realloc(void* ptr, size_t size) {
-	return tlsf_realloc(__tlsf_allocator, ptr, size);
-}
-
-void free(void* ptr) {
-	tlsf_free(__tlsf_allocator, ptr);
-}
-
 #if defined(__cplusplus)
 };
 #endif

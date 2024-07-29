@@ -14,6 +14,7 @@
  */
 #include "aff.h"
 
+#include <stdlib.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <assert.h>
@@ -121,7 +122,7 @@ void* affMalloc(size_t size) {
 		_alloc_head = new;
 		_alloc_tail = new;
 
-		TrackHeapUsage(_size);
+		affTrackHeapUsage(_size);
 		return ptr;
 	}
 
@@ -140,7 +141,7 @@ void* affMalloc(size_t size) {
 		_alloc_head->prev = new;
 		_alloc_head       = new;
 
-		TrackHeapUsage(_size);
+		affTrackHeapUsage(_size);
 		return ptr;
 	}
 
@@ -158,7 +159,7 @@ void* affMalloc(size_t size) {
 		(new->next)->prev = new;
 		prev->next        = new;
 
-		TrackHeapUsage(_size);
+		affTrackHeapUsage(_size);
 		return ptr;
 	}
 
@@ -176,7 +177,7 @@ void* affMalloc(size_t size) {
 	_alloc_tail->next = new;
 	_alloc_tail       = new;
 
-	TrackHeapUsage(_size);
+	affTrackHeapUsage(_size);
 	return ptr;
 }
 
@@ -198,7 +199,7 @@ void* affRealloc(void *ptr, size_t size) {
 
 	// New memory block shorter?
 	if (prev->size >= _size_nh) {
-		TrackHeapUsage(_size_nh - prev->size);
+		affTrackHeapUsage(_size_nh - prev->size);
 		prev->size = _size_nh;
 
 		if (!prev->next)
@@ -212,14 +213,14 @@ void* affRealloc(void *ptr, size_t size) {
 		void *new = sbrk(_size_nh - prev->size);
 		if (!new)
 			return 0;
-		TrackHeapUsage(_size_nh - prev->size);
+		affTrackHeapUsage(_size_nh - prev->size);
 		prev->size = _size_nh;
 		return ptr;
 	}
 
 	// Do we have free memory after it?
 	if ((uintptr_t) prev->next - (uintptr_t) ptr >= _size_nh) {
-		TrackHeapUsage(_size_nh - prev->size);
+		affTrackHeapUsage(_size_nh - prev->size);
 		prev->size = _size_nh;
 		return ptr;
 	}
@@ -250,7 +251,7 @@ void affFree(void *ptr) {
 			sbrk(-size);
 		}
 
-		TrackHeapUsage(-size);
+		affTrackHeapUsage(-size);
 		return;
 	}
 
@@ -267,6 +268,36 @@ void affFree(void *ptr) {
 
 		sbrk(-size);
 	}
-	TrackHeapUsage(-(cur->size + sizeof(BlockHeader)));
+	affTrackHeapUsage(-(cur->size + sizeof(BlockHeader)));
 	(cur->prev)->next = cur->next;
+}
+
+// ==== API ====
+
+void InitHeap(void* addr, size_t size) {
+	affInitHeap(addr, size);
+}
+
+void TrackHeapUsage(ptrdiff_t alloc_incr) {
+	affTrackHeapUsage(alloc_incr);
+}
+
+void GetHeapUsage(HeapUsage* usage) {
+	affGetHeapUsage(usage);
+}
+
+void* malloc(size_t size) {
+	return affMalloc(size);
+}
+
+void* calloc(size_t num, size_t size) {
+	return affCalloc(num, size);
+}
+
+void* realloc(void* ptr, size_t size) {
+	return affRealloc(ptr, size);
+}
+
+void free(void* ptr) {
+	affFree(ptr);
 }
