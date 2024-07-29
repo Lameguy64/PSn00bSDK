@@ -79,7 +79,6 @@ if(NOT LIBPSN00B_GENERATOR MATCHES ".*(Make|Makefiles|Ninja)( Multi-Config)?$")
 	endif()
 endif()
 
-message("ALLOCATOR: ${PSN00BSDK_LIBC_ALLOCATOR}")
 list(FIND PSN00BSDK_LIBC_ALLOCATORS ${PSN00BSDK_LIBC_ALLOCATOR} index)
 if (index EQUAL -1)
 	message(FATAL_ERROR "Invalid allocator: ${PSN00BSDK_LIBC_ALLOCATOR} (must be CUSTOM, AFF or TLSF)")
