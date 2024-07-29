@@ -274,7 +274,7 @@ void affFree(void *ptr) {
 
 // ==== API ====
 
-#if MALLOC_IMPL == MALLOC_IMPL_AFF
+#if SDK_ALLOC_IMPL == SDK_ALLOC_IMPL_AFF
 
 void InitHeap(void* addr, size_t size) {
 	affInitHeap(addr, size);

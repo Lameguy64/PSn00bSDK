@@ -1,6 +1,6 @@
 #include "malloc_impl.h"
 
-#if MALLOC_IMPL == MALLOC_IMPL_CUSTOM
+#if SDK_ALLOC_IMPL == SDK_ALLOC_IMPL_CUSTOM
 #include <stdlib.h>
 #include <assert.h>
 

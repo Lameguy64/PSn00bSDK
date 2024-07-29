@@ -1392,7 +1392,7 @@ void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 
 // ==== API ====
 
-#if MALLOC_IMPL == MALLOC_IMPL_TLSF
+#if SDK_ALLOC_IMPL == SDK_ALLOC_IMPL_TLSF
 
 void InitHeap(void* addr, size_t size) {
 	tlsf_init_heap(addr, size);
