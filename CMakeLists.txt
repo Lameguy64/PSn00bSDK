@@ -55,6 +55,12 @@ set(
 	CACHE STRING         "Git commit hash (used by CI)"
 )
 
+set(PSN00BSDK_LIBC_ALLOCATORS CUSTOM AFF TLSF)
+set(
+	PSN00BSDK_LIBC_ALLOCATOR AFF
+	CACHE STRING             "Allocator to use in libc implementation (one of ${PSN00BSDK_LIBC_ALLOCATORS})"
+)
+
 # Attempt to automatically select a suitable CMake generator to build libpsn00b
 # and the examples. Only Ninja and makefile-based generators can be used, as
 # other generators (VS and Xcode) do not allow custom toolchains to be used.
@@ -73,6 +79,12 @@ if(NOT LIBPSN00B_GENERATOR MATCHES ".*(Make|Makefiles|Ninja)( Multi-Config)?$")
 	endif()
 endif()
 
+list(FIND PSN00BSDK_LIBC_ALLOCATORS ${PSN00BSDK_LIBC_ALLOCATOR} index)
+if (index EQUAL -1)
+	message(FATAL_ERROR "Invalid allocator: ${PSN00BSDK_LIBC_ALLOCATOR} (must be CUSTOM, AFF or TLSF)")
+endif()
+set(PSN00BSDK_LIBC_ALLOCATOR ${index})
+
 string(TIMESTAMP PSN00BSDK_BUILD_DATE UTC)
 
 # Forward some important variables to mkpsxiso and to the subprojects (they are
@@ -89,6 +101,8 @@ set(
 	-DPSN00BSDK_BUILD_DATE:STRING=${PSN00BSDK_BUILD_DATE}
 	-DPSN00BSDK_GIT_TAG:STRING=${PSN00BSDK_GIT_TAG}
 	-DPSN00BSDK_GIT_COMMIT:STRING=${PSN00BSDK_GIT_COMMIT}
+	-DPSN00BSDK_LIBC_ALLOCATOR:STRING=${PSN00BSDK_LIBC_ALLOCATOR}
+	-DPSN00BSDK_LIBC_ALLOCATORS:STRING=${PSN00BSDK_LIBC_ALLOCATORS}
 )
 set(
 	_tools_args

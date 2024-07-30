@@ -14,7 +14,7 @@
 extern "C" {
 #endif
 
-void _assert_abort(const char *file, int line, const char *expr);
+__attribute__((noreturn)) void _assert_abort(const char *file, int line, const char *expr);
 
 #ifdef __cplusplus
 }
@@ -25,6 +25,7 @@ void _assert_abort(const char *file, int line, const char *expr);
 #define assert(expr)
 #define _sdk_log(fmt, ...)
 #define _sdk_assert(expr, fmt, ...)
+#define _sdk_assert_abort(expr, fmt, ...)
 #define _sdk_validate_args_void(expr)
 #define _sdk_validate_args(expr, ret)
 
@@ -45,6 +46,11 @@ void _assert_abort(const char *file, int line, const char *expr);
 	if (!(expr)) { \
 		_sdk_log(fmt, __VA_ARGS__); \
 		return ret; \
+	}
+#define _sdk_assert_abort(expr, fmt, ...) \
+	if (!(expr)) { \
+		_sdk_log(fmt, __VA_ARGS__); \
+		assert(expr); \
 	}
 #define _sdk_validate_args_void(expr) \
 	if (!(expr)) { \
