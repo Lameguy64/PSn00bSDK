@@ -42,9 +42,9 @@ long long strtoll(const char *str, char **str_end, int base);
 //double strtod(const char *str, char **str_end);
 //long double strtold(const char *str, char **str_end);
 
-void InitHeap(void *addr, size_t size);
 void *sbrk(ptrdiff_t incr);
 
+void InitHeap(void *addr, size_t size);
 void TrackHeapUsage(ptrdiff_t alloc_incr);
 void GetHeapUsage(HeapUsage *usage);
 

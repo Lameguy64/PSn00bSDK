@@ -96,8 +96,7 @@ the basics of the graphics and controller APIs.
 
 * `libpsxpress`: Add an API for SPU-ADPCM audio encoding at runtime.
 
-* `libc`: Improve the memory allocation framework with multiple allocators,
-  replace the string functions with optimized implementations and maybe add
+* `libc`: Replace the string functions with optimized implementations and maybe add
   helpers to manage swapping between main RAM and VRAM/SPU RAM.
 
 * Add a full controller and memory card API that does not depend on the BIOS

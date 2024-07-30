@@ -22,6 +22,13 @@ void GetHeapUsage(HeapUsage* usage) {
 	abort();
 }
 
+__attribute__((weak))
+void* sbrk(ptrdiff_t incr) {
+	_sdk_log("[ERROR] Unimplemented custom allocator handle: void* sbrk(ptrdiff_t)\n");
+	abort();
+	return NULL;
+}
+
 __attribute__((weak, hot))
 void free(void* ptr) {
 	_sdk_log("[ERROR] Unimplemented custom allocator handle: void free(void* ptr)\n");
