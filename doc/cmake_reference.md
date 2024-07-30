@@ -333,17 +333,19 @@ also set.
 
 ### `PSN00BSDK_LIBC_ALLOCATOR` (`STRING`)
 
-Allocator implementation to use for the libc `malloc`, `calloc`, `realloc` and
-`free` calls. This MUST be one of the following:
+Allocator implementation to use for the libc memory allocation API functions.
+This MUST be one of the following:
 
 1. `AFF`: Allocated first-fit, similar to that of the standard glibc allocator.
 2. `TLSF`: Two-level segregated-fit designed for latency sensitive applications.
    It has a bounded response time, performs faster than glibc-like allocators
    and has a lower base overhead and per-allocation overhead.
-3. `CUSTOM`: User-defined implementation of the allocation primitives (see the
-   documentation on [allocator implementation](./allocator_implementation.md)).
+3. `CUSTOM`: User-defined implementation of the allocation primitives.
 
-If an allocator is not specified when compliling the SDK, the `AFF` allocator will
+For details on the specific functions required to be implemented as well as any
+additional details, see the documentation on [allocator implementation](./allocator_implementation.md).
+
+**IMPORTANT**: If an allocator is not specified when compliling the SDK, the `AFF` allocator will
 be used by default.
 
 ## Internal settings
