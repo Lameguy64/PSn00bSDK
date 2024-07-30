@@ -1201,7 +1201,8 @@ void* tlsf_malloc(tlsf_t tlsf, size_t size)
 	block_header_t* block = block_locate_free(control, adjust);
 	void* mem = block_prepare_used(control, block, adjust);
 	tlsf_track_heap_usage(mem, block_size(block));
-	return mem;}
+	return mem;
+}
 
 void* tlsf_memalign(tlsf_t tlsf, size_t align, size_t size)
 {
@@ -1270,6 +1271,7 @@ void tlsf_free(tlsf_t tlsf, void* ptr)
 		control_t* control = tlsf_cast(control_t*, tlsf);
 		block_header_t* block = block_from_ptr(ptr);
 		tlsf_assert(!block_is_free(block) && "block already marked as free");
+		tlsf_track_heap_usage(NULL, -block_size(block));
 		block_mark_as_free(block);
 		block = block_merge_prev(control, block);
 		block = block_merge_next(control, block);
