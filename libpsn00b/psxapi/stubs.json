@@ -121,7 +121,7 @@
 	},
 	{
 		"type": "a",
-		"id":   85,
+		"id":   112,
 		"name": "_bu_init",
 		"file": "drivers.s"
 	},

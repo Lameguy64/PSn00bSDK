@@ -14,7 +14,7 @@
 _bu_init:
 	li $t2, 0xa0
 	jr $t2
-	li $t1, 0x55
+	li $t1, 0x70
 
 .section .text._96_init
 .global _96_init
