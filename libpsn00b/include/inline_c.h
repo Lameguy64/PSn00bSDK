@@ -383,7 +383,7 @@
 	"ctc2	$t2, $4;"		\
 	:						\
 	: "r"( r0 )				\
-	: "$t2" )
+	: "$t0", "$t1", "$t2" )
 
 #define gte_ldsvllrow0( r0 ) __asm__ volatile ( \
 	"lw	$12, 0( %0 );"		\
@@ -418,7 +418,7 @@
 	"ctc2	$t2, $12;"		\
 	:						\
 	: "r"( r0 )				\
-	: "$t2" )
+	: "$t0", "$t1", "$t2" )
 
 #define gte_ldsvlcrow0( r0 ) __asm__ volatile ( \
 	"lw	$12, 0( %0 );"		\
@@ -453,7 +453,7 @@
 	"ctc2	$t2, $20;"		\
 	:						\
 	: "r"( r0 )				\
-	: "$t2" )
+	: "$t0", "$t1", "$t2" )
 
 /**
  * @brief Sets the translation portion of a MATRIX to the GTE
@@ -470,7 +470,7 @@
 	"ctc2	$t2, $7;"		\
 	:						\
 	: "r"( r0 )				\
-	: "$t2" )
+	: "$t0", "$t1", "$t2" )
 
 #define gte_ldtr( r0, r1, r2 ) __asm__ volatile ( \
 	"ctc2	%0, $5;"		\
