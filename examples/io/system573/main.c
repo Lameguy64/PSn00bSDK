@@ -53,8 +53,8 @@
  * writing a custom ATAPI driver and ISO9660 parser (which is out of the scope
  * of this example).
  *
- * https://github.com/mamedev/mame/blob/master/src/mame/drivers/ksys573.cpp
- * https://github.com/mamedev/mame/blob/master/src/mame/machine/k573dio.cpp
+ * https://github.com/mamedev/mame/blob/master/src/mame/konami/ksys573.cpp
+ * https://github.com/mamedev/mame/blob/master/src/mame/konami/k573dio.cpp
  */
 
 #include <stdint.h>

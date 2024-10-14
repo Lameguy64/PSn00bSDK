@@ -22,11 +22,11 @@ void _assert_abort(const char *file, int line, const char *expr);
 
 #ifdef NDEBUG
 
-#define assert(expr)
+#define assert(expr)                  ((void) (expr))
 #define _sdk_log(fmt, ...)
-#define _sdk_assert(expr, fmt, ...)
-#define _sdk_validate_args_void(expr)
-#define _sdk_validate_args(expr, ret)
+#define _sdk_assert(expr, fmt, ...)   ((void) (expr))
+#define _sdk_validate_args_void(expr) ((void) (expr))
+#define _sdk_validate_args(expr, ret) ((void) (expr))
 
 #else
 

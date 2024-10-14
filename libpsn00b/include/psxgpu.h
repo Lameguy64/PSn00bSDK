@@ -329,7 +329,7 @@ _DEF_PRIM(POLY_FT3,
 
 _DEF_PRIM(POLY_FT4,
 	uint8_t		r0, g0, b0, code;
-	uint16_t	x0, y0;
+	int16_t		x0, y0;
 	uint8_t		u0, v0;
 	uint16_t	clut;
 	int16_t		x1, y1;

@@ -46,9 +46,10 @@ static size_t _dma_transfer(uint32_t *data, size_t length, int write) {
 	}
 
 	// Increase bus delay for DMA reads
-	BUS_SPU_CFG &= ~(0xf << 24);
-	if (!write)
-		BUS_SPU_CFG = 2 << 24;
+	if (write)
+		BUS_SPU_CFG &= ~(0xf << 24);
+	else
+		BUS_SPU_CFG = (BUS_SPU_CFG & ~(0xf << 24)) | (2 << 24);
 
 	SPU_CTRL &= 0xffcf; // Disable DMA request
 	_wait_status(0x0030, 0x0000);

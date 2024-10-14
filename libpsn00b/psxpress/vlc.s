@@ -282,7 +282,6 @@ _vlc_skip_context_load:
 	beqz  length, .Ldc_y_zero # if (dc_length)
 	subu  bit_offset, temp
 
-	sll   temp, last_y, 2
 	subu  $at, length # value = window >> (32 - dc_length)
 	srlv  value, window, $at
 
