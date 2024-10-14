@@ -118,6 +118,7 @@ SECTIONS {
 	/* Remove anything flagged as link-time optimized */
 
 	/DISCARD/ : {
-		*(.gnu.lto_*)
+		*(.note.* .gnu_debuglink .gnu.lto_*)
+		*(.MIPS.abiflags)
 	}
 }

@@ -1,23 +1,9 @@
 
-# PSn00bSDK changelog
+# PSn00bSDK changelog (archived)
 
-**NOTE**: this file is parsed by a script to generate release notes. When
-contributing to PSn00bSDK, add a new block at the top following this template:
-
-```
-## <year>-<month>-<day>: [optional new version]
-
-<contributor>:
-
-- ...
-
-- ...
-```
-
-You may run `.github/scripts/generate_release_notes.py CHANGELOG.md` afterwards
-to ensure the changelog can be parsed correctly.
-
--------------------------------------------------------------------------------
+**NOTE**: due to the large amount of changes in recent PSn00bSDK releases, this
+file is no longer being updated and is only kept here for reference purposes.
+Refer to the commit history for more information about newer releases.
 
 ## 2023-07-03: 0.24
 

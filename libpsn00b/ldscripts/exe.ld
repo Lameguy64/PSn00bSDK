@@ -17,9 +17,7 @@ ENTRY(_start)
 /*STARTUP(start.o)*/
 
 MEMORY {
-	/* Mapped into KSEG0 */
-	KERNEL_RAM (rwx) : ORIGIN = 0x80000000, LENGTH = 0x010000
-	APP_RAM    (rwx) : ORIGIN = 0x80010000, LENGTH = 0x7f0000
+	APP_RAM (rwx) : ORIGIN = 0x80010000, LENGTH = 0x7f0000
 }
 
 SECTIONS {
@@ -114,6 +112,7 @@ SECTIONS {
 	/* Remove anything flagged as link-time optimized */
 
 	/DISCARD/ : {
-		*(.gnu.lto_*)
+		*(.note.* .gnu_debuglink .gnu.lto_*)
+		*(.MIPS.abiflags)
 	}
 }
