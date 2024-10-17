@@ -540,6 +540,11 @@ typedef struct {
 	uint8_t		_reserved;
 } DISPENV;
 
+// Use 16-bit colors (isrgb24)
+#define DISPENV_COLOR_MODE_16_BIT 0
+// Use 24-bit colors (isrgb24)
+#define DISPENV_COLOR_MODE_24_BIT 1
+
 typedef struct {
 	RECT		clip;		// Drawing area
 	int16_t		ofs[2];		// GPU draw offset (relative to draw area)
@@ -551,6 +556,21 @@ typedef struct {
 	uint8_t		r0, g0, b0;	// Draw area clear color (if isbg iz nonzero)
 	DR_ENV		dr_env;		// GPU primitive cache area (used internally)
 } DRAWENV;
+
+// Disable dither processing (dtd)
+#define DRAWENV_DITHER_DISABLED 0
+// Enable dither processing (dtd)
+#define DRAWENV_DITHER_ENABLED 1
+
+// Disable draw to display (dfe)
+#define DRAWENV_DISPLAY_DISABLED 0
+// Enable draw to display (dfe)
+#define DRAWENV_DISPLAY_ENABLED 1
+
+// Disable draw area clear on env set (isbg)
+#define DRAWENV_CLEAR_ON_SET_DISABLED 0
+// Enable draw area clear on env set (isbg)
+#define DRAWENV_CLEAR_ON_SET_ENABLED 1
 
 typedef struct {
 	uint32_t	mode;
@@ -574,7 +594,16 @@ typedef struct {
 extern "C" {
 #endif
 
-void ResetGraph(int mode);
+typedef enum {
+	// Resets GPU including video mode and sets displaymask to 0
+	RESET_GRAPH_ALL_VIDEO_MODE_DISPLAY_MASK = 0,
+	// Cancels any outgoing DMA requests and resets the GPU command buffer
+	RESET_GRAPH_DMA_IRQ_COMMAND_BUFFER = 1,
+	// Resets the GPU command buffer
+	RESET_GRAPH_COMMAND_BUFFER = 2
+} ResetGraphMode;
+
+void ResetGraph(ResetGraphMode mode);
 
 GPU_VideoMode GetVideoMode(void);
 void SetVideoMode(GPU_VideoMode mode);

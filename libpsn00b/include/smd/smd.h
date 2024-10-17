@@ -43,6 +43,37 @@ typedef struct {
 	uint8_t len;
 } SMD_PRI_TYPE;
 
+typedef enum: uint8_t {
+	SMD_KIND_LINE = 0,
+	SMD_KIND_TRIANGLE = 1,
+	SMD_KIND_QUAD = 2,
+} SMD_KIND;
+
+typedef enum: uint8_t {
+	// No shading (no normals)
+	SMD_LIGHTING_NONE = 0,
+	// Flat shading (1 normal)
+	SMD_LIGHTING_FLAT = 1,
+	// Smooth shading (3 normals)
+	SMD_LIGHTING_SMOOTH = 2
+} SMD_LIGHTING;
+
+typedef enum: uint8_t {
+	SMD_COLORING_SOLID = 0,
+	SMD_COLORING_GOURAUD = 1
+} SMD_COLORING;
+
+typedef enum: uint8_t {
+	// 50% background + 50% foreground (50% alpha)
+	SMD_BLEND_ALPHA_50 = 0,
+	// 100% background + 100% foreground (additive)
+	SMD_BLEND_ADDITIVE = 1,
+	// 100% background - 100% foreground (subtractive)
+	SMD_BLEND_SUBTRACT = 2,
+	// 100% background - 25% foreground (subtract 25%)
+	SMD_BLEND_SUBTRACT_25 = 3
+} SMD_BLEND;
+
 typedef struct {
 	SMD_PRI_TYPE prim_id;
 
