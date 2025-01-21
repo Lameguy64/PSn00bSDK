@@ -29,13 +29,27 @@ static int  _next_saved_rect = 0;
 
 static void _dma_transfer(const RECT *rect, uint32_t *data, int write) {
 	size_t length = rect->w * rect->h;
+	size_t dma_chunk_lenght = DMA_CHUNK_LENGTH;
 	if (length % 2)
 		_sdk_log("can't transfer an odd number of pixels\n");
 
 	length /= 2;
-	if ((length >= DMA_CHUNK_LENGTH) && (length % DMA_CHUNK_LENGTH)) {
-		_sdk_log("transfer data length (%d) is not a multiple of %d, rounding\n", length, DMA_CHUNK_LENGTH);
-		length += DMA_CHUNK_LENGTH - 1;
+	if (length >= dma_chunk_lenght) {
+		uint32_t tail = length % dma_chunk_lenght;
+		if(tail) {
+			// index  length    w    h
+			// 0      80        5    16
+			// 1      34        2    17
+			// 2      36        6    6
+			// 3      38        2    19
+			// 4      40        5    8
+			// 5      42        6    7
+			// 6      44        11   4
+			// 7      46        23   2
+			uint8_t dma_chunk_length_lookup[8] = {8, 1, 2, 1, 4, 1, 2, 1};
+			dma_chunk_lenght = dma_chunk_length_lookup[tail % 8];
+			_sdk_log("transfer data length / 2 (%d) is not a multiple of %d, changing dma_chunk_lenght %d\n", length, DMA_CHUNK_LENGTH, dma_chunk_lenght);
+		}
 	}
 
 	while (!(GPU_GP1 & (1 << 26)))
@@ -66,11 +80,11 @@ static void _dma_transfer(const RECT *rect, uint32_t *data, int write) {
 		__asm__ volatile("");
 
 	DMA_MADR(DMA_GPU) = (uint32_t) data;
-	if (length < DMA_CHUNK_LENGTH)
+	if (length < dma_chunk_lenght)
 		DMA_BCR(DMA_GPU) = 0x00010000 | length;
 	else
-		DMA_BCR(DMA_GPU) = DMA_CHUNK_LENGTH |
-			((length / DMA_CHUNK_LENGTH) << 16);
+		DMA_BCR(DMA_GPU) = dma_chunk_lenght |
+			((length / dma_chunk_lenght) << 16);
 
 	DMA_CHCR(DMA_GPU) = 0x01000200 | write;
 }
@@ -169,6 +183,7 @@ int GsGetTimInfo(const uint32_t *tim, GsIMAGE *info) {
 	if ((*(tim++) & 0xffff) != 0x0010)
 		return 1;
 
+	*info = (GsIMAGE){0};
 	info->pmode = *(tim++);
 	if (info->pmode & 8) {
 		const uint32_t *palette_end = tim;
@@ -179,15 +194,15 @@ int GsGetTimInfo(const uint32_t *tim, GsIMAGE *info) {
 		info->clut = (uint32_t *) tim;
 
 		tim = palette_end;
-	} else {
-		info->clut = 0;
 	}
 
-	tim++;
-	*((uint32_t *) &(info->px)) = *(tim++);
-	*((uint32_t *) &(info->pw)) = *(tim++);
-	info->pixel = (uint32_t *) tim;
-
+	uint32_t plenght = *(tim++);
+	// bnum(4 bytes) + pos(4 bytes) + size(4 bytes)
+	if (plenght > 12) {
+		*((uint32_t *) &(info->px)) = *(tim++);
+		*((uint32_t *) &(info->pw)) = *(tim++);
+		info->pixel = (uint32_t *) tim;
+	}
 	return 0;
 }
 
@@ -197,6 +212,7 @@ int GetTimInfo(const uint32_t *tim, TIM_IMAGE *info) {
 	if ((*(tim++) & 0xffff) != 0x0010)
 		return 1;
 
+	*info = (TIM_IMAGE){0};
 	info->mode = *(tim++);
 	if (info->mode & 8) {
 		const uint32_t *palette_end = tim;
@@ -206,13 +222,13 @@ int GetTimInfo(const uint32_t *tim, TIM_IMAGE *info) {
 		info->caddr = (uint32_t *) &tim[2];
 
 		tim = palette_end;
-	} else {
-		info->caddr = 0;
 	}
 
-	tim++;
-	info->prect = (RECT *)     tim;
-	info->paddr = (uint32_t *) &tim[2];
-
+	uint32_t plenght = *(tim++);
+	// bnum(4 bytes) + pos(4 bytes) + size(4 bytes)
+	if(plenght > 12) {
+		info->prect = (RECT *)     tim;
+		info->paddr = (uint32_t *) &tim[2];
+	}
 	return 0;
 }
