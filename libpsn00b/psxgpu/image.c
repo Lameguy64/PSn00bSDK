@@ -29,13 +29,13 @@ static int  _next_saved_rect = 0;
 
 static void _dma_transfer(const RECT *rect, uint32_t *data, int write) {
 	size_t length = rect->w * rect->h;
-	size_t dma_chunk_lenght = DMA_CHUNK_LENGTH;
+	size_t dma_chunk_length = DMA_CHUNK_LENGTH;
 	if (length % 2)
 		_sdk_log("can't transfer an odd number of pixels\n");
 
 	length /= 2;
-	if (length >= dma_chunk_lenght) {
-		uint32_t tail = length % dma_chunk_lenght;
+	if (length >= dma_chunk_length) {
+		uint32_t tail = length % dma_chunk_length;
 		if(tail) {
 			// index  length    w    h
 			// 0      80        5    16
@@ -46,9 +46,9 @@ static void _dma_transfer(const RECT *rect, uint32_t *data, int write) {
 			// 5      42        6    7
 			// 6      44        11   4
 			// 7      46        23   2
-			uint8_t dma_chunk_length_lookup[8] = {8, 1, 2, 1, 4, 1, 2, 1};
-			dma_chunk_lenght = dma_chunk_length_lookup[tail % 8];
-			_sdk_log("transfer data length / 2 (%d) is not a multiple of %d, changing dma_chunk_lenght %d\n", length, DMA_CHUNK_LENGTH, dma_chunk_lenght);
+			const uint8_t dma_chunk_length_lookup[8] = {8, 1, 2, 1, 4, 1, 2, 1};
+			dma_chunk_length = dma_chunk_length_lookup[tail % 8];
+			_sdk_log("transfer data length / 2 (%d) is not a multiple of %d, changing dma_chunk_length %d\n", length, DMA_CHUNK_LENGTH, dma_chunk_length);
 		}
 	}
 
@@ -80,11 +80,11 @@ static void _dma_transfer(const RECT *rect, uint32_t *data, int write) {
 		__asm__ volatile("");
 
 	DMA_MADR(DMA_GPU) = (uint32_t) data;
-	if (length < dma_chunk_lenght)
+	if (length < dma_chunk_length)
 		DMA_BCR(DMA_GPU) = 0x00010000 | length;
 	else
-		DMA_BCR(DMA_GPU) = dma_chunk_lenght |
-			((length / dma_chunk_lenght) << 16);
+		DMA_BCR(DMA_GPU) = dma_chunk_length |
+			((length / dma_chunk_length) << 16);
 
 	DMA_CHCR(DMA_GPU) = 0x01000200 | write;
 }
@@ -196,9 +196,9 @@ int GsGetTimInfo(const uint32_t *tim, GsIMAGE *info) {
 		tim = palette_end;
 	}
 
-	uint32_t plenght = *(tim++);
+	uint32_t plength = *(tim++);
 	// bnum(4 bytes) + pos(4 bytes) + size(4 bytes)
-	if (plenght > 12) {
+	if (plength > 12) {
 		*((uint32_t *) &(info->px)) = *(tim++);
 		*((uint32_t *) &(info->pw)) = *(tim++);
 		info->pixel = (uint32_t *) tim;
@@ -224,9 +224,9 @@ int GetTimInfo(const uint32_t *tim, TIM_IMAGE *info) {
 		tim = palette_end;
 	}
 
-	uint32_t plenght = *(tim++);
+	uint32_t plength = *(tim++);
 	// bnum(4 bytes) + pos(4 bytes) + size(4 bytes)
-	if(plenght > 12) {
+	if (plength > 12) {
 		info->prect = (RECT *)     tim;
 		info->paddr = (uint32_t *) &tim[2];
 	}
