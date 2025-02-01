@@ -79,7 +79,7 @@ static void _gpu_dma_handler(void) {
 
 /* GPU reset and system initialization */
 
-void ResetGraph(int mode) {
+void ResetGraph(ResetGraphMode mode) {
 	_queue_head   = 0;
 	_queue_tail   = 0;
 	_queue_length = 0;
@@ -106,7 +106,7 @@ void ResetGraph(int mode) {
 		GPU_GP1 = 0x02000000; // Reset IRQ
 		GPU_GP1 = 0x04000000; // Disable DMA request
 
-		if (mode == 1)
+		if (mode == RESET_GRAPH_DMA_IRQ_COMMAND_BUFFER)
 			return;
 	} else {
 		GPU_GP1 = 0x00000000; // Reset GPU
