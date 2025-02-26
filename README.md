@@ -77,7 +77,7 @@ parts of the SDK (mostly graphics); the source code of `n00bdemo` can also be
 found in the same directory. More example programs may be added in the future
 and contributed example programs are welcome.
 
-[Lameguy's PlayStation Programming Tutorial Series](http://lameguy64.net/tutorials/pstutorials)
+[Lameguy's PlayStation Programming Tutorial Series](doc/lameguy_tutorial/index.md)
 was written with older versions of PSn00bSDK in mind and is outdated at this
 point, but may still be useful as an introduction to the console's hardware and
 the basics of the graphics and controller APIs.

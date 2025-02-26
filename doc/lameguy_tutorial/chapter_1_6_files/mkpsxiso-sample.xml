@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The above element is not required, but it doesn't hurt to have it -->
+
+<!-- To build an ISO image from this XML file, simply run MKPSXISO in -->
+<!-- the command line with this file as the first argument: -->
+
+<!-- mkpsxiso mkpsxiso-sample.xml -->
+
+<!-- The following element defines an ISO project -->
+<!-- Attribute names should be pretty self-explanatory -->
+<!-- Cue sheet is not required if CD audio tracks are not defined -->
+<iso_project image_name="cdtutorial.bin" cue_sheet="cdtutorial.cue">
+	
+	<!-- This track element defines a track on the CD image, -->
+	<!-- whether it is a data track or an audio track. -->
+	<!-- For this tutorial, only a single data track will be defined. -->
+	<track type="data">
+	
+		<!-- The following element defines some identifiers to the disc -->
+		<!-- image. The first two identifiers are mandatory and must -->
+		<!-- always contain the text PLAYSTATION. All other identifiers -->
+		<!-- are optional and can be modified. -->
+		<identifiers
+			system			="PLAYSTATION"
+			application		="PLAYSTATION"
+			volume			="CDTUTORIAL"
+			volume_set		="CDTUTORIAL"
+			publisher		="ME"
+			copyright		="COPYLEFT"
+		/>
+		
+		<!-- The following element defines the license file to inject -->
+		<!-- into the disc image, which is required on some earlier -->
+		<!-- console revisions that check the license data area, -->
+		<!-- but you still need a modchip to boot CD-Rs on all consoles. -->
+		<!-- MKPSXISO expects the raw .DAT files found in the PsyQ -->
+		<!-- SDK directory in PS\CDGEN\LCNSFILE. This is optional if you -->
+		<!-- intend to run this sample in emulators. -->
+		<!--
+		<license file="licensea.dat"/>
+		-->
+		
+		<!-- This element defines the contents and directory structure -->
+		<!-- of the disc image. For this tutorial no directories will be -->
+		<!-- defined and only a .CNF file and the program executable are -->
+		<!-- included into the CD. -->
+		<directory_tree>
+		
+			<!-- The file element defines a file to be included into the -->
+			<!-- disc image. As you can see, the source file can be -->
+			<!-- renamed with the name attribute. -->
+			<file name="system.cnf"	type="data"	source="system.txt"/>
+			
+			<!-- For this element, the source attribute can be omitted -->
+			<!-- provided the name attribute is defined. -->
+			<file name="cdread.exe" type="data">
+			
+			<!-- Lastly, some dummy sectors must always be placed at the -->
+			<!-- end of the disc image. It must be a pretty large one to -->
+			<!-- make sure the console does not go run-away when it -->
+			<!-- reaches the end of the track -->
+			<dummy sectors="1024"/>
+		
+		</directory_tree>
+		
+	</track>
+	
+</iso_project>
