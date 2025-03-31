@@ -228,5 +228,14 @@ scope of PSn00bSDK. There are other PS1 SDKs that provide an STL, such as
 and they might be a better fit for your project if you plan to make heavy use of
 C++ features.
 
+## MacOS
+
+Using [Homebrew](https://brew.sh/), you can install the mips toolchain after downloading [these two scripts](https://github.com/grumpycoders/pcsx-redux/tree/main/tools/macos-mips)
+
+```bash
+brew install ./tools/macos-mips/mipsel-none-elf-binutils.rb
+brew install ./tools/macos-mips/mipsel-none-elf-gcc.rb
+```
+
 -----------------------------------------
-_Last updated on 2023-04-05 by spicyjpeg_
+_Last updated on 2025-03-31 by kiwanowski
