@@ -198,6 +198,7 @@ void SetDrawOpType(GPU_DrawOpType type) {
 
 int EnqueueDrawOp(void (*func)(), uint32_t arg1, uint32_t arg2, uint32_t arg3) {
 	_sdk_validate_args(func, -1);
+	void (*typed_func)(uint32_t, uint32_t, uint32_t) = (void (*)(uint32_t, uint32_t, uint32_t)) func;
 
 	// If GPU DMA is currently busy, append the command to the queue instead of
 	// executing it immediately. Note that interrupts must be disabled *prior*
@@ -212,7 +213,7 @@ int EnqueueDrawOp(void (*func)(), uint32_t arg1, uint32_t arg2, uint32_t arg3) {
 		_queue_length = 1;
 		FastExitCriticalSection();
 
-		func(arg1, arg2, arg3);
+		typed_func(arg1, arg2, arg3);
 		return 0;
 	}
 	if (length >= QUEUE_LENGTH) {
@@ -227,7 +228,7 @@ int EnqueueDrawOp(void (*func)(), uint32_t arg1, uint32_t arg2, uint32_t arg3) {
 	_queue_length = length + 1;
 
 	volatile DrawOp *entry = &_draw_queue[tail];
-	entry->func = func;
+	entry->func = typed_func;
 	entry->arg1 = arg1;
 	entry->arg2 = arg2;
 	entry->arg3 = arg3;
