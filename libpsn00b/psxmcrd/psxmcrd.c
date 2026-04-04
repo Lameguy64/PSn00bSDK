@@ -51,6 +51,14 @@ void McInit(void)
 {
     InitCARD(1); /* 1 = share IRQ with pad driver */
     StartCARD();
+    /*
+     * _bu_init() probes the card directory and blocks until the controller
+     * has finished its initialisation sequence.  On real hardware this is
+     * mandatory — without it the first open() fires before the card is
+     * ready and returns -1.  Emulators rarely enforce the timing, which is
+     * why omitting this call only manifests as a failure on hardware.
+     */
+    _bu_init();
 }
 
 int McOpen(int port, const char *name, int mode)
