@@ -28,6 +28,9 @@ target_compile_options(
 		-mabi=32
 		-mno-mt
 		-mno-llsc
+	$<$<COMPILE_LANGUAGE:C>:
+		-std=c17
+	>
 	$<$<COMPILE_LANGUAGE:CXX>:
 		# Options common to all target types (C++)
 		-fno-exceptions
