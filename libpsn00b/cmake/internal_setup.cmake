@@ -22,6 +22,13 @@ set(CMAKE_SHARED_MODULE_SUFFIX  ".so")
 
 set_property(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS ON)
 
+# A workaround to let GNU AS detect includes provided by CMake on some
+# modern toolchains.
+add_compile_options(
+    "$<$<COMPILE_LANGUAGE:ASM>:$<$<BOOL:$<TARGET_PROPERTY:INCLUDE_DIRECTORIES>>:-Wa,-I$<JOIN:$<TARGET_PROPERTY:INCLUDE_DIRECTORIES>,;-Wa,-I>>>"
+)
+
+
 ## PSn00bSDK initialization
 
 # Fetch SDK version information from build.json.
